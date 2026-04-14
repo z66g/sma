@@ -1747,16 +1747,15 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         ["Net GEX", fmt_num(net_gex, "", 0)],
         ["GEX Flip Zone", f"${flip:.2f}" if flip else "N/A"],
     ]
+    l3_highlight = {1: COLOR['alert_blue'], 2: COLOR['alert_red']}   # Spot=blue, Max Pain=red
+    l3_table_html = _table(["Metric", "Value"], l3_rows, highlight_rows=l3_highlight)
     s3 = _section_header(3, "Options Layer (L3)", l3_badges) + f"""
 <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;align-items:start;">
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">GEX by Strike</div>
     <div style="position:relative;height:300px;"><canvas id="gexChart"></canvas></div>
   </div>
-  <div>{_table(["Metric","Value"], l3_rows, highlight_rows={{
-      1: COLOR['alert_blue'],   # Spot 행 — 파란 배경
-      2: COLOR['alert_red'],    # Max Pain 행 — 빨간 배경
-  }})}</div>
+  <div>{l3_table_html}</div>
 </div>
 """
 
