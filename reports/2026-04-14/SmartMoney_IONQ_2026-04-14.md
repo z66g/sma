@@ -6,7 +6,7 @@ generated_by: Smart Money Analyzer (sma.py)
 
 # Smart Money Analysis: IONQ
 **Analysis Date**: 2026-04-14  
-**Current Price**: $34.22  
+**Current Price**: $34.21  
 **Options Expiry**: 2026-04-17  
 **Analyst**: Smart Money Analyzer v2.0
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $34.22 | 6M | 2M | 3M | 12M | 52.5% | 0.48% | 550,000 | $23.50 | $32.00 |
+| 2026-04-14 | $34.21 | 6M | 2M | 3M | 12M | 52.5% | 0.48% | 550,000 | $23.50 | $32.00 |

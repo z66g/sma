@@ -1475,10 +1475,10 @@ def _badge(text, kind="info"):
     bg = COLOR[bg_key]; fg = COLOR[fg_key]
     return f'<span style="background:{bg};color:{fg};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{html.escape(str(text))}</span>'
 
-def _scenario_badge_tt(scenario: str, signal: str, layer: str = "L1") -> str:
+def _scenario_badge_tt(scenario: str, signal: str, layer: str = "L1", align: str = "right") -> str:
     """
-    시나리오 배지 자체가 호버 툴팁 트리거. 배지 색상은 signal(BULLISH/BEARISH/NEUTRAL)에
-    따라 결정. 툴팁엔 해당 레이어의 시나리오 옵션과 결정 로직 요약.
+    시나리오 배지 자체가 호버 툴팁 트리거. align='right' 면 섹션 헤더 오른쪽 배지용으로
+    툴팁을 오른쪽 끝 기준 정렬(뷰포트 벗어남 방지).
     """
     kind = {"BULLISH":"pos", "BEARISH":"neg"}.get(signal, "warn")
     bg_key, fg_key = _BADGE_PALETTE[kind]
@@ -1534,8 +1534,9 @@ def _scenario_badge_tt(scenario: str, signal: str, layer: str = "L1") -> str:
             "</table>"
         )
 
+    align_class = " tt-right" if align == "right" else ""
     return (
-        f'<span class="tt" style="background:{bg};color:{fg};padding:2px 8px;border-radius:12px;'
+        f'<span class="tt{align_class}" style="background:{bg};color:{fg};padding:2px 8px;border-radius:12px;'
         f'font-size:11px;font-weight:600;">{html.escape(str(scenario))}'
         f'<span class="tt-body">{body}</span></span>'
     )
@@ -1747,12 +1748,12 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         ["GEX Flip Zone", f"${flip:.2f}" if flip else "N/A"],
     ]
     s3 = _section_header(3, "Options Layer (L3)", l3_badges) + f"""
-<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:12px;">
-  <div>{_table(["Metric","Value"], l3_rows)}</div>
+<div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;align-items:start;">
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">GEX by Strike</div>
-    <canvas id="gexChart" height="260"></canvas>
+    <div style="position:relative;height:220px;"><canvas id="gexChart"></canvas></div>
   </div>
+  <div>{_table(["Metric","Value"], l3_rows)}</div>
 </div>
 """
 
@@ -1866,6 +1867,9 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   /* Hover tooltip (pure CSS) — positioning only, styling via inline */
   .tt {{ position:relative; display:inline-block; cursor:help; }}
   .tt-i {{ color:{COLOR['info']}; margin-left:3px; font-weight:600; font-size:11px; }}
+  /* 섹션 헤더 오른쪽 배지는 오른쪽 끝 기준 정렬 — 뷰포트 바깥 잘림 방지 */
+  .tt-right .tt-body {{ left:auto !important; right:0 !important; transform:none !important; }}
+  .tt-right .tt-body::after {{ left:auto !important; right:14px !important; margin-left:0 !important; }}
   .tt .tt-body {{
     visibility:hidden; opacity:0; transition:opacity 0.12s;
     position:absolute; left:50%; transform:translateX(-50%);
@@ -2083,6 +2087,7 @@ new Chart(document.getElementById('gexChart'), {{
     }}]
   }},
   options:{{
+    maintainAspectRatio:false,
     plugins:{{legend:{{display:false}},title:{{display:true,text:'Gamma Exposure (GEX) by Strike'}}}},
     scales:{{y:{{grid:{{color:'{COLOR['chart_grid']}'}}}},x:{{grid:{{display:false}}}}}}
   }}
