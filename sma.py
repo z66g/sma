@@ -2108,54 +2108,77 @@ def _core_conclusions(a) -> str:
     scen = a["scenarios"]; patterns = a["patterns"]; meta = a["meta"]
     price = meta.get("price") or 0
 
-    # Paragraph 1
     top = max([("A", scen["A_bullish"]), ("B", scen["B_neutral"]), ("C", scen["C_bearish"])], key=lambda x: x[1])
-    p1 = (
-        f"<b>핵심 단일 발견.</b> {meta['ticker']}의 4개 레이어 가중합 점수는 {scen['raw_score']:+.2f} · "
-        f"시나리오 확률은 [A] {scen['A_bullish']}% / [B] {scen['B_neutral']}% / [C] {scen['C_bearish']}% 로 수렴하며, "
-        f"최우선은 <b>시나리오 [{top[0]}] ({top[1]}%)</b>이다. "
-        f"L1은 {l1.get('scenario','N/A')} ({l1.get('signal','NEUTRAL')}), L2는 {l2.get('scenario','N/A')} "
-        f"({l2.get('case','N/A')}), L3은 {l3.get('scenario','N/A')} (Max Pain ${l3.get('max_pain') or 0:.2f}, "
+    top_color = {"A": COLOR["bull"], "B": COLOR["warn"], "C": COLOR["bear"]}[top[0]]
+    architect_intent = ('축적(accumulation)' if top[0]=='A' else
+                        '분배(distribution)' if top[0]=='C' else
+                        '소강/타이밍 조정(pinning/theta)')
+
+    # Body 1 — 핵심 단일 발견
+    b1 = (
+        f"{meta['ticker']}의 4개 레이어 가중합 점수는 <b>{scen['raw_score']:+.2f}</b> · "
+        f"시나리오 확률은 [A] {scen['A_bullish']}% / [B] {scen['B_neutral']}% / [C] {scen['C_bearish']}%로 수렴하며, "
+        f"최우선은 <b style=\"color:{top_color};\">시나리오 [{top[0]}] ({top[1]}%)</b>이다. "
+        f"L1은 {l1.get('scenario','N/A')} ({l1.get('signal','NEUTRAL')}), "
+        f"L2는 {l2.get('scenario','N/A')} ({l2.get('case','N/A')}), "
+        f"L3은 {l3.get('scenario','N/A')} (Max Pain ${l3.get('max_pain') or 0:.2f}, "
         f"Net GEX {fmt_num(l3.get('net_gex') or 0, '', 0)})의 구조적 배치를 보여준다. "
-        f"패턴 탐지 결과: {', '.join(patterns) if patterns else '정형 패턴 없음'}. "
-        f"이 조합에서 Architect의 의도는 {'축적(accumulation)' if top[0]=='A' else '분배(distribution)' if top[0]=='C' else '소강/타이밍 조정(pinning/theta)'}의 "
-        f"단계에 가깝다고 해석된다."
+        f"패턴 탐지 결과: <b>{', '.join(patterns) if patterns else '정형 패턴 없음'}</b>. "
+        f"이 조합에서 Architect의 의도는 <b>{architect_intent}</b>의 단계에 가깝다고 해석된다."
     )
 
-    # Paragraph 2
-    p2 = (
-        f"<b>구조적 메커니즘.</b> 다크풀 기관 Δ는 {fmt_num((l1.get('obv') or {}).get('delta_institutional') or 0, '', 0)}, "
-        f"IAR {fmt_num((l1.get('obv') or {}).get('iar'), '', 2)}, Divergence {(l1.get('obv') or {}).get('divergence','N/A')}로 기록되며, "
-        f"L2에서 Short% 기울기 {l2.get('slope',0):+.3f} · CTB "
-        + (f"{l2['ctb_fee']:.2f}%" if l2.get('ctb_fee') is not None else "N/A")
-        + f" 조합은 L3 GEX 플립 {('$'+format(l3.get('flip_zone'),'.2f')) if l3.get('flip_zone') else 'N/A'} 및 "
-        f"Max Pain 거리 {l3.get('max_pain_dist_pct') or 0:+.1f}%와 " +
-        ("정합적으로" if (l1.get("signal")==l3.get("signal")) else "부분 상충적으로") +
-        " 맞물린다. 매크로는 <b>" + scen['macro'] + "</b>로 분류되어 확률을 " +
-        ("+" if scen['macro']=="FAVORABLE" else ("−" if scen['macro']=="RESTRICTED" else "0")) +
-        "5~10%p 조정했다. 해석이 틀릴 위험은 CTB와 기관 OBV의 동시 역전, 또는 다가오는 이벤트(어닝/FOMC)의 가이던스 변질이다."
+    # Body 2 — 구조적 메커니즘
+    obv_d = (l1.get('obv') or {}).get('delta_institutional') or 0
+    iar   = (l1.get('obv') or {}).get('iar')
+    div   = (l1.get('obv') or {}).get('divergence','N/A')
+    ctb_s = f"{l2['ctb_fee']:.2f}%" if l2.get('ctb_fee') is not None else "N/A"
+    flip_s= ('$'+format(l3.get('flip_zone'),'.2f')) if l3.get('flip_zone') else 'N/A'
+    align = "정합적으로" if (l1.get("signal")==l3.get("signal")) else "부분 상충적으로"
+    macro_sign = "+" if scen['macro']=="FAVORABLE" else ("−" if scen['macro']=="RESTRICTED" else "0")
+    b2 = (
+        f"다크풀 기관 Δ는 <b>{fmt_num(obv_d,'',0)}</b>, IAR <b>{fmt_num(iar,'',2)}</b>, "
+        f"Divergence <b>{div}</b>로 기록되며, "
+        f"L2에서 Short% 기울기 <b>{l2.get('slope',0):+.3f}</b> · CTB <b>{ctb_s}</b> 조합은 "
+        f"L3 GEX 플립 <b>{flip_s}</b> 및 Max Pain 거리 <b>{l3.get('max_pain_dist_pct') or 0:+.1f}%</b>와 "
+        f"<b>{align}</b> 맞물린다. "
+        f"매크로는 <b>{scen['macro']}</b>로 분류되어 확률을 <b>{macro_sign}5~10%p</b> 조정했다. "
+        f"해석이 틀릴 위험은 CTB와 기관 OBV의 동시 역전, 또는 다가오는 이벤트(어닝/FOMC)의 가이던스 변질이다."
     )
 
-    # Paragraph 3
+    # Body 3 — 결정적 트리거
     p3_triggers = []
     if l3.get("flip_zone"): p3_triggers.append(f"가격이 GEX 플립(${l3['flip_zone']:.2f})을 돌파")
     if l2.get("ctb_fee") is not None: p3_triggers.append(f"CTB가 {l2['ctb_fee']:.1f}%에서 +3pp 이상 급등")
     if l1.get("dp_pct") is not None: p3_triggers.append(f"다크풀 비중이 {l1['dp_pct']:.0f}%에서 2거래일 연속 45% 이상 유지")
-    p3 = (
-        f"<b>결정적 트리거.</b> 본 가설을 확정하는 단일 신호는 다음 중 어느 것이든 먼저 발동될 때다: "
-        + ("; ".join(p3_triggers) if p3_triggers else "거래량 +150% 스파이크 + BB 확장")
-        + f". 반대로 <b>" + ("기관 OBV가 음전환(누적 5영업일 합산 < 0)" if top[0]=="A" else
-                            "기관 OBV가 양전환하면서 CTB가 급락" if top[0]=="C" else
-                            "L1·L2·L3 중 2개 레이어 신호가 동시에 반대 방향으로 고착") +
-        "</b>되면 본 분석의 방향성 가정은 재설정되어야 한다."
+    reset_cond = ("기관 OBV가 음전환(누적 5영업일 합산 &lt; 0)" if top[0]=="A" else
+                  "기관 OBV가 양전환하면서 CTB가 급락" if top[0]=="C" else
+                  "L1·L2·L3 중 2개 레이어 신호가 동시에 반대 방향으로 고착")
+    trigger_text = "; ".join(p3_triggers) if p3_triggers else "거래량 +150% 스파이크 + BB 확장"
+    b3 = (
+        f"본 가설을 확정하는 단일 신호는 다음 중 어느 것이든 먼저 발동될 때다: <b>{trigger_text}</b>. "
+        f"반대로 <b>{reset_cond}</b>되면 본 분석의 방향성 가정은 재설정되어야 한다."
     )
 
-    return f"""
-<div style="font-size:13px;line-height:1.8;font-weight:500;color:{COLOR['text']};">
-  <p style="margin-bottom:14px;">{p1}</p>
-  <p style="margin-bottom:14px;">{p2}</p>
-  <p>{p3}</p>
-</div>"""
+    # 각 결론 블록: 라벨 pill + 줄바꿈 + 본문 + 좌측 악센트 바 + 카드
+    def _block(title_ko: str, title_en: str, accent: str, body: str) -> str:
+        return (
+            f'<div style="background:{COLOR["bg_card"]};border-left:3px solid {accent};'
+            f'border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:12px;">'
+            f'  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+            f'    <span style="font-size:13px;font-weight:700;color:{accent};">{title_ko}</span>'
+            f'    <span style="font-size:10px;color:{COLOR["muted"]};letter-spacing:0.08em;text-transform:uppercase;">{title_en}</span>'
+            f'  </div>'
+            f'  <div style="font-size:13px;line-height:1.8;color:{COLOR["text"]};">{body}</div>'
+            f'</div>'
+        )
+
+    return (
+        f'<div style="margin-top:4px;">'
+        + _block("핵심 단일 발견", "Key Finding",          COLOR["info"], b1)
+        + _block("구조적 메커니즘", "Structural Mechanism", COLOR["warn"], b2)
+        + _block("결정적 트리거",   "Decisive Trigger",     COLOR["bull"], b3)
+        + '</div>'
+    )
 
 
 def _chart_js(obv_data, gex_labels, gex_vals, flip, spot, max_pain, scenarios) -> str:
