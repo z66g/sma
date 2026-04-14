@@ -3,36 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Smart Money Analyzer — Reports</title>
+<title>Smart Money Analyzer — Dashboard</title>
 <style>
-  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1F2328; margin:0; padding:24px; }
-  .wrap { max-width:1000px; margin:0 auto; }
-  h1 { font-size:22px; border-bottom:1px solid #D0D7DE; padding-bottom:8px; }
-  h2 { font-size:15px; color:#9A6700; margin-top:24px; }
-  table { border-collapse:collapse; width:100%; font-size:13px; }
-  th,td { border:0.5px solid #D0D7DE; padding:6px 8px; text-align:left; }
-  th { background:#EAEEF2; color:#656D76; font-weight:600; }
+  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1F2328; margin:0; padding:24px; font-size:13px; }
+  .wrap { max-width:1400px; margin:0 auto; }
+  header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #D0D7DE; padding-bottom:12px; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
+  h1 { font-size:20px; margin:0; }
+  .meta { color:#656D76; font-size:11px; }
+  .controls { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+  input, select { padding:6px 10px; border:0.5px solid #D0D7DE; border-radius:4px; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:13px; background:#FFFFFF; color:#1F2328; }
+  input { min-width:220px; }
+  .stat-bar { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .stat { background:#F6F8FA; border:0.5px solid #D0D7DE; border-radius:6px; padding:8px 14px; min-width:120px; }
+  .stat-label { font-size:10px; color:#656D76; text-transform:uppercase; letter-spacing:0.05em; }
+  .stat-value { font-size:18px; font-weight:600; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th,td { border:0.5px solid #D0D7DE; padding:6px 8px; text-align:left; white-space:nowrap; }
+  th { background:#EAEEF2; color:#656D76; font-weight:600; cursor:pointer; user-select:none; position:sticky; top:0; }
+  th:hover { background:#DDE3E8; }
   tr:nth-child(even) { background:#F6F8FA; }
+  tr:hover { background:#DDF4FF; }
   a { color:#0969DA; text-decoration:none; }
   a:hover { text-decoration:underline; }
-  .meta { color:#656D76; font-size:11px; }
+  .pill { padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; }
+  .pill-A { background:#DAFBE1; color:#1A7F5A; }
+  .pill-B { background:#FFF8C5; color:#9A6700; }
+  .pill-C { background:#FFEBE9; color:#CF222B; }
+  .pattern { font-size:9px; background:#FFF8C5; color:#9A6700; padding:1px 4px; border-radius:6px; margin-right:2px; }
+  .tbl-wrap { max-height:70vh; overflow:auto; border:0.5px solid #D0D7DE; border-radius:6px; }
+  .empty { padding:32px; text-align:center; color:#656D76; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Smart Money Analyzer — Reports</h1>
-  <div class="meta">Generated 2026-04-14 04:35 UTC · 0 reports · 0 tickers</div>
+<header>
+  <div>
+    <h1>Smart Money Analyzer</h1>
+    <div class="meta">Generated 2026-04-14 04:41 UTC</div>
+  </div>
+  <div>
+    <a href="https://github.com/z66g/sma" style="font-size:11px;">GitHub</a>
+  </div>
+</header>
 
-  <h2>티커별 최신 리포트</h2>
-  <table>
-    <thead><tr><th>Ticker</th><th>최신 날짜</th><th>링크</th><th>전체 히스토리</th></tr></thead>
-    <tbody>
-      <tr><td colspan="4">아직 리포트가 없습니다.</td></tr>
-    </tbody>
-  </table>
+<div class="stat-bar" id="statBar"></div>
 
-  <h2>날짜별 전체 리포트</h2>
-  <p>리포트 없음.</p>
+<div class="controls">
+  <input id="q" type="text" placeholder="티커 검색 (예: NVDA)...">
+  <select id="filter-scenario">
+    <option value="">시나리오 전체</option>
+    <option value="A">[A] Bullish 우세</option>
+    <option value="B">[B] Neutral 우세</option>
+    <option value="C">[C] Bearish 우세</option>
+  </select>
+  <select id="filter-pattern">
+    <option value="">패턴 전체</option>
+    <option value="FINAL_ABSORPTION">FINAL_ABSORPTION</option>
+    <option value="THETA_BURN">THETA_BURN</option>
+    <option value="GAMMA_SQUEEZE_SETUP">GAMMA_SQUEEZE_SETUP</option>
+    <option value="SHORT_SQUEEZE_RISK">SHORT_SQUEEZE_RISK</option>
+    <option value="LOW_CTB_PARADOX">LOW_CTB_PARADOX</option>
+  </select>
+  <select id="sort">
+    <option value="ticker">Ticker ↓</option>
+    <option value="scenario_pct-desc">확률 높은순</option>
+    <option value="raw_score-desc">Score 높은순</option>
+    <option value="raw_score-asc">Score 낮은순</option>
+    <option value="ctb_fee-desc">CTB 높은순</option>
+    <option value="short_pct-desc">Short% 높은순</option>
+  </select>
+  <span id="count" style="color:#656D76;font-size:11px;"></span>
 </div>
+
+<div class="tbl-wrap">
+<table id="tbl">
+  <thead><tr>
+    <th>Ticker</th>
+    <th>Latest</th>
+    <th>Price</th>
+    <th>Top Scenario</th>
+    <th>Score</th>
+    <th>Macro</th>
+    <th>L1</th>
+    <th>L2 Case</th>
+    <th>L3</th>
+    <th>DP %</th>
+    <th>Short %</th>
+    <th>CTB %</th>
+    <th>Max Pain</th>
+    <th>Patterns</th>
+    <th>Reports</th>
+    <th></th>
+  </tr></thead>
+  <tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+<script>
+window.__DB__ = [{"ticker": "IONQ", "latest_date": "2026-04-14", "price": 29.760000228881836, "scenario": "C", "scenario_pct": 43.0, "raw_score": -0.2, "patterns": [], "l1_scenario": "NEUTRAL", "l2_case": "CASE_2_DIRECTIONAL_SHORT", "l3_scenario": "VOLATILITY_EXPANSION", "macro_env": "FAVORABLE", "dp_pct": 90.88576803263419, "ctb_fee": 0.4402, "short_pct": 52.535569478953924, "max_pain": 34.0, "report_count": 1}, {"ticker": "NVDA", "latest_date": "2026-04-14", "price": 189.30999755859375, "scenario": "B", "scenario_pct": 40.0, "raw_score": 0.0, "patterns": [], "l1_scenario": "NEUTRAL", "l2_case": "CASE_2_DIRECTIONAL_SHORT", "l3_scenario": "HEDGING", "macro_env": "FAVORABLE", "dp_pct": 95.52523589207884, "ctb_fee": 0.2782, "short_pct": 45.51440819581565, "max_pain": 100.0, "report_count": 1}];
+</script>
+<script src="app.js"></script>
 </body>
 </html>

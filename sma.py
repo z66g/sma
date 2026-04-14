@@ -973,14 +973,17 @@ class SmartMoneyAnalyzer:
         }
 
     # ─── 12. Output ───────────────────────────────────────────────────────
-    def generate_outputs(self, analysis: Dict) -> Tuple[str, str]:
+    def generate_outputs(self, analysis: Dict) -> Tuple[str, str, str]:
         html_str = render_html(analysis, self)
         md_str   = render_markdown(analysis, self)
+        json_str = render_json(analysis)
         html_path = OUT_DIR / f"{self.ticker}_3Layer_Forensic_{self.date_str}.html"
         md_path   = OUT_DIR / f"SmartMoney_{self.ticker}_{self.date_str}.md"
+        json_path = OUT_DIR / f"{self.ticker}_{self.date_str}.json"
         html_path.write_text(html_str, encoding="utf-8")
         md_path.write_text(md_str, encoding="utf-8")
-        return str(html_path), str(md_path)
+        json_path.write_text(json_str, encoding="utf-8")
+        return str(html_path), str(md_path), str(json_path)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1546,6 +1549,71 @@ new Chart(document.getElementById('probChart'), {{
 """
 
 
+# ─── JSON 렌더 ───────────────────────────────────────────────────────────────
+def render_json(a: Dict) -> str:
+    """
+    사이트 프론트가 먹는 원시 수치 덤프.
+    날짜별/티커별 시계열 DB의 한 행이 됨.
+    """
+    l1, l2, l3, l4 = a["l1"], a["l2"], a["l3"], a["l4"]
+    obv = l1.get("obv", {}) or {}
+    scen = a["scenarios"]
+    out = {
+        "ticker":        a["meta"]["ticker"],
+        "date":          a["meta"]["date"],
+        "price":         a["meta"].get("price"),
+        "warnings":      a["meta"].get("warnings", []),
+        "patterns":      a.get("patterns", []),
+        "macro_env":     a.get("macro_env"),
+        "scenarios": {
+            "A_bullish": scen["A_bullish"],
+            "B_neutral": scen["B_neutral"],
+            "C_bearish": scen["C_bearish"],
+            "raw_score": scen["raw_score"],
+        },
+        "l1": {
+            "scenario": l1.get("scenario"), "signal": l1.get("signal"),
+            "confidence": l1.get("confidence"),
+            "dp_pct": l1.get("dp_pct"),
+            "delta_institutional": obv.get("delta_institutional"),
+            "delta_professional":  obv.get("delta_professional"),
+            "delta_retail":        obv.get("delta_retail"),
+            "delta_total":         obv.get("delta_total"),
+            "iar":                 obv.get("iar"),
+            "divergence":          obv.get("divergence"),
+            "obv_source":          obv.get("_source"),
+        },
+        "l2": {
+            "scenario": l2.get("scenario"), "signal": l2.get("signal"),
+            "case":     l2.get("case"),
+            "short_pct_latest": l2.get("latest_short_pct"),
+            "short_avg_14d":    l2.get("avg_14d"),
+            "short_slope":      l2.get("slope"),
+            "ctb_fee":          l2.get("ctb_fee"),
+            "ctb_delta_pct":    l2.get("ctb_delta_pct"),
+            "shares_available": l2.get("shares_available"),
+        },
+        "l3": {
+            "scenario": l3.get("scenario"), "signal": l3.get("signal"),
+            "expiry":   l3.get("expiry"), "dte": l3.get("dte"),
+            "max_pain": l3.get("max_pain"),
+            "max_pain_dist_pct": l3.get("max_pain_dist_pct"),
+            "pc_oi":    l3.get("pc_oi"), "pc_vol": l3.get("pc_vol"),
+            "skew":     l3.get("skew"),
+            "net_gex":  l3.get("net_gex"), "flip_zone": l3.get("flip_zone"),
+        },
+        "l4": {
+            "scenario": l4.get("scenario"), "signal": l4.get("signal"),
+            "ma_alignment": l4.get("ma_alignment"),
+            "sma20": l4.get("sma20"), "sma50": l4.get("sma50"), "sma200": l4.get("sma200"),
+            "bb_width_pct": l4.get("bb_width_pct"),
+            "immediate_resistance": l4.get("immediate_resistance"),
+            "immediate_support":    l4.get("immediate_support"),
+        },
+    }
+    return json.dumps(out, ensure_ascii=False, indent=2, default=str)
+
+
 # ─── MD 렌더 ─────────────────────────────────────────────────────────────────
 def render_markdown(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     m = a["meta"]; l1,l2,l3,l4 = a["l1"],a["l2"],a["l3"],a["l4"]
@@ -1651,11 +1719,12 @@ def main():
     print(f"[sma] Analyzing {analyzer.ticker} @ {analyzer.date_str}...", file=sys.stderr)
     data = analyzer.fetch_all_data()
     analysis = analyzer.run_analysis(data)
-    html_path, md_path = analyzer.generate_outputs(analysis)
+    html_path, md_path, json_path = analyzer.generate_outputs(analysis)
     dt = time.time() - t0
     print(f"[sma] done ({dt:.1f}s)", file=sys.stderr)
     print(f"HTML: {html_path}")
     print(f"MD:   {md_path}")
+    print(f"JSON: {json_path}")
 
 if __name__ == "__main__":
     main()
