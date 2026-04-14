@@ -1751,7 +1751,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;align-items:start;">
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">GEX by Strike</div>
-    <div style="position:relative;height:220px;"><canvas id="gexChart"></canvas></div>
+    <div style="position:relative;height:300px;"><canvas id="gexChart"></canvas></div>
   </div>
   <div>{_table(["Metric","Value"], l3_rows)}</div>
 </div>
@@ -2075,11 +2075,10 @@ new Chart(document.getElementById('obv4way'), {{
   }}
 }});
 
-// Custom plugin: draw vertical marker lines at spot / max pain / GEX flip
+// Custom plugin: draw vertical marker lines at spot / max pain
 const GEX_MARKERS = {json.dumps([
-    {"value": spot,      "label": f"Spot ${spot:.2f}"      if spot     else None, "color": COLOR["info"], "dash": [6,4]}        if spot     else None,
-    {"value": max_pain,  "label": f"Max Pain ${max_pain:.2f}" if max_pain else None, "color": COLOR["warn"], "dash": [2,3]}    if max_pain else None,
-    {"value": flip,      "label": f"Flip ${flip:.2f}"      if flip     else None, "color": COLOR["warn"], "dash": [1,1]}        if flip     else None,
+    {"value": spot,      "label": f"Spot ${spot:.2f}"       if spot     else None, "color": COLOR["info"], "dash": [6,4]}  if spot     else None,
+    {"value": max_pain,  "label": f"Max Pain ${max_pain:.2f}" if max_pain else None, "color": COLOR["warn"], "dash": [2,3]} if max_pain else None,
 ])};
 const GEX_STRIKES = {json.dumps(gex_labels)};
 const gexMarkerPlugin = {{
@@ -2120,7 +2119,8 @@ const gexMarkerPlugin = {{
       const text = m.label;
       const w = ctx.measureText(text).width + 10;
       const lx = Math.max(chartArea.left + 2, Math.min(x - w/2, chartArea.right - w - 2));
-      const ly = chartArea.top + 4 + yOffset;
+      // 라벨을 차트 영역 위쪽 패딩 안에 배치 (데이터 영역 침범 방지)
+      const ly = chartArea.top - 22 + yOffset;
       ctx.globalAlpha = 0.9;
       ctx.fillRect(lx, ly, w, 16);
       ctx.globalAlpha = 1;
@@ -2145,7 +2145,7 @@ new Chart(document.getElementById('gexChart'), {{
   }},
   options:{{
     maintainAspectRatio:false,
-    layout:{{ padding:{{ top:60 }} }},
+    layout:{{ padding:{{ top:40 }} }},
     plugins:{{legend:{{display:false}},title:{{display:true,text:'Gamma Exposure (GEX) by Strike'}}}},
     scales:{{y:{{grid:{{color:'{COLOR['chart_grid']}'}}}},x:{{grid:{{display:false}}}}}}
   }},
