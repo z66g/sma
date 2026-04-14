@@ -833,15 +833,35 @@ class SmartMoneyAnalyzer:
         news_items = []
         try:
             for n in (self.yf.news or [])[:8]:
-                ts = n.get("providerPublishTime") or 0
-                news_items.append({
-                    "title": n.get("title", ""),
-                    "publisher": n.get("publisher", ""),
-                    "link": n.get("link", ""),
-                    "date": datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") if ts else "",
-                })
-        except Exception:
-            pass
+                # yfinance 0.2.40+ 이후 응답이 {"id", "content": {...}} 로 바뀜.
+                # 구 포맷도 호환되도록 양쪽 모두 처리.
+                c = n.get("content") if isinstance(n.get("content"), dict) else n
+                title = c.get("title", "") or ""
+                # publisher
+                prov = c.get("provider")
+                publisher = (prov or {}).get("displayName", "") if isinstance(prov, dict) else (c.get("publisher", "") or "")
+                # link
+                cu = c.get("canonicalUrl") or c.get("clickThroughUrl")
+                link = (cu or {}).get("url", "") if isinstance(cu, dict) else (c.get("link", "") or "")
+                # date
+                date_str = ""
+                pubdate = c.get("pubDate") or c.get("displayTime")
+                if isinstance(pubdate, str) and len(pubdate) >= 10:
+                    date_str = pubdate[:10]
+                else:
+                    ts = c.get("providerPublishTime") or 0
+                    if ts:
+                        date_str = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+                if title:  # 빈 항목 제외
+                    news_items.append({
+                        "title": title,
+                        "publisher": publisher,
+                        "link": link,
+                        "date": date_str,
+                        "summary": c.get("summary", "") or "",
+                    })
+        except Exception as e:
+            self.warnings.append(f"news parse: {e}")
 
         # SEC EDGAR recent filings
         filings = []
@@ -863,21 +883,95 @@ class SmartMoneyAnalyzer:
         except Exception:
             pass
 
-        # 다가오는 이벤트: earnings
-        upcoming = []
+        # 다가오는 이벤트 (30일 윈도우): earnings, 옵션 월물 만기, 배당 ex-date, FOMC
+        today = datetime.strptime(self.date_str, "%Y-%m-%d").date()
+        horizon = today + timedelta(days=30)
+
+        def signal_for(days: int, base: str = "MED") -> str:
+            """남은 일수 기반 Signal — 이벤트가 가까울수록 HIGH."""
+            if days is None: return "LOW"
+            if days <= 7:  return "HIGH"
+            if days <= 21: return "MED"
+            return "LOW"
+
+        def add_event(d: date, name: str, base_sig: str = "MED", boost: bool = False):
+            if d < today or d > horizon:
+                return
+            days = (d - today).days
+            sig = signal_for(days)
+            # 어닝·FOMC 같은 중요 이벤트는 한 단계 상향
+            if boost:
+                sig = "HIGH" if sig == "MED" else ("MED" if sig == "LOW" else sig)
+            upcoming.append({
+                "date": d.strftime("%Y-%m-%d"),
+                "event": name,
+                "days_until": days,
+                "significance": sig,
+            })
+
+        upcoming: List[Dict[str, Any]] = []
+
+        # 1) Earnings Call
         try:
             cal = self.yf.calendar
             if isinstance(cal, dict):
                 ed = cal.get("Earnings Date")
                 if ed:
                     if isinstance(ed, list): ed = ed[0]
-                    upcoming.append({
-                        "date": str(ed)[:10],
-                        "event": "Earnings Call",
-                        "significance": "HIGH",
-                    })
-        except Exception:
-            pass
+                    try:
+                        if isinstance(ed, date):      ed_date = ed
+                        elif isinstance(ed, datetime): ed_date = ed.date()
+                        else:                          ed_date = datetime.fromisoformat(str(ed)[:10]).date()
+                        add_event(ed_date, "Earnings Call", boost=True)
+                    except Exception: pass
+        except Exception: pass
+
+        # 2) 옵션 월물 만기 (3번째 금요일)
+        try:
+            for exp in list(self.yf.options or [])[:8]:
+                try:
+                    ed = datetime.strptime(exp, "%Y-%m-%d").date()
+                    # 3번째 금요일 판별: 금요일이고 day가 15~21
+                    if ed.weekday() == 4 and 15 <= ed.day <= 21:
+                        add_event(ed, "Monthly Options Expiry")
+                except Exception: continue
+        except Exception: pass
+
+        # 3) 배당 ex-date — calendar에 Ex-Dividend Date가 있으면
+        try:
+            if isinstance(cal, dict):
+                xd = cal.get("Ex-Dividend Date")
+                if xd:
+                    if isinstance(xd, list): xd = xd[0]
+                    try:
+                        if isinstance(xd, date):      xd_date = xd
+                        elif isinstance(xd, datetime): xd_date = xd.date()
+                        else:                          xd_date = datetime.fromisoformat(str(xd)[:10]).date()
+                        add_event(xd_date, "Ex-Dividend Date")
+                    except Exception: pass
+        except Exception: pass
+
+        # 4) FOMC — 2025-2026 공식 일정 (변경 시 업데이트 필요)
+        FOMC_DATES = [
+            "2025-01-29","2025-03-19","2025-05-07","2025-06-18",
+            "2025-07-30","2025-09-17","2025-10-29","2025-12-10",
+            "2026-01-28","2026-03-18","2026-04-29","2026-06-10",
+            "2026-07-29","2026-09-16","2026-10-28","2026-12-16",
+        ]
+        for ds in FOMC_DATES:
+            try:
+                add_event(datetime.strptime(ds, "%Y-%m-%d").date(),
+                          "FOMC Decision", boost=True)
+            except Exception: pass
+
+        # 날짜순 정렬 + 중복 제거
+        seen = set()
+        dedup = []
+        for e in sorted(upcoming, key=lambda x: x["date"]):
+            key = (e["date"], e["event"])
+            if key in seen: continue
+            seen.add(key); dedup.append(e)
+        upcoming = dedup
 
         return {"news": news_items, "filings": filings, "events": upcoming}
 
@@ -1409,8 +1503,38 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     newsitems = (raw.get("news", {}) or {}).get("news", [])
     filings = (raw.get("news", {}) or {}).get("filings", [])
 
-    ev_rows = [[e.get("date","-"), html.escape(str(e.get("event","-"))), e.get("significance","MED")] for e in events] or [["-","(이벤트 없음)","-"]]
-    news_rows = [[n.get("date","-"), html.escape(str(n.get("title","-"))[:80]), html.escape(str(n.get("publisher","-")))] for n in newsitems[:5]] or [["-","(최근 뉴스 없음)","-"]]
+    # Signal pill: HIGH/MED/LOW → 색상
+    def _sig_pill(sig: str) -> str:
+        sig = (sig or "LOW").upper()
+        if sig == "HIGH": bg, fg = COLOR["alert_red"],   COLOR["bear"]
+        elif sig == "MED": bg, fg = COLOR["alert_amber"], COLOR["warn"]
+        else:              bg, fg = COLOR["alert_blue"],  COLOR["info"]
+        return f'<span style="background:{bg};color:{fg};padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">{sig}</span>'
+
+    # Upcoming Events — date에 D-N 표시 추가
+    def _ev_date_cell(e):
+        d = e.get("date","-")
+        du = e.get("days_until")
+        if du is None:
+            return html.escape(d)
+        return f'{html.escape(d)} <span style="color:{COLOR["muted"]};font-size:10px;">(D-{du})</span>'
+    ev_rows = [[_ev_date_cell(e),
+                html.escape(str(e.get("event","-"))),
+                _sig_pill(e.get("significance","LOW"))]
+               for e in events] or [["-","(이벤트 없음)","-"]]
+
+    # Recent News — 제목 링크로 만들기
+    def _news_title_cell(n):
+        title = html.escape((n.get("title") or "-")[:100])
+        link = n.get("link") or ""
+        if link:
+            return f'<a href="{html.escape(link)}" target="_blank" style="color:{COLOR["info"]};text-decoration:none;">{title}</a>'
+        return title
+    news_rows = [[n.get("date","-"),
+                  _news_title_cell(n),
+                  html.escape(n.get("publisher","") or "-")]
+                 for n in newsitems[:6]] or [["-","(최근 뉴스 없음)","-"]]
+
     fil_rows  = [[f.get("date","-")[:10], html.escape(str(f.get("title","-"))[:80])] for f in filings[:3]] or [["-","(최근 filings 없음)"]]
 
     ff = macro.get("fedfunds"); ffd = macro.get("fedfunds_trend")
@@ -1427,7 +1551,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
   <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;">
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Upcoming Events (30d)</div>
-    {_table(["Date","Event","Sig"], ev_rows)}
+    {_table(["Date","Event","Signal"], ev_rows)}
   </div>
   <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;">
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Recent News (7d)</div>
