@@ -1826,7 +1826,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 """
 
     # Section 6 — Summary
-    s6_badges = [("3-Line Summary","info")]
+    s6_badges = [("3-Line Summary","muted")]
     l1_summary = _one_liner_l1(l1, raw.get("l1", {}) or {})
     l2_summary = _one_liner_l2(l2)
     l3_summary = _one_liner_l3(l3)
