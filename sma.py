@@ -1585,7 +1585,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
                      fmt_num(s.get("off_exchange_volume"), "", 0),
                      fmt_num(s.get("market_volume"), "", 0),
                      f"{s.get('dp_pct'):.1f}%" if s.get("dp_pct") is not None else "N/A"]
-                    for s in sessions[-10:]] or [["-","-","-","-"]]
+                    for s in reversed(sessions[-10:])] or [["-","-","-","-"]]
     obv_chart_data = {
         "labels": ["Institutional","Professional","Retail","Total"],
         "values": [obv.get("delta_institutional",0) or 0,
@@ -1621,7 +1621,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     hist = l2.get("history", [])
     short_rows = [[h["date"], fmt_num(h.get("short_vol"),"",0), fmt_num(h.get("total_vol"),"",0),
                    f"{h.get('short_pct'):.1f}%" if h.get("short_pct") is not None else "N/A"]
-                  for h in hist[-14:]] or [["-","-","-","-"]]
+                  for h in reversed(hist[-14:])] or [["-","-","-","-"]]
     ctb_fee = l2.get("ctb_fee")
     ctb_delta = l2.get("ctb_delta_pct")
     ctb_label = "ETB" if (ctb_fee or 0) < 1 else ("HTB" if (ctb_fee or 0) > 15 else "Moderate")

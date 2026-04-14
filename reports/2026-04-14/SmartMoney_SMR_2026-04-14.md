@@ -28,25 +28,25 @@ generated_by: Smart Money Analyzer (sma.py)
 | Max Pain           | $12.00 |
 | GEX Flip Zone      | $4.00 |
 | Net GEX            | -24M |
-| Scenario [A] Bull  | 41.7% |
-| Scenario [B] Neut  | 37.0% |
-| Scenario [C] Bear  | 21.3% |
+| Scenario [A] Bull  | 37.0% |
+| Scenario [B] Neut  | 40.0% |
+| Scenario [C] Bear  | 23.0% |
 
 ---
 
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-03-30 ~ 2026-04-13 — 주기/분배 이미 전개
-- **Phase 2 (Current)**:   2026-04-14 — DISTRIBUTION × GAMMA_SQUEEZE
-- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — UPWARD 방향 · 타겟 $12.62 / $8.68 (BB폭 37.0%)
+- **Phase 2 (Current)**:   2026-04-14 — DISTRIBUTION × VOLATILITY_EXPANSION
+- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — RANGE 방향 · 타겟 $10.99 / $10.01 (BB폭 37.0%)
 
 ---
 
 ## Core Conclusion
 - L1 (Dark Pool): **DISTRIBUTION** · signal=BEARISH · conf=HIGH
 - L2 (Short/CTB): **SHORT_COVERING** · SHORT_COVERING · conf=MEDIUM
-- L3 (Options):   **GAMMA_SQUEEZE** · DTE=3 · net_gex=-24M
+- L3 (Options):   **VOLATILITY_EXPANSION** · DTE=3 · net_gex=-24M
 - L4 (Chart):     **RANGE_BOUND** · MA=FULL_BEAR
-- Macro: **FAVORABLE** · Raw Score: **+0.15** · Patterns: **GAMMA_SQUEEZE_SETUP**
+- Macro: **FAVORABLE** · Raw Score: **-0.15** · Patterns: **none**
 
 ---
 
