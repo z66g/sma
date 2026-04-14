@@ -1606,7 +1606,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">OBV 4-Way Decomposition (Δ)</div>
     <div style="position:relative;height:200px;"><canvas id="obv4way"></canvas></div>
     <div style="font-size:11px;color:{COLOR['text']};margin-top:8px;text-align:center;">
-      IAR (Institutional Absorption Ratio): <b>{fmt_num(obv.get('iar'),'',2)}</b> · Divergence: <b>{obv.get('divergence','N/A')}</b>
+      IAR (Institutional Absorption Ratio): <b>{fmt_num(obv.get('iar'),'',2)}</b><span class="tt">ⓘ<span class="tt-body"><b>IAR = |Inst Δ| / (|Pro Δ| + |Retail Δ|)</b><br>기관 플로 지배력 측정.<table><tr><th>IAR</th><th>해석</th></tr><tr><td>&gt; 1.5</td><td>기관 지배적 — 방향성 의도 강함</td></tr><tr><td>0.8–1.5</td><td>혼합 — 기관 주도 불분명</td></tr><tr><td>&lt; 0.8</td><td>리테일/프로 주도 — 신뢰도 낮음</td></tr></table></span></span>
+      · Divergence: <b>{obv.get('divergence','N/A')}</b><span class="tt">ⓘ<span class="tt-body"><b>가격 slope vs 기관 cumulative signed volume slope</b> (5일 회귀).<table><tr><th>상태</th><th>Architect 해석</th></tr><tr><td>BULLISH_DIV</td><td>가격↓ + 기관↑ = 공포 속 축적</td></tr><tr><td>BEARISH_DIV</td><td>가격↑ + 기관↓ = 강세 속 분배</td></tr><tr><td>CONVERGENCE</td><td>같은 방향 — 추세 확인</td></tr><tr><td>NEUTRAL</td><td>의미있는 기울기 없음</td></tr></table></span></span>
       {("<br>Sessions · " + " · ".join(f"{k}: {fmt_num(v,'',0)}" for k,v in (obv.get('session_volume') or {}).items())) if obv.get('session_volume') else ""}
       {"<br><span style='color:"+COLOR['info']+";'>Source: Polygon 1-min bars ("+str(obv.get('minute_bar_count','?'))+")</span>" if obv.get('_source')=='polygon_1min' else ""}
     </div>
@@ -1781,6 +1782,27 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   .hdr h1 {{ font-size:20px; margin:0 0 4px 0; }}
   .hdr .sub {{ font-size:12px; color:{COLOR['muted']}; }}
   @media print {{ body{{padding:12px;font-size:11px}} canvas{{max-height:220px}} }}
+
+  /* Hover tooltip (pure CSS) */
+  .tt {{ position:relative; display:inline-block; cursor:help; color:{COLOR['info']}; margin-left:3px; font-weight:600; font-size:11px; }}
+  .tt .tt-body {{
+    visibility:hidden; opacity:0; transition:opacity 0.12s;
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:calc(100% + 8px); z-index:20;
+    background:#1F2328; color:#FFFFFF;
+    padding:8px 10px; border-radius:6px;
+    font-size:11px; line-height:1.5; text-align:left;
+    white-space:normal; width:max-content; max-width:320px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    font-weight:400;
+  }}
+  .tt .tt-body::after {{
+    content:''; position:absolute; top:100%; left:50%;
+    margin-left:-5px; border:5px solid transparent; border-top-color:#1F2328;
+  }}
+  .tt:hover .tt-body {{ visibility:visible; opacity:1; }}
+  .tt table {{ border-collapse:collapse; margin-top:4px; }}
+  .tt th, .tt td {{ padding:2px 6px; border:0.5px solid #555; text-align:left; color:#fff; }}
 </style>
 </head>
 <body>
