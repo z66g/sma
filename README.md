@@ -84,7 +84,21 @@ Section 상단에 "데이터 부재" 문구가 들어갑니다.
    - Settings → Pages → Source: Deploy from a branch → **main** / **/ (root)** 또는 **/reports**
    - 활성화하면 `https://z66g.github.io/sma/reports/index.html`에서 브라우저로 모든 리포트 열람
 
-### 감시 종목 수정
+### 감시 종목 수정 (웹 UI)
+
+대시보드(`reports/index.html`) 상단의 **⚙ Manage Watchlist** 패널에서 직접 추가/삭제/즉시 실행이 가능합니다.
+
+**최초 1회**: GitHub Personal Access Token 생성
+1. https://github.com/settings/personal-access-tokens/new (Fine-grained PAT 추천)
+2. **Repository access**: Only select repositories → `z66g/sma`
+3. **Permissions**: 
+   - Contents: **Read and write** (tickers.txt 편집)
+   - Actions:  **Read and write** (워크플로우 수동 실행)
+4. Generate → 복사 → 대시보드 PAT 입력창에 붙여넣고 저장
+
+**보안**: PAT는 브라우저 `localStorage`에만 저장됩니다. repo에 커밋되지 않고, 다른 사이트로 전송되지 않습니다. 만료시 "PAT 변경" 버튼으로 교체.
+
+### 감시 종목 수정 (파일 직접 편집)
 
 `tickers.txt` 편집 후 커밋하면 다음 실행부터 반영됩니다:
 

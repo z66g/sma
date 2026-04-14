@@ -295,6 +295,34 @@ def render_dashboard(db: dict) -> tuple[str, str]:
 
 <div class="stat-bar" id="statBar"></div>
 
+<details id="mgmt" style="margin-bottom:14px;background:{COLOR['card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:0;">
+  <summary style="cursor:pointer;padding:10px 14px;font-weight:600;font-size:13px;color:{COLOR['info']};">⚙ Manage Watchlist · Run Analysis</summary>
+  <div style="padding:12px 14px;border-top:0.5px solid {COLOR['border']};">
+    <div id="mgmt-need-token" style="display:none;">
+      <div style="margin-bottom:8px;font-size:12px;color:{COLOR['muted']};">
+        GitHub Personal Access Token이 필요합니다 (브라우저 localStorage에만 저장, repo에 커밋 안 됨).
+        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Fine-grained PAT 생성</a> →
+        Repository access: <b>z66g/sma</b> →
+        Permissions: <b>Contents: Read and write</b> + <b>Actions: Read and write</b>
+      </div>
+      <input id="pat" type="password" placeholder="ghp_… 또는 github_pat_…" style="width:420px;">
+      <button id="pat-save" style="padding:6px 14px;background:{COLOR['info']};color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
+      <button id="pat-clear" style="padding:6px 10px;background:none;color:{COLOR['muted']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">지우기</button>
+    </div>
+
+    <div id="mgmt-panel" style="display:none;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+        <input id="new-ticker" type="text" placeholder="티커 추가 (예: PLTR)" style="text-transform:uppercase;">
+        <button id="add-btn" style="padding:6px 14px;background:{COLOR['bull']};color:#fff;border:0;border-radius:4px;cursor:pointer;">＋ 추가</button>
+        <button id="run-btn" style="padding:6px 14px;background:{COLOR['warn']};color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ Run Analysis Now</button>
+        <button id="pat-edit" style="padding:6px 10px;background:none;color:{COLOR['muted']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;font-size:11px;">PAT 변경</button>
+      </div>
+      <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+      <div id="mgmt-status" style="font-size:11px;color:{COLOR['muted']};min-height:16px;"></div>
+    </div>
+  </div>
+</details>
+
 <div class="controls">
   <input id="q" type="text" placeholder="티커 검색 (예: NVDA)...">
   <select id="filter-scenario">
@@ -440,6 +468,187 @@ function renderStats() {
 [q, fScenario, fPattern, sortSel].forEach(el => el.addEventListener('input', render));
 renderStats();
 render();
+
+// ───── Watchlist management via GitHub API ─────
+const REPO = 'z66g/sma';
+const API  = 'https://api.github.com';
+const LS_KEY = 'sma_github_pat';
+
+const mgmtNeedToken = document.getElementById('mgmt-need-token');
+const mgmtPanel     = document.getElementById('mgmt-panel');
+const patInput      = document.getElementById('pat');
+const patSaveBtn    = document.getElementById('pat-save');
+const patClearBtn   = document.getElementById('pat-clear');
+const patEditBtn    = document.getElementById('pat-edit');
+const newTickerEl   = document.getElementById('new-ticker');
+const addBtn        = document.getElementById('add-btn');
+const runBtn        = document.getElementById('run-btn');
+const wlList        = document.getElementById('wl-list');
+const statusEl      = document.getElementById('mgmt-status');
+
+let ticksCache = [];     // current tickers.txt lines (non-comment)
+let txtSha = null;        // current file SHA for PUT
+
+function getPAT() { return localStorage.getItem(LS_KEY) || ''; }
+function setPAT(v) { localStorage.setItem(LS_KEY, v); }
+function clearPAT() { localStorage.removeItem(LS_KEY); }
+
+function showPanel(hasToken) {
+  mgmtNeedToken.style.display = hasToken ? 'none' : 'block';
+  mgmtPanel.style.display     = hasToken ? 'block' : 'none';
+}
+function setStatus(msg, isError) {
+  statusEl.textContent = msg || '';
+  statusEl.style.color = isError ? '#CF222B' : '#656D76';
+}
+
+async function gh(path, opts={}) {
+  const pat = getPAT();
+  if (!pat) throw new Error('PAT 없음');
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': 'Bearer ' + pat,
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(`GitHub ${res.status}: ${err.message || res.statusText}`);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+function parseTickers(text) {
+  return text.split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('#'));
+}
+
+async function loadTickers() {
+  setStatus('tickers.txt 로드 중...');
+  const j = await gh(`/repos/${REPO}/contents/tickers.txt`);
+  txtSha = j.sha;
+  const text = atob(j.content.replace(/\n/g, ''));
+  ticksCache = parseTickers(text);
+  renderWL();
+  setStatus(`${ticksCache.length}개 감시 중 · last commit ${j.sha.slice(0,7)}`);
+}
+
+function renderWL() {
+  if (!ticksCache.length) {
+    wlList.innerHTML = '<span style="color:#656D76;font-size:11px;">감시 종목 없음</span>';
+    return;
+  }
+  wlList.innerHTML = ticksCache.map(t =>
+    `<span style="background:#DDF4FF;color:#0969DA;padding:3px 4px 3px 10px;border-radius:12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+       ${t}
+       <button data-t="${t}" class="rm-btn" style="background:none;border:0;color:#CF222B;cursor:pointer;font-size:14px;padding:0 6px;">×</button>
+     </span>`
+  ).join('');
+  wlList.querySelectorAll('.rm-btn').forEach(b =>
+    b.addEventListener('click', () => removeTicker(b.dataset.t))
+  );
+}
+
+function buildFileContent() {
+  const header = [
+    '# Smart Money Analyzer — Watchlist',
+    '# Managed via dashboard UI (reports/index.html).',
+    '# 한 줄에 티커 하나. #으로 시작하는 줄은 주석.',
+    ''
+  ];
+  return header.concat(ticksCache).join('\n') + '\n';
+}
+
+async function commitTickers(message) {
+  setStatus('커밋 중...');
+  const content = btoa(unescape(encodeURIComponent(buildFileContent())));
+  const j = await gh(`/repos/${REPO}/contents/tickers.txt`, {
+    method: 'PUT',
+    body: JSON.stringify({ message, content, sha: txtSha })
+  });
+  txtSha = j.content.sha;
+  setStatus(`✅ 커밋 완료: ${message} (${txtSha.slice(0,7)})`);
+}
+
+async function addTicker() {
+  const t = (newTickerEl.value || '').trim().toUpperCase();
+  if (!t) return;
+  if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(t)) {
+    setStatus(`"${t}"는 유효한 티커 형식이 아닙니다`, true); return;
+  }
+  if (ticksCache.includes(t)) {
+    setStatus(`${t}는 이미 등록됨`, true); return;
+  }
+  ticksCache.push(t);
+  ticksCache.sort();
+  try {
+    await commitTickers(`watchlist: add ${t}`);
+    renderWL();
+    newTickerEl.value = '';
+  } catch (e) {
+    ticksCache = ticksCache.filter(x => x !== t);
+    setStatus('실패: ' + e.message, true);
+  }
+}
+
+async function removeTicker(t) {
+  if (!confirm(`${t} 제거?`)) return;
+  const prev = ticksCache.slice();
+  ticksCache = ticksCache.filter(x => x !== t);
+  try {
+    await commitTickers(`watchlist: remove ${t}`);
+    renderWL();
+  } catch (e) {
+    ticksCache = prev;
+    setStatus('실패: ' + e.message, true);
+  }
+}
+
+async function runWorkflow() {
+  if (!confirm('지금 전체 티커 분석을 실행할까요? (5~10분 소요, Actions 탭에서 진행 확인)')) return;
+  setStatus('워크플로우 dispatch 중...');
+  try {
+    await gh(`/repos/${REPO}/actions/workflows/daily.yml/dispatches`, {
+      method: 'POST',
+      body: JSON.stringify({ ref: 'main' })
+    });
+    setStatus('✅ 실행 시작됨. https://github.com/' + REPO + '/actions 에서 진행 확인');
+  } catch (e) {
+    setStatus('실패: ' + e.message, true);
+  }
+}
+
+patSaveBtn.addEventListener('click', () => {
+  const v = patInput.value.trim();
+  if (!v.startsWith('ghp_') && !v.startsWith('github_pat_')) {
+    setStatus('유효한 PAT 형식이 아님 (ghp_ 또는 github_pat_ 시작)', true);
+    return;
+  }
+  setPAT(v);
+  patInput.value = '';
+  showPanel(true);
+  loadTickers().catch(e => setStatus('PAT 검증 실패: ' + e.message, true));
+});
+patClearBtn.addEventListener('click', () => { clearPAT(); showPanel(false); });
+patEditBtn.addEventListener('click', () => { showPanel(false); });
+addBtn.addEventListener('click', addTicker);
+newTickerEl.addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
+runBtn.addEventListener('click', runWorkflow);
+
+// 초기화
+if (getPAT()) {
+  showPanel(true);
+  loadTickers().catch(e => {
+    setStatus('PAT 무효/만료 — 다시 저장하세요: ' + e.message, true);
+    showPanel(false);
+  });
+} else {
+  showPanel(false);
+}
 """
     return html, app_js
 
