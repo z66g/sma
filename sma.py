@@ -1596,13 +1596,6 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     s1 = _section_header(1, "Dark Pool Layer (L1)", l1_badges) + f"""
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
   <div>
-    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Off-Exchange Volume (10d, FINRA CNMS ÷ market total)</div>
-    {_table(["Date","Off-Exch Vol","Market Vol","DP %"], session_rows)}
-    <p style="font-size:11px;color:{COLOR['muted']};margin-top:6px;">
-      {html.escape(raw.get('l1',{}).get('_note','')) if raw.get('l1') else ''}
-    </p>
-  </div>
-  <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">OBV 4-Way Decomposition (Δ)</div>
     <div style="position:relative;height:200px;"><canvas id="obv4way"></canvas></div>
     <div style="font-size:11px;color:{COLOR['text']};margin-top:8px;text-align:center;">
@@ -1611,6 +1604,13 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
       {("<br>Sessions · " + " · ".join(f"{k}: {fmt_num(v,'',0)}" for k,v in (obv.get('session_volume') or {}).items())) if obv.get('session_volume') else ""}
       {"<br><span style='color:"+COLOR['info']+";'>Source: Polygon 1-min bars ("+str(obv.get('minute_bar_count','?'))+")</span>" if obv.get('_source')=='polygon_1min' else ""}
     </div>
+  </div>
+  <div>
+    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Off-Exchange Volume (10d, FINRA CNMS ÷ market total)</div>
+    {_table(["Date","Off-Exch Vol","Market Vol","DP %"], session_rows)}
+    <p style="font-size:11px;color:{COLOR['muted']};margin-top:6px;">
+      {html.escape(raw.get('l1',{}).get('_note','')) if raw.get('l1') else ''}
+    </p>
   </div>
 </div>
 """
