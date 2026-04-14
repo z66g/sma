@@ -70,11 +70,21 @@
     <tbody><tr><td>2026-04-14</td><td>$259.20</td><td style="color:#CF222B;font-weight:600;">[C]Bear 43%</td><td>DISTRIBUTION</td><td>CASE_1_MM_DELTA_HEDGE</td><td>HEDGING</td><td><a href="../../2026-04-14/AAPL_3Layer_Forensic_2026-04-14.html">리포트</a></td></tr></tbody>
   </table>
 
+  <div id="narrative-root"></div>
+
   <div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
     Data: <a href="../../data/AAPL.json">AAPL.json</a> ·
     <a href="../../">Back to dashboard</a>
   </div>
 </div>
+<script src="../../narrative.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.SMA_Narrative) {
+      window.SMA_Narrative.mount(document.getElementById('narrative-root'), "AAPL");
+    }
+  });
+</script>
 <script>
 Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
 Chart.defaults.color = "#1F2328";

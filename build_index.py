@@ -170,11 +170,21 @@ def render_ticker_page(ticker: str, series: list) -> str:
     <tbody>{''.join(rows) if rows else '<tr><td colspan="7">아직 리포트 없음</td></tr>'}</tbody>
   </table>
 
+  <div id="narrative-root"></div>
+
   <div style="margin-top:24px;font-size:10px;color:{COLOR['muted']};text-align:center;">
     Data: <a href="../../data/{ticker}.json">{ticker}.json</a> ·
     <a href="../../">Back to dashboard</a>
   </div>
 </div>
+<script src="../../narrative.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {{
+    if (window.SMA_Narrative) {{
+      window.SMA_Narrative.mount(document.getElementById('narrative-root'), {json.dumps(ticker)});
+    }}
+  }});
+</script>
 <script>
 Chart.defaults.font.family = {json.dumps(FONT)};
 Chart.defaults.color = "{COLOR['text']}";
