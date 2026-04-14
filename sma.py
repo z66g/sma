@@ -1830,7 +1830,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     l1_summary = _one_liner_l1(l1, raw.get("l1", {}) or {})
     l2_summary = _one_liner_l2(l2)
     l3_summary = _one_liner_l3(l3)
-    triggers = _triggers(l1, l2, l3, l4, price, max_pain, flip)
+    triggers = _triggers(l1, l2, l3, l4, price, max_pain, flip, raw_l4=raw.get("l4"))
+    positioning = _positioning_strength(triggers)
     risks = _risks(l1, l2, l3, scenarios, patterns)
     s6 = _section_header(6, "Summary & Action Points", s6_badges) + f"""
 <div class="summary-row" style="font-size:11px;line-height:1.7;color:{COLOR['text']};margin-bottom:10px;">
@@ -1838,6 +1839,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   <div><b style="color:{COLOR['bear']};">②</b> [SHORT/CTB] {l2_summary}</div>
   <div><b style="color:{COLOR['bear']};">③</b> [OPTIONS] {l3_summary}</div>
 </div>
+{positioning}
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:8px 0 4px;">Trigger Checklist</div>
 {_table(["Trigger","Type","Status","Implication"], triggers)}
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:12px 0 4px;">Risk Factors</div>
@@ -1960,10 +1962,12 @@ def _one_liner_l3(l3):
             + (f"${flip:.2f}. " if flip else "N/A. ")
             + f"시나리오: {l3.get('scenario','NEUTRAL')}.")
 
-def _triggers(l1, l2, l3, l4, price, max_pain, flip):
+def _triggers(l1, l2, l3, l4, price, max_pain, flip, raw_l4=None):
     """HTML 안에서 렌더되므로 < > 를 HTML 엔터티로 쓴다 (&lt; &gt;)."""
     rows = []
     def met(cond): return "MET" if cond else "NOT MET"
+
+    # ── 기본 트리거 ────────────────────────────────────────────────
     rows.append(["Volume spike &gt; 150%", "BULLISH", "WATCHING", "Breakout start"])
     if l2.get("ctb_fee") is not None:
         rows.append(["CTB &gt; 5%", "BULLISH", met(l2["ctb_fee"] > 5), "Squeeze setup"])
@@ -1977,12 +1981,110 @@ def _triggers(l1, l2, l3, l4, price, max_pain, flip):
         rows.append(["Inst OBV &gt; 0", "BULLISH",
                      met(l1["obv"]["delta_institutional"] > 0),
                      "Institutional accumulation"])
-    # L2 슬로프 방향 (P2 추가)
     if l2.get("slope_dir"):
         rows.append(["Short% slope FALLING", "BULLISH",
                      met(l2["slope_dir"] == "FALLING"),
                      "Short covering 진행"])
+
+    # ── 확장 트리거 ────────────────────────────────────────────────
+
+    # (a) BB Width 52주 저점 근접 — Theta Burn(변동성 압축) 임박
+    if raw_l4 and raw_l4.get("ohlcv") and l4.get("bb_width_pct") is not None:
+        try:
+            closes = [c["close"] for c in raw_l4["ohlcv"][-252:]]
+            import numpy as _np
+            if len(closes) >= 40:
+                widths = []
+                for i in range(20, len(closes)):
+                    window = closes[i-20:i]
+                    m = _np.mean(window); s = _np.std(window, ddof=0)
+                    if m > 0:
+                        widths.append((m + 2*s - (m - 2*s)) / m * 100)
+                if widths:
+                    w52_low = min(widths)
+                    cur = l4["bb_width_pct"]
+                    # 현재 BB 폭이 52주 최저의 1.2배 이내면 압축 구간
+                    rows.append([
+                        "BB Width ≤ 52w low × 1.2", "BULLISH",
+                        met(cur <= w52_low * 1.2),
+                        f"Theta Burn 임박 (cur {cur:.1f}% / 52w low {w52_low:.1f}%)"
+                    ])
+        except Exception: pass
+
+    # (b) DP% 2일 연속 40% 초과 — Final Absorption 조건 ③
+    sessions = l1.get("sessions") or []
+    if len(sessions) >= 2:
+        recent = [s.get("dp_pct") for s in sessions[-2:]]
+        if all(p is not None and p > 40 for p in recent):
+            rows.append(["DP% &gt; 40 for 2d", "BULLISH", "MET",
+                         f"Final Absorption 조건 ③ ({recent[0]:.0f}% → {recent[1]:.0f}%)"])
+        else:
+            shown = ", ".join(f"{p:.0f}%" if p is not None else "N/A" for p in recent)
+            rows.append(["DP% &gt; 40 for 2d", "BULLISH", "NOT MET",
+                         f"조건 미충족 ({shown})"])
+
+    # (c) Short slope 음전환 + CTB 안정 — Final Absorption 조건 ④+⑤
+    if l2.get("slope_dir") and l2.get("ctb_delta_pct") is not None:
+        cond = (l2["slope_dir"] == "FALLING" and abs(l2.get("ctb_delta_pct", 0)) < 5)
+        rows.append(["Short↓ × CTB 안정", "BULLISH", met(cond),
+                     "Final Absorption 조건 ④+⑤"])
+
+    # (d) Net GEX 부호 전환 임박 — flip zone 거리 ≤ 1%
+    if flip and price and price > 0:
+        dist_pct = abs(price - flip) / price * 100
+        # 방향 — 현재가가 flip 위면 상승 시 유지 / 아래면 하락 시 가속
+        direction = "BEARISH" if price > flip else "BULLISH"
+        implication = ("Flip 위 — 하향 돌파 시 vol 확대" if price > flip
+                       else "Flip 아래 — 상향 돌파 시 gamma 점화")
+        rows.append([f"|Price − Flip| ≤ 1% (현재 {dist_pct:.2f}%)",
+                     direction, met(dist_pct <= 1.0), implication])
+
     return rows
+
+def _positioning_strength(rows: List[List[str]]) -> str:
+    """
+    Trigger rows에서 MET BULLISH vs MET BEARISH 개수를 세어 즉각 포지셔닝 강도를
+    시각화된 HTML 블록으로 반환.
+    """
+    bull_met = bull_total = bear_met = bear_total = 0
+    for r in rows:
+        if len(r) < 3: continue
+        direction, status = r[1], r[2]
+        if direction == "BULLISH":
+            bull_total += 1
+            if status == "MET": bull_met += 1
+        elif direction == "BEARISH":
+            bear_total += 1
+            if status == "MET": bear_met += 1
+    net = bull_met - bear_met
+    if   net >=  3: label, color, bg = "Strong Long",  COLOR["bull"], COLOR["alert_green"]
+    elif net >=  1: label, color, bg = "Mild Long",    COLOR["bull"], COLOR["alert_green"]
+    elif net ==  0: label, color, bg = "Neutral",      COLOR["warn"], COLOR["alert_amber"]
+    elif net >= -2: label, color, bg = "Mild Short",   COLOR["bear"], COLOR["alert_red"]
+    else:           label, color, bg = "Strong Short", COLOR["bear"], COLOR["alert_red"]
+
+    # 시각 바 (좌 bearish 우 bullish)
+    total = max(bull_met + bear_met, 1)
+    bull_w = bull_met / total * 100
+    bear_w = bear_met / total * 100
+    return f"""
+<div style="background:{bg};border:0.5px solid {COLOR['border']};border-radius:6px;padding:10px 14px;margin:4px 0 12px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;">
+    <div style="font-size:12px;color:{COLOR['muted']};font-weight:600;">Positioning Strength</div>
+    <div style="font-size:13px;color:{color};font-weight:700;">{label} (net {net:+d})</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
+    <span style="color:{COLOR['bear']};min-width:80px;text-align:right;">Bear {bear_met}/{bear_total} MET</span>
+    <div style="flex:1;display:flex;height:10px;background:{COLOR['bg_panel']};border-radius:5px;overflow:hidden;">
+      <div style="width:{bear_w:.0f}%;background:{COLOR['bear']};"></div>
+      <div style="flex:1;"></div>
+      <div style="width:{bull_w:.0f}%;background:{COLOR['bull']};"></div>
+    </div>
+    <span style="color:{COLOR['bull']};min-width:80px;">Bull {bull_met}/{bull_total} MET</span>
+  </div>
+</div>
+"""
+
 
 def _risks(l1, l2, l3, scenarios, patterns):
     out = []
