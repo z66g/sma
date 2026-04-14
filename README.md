@@ -13,9 +13,19 @@ pip install -r requirements.txt
 ## 실행
 
 ```bash
+# 무료 티어만 (Polygon 없음): OBV 4-way는 일봉 근사
 python3 sma.py NVDA
-python3 sma.py TSLA --date 2026-04-14
+
+# Polygon.io API 키 설정 시: OBV 4-way를 1분봉 기반으로 실제 계산
+export POLYGON_API_KEY="여기에_키_붙여넣기"
+python3 sma.py NVDA
+
+# 영속화하려면 ~/.zshrc 혹은 ~/.bash_profile 에 추가:
+echo 'export POLYGON_API_KEY="..."' >> ~/.zshrc && source ~/.zshrc
 ```
+
+**주의**: `POLYGON_API_KEY`는 **절대 repo에 커밋하지 마세요**. 환경변수로만 읽습니다.
+Polygon 무료 티어는 **분당 5회 호출 제한**이 있어 티커 한 번에 1회만 씁니다.
 
 출력: `./output/`
 - `{TICKER}_3Layer_Forensic_{DATE}.html` — Chart.js 내장 인터랙티브 리포트 (§10 섹션 0~7, MD 아카이브 블록 포함)
@@ -26,7 +36,7 @@ python3 sma.py TSLA --date 2026-04-14
 | Layer | Source | 비고 |
 |-------|--------|------|
 | L1 Dark Pool | FINRA RegSHO `FNSQshvol` (ADF off-exchange) vs `CNMSshvol` (consolidated) | 세션별(Pre/Reg/AH) 분해는 유료 전용 — 근사치로 대체 |
-| L1 OBV 4-way | yfinance daily bars 기반 근사 | tick 데이터 부재로 거래규모 기반 분류는 PARTIAL |
+| L1 OBV 4-way | **Polygon.io** 1분봉 (키 있을 때) / yfinance daily 근사 (없을 때) | 분봉 분위 기반: top20%=inst / mid60%=pro / bot20%=retail |
 | L2 Short % | FINRA RegSHO `CNMSshvol` 일일 파일 | T+1 지연 |
 | L2 CTB Fee | iborrowdesk.com JSON API | 공개 대차 데이터 |
 | L3 Options Chain | yfinance `option_chain` | Greeks는 BS 근사 (yfinance 미제공) |

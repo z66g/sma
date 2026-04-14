@@ -66,6 +66,10 @@ COLOR = {
 }
 FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 
+# Polygon.io (massive.io 리브랜딩) — 환경변수로만 주입, 절대 커밋 X
+POLYGON_API_KEY = os.environ.get("POLYGON_API_KEY", "").strip()
+POLYGON_BASE    = "https://api.polygon.io"
+
 # US 시장 휴장일 (대략 2025–2026, §9.1)
 US_HOLIDAYS = {
     "2025-01-01","2025-01-20","2025-02-17","2025-04-18","2025-05-26",
@@ -359,15 +363,121 @@ class SmartMoneyAnalyzer:
                 pass
             d = prev_trading_day(d); tried += 1
 
-        # OBV 4-way 근사 — tick 없음 → N/A 처리하되
-        #  institutional 프록시: |volume × close_change| 중 상위 20% 일자 합
-        obv_proxy = self._approx_obv_4way(ohlcv)
+        # OBV 4-way: Polygon 분봉 있으면 진짜 계산, 없으면 일봉 근사
+        obv_data, obv_note = None, "OBV 4-way: 일봉 근사(분봉 부재)."
+        if POLYGON_API_KEY:
+            try:
+                minute_bars = self._fetch_polygon_minutes(today, days=5)
+                if minute_bars:
+                    obv_data = self._compute_obv_4way_from_minutes(minute_bars)
+                    obv_note = (f"OBV 4-way: Polygon 1분봉 {len(minute_bars)}개 기준 "
+                                f"(top 20% 분봉=institutional, mid 60%=professional, bot 20%=retail).")
+            except Exception as e:
+                obv_note = f"OBV 4-way: Polygon 호출 실패 ({e}) — 일봉 근사로 fallback."
+        if obv_data is None:
+            obv_data = self._approx_obv_4way(ohlcv)
 
         return {
             "sessions": list(reversed(dp_rows)),
-            "obv_4way": obv_proxy,
+            "obv_4way": obv_data,
             "_partial": len(dp_rows) < 3,
-            "_note": "OBV 4-way는 tick 데이터 부재로 근사치. 세션별(Pre/Regular/AH) 분해는 미제공.",
+            "_note": obv_note,
+        }
+
+    # ── Polygon.io 분봉 수집 ──────────────────────────────────────────────
+    def _fetch_polygon_minutes(self, today: date, days: int = 5) -> List[Dict[str, Any]]:
+        """
+        Polygon aggs endpoint: /v2/aggs/ticker/{T}/range/1/minute/{from}/{to}
+        반환: [{t, o, h, l, c, v, vw, n} ...]  t = ms epoch
+        """
+        if not POLYGON_API_KEY:
+            return []
+        start = prev_trading_day(today, days).strftime("%Y-%m-%d")
+        end   = today.strftime("%Y-%m-%d")
+        url   = (f"{POLYGON_BASE}/v2/aggs/ticker/{self.ticker}/range/1/minute/"
+                 f"{start}/{end}?adjusted=true&sort=asc&limit=50000&apiKey={POLYGON_API_KEY}")
+        r = requests.get(url, timeout=20)
+        if r.status_code == 429:
+            raise RuntimeError("Polygon rate limit (무료 티어 5 req/min)")
+        if r.status_code != 200:
+            raise RuntimeError(f"Polygon HTTP {r.status_code}")
+        j = r.json()
+        if j.get("status") not in ("OK","DELAYED"):
+            raise RuntimeError(f"Polygon status={j.get('status')}")
+        return j.get("results", []) or []
+
+    def _compute_obv_4way_from_minutes(self, bars: List[Dict]) -> Dict[str, Any]:
+        """
+        1분봉 거래규모 기반 4-way OBV 계산.
+        분봉 volume 분포를 percentile로 bucket 분류:
+          - top 20%  : institutional (블록 주문이 들어간 바 근사)
+          - mid 60%  : professional
+          - bot 20%  : retail
+        각 버킷별로 signed volume(=sign(close-prev_close) × volume) 누적.
+        """
+        if len(bars) < 30:
+            return {"_partial": True}
+        df = pd.DataFrame(bars)
+        df = df.sort_values("t").reset_index(drop=True)
+        df["prev_c"] = df["c"].shift(1)
+        df["delta"]  = df["c"] - df["prev_c"]
+        df["sign"]   = np.sign(df["delta"]).fillna(0)
+        df["signed_vol"] = df["sign"] * df["v"]
+        df["notional"] = df["v"] * df["c"]
+
+        # percentile 컷오프
+        v80 = df["v"].quantile(0.80)
+        v20 = df["v"].quantile(0.20)
+
+        inst_mask   = df["v"] >= v80
+        retail_mask = df["v"] <= v20
+        prof_mask   = ~(inst_mask | retail_mask)
+
+        delta_inst = float(df.loc[inst_mask,   "signed_vol"].sum())
+        delta_pro  = float(df.loc[prof_mask,   "signed_vol"].sum())
+        delta_ret  = float(df.loc[retail_mask, "signed_vol"].sum())
+        delta_tot  = delta_inst + delta_pro + delta_ret
+
+        iar = safe_div(abs(delta_inst), (abs(delta_ret) + abs(delta_pro)), None)
+
+        # 마지막 1시간 vs 그 이전 1시간 비교로 divergence 근사
+        df["bucket"] = pd.cut(df.index, bins=min(60, len(df)//10), labels=False)
+        price_path = df.groupby("bucket")["c"].last().dropna().tolist()
+        inst_path  = df.loc[inst_mask].groupby("bucket")["signed_vol"].sum().cumsum().dropna().tolist() or [0,0]
+        price_slope = linregress_slope(price_path[-20:])
+        obv_slope   = linregress_slope(inst_path[-20:])
+        if price_slope < 0 and obv_slope > 0:
+            divergence = "BULLISH_DIVERGENCE"
+        elif price_slope > 0 and obv_slope < 0:
+            divergence = "BEARISH_DIVERGENCE"
+        elif abs(price_slope) < 1e-4 and abs(obv_slope) < 1e-4:
+            divergence = "NEUTRAL"
+        else:
+            divergence = "CONVERGENCE"
+
+        # 세션 분해 (Pre / Regular / AH) — ET 기준 ms epoch
+        def session_of(ts_ms):
+            # UTC to ET = -5h or -4h (DST). Polygon 's'/'e' 필드 없으면 간단화: 시각(hour) 판정
+            hr = datetime.utcfromtimestamp(ts_ms/1000).hour
+            # UTC 9:30–16:00 ET = 13:30–20:00 UTC (표준시) / 13:30–19:59 DST
+            if 13 <= hr < 20: return "Regular"
+            if hr < 13: return "Pre"
+            return "AH"
+        df["sess"] = df["t"].map(session_of)
+        sess_vol = df.groupby("sess")["v"].sum().to_dict()
+
+        return {
+            "delta_institutional": delta_inst,
+            "delta_professional":  delta_pro,
+            "delta_retail":        delta_ret,
+            "delta_total":         delta_tot,
+            "iar":                 iar,
+            "divergence":          divergence,
+            "minute_bar_count":    int(len(df)),
+            "v80_threshold":       float(v80),
+            "v20_threshold":       float(v20),
+            "session_volume":      {k: float(v) for k, v in sess_vol.items()},
+            "_source":             "polygon_1min",
         }
 
     def _approx_obv_4way(self, ohlcv: List[Dict]) -> Dict[str, Any]:
@@ -1042,7 +1152,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Session Volume (10d, FINRA ADF proxy)</div>
     {_table(["Date","DP Vol","Total Vol","DP %"], session_rows)}
     <p style="font-size:11px;color:{COLOR['muted']};margin-top:6px;">
-      세션별(Pre/Reg/AH) 분해는 유료 데이터 필요 — FINRA ADF off-exchange 전체 합산치로 대체.
+      {html.escape(raw.get('l1',{}).get('_note','')) if raw.get('l1') else ''}
     </p>
   </div>
   <div>
@@ -1050,6 +1160,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     <canvas id="obv4way" height="220"></canvas>
     <div style="font-size:11px;color:{COLOR['text']};margin-top:6px;">
       IAR (Institutional Absorption Ratio): <b>{fmt_num(obv.get('iar'),'',2)}</b> · Divergence: <b>{obv.get('divergence','N/A')}</b>
+      {("<br>Sessions · " + " · ".join(f"{k}: {fmt_num(v,'',0)}" for k,v in (obv.get('session_volume') or {}).items())) if obv.get('session_volume') else ""}
+      {"<br><span style='color:"+COLOR['info']+";'>Source: Polygon 1-min bars ("+str(obv.get('minute_bar_count','?'))+")</span>" if obv.get('_source')=='polygon_1min' else ""}
     </div>
   </div>
 </div>
