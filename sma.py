@@ -428,42 +428,44 @@ class SmartMoneyAnalyzer:
         """
         today = datetime.strptime(self.date_str, "%Y-%m-%d").date()
         ohlcv = l4.get("ohlcv", []) if l4 else []
+        # 일자별 yfinance 총거래량 맵 (ohlcv 재활용)
+        market_vol = {c["date"]: c["volume"] for c in ohlcv}
+
         dp_rows = []
         d = prev_trading_day(today)
         tried = 0
         while len(dp_rows) < 10 and tried < 30:
             ds = d.strftime("%Y%m%d")
-            # FINRA ADF (off-exchange ≈ dark) file
-            adf_url = f"https://cdn.finra.org/equity/regsho/daily/FNSQshvol{ds}.txt"
+            dstr = d.strftime("%Y-%m-%d")
+            # CNMS = FINRA 오프거래소 "consolidated" (= Nasdaq TRF + NYSE TRF + ADF 합산).
+            # 이게 "모든 거래소 거래의 합"이 아니라 "오프거래소(다크풀·ATS·내부화)만"이라는 점이 중요.
+            url = f"https://cdn.finra.org/equity/regsho/daily/CNMSshvol{ds}.txt"
             try:
-                r = requests.get(adf_url, headers=UA, timeout=15)
+                r = requests.get(url, headers=UA, timeout=15)
                 if r.status_code == 200:
-                    adf_short = None; adf_total = None
+                    off_total = None; off_short = None
                     for line in r.text.splitlines()[1:]:
                         parts = line.split("|")
                         if len(parts) >= 5 and parts[1].strip().upper() == self.ticker:
-                            adf_short = float(parts[2] or 0)
-                            adf_total = float(parts[4] or 0)
+                            off_short = float(parts[2] or 0)
+                            off_total = float(parts[4] or 0)
                             break
-                    if adf_total is not None:
-                        # consolidated total
-                        c_url = f"https://cdn.finra.org/equity/regsho/daily/CNMSshvol{ds}.txt"
-                        try:
-                            rc = requests.get(c_url, headers=UA, timeout=15)
-                            c_total = None
-                            for line in rc.text.splitlines()[1:]:
-                                parts = line.split("|")
-                                if len(parts) >= 5 and parts[1].strip().upper() == self.ticker:
-                                    c_total = float(parts[4] or 0); break
-                            dp_pct = safe_div(adf_total, c_total, None)
-                            dp_rows.append({
-                                "date": d.strftime("%Y-%m-%d"),
-                                "dp_volume": adf_total,
-                                "consolidated_volume": c_total,
-                                "dp_pct": (dp_pct * 100) if dp_pct else None,
-                            })
-                        except Exception:
-                            pass
+                    if off_total is not None:
+                        tot_mkt = market_vol.get(dstr)
+                        # DP % = 오프거래소 / 총 시장 거래량
+                        if tot_mkt and tot_mkt > 0:
+                            dp_pct = (off_total / tot_mkt) * 100
+                            # 이론상 100 초과는 데이터 불일치 — cap
+                            if dp_pct > 100: dp_pct = None
+                        else:
+                            dp_pct = None
+                        dp_rows.append({
+                            "date": dstr,
+                            "off_exchange_volume": off_total,
+                            "off_exchange_short":  off_short,
+                            "market_volume":       tot_mkt,
+                            "dp_pct":              dp_pct,
+                        })
             except Exception:
                 pass
             d = prev_trading_day(d); tried += 1
@@ -586,41 +588,62 @@ class SmartMoneyAnalyzer:
         }
 
     def _approx_obv_4way(self, ohlcv: List[Dict]) -> Dict[str, Any]:
-        if len(ohlcv) < 6:
+        """
+        일봉만으로 근사하는 4-way OBV (Polygon 분봉 없는 로컬 실행용).
+        기존 "중앙값 × 1.8" 고정 배수는 대부분의 종목에서 institutional=0
+        으로 만드는 경향이 있어, **Z-score 기반 분류**로 교체:
+
+          - z ≥ +1.0 (평균+1σ 이상 거래량) → institutional
+          - z ≤ -0.5                         → retail
+          - 그 사이                          → professional
+        """
+        if len(ohlcv) < 20:
             return {"_partial": True}
         df = pd.DataFrame(ohlcv)
         df["delta"] = df["close"].diff().fillna(0)
         df["sign"]  = np.sign(df["delta"])
         df["signed_vol"] = df["sign"] * df["volume"]
 
-        # 최근 5영업일 델타
-        recent = df.tail(5)
-        # 일평균 거래량 기준 상위 20% → institutional 블록 근사
-        v_med   = df["volume"].rolling(30).median().iloc[-1]
-        block   = recent[recent["volume"] > v_med * 1.8]
-        prof    = recent[(recent["volume"] > v_med * 0.8) & (recent["volume"] <= v_med * 1.8)]
-        retail  = recent[recent["volume"] <= v_med * 0.8]
+        # 30일 baseline으로 각 일자의 z-score
+        base = df["volume"].tail(30) if len(df) >= 30 else df["volume"]
+        vmean = float(base.mean())
+        vstd  = float(base.std(ddof=0)) or 1.0
+        df["vz"] = (df["volume"] - vmean) / vstd
 
-        delta_inst = float(block["signed_vol"].sum())
-        delta_pro  = float(prof["signed_vol"].sum())
-        delta_ret  = float(retail["signed_vol"].sum())
+        recent = df.tail(5).copy()
+        inst_mask   = recent["vz"] >= 1.0
+        retail_mask = recent["vz"] <= -0.5
+        prof_mask   = ~(inst_mask | retail_mask)
+
+        delta_inst = float(recent.loc[inst_mask,   "signed_vol"].sum())
+        delta_pro  = float(recent.loc[prof_mask,   "signed_vol"].sum())
+        delta_ret  = float(recent.loc[retail_mask, "signed_vol"].sum())
         delta_tot  = delta_inst + delta_pro + delta_ret
 
         iar = safe_div(abs(delta_inst), (abs(delta_ret) + abs(delta_pro)), None)
 
-        # 5-day divergence
+        # 5-day divergence — institutional이 비어있으면 total_signed_vol로 대체
         closes = df["close"].tail(5).tolist()
-        obv_inst_series = block["signed_vol"].cumsum().tolist() or [0,0]
-        price_slope = linregress_slope(closes)
-        obv_slope   = linregress_slope(obv_inst_series)
-        if price_slope < 0 and obv_slope > 0:
-            divergence = "BULLISH_DIVERGENCE"
-        elif price_slope > 0 and obv_slope < 0:
-            divergence = "BEARISH_DIVERGENCE"
-        elif abs(price_slope) < 1e-4 and abs(obv_slope) < 1e-4:
-            divergence = "NEUTRAL"
+        if inst_mask.any():
+            inst_series = recent.loc[inst_mask, "signed_vol"].cumsum().tolist()
         else:
+            inst_series = recent["signed_vol"].cumsum().tolist()
+        price_slope = linregress_slope(closes)
+        obv_slope   = linregress_slope(inst_series)
+
+        # 임계: 가격 기울기는 $/day, obv는 shares/day — 정규화해서 비교
+        price_eps = max(abs(df["close"].iloc[-1]) * 0.001, 0.01)  # 0.1% of price
+        obv_eps   = max(abs(vmean) * 0.05, 1.0)
+        if price_slope < -price_eps and obv_slope > obv_eps:
+            divergence = "BULLISH_DIVERGENCE"
+        elif price_slope > price_eps and obv_slope < -obv_eps:
+            divergence = "BEARISH_DIVERGENCE"
+        elif abs(price_slope) < price_eps and abs(obv_slope) < obv_eps:
+            divergence = "NEUTRAL"
+        elif (price_slope > 0 and obv_slope > 0) or (price_slope < 0 and obv_slope < 0):
             divergence = "CONVERGENCE"
+        else:
+            divergence = "NEUTRAL"
 
         return {
             "delta_institutional": delta_inst,
@@ -629,6 +652,9 @@ class SmartMoneyAnalyzer:
             "delta_total":         delta_tot,
             "iar":                 iar,
             "divergence":          divergence,
+            "_source":             "daily_zscore",
+            "inst_day_count":      int(inst_mask.sum()),
+            "retail_day_count":    int(retail_mask.sum()),
         }
 
     # ── Macro (FRED CSV) ──────────────────────────────────────────────────
@@ -796,29 +822,59 @@ class SmartMoneyAnalyzer:
             a, b = ctb_hist[-2].get("fee", 0), ctb_hist[-1].get("fee", 0)
             ctb_delta_pct = safe_div((b - a), a, 0) * 100 if a else None
 
-        # Case 분류 (간소화)
-        case = "CASE_2_DIRECTIONAL_SHORT"
-        if (ctb_delta_pct is not None and abs(ctb_delta_pct) < 3) and latest["short_pct"] > short_avg_14 * 1.2:
-            case = "CASE_1_MM_DELTA_HEDGE"  # 숏 급증 + CTB 변동 없음
-        elif ctb_fee and ctb_fee > 5 and short_slope > 0:
-            case = "CASE_2_DIRECTIONAL_SHORT"
-        # Case 3 (synthetic hedge)는 L1 교차검증에서 판정
+        # ─── 중요한 전제 ────────────────────────────────────────────
+        # FINRA Reg SHO "short volume"은 포지션(short interest)이 아니라
+        # 당일 체결된 숏 매도의 합임. 유동성 좋은 대형주는 market maker의
+        # 내재 헤지·ETF 메커니즘·페어 트레이드로 인해 구조적으로 40-55%가
+        # 나오므로 "short_pct > 50" 을 bearish로 읽으면 안 된다.
+        #
+        # 올바른 읽기: 이 종목 고유의 baseline 대비 **변화율(slope)**과
+        # **CTB 방향**, **L1 기관 OBV**의 조합으로 판단.
+        # ────────────────────────────────────────────────────────────
 
-        # Scenario
-        if ctb_fee and ctb_fee > 15 and short_slope > 0:
+        # baseline 대비 편차 (z-score 유사)
+        short_std = float(np.std(short_pcts[-14:], ddof=0)) if len(short_pcts) >= 3 else 0
+        anomaly = safe_div(latest["short_pct"] - short_avg_14, short_std, 0) if short_std > 0.5 else 0
+
+        # 슬로프 방향 분류 (pp/day)
+        if   short_slope >  0.3:  slope_dir = "RISING"
+        elif short_slope < -0.3:  slope_dir = "FALLING"
+        else:                      slope_dir = "FLAT"
+
+        ctb_rising = (ctb_delta_pct or 0) > 5
+        ctb_falling = (ctb_delta_pct or 0) < -5
+        htb = (ctb_fee or 0) > 5
+        etb = (ctb_fee or 0) < 1
+
+        # Case 분류 (§4.3)
+        if slope_dir == "RISING" and not ctb_rising:
+            case = "CASE_1_MM_DELTA_HEDGE"          # 숏 급증인데 대차 여유 → MM 헤지
+        elif slope_dir == "RISING" and ctb_rising:
+            case = "CASE_2_DIRECTIONAL_SHORT"       # 슬로프+CTB 동반 상승 → 진짜 공격
+        elif slope_dir == "FALLING":
+            case = "SHORT_COVERING"                 # 숏 커버링 진행
+        else:
+            case = "MIXED"
+
+        # Scenario (L1 교차검증 없이 L2 단독)
+        if htb and slope_dir == "RISING":
             scenario, signal = "SHORT_SQUEEZE_RISK", "BULLISH"
-        elif case == "CASE_2_DIRECTIONAL_SHORT" and latest["short_pct"] > 50:
+        elif case == "SHORT_COVERING" and (ctb_falling or etb):
+            scenario, signal = "SHORT_COVERING", "BULLISH"   # 숏 감소 + 비용 하락 → 롱 유리
+        elif case == "CASE_2_DIRECTIONAL_SHORT":
             scenario, signal = "DIRECTIONAL_SHORT", "BEARISH"
         elif case == "CASE_1_MM_DELTA_HEDGE":
             scenario, signal = "MM_HEDGE", "NEUTRAL"
-        elif short_slope < 0:
-            scenario, signal = "NEUTRAL", "NEUTRAL"
+        elif anomaly > 2.0:
+            # 절대값 50%+는 정상이지만, 자신의 14d baseline 대비 +2σ면 의미 있음
+            scenario, signal = "DIRECTIONAL_SHORT", "BEARISH"
         else:
             scenario, signal = "NEUTRAL", "NEUTRAL"
 
         return {
             "latest_short_pct": latest["short_pct"],
             "avg_14d": short_avg_14, "slope": short_slope,
+            "slope_dir": slope_dir, "anomaly_z": anomaly,
             "ctb_fee": ctb_fee, "ctb_delta_pct": ctb_delta_pct,
             "shares_available": ctb.get("latest_avail"),
             "case": case, "scenario": scenario, "signal": signal,
@@ -1059,10 +1115,39 @@ class SmartMoneyAnalyzer:
         macro_env = self.classify_macro(data.get("macro", {}))
         scenarios = self.calculate_scenarios(l1, l2, l3, l4, macro_env, patterns)
         today = datetime.strptime(self.date_str, "%Y-%m-%d").date()
+        # Phase 3 타겟: 시나리오 우세 방향에 따라 BB/GEX/S-R을 조합
+        price = l4.get("current_price") or 0
+        bb_width = l4.get("bb_width_pct") or 0
+        bb_up    = l4.get("bb_upper") or price
+        bb_lo    = l4.get("bb_lower") or price
+        flip     = l3.get("flip_zone")
+        max_pain = l3.get("max_pain")
+        imm_r    = l4.get("immediate_resistance")
+        imm_s    = l4.get("immediate_support")
+
+        A, B, C = scenarios["A_bullish"], scenarios["B_neutral"], scenarios["C_bearish"]
+        if A >= max(B, C):
+            # 상승 시나리오 우세 → 상단 타겟 강조 (GEX flip 돌파시 BB upper)
+            t_hi = max([v for v in (imm_r, bb_up, max_pain) if v and v > price], default=price*1.05)
+            t_lo = min([v for v in (imm_s, bb_lo) if v and v < price], default=price*0.97)
+            p3_direction = "UPWARD"
+        elif C >= max(A, B):
+            t_hi = min([v for v in (imm_r, max_pain) if v and v > price], default=price*1.03)
+            t_lo = min([v for v in (imm_s, bb_lo, flip) if v and v < price], default=price*0.90)
+            p3_direction = "DOWNWARD"
+        else:
+            t_hi = imm_r or bb_up
+            t_lo = imm_s or bb_lo
+            p3_direction = "RANGE"
+
         phase = {
             "p1_date": prev_trading_day(today, 10).strftime("%Y-%m-%d") + " ~ " + prev_trading_day(today, 1).strftime("%Y-%m-%d"),
             "p2_date": today.strftime("%Y-%m-%d"),
             "p3_date": next_trading_day(today, 5).strftime("%Y-%m-%d") + " ~ " + next_trading_day(today, 20).strftime("%Y-%m-%d"),
+            "p3_direction": p3_direction,
+            "p3_target_hi": t_hi,
+            "p3_target_lo": t_lo,
+            "p3_bb_width": bb_width,
         }
         return {
             "l1": l1, "l2": l2, "l3": l3, "l4": l4,
@@ -1243,8 +1328,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     obv = l1.get("obv", {}) or {}
     sessions = l1.get("sessions", [])
     session_rows = [[s["date"],
-                     fmt_num(s.get("dp_volume"), "", 0),
-                     fmt_num(s.get("consolidated_volume"), "", 0),
+                     fmt_num(s.get("off_exchange_volume"), "", 0),
+                     fmt_num(s.get("market_volume"), "", 0),
                      f"{s.get('dp_pct'):.1f}%" if s.get("dp_pct") is not None else "N/A"]
                     for s in sessions[-10:]] or [["-","-","-","-"]]
     obv_chart_data = {
@@ -1257,8 +1342,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     s1 = _section_header(1, "Dark Pool Layer (L1)", l1_badges) + f"""
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
   <div>
-    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Session Volume (10d, FINRA ADF proxy)</div>
-    {_table(["Date","DP Vol","Total Vol","DP %"], session_rows)}
+    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Off-Exchange Volume (10d, FINRA CNMS ÷ market total)</div>
+    {_table(["Date","Off-Exch Vol","Market Vol","DP %"], session_rows)}
     <p style="font-size:11px;color:{COLOR['muted']};margin-top:6px;">
       {html.escape(raw.get('l1',{}).get('_note','')) if raw.get('l1') else ''}
     </p>
@@ -1357,7 +1442,9 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     phase_rows = [
         ["Phase 1 — Setup (완료)",     phase["p1_date"], "축적/분배 완료 구간", "COMPLETE"],
         ["Phase 2 — Transition (현재)", phase["p2_date"], f"{l1.get('scenario','N/A')} × {l3.get('scenario','N/A')}", "IN PROGRESS"],
-        ["Phase 3 — Resolution (미래)", phase["p3_date"], "촉발 신호 시 추세 전개", "PENDING"],
+        ["Phase 3 — Resolution (미래)", phase["p3_date"],
+         f"{phase.get('p3_direction','RANGE')} · 타겟 ${phase.get('p3_target_hi') or 0:.2f} / ${phase.get('p3_target_lo') or 0:.2f} (BB폭 {phase.get('p3_bb_width',0):.1f}%)",
+         "PENDING"],
     ]
 
     imm_res = l4.get("immediate_resistance"); key_res = l4.get("key_resistance")
@@ -1494,21 +1581,27 @@ def _one_liner_l3(l3):
             + f"시나리오: {l3.get('scenario','NEUTRAL')}.")
 
 def _triggers(l1, l2, l3, l4, price, max_pain, flip):
+    """HTML 안에서 렌더되므로 < > 를 HTML 엔터티로 쓴다 (&lt; &gt;)."""
     rows = []
     def met(cond): return "MET" if cond else "NOT MET"
-    rows.append(["Volume spike > 150%", "BULLISH", "WATCHING", "Breakout start"])
+    rows.append(["Volume spike &gt; 150%", "BULLISH", "WATCHING", "Breakout start"])
     if l2.get("ctb_fee") is not None:
-        rows.append([f"CTB > 5%", "BULLISH", met(l2["ctb_fee"] > 5), "Squeeze setup"])
+        rows.append(["CTB &gt; 5%", "BULLISH", met(l2["ctb_fee"] > 5), "Squeeze setup"])
     if flip and price:
-        rows.append(["Price > GEX Flip", "BULLISH", met(price > flip), "Vol dampened"])
+        rows.append(["Price &gt; GEX Flip", "BULLISH", met(price > flip), "Vol dampened"])
     if max_pain and price:
-        rows.append(["Price < Max Pain", "BEARISH", met(price < max_pain), "Downward gravity"])
+        rows.append(["Price &lt; Max Pain", "BEARISH", met(price < max_pain), "Downward gravity"])
     if l4.get("sma50"):
-        rows.append(["Close > SMA50", "BULLISH", met(l4["current_price"] > l4["sma50"]), "Trend support"])
+        rows.append(["Close &gt; SMA50", "BULLISH", met(l4["current_price"] > l4["sma50"]), "Trend support"])
     if (l1.get("obv") or {}).get("delta_institutional") is not None:
-        rows.append(["Inst OBV > 0", "BULLISH",
+        rows.append(["Inst OBV &gt; 0", "BULLISH",
                      met(l1["obv"]["delta_institutional"] > 0),
                      "Institutional accumulation"])
+    # L2 슬로프 방향 (P2 추가)
+    if l2.get("slope_dir"):
+        rows.append(["Short% slope FALLING", "BULLISH",
+                     met(l2["slope_dir"] == "FALLING"),
+                     "Short covering 진행"])
     return rows
 
 def _risks(l1, l2, l3, scenarios, patterns):
@@ -1693,10 +1786,13 @@ def render_json(a: Dict) -> str:
             "short_pct_latest": l2.get("latest_short_pct"),
             "short_avg_14d":    l2.get("avg_14d"),
             "short_slope":      l2.get("slope"),
+            "slope_dir":        l2.get("slope_dir"),
+            "anomaly_z":        l2.get("anomaly_z"),
             "ctb_fee":          l2.get("ctb_fee"),
             "ctb_delta_pct":    l2.get("ctb_delta_pct"),
             "shares_available": l2.get("shares_available"),
         },
+        "phase": a.get("phase"),
         "l3": {
             "scenario": l3.get("scenario"), "signal": l3.get("signal"),
             "expiry":   l3.get("expiry"), "dte": l3.get("dte"),
@@ -1778,7 +1874,7 @@ def render_markdown(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         "## Architect Phase Structure",
         f"- **Phase 1 (Completed)**: {phase['p1_date']} — 주기/분배 이미 전개",
         f"- **Phase 2 (Current)**:   {phase['p2_date']} — {l1.get('scenario')} × {l3.get('scenario')}",
-        f"- **Phase 3 (Target)**:    {phase['p3_date']} — 상단 ${imm_r:.2f} / 하단 ${imm_s:.2f}",
+        f"- **Phase 3 (Target)**:    {phase['p3_date']} — {phase.get('p3_direction','RANGE')} 방향 · 타겟 ${phase.get('p3_target_hi') or 0:.2f} / ${phase.get('p3_target_lo') or 0:.2f} (BB폭 {phase.get('p3_bb_width',0):.1f}%)",
         "",
         "---",
         "",

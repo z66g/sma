@@ -17,10 +17,10 @@ generated_by: Smart Money Analyzer (sma.py)
 | Metric | Value |
 |--------|-------|
 | Institutional OBV Δ | 0 |
-| Professional OBV Δ | 308M |
-| Retail OBV Δ       | 382M |
+| Professional OBV Δ | 160M |
+| Retail OBV Δ       | 530M |
 | Total OBV Δ        | 690M |
-| Dark Pool %        | 95.5% |
+| Dark Pool %        | 45.6% |
 | IAR                | 0.00 |
 | Short %            | 45.5% |
 | CTB Fee            | 0.28% |
@@ -37,13 +37,13 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-03-30 ~ 2026-04-13 — 주기/분배 이미 전개
 - **Phase 2 (Current)**:   2026-04-14 — NEUTRAL × HEDGING
-- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — 상단 $190.37 / 하단 $185.70
+- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — RANGE 방향 · 타겟 $190.37 / $185.70 (BB폭 13.5%)
 
 ---
 
 ## Core Conclusion
 - L1 (Dark Pool): **NEUTRAL** · signal=NEUTRAL · conf=HIGH
-- L2 (Short/CTB): **NEUTRAL** · CASE_2_DIRECTIONAL_SHORT · conf=MEDIUM
+- L2 (Short/CTB): **MM_HEDGE** · CASE_1_MM_DELTA_HEDGE · conf=MEDIUM
 - L3 (Options):   **HEDGING** · DTE=1 · net_gex=5B
 - L4 (Chart):     **RANGE_BOUND** · MA=MIXED
 - Macro: **FAVORABLE** · Raw Score: **+0.00** · Patterns: **none**
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $189.31 | 0 | 308M | 382M | 690M | 45.5% | 0.28% | 10M | $152.49 | $185.00 |
+| 2026-04-14 | $189.31 | 0 | 160M | 530M | 690M | 45.5% | 0.28% | 10M | $152.49 | $185.00 |
