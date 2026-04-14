@@ -66,7 +66,7 @@ def _render_narrative_archive(ticker: str) -> str:
     }
     rows = []
     for it in items[:40]:
-        label, bg, fg = mode_meta.get(it["mode"], ("?", COLOR["bg_panel"], COLOR["muted"]))
+        label, bg, fg = mode_meta.get(it["mode"], ("?", COLOR["panel"], COLOR["muted"]))
         rows.append(
             f'<tr>'
             f'<td>{it["date"]}</td>'
