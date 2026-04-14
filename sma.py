@@ -1819,7 +1819,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:12px 0 4px;">Probability Bar</div>
 <div style="position:relative;height:120px;"><canvas id="probChart"></canvas></div>
 <div style="font-size:11px;color:{COLOR['muted']};margin-top:6px;">
-  Raw Score: <b>{scenarios['raw_score']:+.2f}</b><span class="tt tt-i">ⓘ<span class="tt-body"><b>가중 signal 합산 (−1.00 ~ +1.00)</b><br>raw_score = Σ(layer_signal × weight) where BULLISH=+1, NEUTRAL=0, BEARISH=−1.<table><tr><th>Layer</th><th>Weight</th><th>근거</th></tr><tr><td>L1 Dark Pool</td><td>0.35</td><td>기관 의도 직접</td></tr><tr><td>L3 Options</td><td>0.30</td><td>MM 행동 예측력</td></tr><tr><td>L2 Short/CTB</td><td>0.20</td><td>구조적·해석 복잡</td></tr><tr><td>L4 Chart</td><td>0.15</td><td>후행 지표</td></tr></table><br><b>Score → 시나리오 매핑</b><table><tr><th>Score</th><th>A Bull</th><th>B Neut</th><th>C Bear</th></tr><tr><td>&gt; +0.50</td><td>65%</td><td>20%</td><td>15%</td></tr><tr><td>+0.20~+0.50</td><td>50%</td><td>30%</td><td>20%</td></tr><tr><td>−0.20~+0.20</td><td>30%</td><td>40%</td><td>30%</td></tr><tr><td>−0.50~−0.20</td><td>20%</td><td>30%</td><td>50%</td></tr><tr><td>&lt; −0.50</td><td>15%</td><td>20%</td><td>65%</td></tr></table>추가로 Macro (±7pp)·Pattern bonus (FINAL_ABSORPTION +5, GAMMA_SQUEEZE +8 등) 적용 후 80% 상한으로 정규화.</span></span> | Macro: <b>{scenarios['macro']}</b> | Patterns: <b>{', '.join(patterns) if patterns else 'none'}</b>
+  Raw Score: <b>{scenarios['raw_score']:+.2f}</b><span class="tt tt-i tt-left">ⓘ<span class="tt-body"><b>가중 signal 합산 (−1.00 ~ +1.00)</b><br>raw_score = Σ(layer_signal × weight) where BULLISH=+1, NEUTRAL=0, BEARISH=−1.<table><tr><th>Layer</th><th>Weight</th><th>근거</th></tr><tr><td>L1 Dark Pool</td><td>0.35</td><td>기관 의도 직접</td></tr><tr><td>L3 Options</td><td>0.30</td><td>MM 행동 예측력</td></tr><tr><td>L2 Short/CTB</td><td>0.20</td><td>구조적·해석 복잡</td></tr><tr><td>L4 Chart</td><td>0.15</td><td>후행 지표</td></tr></table><br><b>Score → 시나리오 매핑</b><table><tr><th>Score</th><th>A Bull</th><th>B Neut</th><th>C Bear</th></tr><tr><td>&gt; +0.50</td><td>65%</td><td>20%</td><td>15%</td></tr><tr><td>+0.20~+0.50</td><td>50%</td><td>30%</td><td>20%</td></tr><tr><td>−0.20~+0.20</td><td>30%</td><td>40%</td><td>30%</td></tr><tr><td>−0.50~−0.20</td><td>20%</td><td>30%</td><td>50%</td></tr><tr><td>&lt; −0.50</td><td>15%</td><td>20%</td><td>65%</td></tr></table>추가로 Macro (±7pp)·Pattern bonus (FINAL_ABSORPTION +5, GAMMA_SQUEEZE +8 등) 적용 후 80% 상한으로 정규화.</span></span> | Macro: <b>{scenarios['macro']}</b> | Patterns: <b>{', '.join(patterns) if patterns else 'none'}</b>
 </div>
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:12px 0 4px;">Key Price Level Map</div>
 {_table(["Level Type","Price","Distance","Significance"], price_rows)}
@@ -1886,6 +1886,9 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   /* 섹션 헤더 오른쪽 배지는 오른쪽 끝 기준 정렬 — 뷰포트 바깥 잘림 방지 */
   .tt-right .tt-body {{ left:auto !important; right:0 !important; transform:none !important; }}
   .tt-right .tt-body::after {{ left:auto !important; right:14px !important; margin-left:0 !important; }}
+  /* 왼쪽 가장자리 ⓘ는 왼쪽 끝 기준 정렬 */
+  .tt-left .tt-body {{ left:0 !important; right:auto !important; transform:none !important; }}
+  .tt-left .tt-body::after {{ left:14px !important; right:auto !important; margin-left:0 !important; }}
   .tt .tt-body {{
     visibility:hidden; opacity:0; transition:opacity 0.12s;
     position:absolute; left:50%; transform:translateX(-50%);
