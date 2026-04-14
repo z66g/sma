@@ -1547,24 +1547,32 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         ["Oil (WTI)", (f"{macro['oil'][1]:.2f}" if macro.get("oil") else "N/A"), "-"],
         ["Liquidity", liq, "-"],
     ]
+    # 3-column layout:
+    #   1) Upcoming Events + Macro Environment (2개 표 수직 스택)
+    #   2) SEC Filings
+    #   3) Recent News (가장 넓게 — 제목 줄바꿈 완화 위해 2배 너비)
     s0_body = f"""
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+<div style="display:grid;grid-template-columns:1.2fr 0.9fr 1.6fr;gap:12px;align-items:start;">
+
   <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;">
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Upcoming Events (30d)</div>
     {_table(["Date","Event","Signal"], ev_rows)}
+    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:14px 0 6px;">Macro Environment</div>
+    {_table(["Indicator","Value","Δ"], macro_rows)}
   </div>
-  <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;">
-    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Recent News (7d)</div>
-    {_table(["Date","Headline","Publisher"], news_rows)}
-  </div>
+
   <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;">
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">SEC Filings</div>
     {_table(["Date","Form / Title"], fil_rows)}
   </div>
-  <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;">
-    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Macro Environment</div>
-    {_table(["Indicator","Value","Δ"], macro_rows)}
+
+  <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;min-width:0;overflow:hidden;">
+    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Recent News (7d)</div>
+    <div style="overflow-wrap:anywhere;word-break:break-word;">
+      {_table(["Date","Headline","Publisher"], news_rows)}
+    </div>
   </div>
+
 </div>
 """
 
