@@ -183,7 +183,7 @@ COLOR MAPPING RULES:
     LOW         → #FFEBE9 / #CF222B
 
 STRICT PROHIBITIONS:
-- Markdown syntax (# ## - ** ``` ) 사용 금지. 순수 HTML만.
+- Markdown syntax (# ## - ** fenced code) 사용 금지. 순수 HTML만.
 - <script>, <style>, <iframe>, onclick= 등 이벤트, javascript:/data: URI 금지.
 - 주가 예측 금지. 확률만.
 - 어떤 시나리오도 80% 초과 금지.
