@@ -1484,41 +1484,47 @@ def _scenario_badge_tt(scenario: str, signal: str, layer: str = "L1", align: str
     bg_key, fg_key = _BADGE_PALETTE[kind]
     bg = COLOR[bg_key]; fg = COLOR[fg_key]
 
+    # 색깔 pill (툴팁 테이블 마지막 컬럼 — 공간 절약)
+    B = '<span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span>'
+    R = '<span style="display:inline-block;background:#FFEBE9;color:#CF222B;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BEAR</span>'
+    N = '<span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span>'
+    VAR = '<span style="display:inline-block;background:#EAEEF2;color:#656D76;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">VAR</span>'
+
     if layer == "L1":
         body = (
             "<b>L1 Dark Pool 시나리오</b><br>"
-            "기관 OBV 방향·다크풀 %·Divergence 조합으로 결정."
+            "기관 OBV 방향·다크풀 %·Divergence 조합."
             "<table>"
-            "<tr><th>시나리오</th><th>조건 요약</th><th>색상</th></tr>"
-            "<tr><td>ACCUMULATION</td><td>Inst Δ > 0 혹은 BULLISH_DIVERGENCE × DP%&gt;35</td><td>녹색 (BULLISH)</td></tr>"
-            "<tr><td>DISTRIBUTION</td><td>Inst Δ &lt; 0 혹은 BEARISH_DIVERGENCE × DP%&gt;35</td><td>적색 (BEARISH)</td></tr>"
-            "<tr><td>NEUTRAL</td><td>명확한 방향 없음</td><td>황색 (NEUTRAL)</td></tr>"
-            "<tr><td>AMBIGUOUS</td><td>상충 신호 (Inst↑ 와 BEARISH_DIV 등)</td><td>황색</td></tr>"
+            "<tr><th>시나리오</th><th>조건</th><th>색</th></tr>"
+            f"<tr><td>ACCUMULATION</td><td>Inst Δ &gt; 0 or BULLISH_DIV × DP%&gt;35</td><td>{B}</td></tr>"
+            f"<tr><td>DISTRIBUTION</td><td>Inst Δ &lt; 0 or BEARISH_DIV × DP%&gt;35</td><td>{R}</td></tr>"
+            f"<tr><td>NEUTRAL</td><td>명확한 방향 없음</td><td>{N}</td></tr>"
+            f"<tr><td>AMBIGUOUS</td><td>상충 신호</td><td>{N}</td></tr>"
             "</table>"
         )
     elif layer == "L2":
         body = (
             "<b>L2 Short Volume 시나리오</b><br>"
-            "Short% slope + CTB 방향 + anomaly_z 조합."
+            "Short% slope + CTB 방향 + anomaly_z."
             "<table>"
-            "<tr><th>시나리오</th><th>조건</th><th>색상</th></tr>"
-            "<tr><td>SHORT_SQUEEZE_RISK</td><td>HTB(CTB&gt;15) × slope RISING</td><td>녹색 (BULLISH)</td></tr>"
-            "<tr><td>SHORT_COVERING</td><td>slope FALLING × CTB 하락/ETB</td><td>녹색 (BULLISH)</td></tr>"
-            "<tr><td>DIRECTIONAL_SHORT</td><td>CTB 상승 + slope RISING (CASE ②)</td><td>적색 (BEARISH)</td></tr>"
-            "<tr><td>MM_HEDGE</td><td>slope RISING + CTB 변동 없음 (CASE ①)</td><td>황색 (NEUTRAL)</td></tr>"
-            "<tr><td>NEUTRAL</td><td>기타</td><td>황색</td></tr>"
+            "<tr><th>시나리오</th><th>조건</th><th>색</th></tr>"
+            f"<tr><td>SHORT_SQUEEZE_RISK</td><td>HTB(&gt;15%) × slope RISING</td><td>{B}</td></tr>"
+            f"<tr><td>SHORT_COVERING</td><td>slope FALLING × CTB 하락/ETB</td><td>{B}</td></tr>"
+            f"<tr><td>DIRECTIONAL_SHORT</td><td>CTB↑ + slope RISING (CASE ②)</td><td>{R}</td></tr>"
+            f"<tr><td>MM_HEDGE</td><td>slope RISING + CTB 변동 없음 (CASE ①)</td><td>{N}</td></tr>"
+            f"<tr><td>NEUTRAL</td><td>기타</td><td>{N}</td></tr>"
             "</table>"
         )
     elif layer == "L3":
         body = (
             "<b>L3 Options 시나리오</b><br>"
-            "Max Pain 거리·Net GEX 부호·P/C·IV Skew 조합."
+            "Max Pain 거리·Net GEX 부호·P/C·IV Skew."
             "<table>"
-            "<tr><th>시나리오</th><th>조건</th><th>색상</th></tr>"
-            "<tr><td>PINNING</td><td>DTE≤5 × |spot−MaxPain|/MaxPain&lt;0.5%</td><td>황색 (NEUTRAL)</td></tr>"
-            "<tr><td>GAMMA_SQUEEZE</td><td>P/C&lt;0.7 × call-heavy skew</td><td>녹색 (BULLISH)</td></tr>"
-            "<tr><td>VOLATILITY_EXPANSION</td><td>Net GEX &lt; 0 (MM short gamma)</td><td>색상 상황별</td></tr>"
-            "<tr><td>HEDGING</td><td>기본/중립 헤지 구간</td><td>황색 (NEUTRAL)</td></tr>"
+            "<tr><th>시나리오</th><th>조건</th><th>색</th></tr>"
+            f"<tr><td>PINNING</td><td>DTE≤5 × |spot−MP|/MP&lt;0.5%</td><td>{N}</td></tr>"
+            f"<tr><td>GAMMA_SQUEEZE</td><td>P/C&lt;0.7 × call-heavy skew</td><td>{B}</td></tr>"
+            f"<tr><td>VOLATILITY_EXPANSION</td><td>Net GEX &lt; 0 (MM short gamma)</td><td>{VAR}</td></tr>"
+            f"<tr><td>HEDGING</td><td>기본/중립 헤지 구간</td><td>{N}</td></tr>"
             "</table>"
         )
     else:  # L4
@@ -1526,11 +1532,11 @@ def _scenario_badge_tt(scenario: str, signal: str, layer: str = "L1", align: str
             "<b>L4 Chart 시나리오</b><br>"
             "MA 배열 × short/med slope × BB width."
             "<table>"
-            "<tr><th>시나리오</th><th>조건</th><th>색상</th></tr>"
-            "<tr><td>UPTREND</td><td>FULL_BULL/RECOVERING × 양의 slope</td><td>녹색</td></tr>"
-            "<tr><td>DOWNTREND</td><td>FULL_BEAR × 음의 slope</td><td>적색</td></tr>"
-            "<tr><td>BREAKOUT_PENDING</td><td>BB 수축 × 단기 slope 양전환</td><td>황색</td></tr>"
-            "<tr><td>RANGE_BOUND</td><td>명확한 방향 없음</td><td>황색</td></tr>"
+            "<tr><th>시나리오</th><th>조건</th><th>색</th></tr>"
+            f"<tr><td>UPTREND</td><td>FULL_BULL/RECOVERING × +slope</td><td>{B}</td></tr>"
+            f"<tr><td>DOWNTREND</td><td>FULL_BEAR × −slope</td><td>{R}</td></tr>"
+            f"<tr><td>BREAKOUT_PENDING</td><td>BB 수축 × 단기 +slope</td><td>{N}</td></tr>"
+            f"<tr><td>RANGE_BOUND</td><td>명확한 방향 없음</td><td>{N}</td></tr>"
             "</table>"
         )
 
@@ -1675,7 +1681,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
                    obv.get("delta_total",0) or 0],
     }
     s1 = _section_header(1, "Dark Pool Layer (L1)", l1_badges) + f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+<div style="display:grid;grid-template-columns:1.4fr 0.9fr;gap:12px;align-items:start;">
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">OBV 4-Way Decomposition (Δ)</div>
     <div style="position:relative;height:200px;"><canvas id="obv4way"></canvas></div>
@@ -1879,7 +1885,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     background:#1F2328; color:#FFFFFF;
     padding:8px 10px; border-radius:6px;
     font-size:11px; line-height:1.5; text-align:left;
-    white-space:normal; width:max-content; max-width:320px;
+    white-space:normal; width:max-content; max-width:480px;
     box-shadow:0 4px 12px rgba(0,0,0,0.15);
     font-weight:400;
   }}
