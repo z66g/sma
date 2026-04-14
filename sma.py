@@ -1604,8 +1604,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   </div>
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">OBV 4-Way Decomposition (Δ)</div>
-    <div style="position:relative;height:180px;"><canvas id="obv4way"></canvas></div>
-    <div style="font-size:11px;color:{COLOR['text']};margin-top:6px;">
+    <div style="position:relative;height:200px;"><canvas id="obv4way"></canvas></div>
+    <div style="font-size:11px;color:{COLOR['text']};margin-top:8px;text-align:center;">
       IAR (Institutional Absorption Ratio): <b>{fmt_num(obv.get('iar'),'',2)}</b> · Divergence: <b>{obv.get('divergence','N/A')}</b>
       {("<br>Sessions · " + " · ".join(f"{k}: {fmt_num(v,'',0)}" for k,v in (obv.get('session_volume') or {}).items())) if obv.get('session_volume') else ""}
       {"<br><span style='color:"+COLOR['info']+";'>Source: Polygon 1-min bars ("+str(obv.get('minute_bar_count','?'))+")</span>" if obv.get('_source')=='polygon_1min' else ""}
