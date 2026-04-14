@@ -220,44 +220,148 @@ class SmartMoneyAnalyzer:
 
     # ── L3: Options ───────────────────────────────────────────────────────
     def fetch_l3_options(self, l4: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            expiries = list(self.yf.options)
-        except Exception as e:
-            raise RuntimeError(f"options unavailable: {e}")
-        if not expiries:
-            raise RuntimeError("no option expiries")
+        """
+        옵션 체인 수집. 우선순위:
+          1) CBOE delayed quotes (official, free, 15-min delay, real OI + Greeks)
+          2) yfinance fallback (OI가 자주 0으로 옴 — 주의)
+
+        만기 선택 규칙:
+          - OI 총합이 유의미한(>= 100) 만기 중 DTE가 가장 작은 양수인 것
+          - 이유: 유동성 없는 만기는 Max Pain / GEX가 엉터리로 산출됨
+        """
         today = datetime.strptime(self.date_str, "%Y-%m-%d").date()
-        # 현재 주차 ATM 체인 — DTE 최소 양수
+        spot = l4.get("current_price", 0) or 0
+
+        # 1) CBOE 시도
+        try:
+            by_expiry = self._fetch_cboe_options()
+            src = "cboe_delayed"
+        except Exception as e:
+            self.warnings.append(f"l3 cboe: {e} — falling back to yfinance")
+            by_expiry = self._fetch_yf_options_grouped()
+            src = "yfinance_fallback"
+
+        if not by_expiry:
+            raise RuntimeError("no option chain from any source")
+
+        # 만기별 OI 총합으로 유동성 필터링
         def dte_of(e):
             return (datetime.strptime(e, "%Y-%m-%d").date() - today).days
-        primary = min(expiries, key=lambda e: (dte_of(e) < 0, abs(dte_of(e))))
-        spot = l4.get("current_price", 0) or 0
-        chain = self.yf.option_chain(primary)
-        calls = chain.calls.copy(); puts = chain.puts.copy()
-        calls["type"] = "call"; puts["type"] = "put"
-        def pack(df, spot):
-            out = []
-            for _, r in df.iterrows():
-                k   = float(r.get("strike", 0))
-                iv  = float(r.get("impliedVolatility", 0) or 0)
-                oi  = float(r.get("openInterest", 0) or 0)
-                vol = float(r.get("volume", 0) or 0)
-                # Greeks 근사 (BS delta/gamma — yfinance에는 greeks 없음)
-                delta, gamma = bs_delta_gamma(spot, k, max(dte_of(primary),1)/365.0, iv, r["type"])
-                out.append({
-                    "strike": k, "oi": oi, "volume": vol,
-                    "iv": iv, "delta": delta, "gamma": gamma,
-                    "bid": float(r.get("bid",0) or 0), "ask": float(r.get("ask",0) or 0),
-                })
-            return out
+        def oi_total(chain):
+            return sum(o["oi"] for o in chain["calls"]) + sum(o["oi"] for o in chain["puts"])
+
+        liquid = [(e, c, oi_total(c)) for e, c in by_expiry.items()
+                  if oi_total(c) >= 100 and dte_of(e) >= 0]
+        liquid.sort(key=lambda x: (dte_of(x[0]), -x[2]))
+        if liquid:
+            primary, chain, total_oi = liquid[0]
+        else:
+            # 모든 만기가 OI 빈약 → 그냥 가장 많은 OI 가진 것
+            best = max(by_expiry.items(), key=lambda kv: oi_total(kv[1]))
+            primary, chain = best
+            total_oi = oi_total(chain)
+            self.warnings.append(f"l3: all expiries low-OI, picked {primary} with OI={int(total_oi)}")
+
+        # Greeks 보강: CBOE가 delta/gamma 주면 그대로, 없으면 BS 근사
+        T = max(dte_of(primary), 1) / 365.0
+        for o in chain["calls"]:
+            if not o.get("gamma"):
+                d, g = bs_delta_gamma(spot, o["strike"], T, o.get("iv", 0), "call")
+                o["delta"], o["gamma"] = d, g
+        for o in chain["puts"]:
+            if not o.get("gamma"):
+                d, g = bs_delta_gamma(spot, o["strike"], T, o.get("iv", 0), "put")
+                o["delta"], o["gamma"] = d, g
+
         return {
             "expiry": primary,
             "dte": dte_of(primary),
-            "all_expiries": expiries[:10],
+            "all_expiries": sorted(by_expiry.keys())[:10],
             "spot": spot,
-            "calls": pack(calls, spot),
-            "puts":  pack(puts, spot),
+            "calls": chain["calls"],
+            "puts":  chain["puts"],
+            "_source": src,
+            "_total_oi": int(total_oi),
         }
+
+    def _fetch_cboe_options(self) -> Dict[str, Dict[str, list]]:
+        """
+        CBOE delayed quotes JSON → {expiry_date: {calls:[...], puts:[...]}}
+        OCC 심볼 파싱: NVDA260415C00100000 = NVDA / 2026-04-15 / Call / $100.00
+        """
+        url = f"https://cdn.cboe.com/api/global/delayed_quotes/options/{self.ticker}.json"
+        r = requests.get(url, headers=UA, timeout=20)
+        if r.status_code != 200:
+            raise RuntimeError(f"CBOE HTTP {r.status_code}")
+        data = r.json().get("data", {})
+        raw_opts = data.get("options", []) or []
+        if not raw_opts:
+            raise RuntimeError("CBOE empty options array")
+
+        # 심볼 파싱용 정규식: ROOT + YYMMDD + C/P + 8자리 strike
+        pat = re.compile(rf"^{re.escape(self.ticker)}(\d{{6}})([CP])(\d{{8}})$")
+        out: Dict[str, Dict[str, list]] = {}
+        for o in raw_opts:
+            sym = o.get("option", "")
+            m = pat.match(sym)
+            if not m:
+                # 루트 티커가 다를 수 있음 (예: BRK.B → BRK). 관대하게 매칭
+                m2 = re.match(r"^([A-Z]{1,6})(\d{6})([CP])(\d{8})$", sym)
+                if not m2: continue
+                root, ymd, cp, strike8 = m2.groups()
+                if root != self.ticker.replace(".", "").replace("-", ""):
+                    continue
+            else:
+                ymd, cp, strike8 = m.groups()
+
+            # 만기
+            y = 2000 + int(ymd[0:2]); mo = int(ymd[2:4]); d = int(ymd[4:6])
+            exp = f"{y:04d}-{mo:02d}-{d:02d}"
+            strike = int(strike8) / 1000.0
+
+            packed = {
+                "strike":  strike,
+                "oi":      float(o.get("open_interest", 0) or 0),
+                "volume":  float(o.get("volume", 0) or 0),
+                "iv":      float(o.get("iv", 0) or 0),
+                "delta":   float(o.get("delta", 0) or 0),
+                "gamma":   float(o.get("gamma", 0) or 0),
+                "bid":     float(o.get("bid", 0) or 0),
+                "ask":     float(o.get("ask", 0) or 0),
+            }
+            bucket = out.setdefault(exp, {"calls": [], "puts": []})
+            (bucket["calls"] if cp == "C" else bucket["puts"]).append(packed)
+
+        return out
+
+    def _fetch_yf_options_grouped(self) -> Dict[str, Dict[str, list]]:
+        """yfinance 폴백 — OI 부정확할 수 있음."""
+        expiries = list(self.yf.options or [])
+        if not expiries:
+            raise RuntimeError("yfinance: no expiries")
+        out = {}
+        today = datetime.strptime(self.date_str, "%Y-%m-%d").date()
+        # 앞 6개 만기만 (속도)
+        for e in expiries[:6]:
+            try:
+                c = self.yf.option_chain(e)
+            except Exception:
+                continue
+            def pack(df, opt_type):
+                rows = []
+                for _, r in df.iterrows():
+                    rows.append({
+                        "strike": float(r.get("strike", 0) or 0),
+                        "oi":     float(r.get("openInterest", 0) or 0),
+                        "volume": float(r.get("volume", 0) or 0),
+                        "iv":     float(r.get("impliedVolatility", 0) or 0),
+                        "delta": 0.0, "gamma": 0.0,
+                        "bid":   float(r.get("bid", 0) or 0),
+                        "ask":   float(r.get("ask", 0) or 0),
+                    })
+                return rows
+            out[e] = {"calls": pack(c.calls, "call"), "puts": pack(c.puts, "put")}
+        return out
 
     # ── L2: FINRA short volume ────────────────────────────────────────────
     def fetch_l2_short(self) -> Dict[str, Any]:
