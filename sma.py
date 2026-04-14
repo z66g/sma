@@ -1753,7 +1753,10 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">GEX by Strike</div>
     <div style="position:relative;height:300px;"><canvas id="gexChart"></canvas></div>
   </div>
-  <div>{_table(["Metric","Value"], l3_rows)}</div>
+  <div>{_table(["Metric","Value"], l3_rows, highlight_rows={{
+      1: COLOR['alert_blue'],   # Spot 행 — 파란 배경
+      2: COLOR['alert_red'],    # Max Pain 행 — 빨간 배경
+  }})}</div>
 </div>
 """
 
