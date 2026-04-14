@@ -1604,7 +1604,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   </div>
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">OBV 4-Way Decomposition (Δ)</div>
-    <canvas id="obv4way" height="220"></canvas>
+    <canvas id="obv4way" height="140"></canvas>
     <div style="font-size:11px;color:{COLOR['text']};margin-top:6px;">
       IAR (Institutional Absorption Ratio): <b>{fmt_num(obv.get('iar'),'',2)}</b> · Divergence: <b>{obv.get('divergence','N/A')}</b>
       {("<br>Sessions · " + " · ".join(f"{k}: {fmt_num(v,'',0)}" for k,v in (obv.get('session_volume') or {}).items())) if obv.get('session_volume') else ""}
@@ -1953,11 +1953,16 @@ new Chart(document.getElementById('obv4way'), {{
       label:'Δ OBV',
       data:{json.dumps(obv_data['values'])},
       backgroundColor:{json.dumps(obv_colors)},
-      borderWidth:0
+      borderWidth:0,
+      barThickness:14,
+      maxBarThickness:14,
+      categoryPercentage:0.6,
+      barPercentage:0.6
     }}]
   }},
   options:{{
     indexAxis:'y',
+    maintainAspectRatio:false,
     plugins:{{legend:{{display:false}},title:{{display:true,text:'OBV 4-Way Decomposition (Δ from prior session)'}}}},
     scales:{{x:{{grid:{{color:'{COLOR['chart_grid']}'}}}},y:{{grid:{{display:false}}}}}}
   }}

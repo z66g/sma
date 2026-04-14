@@ -6,7 +6,7 @@ generated_by: Smart Money Analyzer (sma.py)
 
 # Smart Money Analysis: SMR
 **Analysis Date**: 2026-04-14  
-**Current Price**: $10.26  
+**Current Price**: $10.20  
 **Options Expiry**: 2026-04-17  
 **Analyst**: Smart Money Analyzer v2.0
 
@@ -27,7 +27,7 @@ generated_by: Smart Money Analyzer (sma.py)
 | Available Shares   | 4M |
 | Max Pain           | $12.00 |
 | GEX Flip Zone      | $4.00 |
-| Net GEX            | -20M |
+| Net GEX            | -22M |
 | Scenario [A] Bull  | 37.0% |
 | Scenario [B] Neut  | 40.0% |
 | Scenario [C] Bear  | 23.0% |
@@ -37,14 +37,14 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-03-30 ~ 2026-04-13 — 주기/분배 이미 전개
 - **Phase 2 (Current)**:   2026-04-14 — DISTRIBUTION × VOLATILITY_EXPANSION
-- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — RANGE 방향 · 타겟 $10.99 / $10.01 (BB폭 37.0%)
+- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — RANGE 방향 · 타겟 $10.99 / $10.01 (BB폭 37.1%)
 
 ---
 
 ## Core Conclusion
 - L1 (Dark Pool): **DISTRIBUTION** · signal=BEARISH · conf=HIGH
 - L2 (Short/CTB): **SHORT_COVERING** · SHORT_COVERING · conf=MEDIUM
-- L3 (Options):   **VOLATILITY_EXPANSION** · DTE=3 · net_gex=-20M
+- L3 (Options):   **VOLATILITY_EXPANSION** · DTE=3 · net_gex=-22M
 - L4 (Chart):     **RANGE_BOUND** · MA=FULL_BEAR
 - Macro: **FAVORABLE** · Raw Score: **-0.15** · Patterns: **none**
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $10.26 | -8M | -5M | -8M | -21M | 17.8% | 0.34% | 4M | $4.00 | $12.00 |
+| 2026-04-14 | $10.20 | -8M | -5M | -8M | -21M | 17.8% | 0.34% | 4M | $4.00 | $12.00 |
