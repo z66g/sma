@@ -1647,24 +1647,24 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     #   2) SEC Filings
     #   3) Recent News (가장 넓게 — 제목 줄바꿈 완화 위해 2배 너비)
     s0_body = f"""
-<div style="display:grid;grid-template-columns:1.2fr 0.9fr 1.6fr;gap:12px;align-items:start;">
+<div class="sma-grid" style="display:grid;grid-template-columns:1.2fr 0.9fr 1.6fr;gap:12px;align-items:start;">
 
   <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;">
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Upcoming Events (30d)</div>
-    {_table(["Date","Event","Signal"], ev_rows)}
+    <div class="tbl-scroll">{_table(["Date","Event","Signal"], ev_rows)}</div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:14px 0 6px;">Macro Environment</div>
-    {_table(["Indicator","Value","Δ"], macro_rows)}
+    <div class="tbl-scroll">{_table(["Indicator","Value","Δ"], macro_rows)}</div>
   </div>
 
   <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;">
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">SEC Filings</div>
-    {_table(["Date","Form / Title"], fil_rows)}
+    <div class="tbl-scroll">{_table(["Date","Form / Title"], fil_rows)}</div>
   </div>
 
   <div style="background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:12px;min-width:0;overflow:hidden;">
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Recent News (7d)</div>
     <div style="overflow-wrap:anywhere;word-break:break-word;">
-      {_table(["Date","Headline","Publisher"], news_rows)}
+      <div class="tbl-scroll">{_table(["Date","Headline","Publisher"], news_rows)}</div>
     </div>
   </div>
 
@@ -1689,7 +1689,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
                    obv.get("delta_total",0) or 0],
     }
     s1 = _section_header(1, "Dark Pool Layer (L1)", l1_badges) + f"""
-<div style="display:grid;grid-template-columns:1.4fr 0.9fr;gap:12px;align-items:start;">
+<div class="sma-grid" style="display:grid;grid-template-columns:1.4fr 0.9fr;gap:12px;align-items:start;">
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">OBV 4-Way Decomposition (Δ)</div>
     <div style="position:relative;height:200px;"><canvas id="obv4way"></canvas></div>
@@ -1702,7 +1702,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   </div>
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Off-Exchange Volume (10d, FINRA CNMS ÷ market total)</div>
-    {_table(["Date","Off-Exch Vol","Market Vol","DP %"], session_rows)}
+    <div class="tbl-scroll">{_table(["Date","Off-Exch Vol","Market Vol","DP %"], session_rows)}</div>
     <p style="font-size:11px;color:{COLOR['muted']};margin-top:6px;">
       {html.escape(raw.get('l1',{}).get('_note','')) if raw.get('l1') else ''}
     </p>
@@ -1721,21 +1721,21 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     ctb_delta = l2.get("ctb_delta_pct")
     ctb_label = "ETB" if (ctb_fee or 0) < 1 else ("HTB" if (ctb_fee or 0) > 15 else "Moderate")
     s2 = _section_header(2, "Short Volume Layer (L2)", l2_badges) + f"""
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
+<div class="sma-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Short % (FINRA consolidated, 14d)</div>
-    {_table(["Date","Short Vol","Total Vol","Short %"], short_rows)}
+    <div class="tbl-scroll">{_table(["Date","Short Vol","Total Vol","Short %"], short_rows)}</div>
     <div style="font-size:11px;color:{COLOR['text']};margin-top:6px;">
       14d Avg Short%: <b>{l2.get('avg_14d',0):.1f}%</b> · Slope: <b>{l2.get('slope',0):+.3f}</b>
     </div>
   </div>
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">CTB / Borrow (iborrowdesk)</div>
-    {_table(["Metric","Value","Δ %"], [
+    <div class="tbl-scroll">{_table(["Metric","Value","Δ %"], [
         ["CTB Fee", f"{ctb_fee:.2f}%" if ctb_fee is not None else "N/A", fmt_pct(ctb_delta) if ctb_delta is not None else "-"],
         ["Class", ctb_label, "-"],
         ["Shares Available", fmt_num(l2.get('shares_available'),'',0), "-"],
-    ])}
+    ])}</div>
   </div>
 </div>
 """
@@ -1762,9 +1762,9 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         ["GEX Flip Zone", f"${flip:.2f}" if flip else "N/A"],
     ]
     l3_highlight = {1: COLOR['alert_blue'], 2: COLOR['alert_red']}   # Spot=blue, Max Pain=red
-    l3_table_html = _table(["Metric", "Value"], l3_rows, highlight_rows=l3_highlight)
+    l3_table_html = f'<div class="tbl-scroll">{_table(["Metric", "Value"], l3_rows, highlight_rows=l3_highlight)}</div>'
     s3 = _section_header(3, "Options Layer (L3)", l3_badges) + f"""
-<div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;align-items:start;">
+<div class="sma-grid" style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;align-items:start;">
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">GEX by Strike</div>
     <div style="position:relative;height:300px;"><canvas id="gexChart"></canvas></div>
@@ -1785,7 +1785,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         ["Immediate R / S", f"{('$'+format(l4.get('immediate_resistance'), '.2f')) if l4.get('immediate_resistance') else '-'}  /  {('$'+format(l4.get('immediate_support'), '.2f')) if l4.get('immediate_support') else '-'}"],
         ["Key R / S", f"{('$'+format(l4.get('key_resistance'), '.2f')) if l4.get('key_resistance') else '-'}  /  {('$'+format(l4.get('key_support'), '.2f')) if l4.get('key_support') else '-'}"],
     ]
-    s4 = _section_header(4, "Chart / Technical Layer (L4)", l4_badges) + _table(["Metric","Value"], l4_rows)
+    s4 = _section_header(4, "Chart / Technical Layer (L4)", l4_badges) + f'<div class="tbl-scroll">{_table(["Metric","Value"], l4_rows)}</div>'
 
     # Section 5 (Integrated)
     s5_badges = [(f"Score {scenarios['raw_score']:+.2f}", "info"),
@@ -1815,14 +1815,14 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     ]
     s5 = _section_header(5, "3-Layer Integrated Scenario", s5_badges) + f"""
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:8px 0 4px;">Architect Phase Table</div>
-{_table(["Phase","Dates","Description","Status"], phase_rows)}
+<div class="tbl-scroll">{_table(["Phase","Dates","Description","Status"], phase_rows)}</div>
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:12px 0 4px;">Probability Bar</div>
 <div style="position:relative;height:105px;"><canvas id="probChart"></canvas></div>
 <div style="font-size:11px;color:{COLOR['muted']};margin-top:6px;">
   Raw Score: <b>{scenarios['raw_score']:+.2f}</b><span class="tt tt-i tt-left">ⓘ<span class="tt-body"><b>가중 signal 합산 (−1.00 ~ +1.00)</b><br>raw_score = Σ(layer_signal × weight) where BULLISH=+1, NEUTRAL=0, BEARISH=−1.<table><tr><th>Layer</th><th>Weight</th><th>근거</th></tr><tr><td>L1 Dark Pool</td><td>0.35</td><td>기관 의도 직접</td></tr><tr><td>L3 Options</td><td>0.30</td><td>MM 행동 예측력</td></tr><tr><td>L2 Short/CTB</td><td>0.20</td><td>구조적·해석 복잡</td></tr><tr><td>L4 Chart</td><td>0.15</td><td>후행 지표</td></tr></table><br><b>Score → 시나리오 매핑</b><table><tr><th>Score</th><th>A Bull</th><th>B Neut</th><th>C Bear</th></tr><tr><td>&gt; +0.50</td><td>65%</td><td>20%</td><td>15%</td></tr><tr><td>+0.20~+0.50</td><td>50%</td><td>30%</td><td>20%</td></tr><tr><td>−0.20~+0.20</td><td>30%</td><td>40%</td><td>30%</td></tr><tr><td>−0.50~−0.20</td><td>20%</td><td>30%</td><td>50%</td></tr><tr><td>&lt; −0.50</td><td>15%</td><td>20%</td><td>65%</td></tr></table>추가로 Macro (±7pp)·Pattern bonus (FINAL_ABSORPTION +5, GAMMA_SQUEEZE +8 등) 적용 후 80% 상한으로 정규화.</span></span> | Macro: <b>{scenarios['macro']}</b> | Patterns: <b>{', '.join(patterns) if patterns else 'none'}</b>
 </div>
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:12px 0 4px;">Key Price Level Map</div>
-{_table(["Level Type","Price","Distance","Significance"], price_rows)}
+<div class="tbl-scroll">{_table(["Level Type","Price","Distance","Significance"], price_rows)}</div>
 """
 
     # Section 6 — Summary
@@ -1841,7 +1841,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 </div>
 {positioning}
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:8px 0 4px;">Trigger Checklist</div>
-{_table(["Trigger","Type","Status","Implication"], triggers)}
+<div class="tbl-scroll">{_table(["Trigger","Type","Status","Implication"], triggers)}</div>
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:12px 0 4px;">Risk Factors</div>
 <ul style="font-size:12px;color:{COLOR['text']};margin-left:18px;">
   {''.join(f'<li>{html.escape(r)}</li>' for r in risks)}
@@ -1909,6 +1909,30 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   .tt:hover .tt-body {{ visibility:visible; opacity:1; }}
   .tt table {{ border-collapse:collapse; margin-top:4px; }}
   .tt th, .tt td {{ padding:2px 6px; border:0.5px solid #555; text-align:left; color:#fff; }}
+
+  /* ── Responsive ──────────────────────────────────────────────
+     Tablet portrait / 창 900px 이하 → 2-column 섹션을 수직 스택 */
+  @media (max-width: 1024px) {{
+    .sma-grid {{ grid-template-columns: 1fr !important; }}
+    .hdr h1 {{ font-size:18px; }}
+  }}
+  /* 모바일 / 700px 이하 → 본문 여백 줄이고, 모든 그리드 1열, 폰트 축소 */
+  @media (max-width: 700px) {{
+    body {{ padding:14px !important; font-size:12.5px; }}
+    .wrap {{ max-width:100% !important; }}
+    .sma-grid {{ grid-template-columns: 1fr !important; }}
+    canvas {{ max-width:100%; }}
+    h1 {{ font-size:17px !important; }}
+    h2 {{ font-size:13px !important; }}
+  }}
+  /* 모든 표는 좁은 화면에서 가로 스크롤로 살리기 */
+  .tbl-scroll {{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }}
+  .tbl-scroll table {{ min-width:100%; }}
+
+  /* 툴팁이 모바일에서 뷰포트 밖으로 넘치지 않게 */
+  @media (max-width: 700px) {{
+    .tt .tt-body {{ max-width:88vw; font-size:10px; }}
+  }}
 </style>
 </head>
 <body>
