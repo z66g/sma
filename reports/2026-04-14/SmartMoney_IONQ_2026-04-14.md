@@ -6,7 +6,7 @@ generated_by: Smart Money Analyzer (sma.py)
 
 # Smart Money Analysis: IONQ
 **Analysis Date**: 2026-04-14  
-**Current Price**: $34.21  
+**Current Price**: $34.27  
 **Options Expiry**: 2026-04-17  
 **Analyst**: Smart Money Analyzer v2.0
 
@@ -27,7 +27,7 @@ generated_by: Smart Money Analyzer (sma.py)
 | Available Shares   | 550,000 |
 | Max Pain           | $32.00 |
 | GEX Flip Zone      | $23.50 |
-| Net GEX            | 44M |
+| Net GEX            | 36M |
 | Scenario [A] Bull  | 78.7% |
 | Scenario [B] Neut  | 18.5% |
 | Scenario [C] Bear  | 2.8% |
@@ -44,7 +44,7 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Core Conclusion
 - L1 (Dark Pool): **ACCUMULATION** · signal=BULLISH · conf=HIGH
 - L2 (Short/CTB): **NEUTRAL** · MIXED · conf=MEDIUM
-- L3 (Options):   **GAMMA_SQUEEZE** · DTE=3 · net_gex=44M
+- L3 (Options):   **GAMMA_SQUEEZE** · DTE=3 · net_gex=36M
 - L4 (Chart):     **RANGE_BOUND** · MA=MIXED
 - Macro: **FAVORABLE** · Raw Score: **+0.65** · Patterns: **GAMMA_SQUEEZE_SETUP, FINAL_ABSORPTION**
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $34.21 | 6M | 2M | 3M | 12M | 52.5% | 0.48% | 550,000 | $23.50 | $32.00 |
+| 2026-04-14 | $34.27 | 6M | 2M | 3M | 12M | 52.5% | 0.48% | 550,000 | $23.50 | $32.00 |

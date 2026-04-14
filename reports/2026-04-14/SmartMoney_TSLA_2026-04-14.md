@@ -6,7 +6,7 @@ generated_by: Smart Money Analyzer (sma.py)
 
 # Smart Money Analysis: TSLA
 **Analysis Date**: 2026-04-14  
-**Current Price**: $365.10  
+**Current Price**: $365.39  
 **Options Expiry**: 2026-04-15  
 **Analyst**: Smart Money Analyzer v2.0
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $365.10 | 14M | -92,711 | -139,067 | 14M | 57.3% | 0.28% | 10M | $346.03 | $350.00 |
+| 2026-04-14 | $365.39 | 14M | -92,711 | -139,067 | 14M | 57.3% | 0.28% | 10M | $346.03 | $350.00 |
