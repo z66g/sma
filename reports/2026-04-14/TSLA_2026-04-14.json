@@ -1,17 +1,15 @@
 {
   "ticker": "TSLA",
   "date": "2026-04-14",
-  "price": 352.4200134277344,
+  "price": 365.8999938964844,
   "warnings": [],
-  "patterns": [
-    "FINAL_ABSORPTION"
-  ],
+  "patterns": [],
   "macro_env": "FAVORABLE",
   "scenarios": {
-    "A_bullish": 62.0,
-    "B_neutral": 30.0,
-    "C_bearish": 8.0,
-    "raw_score": 0.35
+    "A_bullish": 37.0,
+    "B_neutral": 40.0,
+    "C_bearish": 23.0,
+    "raw_score": 0.15
   },
   "l1": {
     "scenario": "ACCUMULATION",
@@ -19,34 +17,38 @@
     "confidence": "HIGH",
     "dp_pct": 56.67635404255103,
     "delta_institutional": 13777177.510859992,
-    "delta_professional": -116578.98502175491,
-    "delta_retail": -115198.52583823744,
+    "delta_professional": -92711.00434399694,
+    "delta_retail": -139066.5065159954,
     "delta_total": 13545400.0,
     "iar": 59.441390408158455,
     "divergence": "CONVERGENCE",
-    "obv_source": "cnms_signed_v2"
+    "obv_source": "cnms_signed_v2",
+    "pro_share": 0.4,
+    "retail_share": 0.6,
+    "window_days": 5,
+    "inst_abs_volume": 175294473.01544797
   },
   "l2": {
-    "scenario": "MM_HEDGE",
-    "signal": "NEUTRAL",
-    "case": "CASE_1_MM_DELTA_HEDGE",
+    "scenario": "DIRECTIONAL_SHORT",
+    "signal": "BEARISH",
+    "case": "CASE_2_DIRECTIONAL_SHORT",
     "short_pct_latest": 57.30729190329682,
     "short_avg_14d": 45.9581366000974,
     "short_slope": 0.8106562022682293,
     "slope_dir": "RISING",
     "anomaly_z": 1.7921437341953226,
-    "ctb_fee": 0.25,
-    "ctb_delta_pct": 0.0,
+    "ctb_fee": 0.2782,
+    "ctb_delta_pct": 11.280000000000001,
     "shares_available": 10000000.0
   },
   "phase": {
     "p1_date": "2026-03-30 ~ 2026-04-13",
     "p2_date": "2026-04-14",
     "p3_date": "2026-04-21 ~ 2026-05-12",
-    "p3_direction": "UPWARD",
-    "p3_target_hi": 403.74307444045735,
-    "p3_target_lo": 334.07992360641765,
-    "p3_bb_width": 18.883431668150276
+    "p3_direction": "RANGE",
+    "p3_target_hi": 383.1400146484375,
+    "p3_target_lo": 364.4599914550781,
+    "p3_bb_width": 17.75719067601001
   },
   "l3": {
     "scenario": "HEDGING",
@@ -54,22 +56,22 @@
     "expiry": "2026-04-15",
     "dte": 1,
     "max_pain": 350.0,
-    "max_pain_dist_pct": 0.6914324079241072,
-    "pc_oi": 1.1296245320414007,
-    "pc_vol": 0.7699059994470556,
-    "skew": 0.05070000000000008,
-    "net_gex": 2333376612.678136,
-    "flip_zone": 345.69829126612154
+    "max_pain_dist_pct": 4.542855398995536,
+    "pc_oi": 0.9523686254206575,
+    "pc_vol": 0.6328703560764111,
+    "skew": 0.06889999999999996,
+    "net_gex": 14604195237.592562,
+    "flip_zone": 346.2490284459036
   },
   "l4": {
     "scenario": "RANGE_BOUND",
     "signal": "NEUTRAL",
     "ma_alignment": "FULL_BEAR",
-    "sma20": 368.9114990234375,
-    "sma50": 393.02299926757814,
-    "sma200": 397.47794998168945,
-    "bb_width_pct": 18.883431668150276,
+    "sma20": 367.42849884033205,
+    "sma50": 391.7327990722656,
+    "sma200": 397.6785499572754,
+    "bb_width_pct": 17.75719067601001,
     "immediate_resistance": 383.1400146484375,
-    "immediate_support": 352.1400146484375
+    "immediate_support": 364.4599914550781
   }
 }

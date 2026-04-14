@@ -2,17 +2,18 @@
   {
     "ticker": "IONQ",
     "date": "2026-04-14",
-    "price": 29.760000228881836,
+    "price": 34.42499923706055,
     "warnings": [],
     "patterns": [
+      "GAMMA_SQUEEZE_SETUP",
       "FINAL_ABSORPTION"
     ],
     "macro_env": "FAVORABLE",
     "scenarios": {
-      "A_bullish": 62.0,
-      "B_neutral": 30.0,
-      "C_bearish": 8.0,
-      "raw_score": 0.35
+      "A_bullish": 78.7,
+      "B_neutral": 18.5,
+      "C_bearish": 2.8,
+      "raw_score": 0.65
     },
     "l1": {
       "scenario": "ACCUMULATION",
@@ -20,12 +21,16 @@
       "confidence": "HIGH",
       "dp_pct": 41.40943769544946,
       "delta_institutional": 6449757.388075999,
-      "delta_professional": 2826152.261469325,
-      "delta_retail": 2934890.3504546755,
-      "delta_total": 12210799.999999998,
+      "delta_professional": 2304417.0447696,
+      "delta_retail": 3456625.5671544,
+      "delta_total": 12210800.0,
       "iar": 1.119546898460102,
       "divergence": "CONVERGENCE",
-      "obv_source": "cnms_signed_v2"
+      "obv_source": "cnms_signed_v2",
+      "pro_share": 0.4,
+      "retail_share": 0.6,
+      "window_days": 5,
+      "inst_abs_volume": 32295397.402044002
     },
     "l2": {
       "scenario": "NEUTRAL",
@@ -36,42 +41,42 @@
       "short_slope": -0.21898529581624837,
       "slope_dir": "FLAT",
       "anomaly_z": -0.9910744259892377,
-      "ctb_fee": 0.4402,
-      "ctb_delta_pct": -14.291277258566973,
-      "shares_available": 1000000.0
+      "ctb_fee": 0.4813,
+      "ctb_delta_pct": 9.336665152203551,
+      "shares_available": 550000.0
     },
     "phase": {
       "p1_date": "2026-03-30 ~ 2026-04-13",
       "p2_date": "2026-04-14",
       "p3_date": "2026-04-21 ~ 2026-05-12",
       "p3_direction": "UPWARD",
-      "p3_target_hi": 34.31263576652327,
-      "p3_target_lo": 25.993364752275557,
-      "p3_bb_width": 27.59019315716153
+      "p3_target_hi": 34.8849983215332,
+      "p3_target_lo": 25.854118674769794,
+      "p3_bb_width": 28.835931945191206
     },
     "l3": {
-      "scenario": "VOLATILITY_EXPANSION",
-      "signal": "NEUTRAL",
+      "scenario": "GAMMA_SQUEEZE",
+      "signal": "BULLISH",
       "expiry": "2026-04-17",
       "dte": 3,
-      "max_pain": 34.0,
-      "max_pain_dist_pct": -12.470587562112247,
-      "pc_oi": 0.9177816560015513,
-      "pc_vol": 0.45236285316102876,
-      "skew": 0.08589999999999998,
-      "net_gex": -20094884.81466719,
-      "flip_zone": 29.508288630786897
+      "max_pain": 32.0,
+      "max_pain_dist_pct": 7.578122615814209,
+      "pc_oi": 0.8688440150949743,
+      "pc_vol": 0.22089441029388585,
+      "skew": -0.07030000000000003,
+      "net_gex": 37410199.420018286,
+      "flip_zone": 23.49898665765918
     },
     "l4": {
       "scenario": "RANGE_BOUND",
       "signal": "NEUTRAL",
-      "ma_alignment": "FULL_BEAR",
-      "sma20": 30.153000259399413,
-      "sma50": 33.063000144958494,
-      "sma200": 46.458599996566775,
-      "bb_width_pct": 27.59019315716153,
-      "immediate_resistance": 31.100000381469727,
-      "immediate_support": 26.739999771118164
+      "ma_alignment": "MIXED",
+      "sma20": 30.209750175476074,
+      "sma50": 32.95190013885498,
+      "sma200": 46.42512499809265,
+      "bb_width_pct": 28.835931945191206,
+      "immediate_resistance": 34.8849983215332,
+      "immediate_support": 30.850000381469727
     }
   }
 ]
