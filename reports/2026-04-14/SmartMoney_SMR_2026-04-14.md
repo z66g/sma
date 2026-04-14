@@ -6,7 +6,7 @@ generated_by: Smart Money Analyzer (sma.py)
 
 # Smart Money Analysis: SMR
 **Analysis Date**: 2026-04-14  
-**Current Price**: $10.09  
+**Current Price**: $10.02  
 **Options Expiry**: 2026-04-17  
 **Analyst**: Smart Money Analyzer v2.0
 
@@ -26,7 +26,7 @@ generated_by: Smart Money Analyzer (sma.py)
 | CTB Fee            | 0.34% |
 | Available Shares   | 4M |
 | Max Pain           | $12.00 |
-| GEX Flip Zone      | $4.00 |
+| GEX Flip Zone      | $10.46 |
 | Net GEX            | -24M |
 | Scenario [A] Bull  | 37.0% |
 | Scenario [B] Neut  | 40.0% |
@@ -37,7 +37,7 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-03-30 ~ 2026-04-13 — 주기/분배 이미 전개
 - **Phase 2 (Current)**:   2026-04-14 — DISTRIBUTION × VOLATILITY_EXPANSION
-- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — RANGE 방향 · 타겟 $10.99 / $10.01 (BB폭 37.2%)
+- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — RANGE 방향 · 타겟 $10.99 / $10.01 (BB폭 37.3%)
 
 ---
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $10.09 | -8M | -5M | -8M | -21M | 17.8% | 0.34% | 4M | $4.00 | $12.00 |
+| 2026-04-14 | $10.02 | -8M | -5M | -8M | -21M | 17.8% | 0.34% | 4M | $10.46 | $12.00 |

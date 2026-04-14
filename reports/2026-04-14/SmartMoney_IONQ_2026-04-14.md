@@ -6,7 +6,7 @@ generated_by: Smart Money Analyzer (sma.py)
 
 # Smart Money Analysis: IONQ
 **Analysis Date**: 2026-04-14  
-**Current Price**: $34.17  
+**Current Price**: $34.08  
 **Options Expiry**: 2026-04-17  
 **Analyst**: Smart Money Analyzer v2.0
 
@@ -26,8 +26,8 @@ generated_by: Smart Money Analyzer (sma.py)
 | CTB Fee            | 0.48% |
 | Available Shares   | 550,000 |
 | Max Pain           | $32.00 |
-| GEX Flip Zone      | $23.50 |
-| Net GEX            | 36M |
+| GEX Flip Zone      | $34.54 |
+| Net GEX            | 42M |
 | Scenario [A] Bull  | 78.7% |
 | Scenario [B] Neut  | 18.5% |
 | Scenario [C] Bear  | 2.8% |
@@ -37,14 +37,14 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-03-30 ~ 2026-04-13 — 주기/분배 이미 전개
 - **Phase 2 (Current)**:   2026-04-14 — ACCUMULATION × GAMMA_SQUEEZE
-- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — UPWARD 방향 · 타겟 $34.51 / $25.89 (BB폭 28.5%)
+- **Phase 3 (Target)**:    2026-04-21 ~ 2026-05-12 — UPWARD 방향 · 타겟 $34.48 / $25.90 (BB폭 28.4%)
 
 ---
 
 ## Core Conclusion
 - L1 (Dark Pool): **ACCUMULATION** · signal=BULLISH · conf=HIGH
 - L2 (Short/CTB): **NEUTRAL** · MIXED · conf=MEDIUM
-- L3 (Options):   **GAMMA_SQUEEZE** · DTE=3 · net_gex=36M
+- L3 (Options):   **GAMMA_SQUEEZE** · DTE=3 · net_gex=42M
 - L4 (Chart):     **RANGE_BOUND** · MA=MIXED
 - Macro: **FAVORABLE** · Raw Score: **+0.65** · Patterns: **GAMMA_SQUEEZE_SETUP, FINAL_ABSORPTION**
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $34.17 | 6M | 2M | 3M | 12M | 52.5% | 0.48% | 550,000 | $23.50 | $32.00 |
+| 2026-04-14 | $34.08 | 6M | 2M | 3M | 12M | 52.5% | 0.48% | 550,000 | $34.54 | $32.00 |

@@ -1450,13 +1450,21 @@ def calculate_gex(chain: Dict, spot: float) -> Dict:
             g = +raw * w if opt_type == "calls" else -raw * w
             results[strike] = results.get(strike, 0) + g
     strikes = sorted(results.keys())
-    flip = None
+    # 모든 zero crossing 수집 후 spot에 가장 가까운 것을 채택.
+    # 이유: 유동성 낮은 깊은 OTM 스트라이크는 noise 많아 여러 crossing이 생기는데,
+    # MM gamma regime 전환의 실제 의미를 지니는 건 spot 근처 crossing.
+    crossings = []
     for i in range(len(strikes)-1):
         g1 = results[strikes[i]]; g2 = results[strikes[i+1]]
-        if g1 * g2 < 0:
-            flip = (strikes[i]*abs(g2) + strikes[i+1]*abs(g1)) / (abs(g1)+abs(g2))
-            break
-    return {"gex_by_strike": results, "flip_zone": flip}
+        if g1 * g2 < 0 and (abs(g1) + abs(g2)) > 0:
+            f = (strikes[i]*abs(g2) + strikes[i+1]*abs(g1)) / (abs(g1)+abs(g2))
+            crossings.append(f)
+    flip = None
+    if crossings and spot > 0:
+        flip = min(crossings, key=lambda x: abs(x - spot))
+    elif crossings:
+        flip = crossings[0]
+    return {"gex_by_strike": results, "flip_zone": flip, "all_crossings": crossings}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
