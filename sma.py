@@ -1817,7 +1817,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:8px 0 4px;">Architect Phase Table</div>
 {_table(["Phase","Dates","Description","Status"], phase_rows)}
 <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin:12px 0 4px;">Probability Bar</div>
-<canvas id="probChart" height="120"></canvas>
+<div style="position:relative;height:90px;"><canvas id="probChart"></canvas></div>
 <div style="font-size:11px;color:{COLOR['muted']};margin-top:6px;">
   Raw Score: <b>{scenarios['raw_score']:+.2f}</b> | Macro: <b>{scenarios['macro']}</b> | Patterns: <b>{', '.join(patterns) if patterns else 'none'}</b>
 </div>
@@ -2117,11 +2117,16 @@ new Chart(document.getElementById('probChart'), {{
       label:'Probability %',
       data:[{scenarios['A_bullish']},{scenarios['B_neutral']},{scenarios['C_bearish']}],
       backgroundColor:['{COLOR['bull']}','{COLOR['warn']}','{COLOR['bear']}'],
-      borderWidth:0
+      borderWidth:0,
+      barThickness:8,
+      maxBarThickness:8,
+      categoryPercentage:0.45,
+      barPercentage:0.45
     }}]
   }},
   options:{{
     indexAxis:'y',
+    maintainAspectRatio:false,
     plugins:{{legend:{{display:false}},title:{{display:false}}}},
     scales:{{x:{{max:80,grid:{{color:'{COLOR['chart_grid']}'}}}},y:{{grid:{{display:false}}}}}}
   }}
