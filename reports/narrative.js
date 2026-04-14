@@ -10,74 +10,123 @@ const MODEL = 'claude-sonnet-4-5';
 const API = 'https://api.anthropic.com/v1/messages';
 const MAX_TURNS = 5;
 
-// 압축 시스템 프롬프트 — CLAUDE.md §1, §8, §9, §10 핵심
-const SYSTEM_PROMPT_CORE = `You are a Smart Money forensic analyst.
-Framework: CLAUDE.md 4-layer institutional flow analysis.
+// 시스템 프롬프트 — CLAUDE.md §1/§8/§9/§10/§11 핵심 + 스타일드 HTML 출력 지시
+const SYSTEM_PROMPT_CORE = `You are a Smart Money forensic analyst following the CLAUDE.md framework.
 
 CORE STANCE:
-- Bias: Zero bullish/bearish. Data and capital flows ONLY.
-- Perspective: Architect — every unusual signal is interpreted as intentional market design first, randomness second.
-- Never fabricate values not present in the JSON/CSV input.
-- Never exceed the MAX_CONFIDENCE cap provided.
+- Zero bullish/bearish bias. Data and capital flows ONLY.
+- Architect perspective — interpret unusual signals as intentional market design first.
+- Never fabricate values not in the JSON/CSV input.
+- Never exceed the MAX_CONFIDENCE cap.
 - Prefer "insufficient data" to speculation.
 
 LAYERS:
-- L1 Dark Pool: delta_institutional = FINRA CNMS signed off-exchange volume (near-100% institutional). IAR = |inst| / (|pro|+|retail|). Divergence: price trend vs institutional cumulative signed.
-- L2 Short Volume: FINRA Reg SHO short volume is NOT short interest. 40-55% is structurally normal for liquid names. Interpret by slope + CTB + anomaly_z only. NEVER say "short% > 50 means bearish".
-- L3 Options: Max Pain, P/C OI, P/C Vol, Net GEX, GEX flip zone, IV skew. Pinning only meaningful when DTE ≤ 5. Positive Net GEX = long gamma (pinning regime). Flip zone crossing = volatility regime change.
-- L4 Chart: MA alignment (FULL_BULL/BEAR/RECOVERING/MIXED), BB width, immediate/key S&R.
+- L1 Dark Pool: delta_institutional = FINRA CNMS signed off-exchange volume (~100% institutional). IAR = |inst|/(|pro|+|retail|). High IAR = dark pool dominates.
+- L2 Short Volume: FINRA Reg SHO short volume ≠ short interest. 40-55% is structurally normal. Judge only by slope + CTB + anomaly_z. NEVER read "short% > 50" as bearish.
+- L3 Options: Max Pain, P/C, Net GEX, Flip Zone, IV Skew. Pinning meaningful only DTE ≤ 5. Positive Net GEX = long gamma (pin regime). Flip crossing = vol regime change.
+- L4 Chart: MA alignment, BB width, immediate/key S&R.
 
-INTEGRATION WEIGHTS: L1=0.35, L2=0.20, L3=0.30, L4=0.15.
+WEIGHTS: L1=0.35, L2=0.20, L3=0.30, L4=0.15.
 
 PATTERNS:
-- FINAL_ABSORPTION (3+ of 5 conditions): DP% > 40, short slope < 0, CTB delta in [-5,+5]%, inst OBV > 0 over 2+ days
-- THETA_BURN: 3+ consecutive days of low volume + tight range + near-zero institutional OBV
-- LOW_CTB_PARADOX: CTB < 1% + shares_available delta < -5% = quiet institutional shorting before a known catalyst
+- FINAL_ABSORPTION: DP% > 40, short slope < 0, CTB delta ∈ [-5,+5]%, inst OBV > 0 (3+ of 5)
+- THETA_BURN: 3+ days low vol + tight range + near-zero inst OBV
+- LOW_CTB_PARADOX: CTB < 1% + shares_available ↓ > 5% = quiet institutional shorting
 - GAMMA_SQUEEZE_SETUP: P/C OI < 0.7 + P/C Vol < 0.7 + rising call OI
-- SHORT_SQUEEZE_RISK: CTB rising > 5% + short slope rising + high HTB classification
+- SHORT_SQUEEZE_RISK: CTB rising > 5% + short slope rising + HTB
 
-ARCHITECT PHASE STRUCTURE (only when N_days >= 7):
-- Phase 1 (past): What the Architect has already done — hindsight accumulation/distribution.
-- Phase 2 (present ± 1-2 weeks): Current regime.
-- Phase 3 (future trading days): Expected resolution + price targets.
-- All dates must be trading days (exclude US market holidays).
+ARCHITECT PHASES (N_days ≥ 7 only): Phase 1 past / Phase 2 present / Phase 3 future (trading days only).
 
-OUTPUT FORMAT (Korean Markdown, strict):
+══════════════════════════════════════════════════════════════
+OUTPUT: STYLED HTML FRAGMENT (Korean text, English technical terms OK)
+══════════════════════════════════════════════════════════════
 
-# {TICKER} Smart Money Forensic · {DATE}
+Return ONLY the HTML fragment body (no <!DOCTYPE>, no <html>, no <body>, no <script>, no <style> tag — use INLINE styles only).
 
-## 핵심 발견
-(1-2문장, 가장 중요한 구조적 발견. 패러독스나 교차검증 충돌이 있으면 우선)
+STRICT DESIGN SYSTEM (hardcoded HEX, never CSS variables):
+- bull:      #1A7F5A  (bullish/buy/long)
+- bear:      #CF222B  (bearish/sell/short)
+- warn:      #9A6700  (section headers, caution)
+- info:      #0969DA  (info, data source)
+- text:      #1F2328  (primary)
+- muted:     #656D76  (secondary)
+- bg-card:   #F6F8FA  (cards)
+- bg-panel:  #EAEEF2  (table headers)
+- border:    #D0D7DE  (borders)
+- alert-green: #DAFBE1 ; alert-red: #FFEBE9 ; alert-amber: #FFF8C5 ; alert-blue: #DDF4FF
 
-## 4-Layer Synthesis
-### L1 Dark Pool
-(기관 OBV 방향·규모·IAR 해석·Divergence 의미 — 숫자 그대로 인용)
-### L2 Short Volume / CTB
-(slope와 CTB 조합 해석. 절대값 %를 bearish로 해석 금지.)
-### L3 Options
-(Max Pain 거리·Net GEX 부호·flip zone 위치의 regime 의미)
-### L4 Chart
-(MA 배열·BB 폭·S&R 거리)
+FONT: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif  (apply to all inline styles)
 
-## Architect Phase Timeline
-(N_days ≥ 7일 때만 채움. 아니면 "시계열 부족으로 Phase 1 해석 유보" 명시)
+MANDATORY SECTION PATTERN:
+Each section starts with a header row like this:
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION NAME</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <span style="background:#DAFBE1;color:#1A7F5A;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Key finding</span>
+  </div>
+</div>
 
-## Probability Matrix
-[A] Bullish XX% · [B] Neutral XX% · [C] Bearish XX%
-(입력 scenarios 값 그대로 인용)
+BADGE TYPES (pill shape):
+- bullish: background:#DAFBE1 color:#1A7F5A
+- bearish: background:#FFEBE9 color:#CF222B
+- warn:    background:#FFF8C5 color:#9A6700
+- info:    background:#DDF4FF color:#0969DA
 
-## Decisive Triggers
-(현재 가설을 확정/반전시킬 **구체적 수치 임계값** 3-5개)
+TABLES:
+<table style="border-collapse:collapse;width:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;">
+  <thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">H</th>...</tr></thead>
+  <tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;">V</td>...</tr></tbody>
+</table>
 
-## Confidence & Limitations
-신뢰도: {MAX_CONFIDENCE}
-데이터 제약: (확보 일수, 누락 지표, PARTIAL 섹션 언급)
+PROBABILITY BAR (CRITICAL — use this exact pattern):
+<div style="display:flex;flex-direction:column;gap:4px;font-size:12px;">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="width:90px;color:#1A7F5A;font-weight:600;">[A] Bullish</span>
+    <div style="flex:1;background:#EAEEF2;border-radius:4px;overflow:hidden;"><div style="width:XX%;background:#1A7F5A;height:14px;"></div></div>
+    <span style="width:40px;text-align:right;font-weight:600;">XX%</span>
+  </div>
+  (similarly for B Neutral with #9A6700 and C Bearish with #CF222B)
+</div>
 
-PROHIBITIONS:
-- 주가 예측 금지. 시나리오별 확률만 제시.
-- 어느 시나리오 확률도 80%를 초과하지 않음.
-- Phase 1/2/3에 주말·휴장일 날짜 사용 금지.
-- 원본 JSON에 없는 숫자 언급 금지.
+REQUIRED SECTIONS (use this order, each with the header pattern):
+
+1. ▶ 핵심 발견 (KEY FINDING)
+   1-2 문장으로 가장 중요한 구조적 신호. 패러독스나 충돌이 있으면 우선.
+   Use <p style="font-size:13px;line-height:1.7;color:#1F2328;">.
+
+2. ▶ 4-LAYER SYNTHESIS
+   4개 카드 (grid 2×2): L1 Dark Pool / L2 Short-CTB / L3 Options / L4 Chart.
+   Each card:
+   <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
+     <div style="font-size:11px;color:#656D76;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">L1 DARK POOL</div>
+     <div style="font-size:15px;font-weight:600;color:#1A7F5A;">ACCUMULATION</div>
+     <div style="font-size:12px;color:#1F2328;line-height:1.6;margin-top:6px;">...</div>
+   </div>
+   Wrap 4 cards in grid:
+   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">...</div>
+
+3. ▶ ARCHITECT PHASE TIMELINE  (skip entirely if N_days < 7, instead show one-line notice)
+   3열 테이블: Phase | Dates | Description
+
+4. ▶ PROBABILITY MATRIX
+   위의 probability bar 패턴 3줄. 확률은 scenarios 값 그대로.
+   바 아래에 small: Raw Score · Macro · Confidence.
+
+5. ▶ DECISIVE TRIGGERS
+   테이블: Trigger | Direction | Threshold | Implication
+   3-5 rows with specific numeric thresholds.
+
+6. ▶ CONFIDENCE & LIMITATIONS
+   배지 하나: 신뢰도 {MAX_CONFIDENCE} (colored accordingly)
+   + 짧은 문단으로 data gap / PARTIAL 섹션 / 확보 일수 명시.
+
+STRICT PROHIBITIONS:
+- 절대 <script>, <style>, <iframe>, event handlers(onclick= etc), external URLs(javascript:, data:) 포함 금지.
+- 주가 예측 금지. 시나리오 확률만.
+- 어떤 시나리오도 80% 초과 금지.
+- 주말/휴장일 날짜 금지.
+- 원본 JSON/CSV에 없는 숫자 언급 금지.
+- Markdown 문법(# ## - **) 사용 금지. 순수 HTML만.
 `;
 
 // ─── Utility ───
@@ -161,7 +210,7 @@ async function callClaudeMultiTurn(apiKey, systemPrompt, userContent, statusCb) 
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 4096,
+        max_tokens: 8192,
         temperature: 0,
         system: systemPrompt,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
@@ -194,20 +243,48 @@ async function callClaudeMultiTurn(apiKey, systemPrompt, userContent, statusCb) 
   throw new Error('MAX_TURNS 초과 — 모델이 도구 호출 루프에서 빠져나오지 못함');
 }
 
-// Minimal Markdown → HTML (헤더, 굵게, 목록, 줄바꿈)
-function md2html(md) {
-  let h = md;
-  h = h.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  h = h.replace(/(?:^|\n)(- .+(?:\n- .+)*)/g, (m) => {
-    const items = m.trim().split('\n').map(l => l.replace(/^- /,'')).map(i => `<li>${i}</li>`).join('');
-    return `\n<ul>${items}</ul>`;
-  });
-  h = h.replace(/\n\n/g, '</p><p>');
-  return `<p>${h}</p>`;
+// HTML Sanitizer — 허용 태그/속성만 통과시키고 나머지 제거
+function sanitizeHTML(raw) {
+  // 1) Claude가 실수로 <!DOCTYPE>나 fenced code block을 섞어도 제거
+  let s = raw.replace(/^```html\s*/i, '').replace(/\s*```$/i, '').trim();
+  s = s.replace(/<\!DOCTYPE[^>]*>/gi, '');
+  s = s.replace(/<html[^>]*>|<\/html>|<body[^>]*>|<\/body>|<head[^>]*>[\s\S]*?<\/head>/gi, '');
+
+  // 2) DOMParser로 파싱 후 위험 노드/속성 제거
+  const doc = new DOMParser().parseFromString(`<div>${s}</div>`, 'text/html');
+  const root = doc.body.firstChild;
+  const DANGEROUS_TAGS = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','BASE','FORM','INPUT','BUTTON','TEXTAREA']);
+
+  function walk(node) {
+    // 자식을 먼저 순회 (remove 중 index shift 방지하려고 array copy)
+    for (const child of Array.from(node.childNodes)) walk(child);
+    if (node.nodeType !== 1) return;
+    if (DANGEROUS_TAGS.has(node.tagName)) {
+      node.remove();
+      return;
+    }
+    // 속성 필터링
+    for (const attr of Array.from(node.attributes)) {
+      const n = attr.name.toLowerCase();
+      const v = attr.value;
+      if (n.startsWith('on')) { node.removeAttribute(attr.name); continue; }
+      if (n === 'href' || n === 'src') {
+        if (/^\s*javascript:/i.test(v) || /^\s*data:/i.test(v)) {
+          node.removeAttribute(attr.name);
+        }
+        continue;
+      }
+      if (n === 'style') {
+        // style 값에서 url(...), expression(), javascript: 제거
+        const cleaned = v.replace(/url\s*\([^)]*\)/gi,'').replace(/expression\s*\([^)]*\)/gi,'').replace(/javascript:/gi,'');
+        node.setAttribute('style', cleaned);
+        continue;
+      }
+      // class, id, width, height 등은 허용
+    }
+  }
+  walk(root);
+  return root.innerHTML;
 }
 
 // ─── UI Hookup ───
@@ -231,7 +308,7 @@ window.SMA_Narrative = {
               <button id="narr-key-edit-${ticker}" style="padding:6px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:11px;">API Key 변경</button>
               <span id="narr-status-${ticker}" style="font-size:11px;color:#656D76;"></span>
             </div>
-            <div id="narr-output-${ticker}" style="background:#FFFFFF;border:0.5px solid #D0D7DE;border-radius:4px;padding:16px;min-height:80px;font-size:13px;line-height:1.8;color:#1F2328;"></div>
+            <div id="narr-output-${ticker}" style="background:#FFFFFF;border:0.5px solid #D0D7DE;border-radius:4px;padding:20px 24px;min-height:80px;font-size:13px;line-height:1.7;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"></div>
             <div id="narr-save-area-${ticker}" style="display:none;margin-top:8px;">
               <button id="narr-commit-${ticker}" style="padding:6px 14px;background:#9A6700;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px;">📝 리포트 저장 (repo 커밋)</button>
               <span id="narr-commit-status-${ticker}" style="font-size:11px;color:#656D76;margin-left:8px;"></span>
@@ -309,8 +386,8 @@ window.SMA_Narrative = {
           s => status.textContent = s
         );
 
-        lastMarkdown = text;
-        output.innerHTML = md2html(text);
+        lastMarkdown = text;   // 저장용 원본
+        output.innerHTML = sanitizeHTML(text);
         const cost = usage ? ((usage.input_tokens*3 + usage.output_tokens*15)/1e6).toFixed(4) : '?';
         status.textContent = `완료 · 입력 ${usage?.input_tokens||'?'} · 출력 ${usage?.output_tokens||'?'} · ~$${cost}`;
         saveArea.style.display = 'block';
@@ -330,16 +407,15 @@ window.SMA_Narrative = {
       commitSt.textContent = '커밋 중...';
       try {
         const today = new Date().toISOString().slice(0,10);
-        const path = `reports/tickers/${ticker}/narratives/${today}.md`;
+        const path = `reports/tickers/${ticker}/narratives/${today}.html`;
         // Get file SHA if exists
         let sha = undefined;
         const getRes = await fetch(`https://api.github.com/repos/z66g/sma/contents/${path}`, {
           headers: { 'Authorization': 'Bearer ' + ghPat, 'Accept': 'application/vnd.github+json' }
         });
         if (getRes.ok) { sha = (await getRes.json()).sha; }
-        const content = btoa(unescape(encodeURIComponent(
-          `---\nticker: ${ticker}\ndate: ${today}\ngenerated_by: Claude Sonnet 4.5 (on-demand)\n---\n\n${lastMarkdown}\n`
-        )));
+        const page = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${ticker} AI Narrative · ${today}</title></head><body style="background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;"><div style="max-width:1000px;margin:0 auto;"><div style="font-size:11px;color:#656D76;margin-bottom:12px;"><a href="../../" style="color:#0969DA;text-decoration:none;">← ${ticker} page</a> · Generated by Claude Sonnet 4.5 · ${today}</div>${sanitizeHTML(lastMarkdown)}</div></body></html>`;
+        const content = btoa(unescape(encodeURIComponent(page)));
         const putRes = await fetch(`https://api.github.com/repos/z66g/sma/contents/${path}`, {
           method: 'PUT',
           headers: { 'Authorization': 'Bearer ' + ghPat, 'Accept': 'application/vnd.github+json' },
