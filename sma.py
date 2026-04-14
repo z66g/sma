@@ -1462,17 +1462,97 @@ def calculate_gex(chain: Dict, spot: float) -> Dict:
 # ─────────────────────────────────────────────────────────────────────────────
 # 렌더링
 # ─────────────────────────────────────────────────────────────────────────────
+_BADGE_PALETTE = {
+    "pos":   ("alert_green", "bull"),
+    "neg":   ("alert_red",   "bear"),
+    "warn":  ("alert_amber", "warn"),
+    "info":  ("alert_blue",  "info"),
+    "muted": ("bg_panel",    "muted"),   # 그레이톤
+}
+
 def _badge(text, kind="info"):
-    bg = {"pos":COLOR["alert_green"], "neg":COLOR["alert_red"], "warn":COLOR["alert_amber"], "info":COLOR["alert_blue"]}[kind]
-    fg = {"pos":COLOR["bull"],        "neg":COLOR["bear"],       "warn":COLOR["warn"],         "info":COLOR["info"]}[kind]
+    bg_key, fg_key = _BADGE_PALETTE.get(kind, _BADGE_PALETTE["info"])
+    bg = COLOR[bg_key]; fg = COLOR[fg_key]
     return f'<span style="background:{bg};color:{fg};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{html.escape(str(text))}</span>'
 
-def _section_header(n, name, badges: List[Tuple[str, str]] = None):
-    b = "".join(_badge(t, k) for t, k in (badges or []))
+def _scenario_badge_tt(scenario: str, signal: str, layer: str = "L1") -> str:
+    """
+    시나리오 배지 자체가 호버 툴팁 트리거. 배지 색상은 signal(BULLISH/BEARISH/NEUTRAL)에
+    따라 결정. 툴팁엔 해당 레이어의 시나리오 옵션과 결정 로직 요약.
+    """
+    kind = {"BULLISH":"pos", "BEARISH":"neg"}.get(signal, "warn")
+    bg_key, fg_key = _BADGE_PALETTE[kind]
+    bg = COLOR[bg_key]; fg = COLOR[fg_key]
+
+    if layer == "L1":
+        body = (
+            "<b>L1 Dark Pool 시나리오</b><br>"
+            "기관 OBV 방향·다크풀 %·Divergence 조합으로 결정."
+            "<table>"
+            "<tr><th>시나리오</th><th>조건 요약</th><th>색상</th></tr>"
+            "<tr><td>ACCUMULATION</td><td>Inst Δ > 0 혹은 BULLISH_DIVERGENCE × DP%&gt;35</td><td>녹색 (BULLISH)</td></tr>"
+            "<tr><td>DISTRIBUTION</td><td>Inst Δ &lt; 0 혹은 BEARISH_DIVERGENCE × DP%&gt;35</td><td>적색 (BEARISH)</td></tr>"
+            "<tr><td>NEUTRAL</td><td>명확한 방향 없음</td><td>황색 (NEUTRAL)</td></tr>"
+            "<tr><td>AMBIGUOUS</td><td>상충 신호 (Inst↑ 와 BEARISH_DIV 등)</td><td>황색</td></tr>"
+            "</table>"
+        )
+    elif layer == "L2":
+        body = (
+            "<b>L2 Short Volume 시나리오</b><br>"
+            "Short% slope + CTB 방향 + anomaly_z 조합."
+            "<table>"
+            "<tr><th>시나리오</th><th>조건</th><th>색상</th></tr>"
+            "<tr><td>SHORT_SQUEEZE_RISK</td><td>HTB(CTB&gt;15) × slope RISING</td><td>녹색 (BULLISH)</td></tr>"
+            "<tr><td>SHORT_COVERING</td><td>slope FALLING × CTB 하락/ETB</td><td>녹색 (BULLISH)</td></tr>"
+            "<tr><td>DIRECTIONAL_SHORT</td><td>CTB 상승 + slope RISING (CASE ②)</td><td>적색 (BEARISH)</td></tr>"
+            "<tr><td>MM_HEDGE</td><td>slope RISING + CTB 변동 없음 (CASE ①)</td><td>황색 (NEUTRAL)</td></tr>"
+            "<tr><td>NEUTRAL</td><td>기타</td><td>황색</td></tr>"
+            "</table>"
+        )
+    elif layer == "L3":
+        body = (
+            "<b>L3 Options 시나리오</b><br>"
+            "Max Pain 거리·Net GEX 부호·P/C·IV Skew 조합."
+            "<table>"
+            "<tr><th>시나리오</th><th>조건</th><th>색상</th></tr>"
+            "<tr><td>PINNING</td><td>DTE≤5 × |spot−MaxPain|/MaxPain&lt;0.5%</td><td>황색 (NEUTRAL)</td></tr>"
+            "<tr><td>GAMMA_SQUEEZE</td><td>P/C&lt;0.7 × call-heavy skew</td><td>녹색 (BULLISH)</td></tr>"
+            "<tr><td>VOLATILITY_EXPANSION</td><td>Net GEX &lt; 0 (MM short gamma)</td><td>색상 상황별</td></tr>"
+            "<tr><td>HEDGING</td><td>기본/중립 헤지 구간</td><td>황색 (NEUTRAL)</td></tr>"
+            "</table>"
+        )
+    else:  # L4
+        body = (
+            "<b>L4 Chart 시나리오</b><br>"
+            "MA 배열 × short/med slope × BB width."
+            "<table>"
+            "<tr><th>시나리오</th><th>조건</th><th>색상</th></tr>"
+            "<tr><td>UPTREND</td><td>FULL_BULL/RECOVERING × 양의 slope</td><td>녹색</td></tr>"
+            "<tr><td>DOWNTREND</td><td>FULL_BEAR × 음의 slope</td><td>적색</td></tr>"
+            "<tr><td>BREAKOUT_PENDING</td><td>BB 수축 × 단기 slope 양전환</td><td>황색</td></tr>"
+            "<tr><td>RANGE_BOUND</td><td>명확한 방향 없음</td><td>황색</td></tr>"
+            "</table>"
+        )
+
+    return (
+        f'<span class="tt" style="background:{bg};color:{fg};padding:2px 8px;border-radius:12px;'
+        f'font-size:11px;font-weight:600;">{html.escape(str(scenario))}'
+        f'<span class="tt-body">{body}</span></span>'
+    )
+
+def _section_header(n, name, badges=None):
+    """badges: list of (text, kind) tuples OR raw HTML strings."""
+    parts = []
+    for item in (badges or []):
+        if isinstance(item, tuple):
+            parts.append(_badge(*item))
+        else:
+            parts.append(item)   # raw HTML (e.g. tooltip badge)
+    b = "".join(parts)
     return f"""
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid {COLOR['warn']};margin:24px 0 12px 0;padding-bottom:4px;">
   <span style="color:{COLOR['warn']};font-weight:700;font-size:14px;">▶ SECTION {n} · {html.escape(name)}</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;">{b}</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">{b}</div>
 </div>
 """
 
@@ -1577,8 +1657,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 """
 
     # Section 1 (L1)
-    l1_badges = [(l1.get("scenario","NEUTRAL"), "pos" if l1.get("signal")=="BULLISH" else "neg" if l1.get("signal")=="BEARISH" else "warn"),
-                 (f"Conf {l1.get('confidence','LOW')}", "info")]
+    l1_badges = [_scenario_badge_tt(l1.get("scenario","NEUTRAL"), l1.get("signal","NEUTRAL"), "L1"),
+                 (f"Conf {l1.get('confidence','LOW')}", "muted")]
     obv = l1.get("obv", {}) or {}
     sessions = l1.get("sessions", [])
     session_rows = [[s["date"],
@@ -1599,8 +1679,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">OBV 4-Way Decomposition (Δ)</div>
     <div style="position:relative;height:200px;"><canvas id="obv4way"></canvas></div>
     <div style="font-size:11px;color:{COLOR['text']};margin-top:8px;text-align:center;">
-      IAR (Institutional Absorption Ratio): <b>{fmt_num(obv.get('iar'),'',2)}</b><span class="tt">ⓘ<span class="tt-body"><b>IAR = |Inst Δ| / (|Pro Δ| + |Retail Δ|)</b><br>기관 플로 지배력 측정.<table><tr><th>IAR</th><th>해석</th></tr><tr><td>&gt; 1.5</td><td>기관 지배적 — 방향성 의도 강함</td></tr><tr><td>0.8–1.5</td><td>혼합 — 기관 주도 불분명</td></tr><tr><td>&lt; 0.8</td><td>리테일/프로 주도 — 신뢰도 낮음</td></tr></table></span></span>
-      · Divergence: <b>{obv.get('divergence','N/A')}</b><span class="tt">ⓘ<span class="tt-body"><b>가격 slope vs 기관 cumulative signed volume slope</b> (5일 회귀).<table><tr><th>상태</th><th>Architect 해석</th></tr><tr><td>BULLISH_DIV</td><td>가격↓ + 기관↑ = 공포 속 축적</td></tr><tr><td>BEARISH_DIV</td><td>가격↑ + 기관↓ = 강세 속 분배</td></tr><tr><td>CONVERGENCE</td><td>같은 방향 — 추세 확인</td></tr><tr><td>NEUTRAL</td><td>의미있는 기울기 없음</td></tr></table></span></span>
+      IAR (Institutional Absorption Ratio): <b>{fmt_num(obv.get('iar'),'',2)}</b><span class="tt tt-i">ⓘ<span class="tt-body"><b>IAR = |Inst Δ| / (|Pro Δ| + |Retail Δ|)</b><br>기관 플로 지배력 측정.<table><tr><th>IAR</th><th>해석</th></tr><tr><td>&gt; 1.5</td><td>기관 지배적 — 방향성 의도 강함</td></tr><tr><td>0.8–1.5</td><td>혼합 — 기관 주도 불분명</td></tr><tr><td>&lt; 0.8</td><td>리테일/프로 주도 — 신뢰도 낮음</td></tr></table></span></span>
+      · Divergence: <b>{obv.get('divergence','N/A')}</b><span class="tt tt-i">ⓘ<span class="tt-body"><b>가격 slope vs 기관 cumulative signed volume slope</b> (5일 회귀).<table><tr><th>상태</th><th>Architect 해석</th></tr><tr><td>BULLISH_DIV</td><td>가격↓ + 기관↑ = 공포 속 축적</td></tr><tr><td>BEARISH_DIV</td><td>가격↑ + 기관↓ = 강세 속 분배</td></tr><tr><td>CONVERGENCE</td><td>같은 방향 — 추세 확인</td></tr><tr><td>NEUTRAL</td><td>의미있는 기울기 없음</td></tr></table></span></span>
       {("<br>Sessions · " + " · ".join(f"{k}: {fmt_num(v,'',0)}" for k,v in (obv.get('session_volume') or {}).items())) if obv.get('session_volume') else ""}
       {"<br><span style='color:"+COLOR['info']+";'>Source: Polygon 1-min bars ("+str(obv.get('minute_bar_count','?'))+")</span>" if obv.get('_source')=='polygon_1min' else ""}
     </div>
@@ -1616,8 +1696,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 """
 
     # Section 2 (L2)
-    l2_badges = [(l2.get("scenario","NEUTRAL"), "pos" if l2.get("signal")=="BULLISH" else "neg" if l2.get("signal")=="BEARISH" else "warn"),
-                 (f"Case {l2.get('case','N/A').replace('CASE_','')}" , "info")]
+    l2_badges = [_scenario_badge_tt(l2.get("scenario","NEUTRAL"), l2.get("signal","NEUTRAL"), "L2"),
+                 (f"Case {l2.get('case','N/A').replace('CASE_','')}" , "muted")]
     hist = l2.get("history", [])
     short_rows = [[h["date"], fmt_num(h.get("short_vol"),"",0), fmt_num(h.get("total_vol"),"",0),
                    f"{h.get('short_pct'):.1f}%" if h.get("short_pct") is not None else "N/A"]
@@ -1646,8 +1726,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 """
 
     # Section 3 (L3)
-    l3_badges = [(l3.get("scenario","NEUTRAL"), "pos" if l3.get("signal")=="BULLISH" else "neg" if l3.get("signal")=="BEARISH" else "warn"),
-                 (f"DTE {l3.get('dte','-')}", "info")]
+    l3_badges = [_scenario_badge_tt(l3.get("scenario","NEUTRAL"), l3.get("signal","NEUTRAL"), "L3"),
+                 (f"DTE {l3.get('dte','-')}", "muted")]
     gex_by_strike = l3.get("gex_by_strike", {}) or {}
     gex_labels = sorted(gex_by_strike.keys())
     gex_vals   = [gex_by_strike[k] for k in gex_labels]
@@ -1677,8 +1757,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 """
 
     # Section 4 (L4)
-    l4_badges = [(l4.get("scenario","NEUTRAL"), "pos" if l4.get("signal")=="BULLISH" else "neg" if l4.get("signal")=="BEARISH" else "warn"),
-                 (l4.get("ma_alignment","N/A"), "info")]
+    l4_badges = [_scenario_badge_tt(l4.get("scenario","NEUTRAL"), l4.get("signal","NEUTRAL"), "L4"),
+                 (l4.get("ma_alignment","N/A"), "muted")]
     l4_rows = [
         ["Current",   f"${l4.get('current_price',0):.2f}"],
         ["SMA 20 / 50 / 200", f"${l4.get('sma20',0):.2f} / " + (f"${l4.get('sma50'):.2f}" if l4.get('sma50') else "-") + " / " + (f"${l4.get('sma200'):.2f}" if l4.get('sma200') else "-")],
@@ -1783,8 +1863,9 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   .hdr .sub {{ font-size:12px; color:{COLOR['muted']}; }}
   @media print {{ body{{padding:12px;font-size:11px}} canvas{{max-height:220px}} }}
 
-  /* Hover tooltip (pure CSS) */
-  .tt {{ position:relative; display:inline-block; cursor:help; color:{COLOR['info']}; margin-left:3px; font-weight:600; font-size:11px; }}
+  /* Hover tooltip (pure CSS) — positioning only, styling via inline */
+  .tt {{ position:relative; display:inline-block; cursor:help; }}
+  .tt-i {{ color:{COLOR['info']}; margin-left:3px; font-weight:600; font-size:11px; }}
   .tt .tt-body {{
     visibility:hidden; opacity:0; transition:opacity 0.12s;
     position:absolute; left:50%; transform:translateX(-50%);

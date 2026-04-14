@@ -6,7 +6,7 @@ generated_by: Smart Money Analyzer (sma.py)
 
 # Smart Money Analysis: TSLA
 **Analysis Date**: 2026-04-14  
-**Current Price**: $365.03  
+**Current Price**: $365.45  
 **Options Expiry**: 2026-04-15  
 **Analyst**: Smart Money Analyzer v2.0
 
@@ -26,7 +26,7 @@ generated_by: Smart Money Analyzer (sma.py)
 | CTB Fee            | 0.28% |
 | Available Shares   | 10M |
 | Max Pain           | $350.00 |
-| GEX Flip Zone      | $346.04 |
+| GEX Flip Zone      | $346.03 |
 | Net GEX            | 15B |
 | Scenario [A] Bull  | 37.0% |
 | Scenario [B] Neut  | 40.0% |
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $365.03 | 14M | -92,711 | -139,067 | 14M | 57.3% | 0.28% | 10M | $346.04 | $350.00 |
+| 2026-04-14 | $365.45 | 14M | -92,711 | -139,067 | 14M | 57.3% | 0.28% | 10M | $346.03 | $350.00 |
