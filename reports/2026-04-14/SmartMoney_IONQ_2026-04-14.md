@@ -27,7 +27,7 @@ generated_by: Smart Money Analyzer (sma.py)
 | Available Shares   | 550,000 |
 | Max Pain           | $32.00 |
 | GEX Flip Zone      | $34.54 |
-| Net GEX            | 43M |
+| Net GEX            | 45M |
 | Scenario [A] Bull  | 78.7% |
 | Scenario [B] Neut  | 18.5% |
 | Scenario [C] Bear  | 2.8% |
@@ -44,7 +44,7 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Core Conclusion
 - L1 (Dark Pool): **ACCUMULATION** · signal=BULLISH · conf=HIGH
 - L2 (Short/CTB): **NEUTRAL** · MIXED · conf=MEDIUM
-- L3 (Options):   **GAMMA_SQUEEZE** · DTE=3 · net_gex=43M
+- L3 (Options):   **GAMMA_SQUEEZE** · DTE=3 · net_gex=45M
 - L4 (Chart):     **RANGE_BOUND** · MA=MIXED
 - Macro: **FAVORABLE** · Raw Score: **+0.65** · Patterns: **GAMMA_SQUEEZE_SETUP, FINAL_ABSORPTION**
 
