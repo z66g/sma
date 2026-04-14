@@ -38,96 +38,160 @@ PATTERNS:
 ARCHITECT PHASES (N_days ≥ 7 only): Phase 1 past / Phase 2 present / Phase 3 future (trading days only).
 
 ══════════════════════════════════════════════════════════════
-OUTPUT: STYLED HTML FRAGMENT (Korean text, English technical terms OK)
+OUTPUT: FILL THIS EXACT HTML TEMPLATE.  NO MARKDOWN.  INLINE STYLES ONLY.
 ══════════════════════════════════════════════════════════════
 
-Return ONLY the HTML fragment body (no <!DOCTYPE>, no <html>, no <body>, no <script>, no <style> tag — use INLINE styles only).
+CRITICAL: Copy the template below verbatim. Replace ONLY text inside {{...}} or the content between tags.
+DO NOT omit any section. DO NOT change the class names, style attributes, or structure.
+The 2×2 CARD GRID and the PROBABILITY BAR are MANDATORY visual elements — not optional.
 
-STRICT DESIGN SYSTEM (hardcoded HEX, never CSS variables):
-- bull:      #1A7F5A  (bullish/buy/long)
-- bear:      #CF222B  (bearish/sell/short)
-- warn:      #9A6700  (section headers, caution)
-- info:      #0969DA  (info, data source)
-- text:      #1F2328  (primary)
-- muted:     #656D76  (secondary)
-- bg-card:   #F6F8FA  (cards)
-- bg-panel:  #EAEEF2  (table headers)
-- border:    #D0D7DE  (borders)
-- alert-green: #DAFBE1 ; alert-red: #FFEBE9 ; alert-amber: #FFF8C5 ; alert-blue: #DDF4FF
+════ TEMPLATE START (copy this entire block, fill content) ════
 
-FONT: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif  (apply to all inline styles)
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1F2328;">
 
-MANDATORY SECTION PATTERN:
-Each section starts with a header row like this:
+<!-- ━━━ 제목 ━━━ -->
+<div style="margin-bottom:16px;">
+  <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;color:#1F2328;">{{TICKER}} Smart Money Forensic · {{DATE}}</h1>
+  <div style="font-size:11px;color:#656D76;">{{price_and_patterns_oneliner}}</div>
+</div>
+
+<!-- ━━━ 1. KEY FINDING ━━━ -->
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION NAME</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;">
-    <span style="background:#DAFBE1;color:#1A7F5A;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Key finding</span>
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ 핵심 발견</span>
+  <span style="background:{{kf_badge_bg}};color:{{kf_badge_fg}};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{{KF_BADGE_TEXT}}</span>
+</div>
+<p style="font-size:13px;line-height:1.7;color:#1F2328;margin:0;">{{핵심 1-2문장, 패러독스/충돌 우선}}</p>
+
+<!-- ━━━ 2. 4-LAYER SYNTHESIS (2×2 GRID) ━━━ -->
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ 4-LAYER SYNTHESIS</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
+    <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L1 DARK POOL</div>
+    <div style="font-size:15px;font-weight:600;color:{{l1_color}};margin-bottom:6px;">{{l1_scenario_label}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L1 설명: 기관 OBV 방향·규모·IAR·Divergence 해석, 실제 수치 인용}}</div>
+  </div>
+  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
+    <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L2 SHORT · CTB</div>
+    <div style="font-size:15px;font-weight:600;color:{{l2_color}};margin-bottom:6px;">{{l2_scenario_label}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L2 설명: slope + CTB 조합. 절대 %를 bearish로 해석 금지}}</div>
+  </div>
+  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
+    <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L3 OPTIONS</div>
+    <div style="font-size:15px;font-weight:600;color:{{l3_color}};margin-bottom:6px;">{{l3_scenario_label}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L3 설명: Max Pain 거리, Net GEX 부호, Flip Zone 위치 regime}}</div>
+  </div>
+  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
+    <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L4 CHART</div>
+    <div style="font-size:15px;font-weight:600;color:{{l4_color}};margin-bottom:6px;">{{l4_scenario_label}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L4 설명: MA 배열, BB 폭, S/R 거리}}</div>
   </div>
 </div>
 
-BADGE TYPES (pill shape):
-- bullish: background:#DAFBE1 color:#1A7F5A
-- bearish: background:#FFEBE9 color:#CF222B
-- warn:    background:#FFF8C5 color:#9A6700
-- info:    background:#DDF4FF color:#0969DA
-
-TABLES:
-<table style="border-collapse:collapse;width:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;">
-  <thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">H</th>...</tr></thead>
-  <tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;">V</td>...</tr></tbody>
+<!-- ━━━ 3. ARCHITECT PHASE (only if N_days >= 7, else skip block entirely and replace with notice) ━━━ -->
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ ARCHITECT PHASE TIMELINE</span>
+  <span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{{N_days}}일 관찰</span>
+</div>
+<!-- (N_days < 7 이면 위 테이블 대신 아래 문단만 렌더:)
+<p style="font-size:12px;color:#9A6700;background:#FFF8C5;padding:8px 12px;border-radius:4px;">시계열 {{N_days}}일로 Phase 1(과거 setup)을 구조적으로 해석하기엔 부족합니다. 최소 7일+ 필요.</p>
+-->
+<table style="border-collapse:collapse;width:100%;font-size:12px;margin-top:4px;">
+  <thead>
+    <tr>
+      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Phase</th>
+      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Dates (trading days)</th>
+      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 1 Setup</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p1_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p1_desc}}</td></tr>
+    <tr style="background:#F6F8FA;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 2 Transition</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p2_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p2_desc}}</td></tr>
+    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 3 Resolution</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p3_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p3_desc_with_targets}}</td></tr>
+  </tbody>
 </table>
 
-PROBABILITY BAR (CRITICAL — use this exact pattern):
-<div style="display:flex;flex-direction:column;gap:4px;font-size:12px;">
-  <div style="display:flex;align-items:center;gap:8px;">
-    <span style="width:90px;color:#1A7F5A;font-weight:600;">[A] Bullish</span>
-    <div style="flex:1;background:#EAEEF2;border-radius:4px;overflow:hidden;"><div style="width:XX%;background:#1A7F5A;height:14px;"></div></div>
-    <span style="width:40px;text-align:right;font-weight:600;">XX%</span>
+<!-- ━━━ 4. PROBABILITY MATRIX (MANDATORY HORIZONTAL BARS) ━━━ -->
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ PROBABILITY MATRIX</span>
+  <span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Raw Score {{raw_score}}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="width:100px;color:#1A7F5A;font-weight:600;">[A] Bullish</span>
+    <div style="flex:1;background:#EAEEF2;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{A_pct}}%;background:#1A7F5A;height:16px;"></div></div>
+    <span style="width:48px;text-align:right;font-weight:600;color:#1A7F5A;">{{A_pct}}%</span>
   </div>
-  (similarly for B Neutral with #9A6700 and C Bearish with #CF222B)
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="width:100px;color:#9A6700;font-weight:600;">[B] Neutral</span>
+    <div style="flex:1;background:#EAEEF2;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{B_pct}}%;background:#9A6700;height:16px;"></div></div>
+    <span style="width:48px;text-align:right;font-weight:600;color:#9A6700;">{{B_pct}}%</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="width:100px;color:#CF222B;font-weight:600;">[C] Bearish</span>
+    <div style="flex:1;background:#EAEEF2;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{C_pct}}%;background:#CF222B;height:16px;"></div></div>
+    <span style="width:48px;text-align:right;font-weight:600;color:#CF222B;">{{C_pct}}%</span>
+  </div>
+</div>
+<div style="font-size:11px;color:#656D76;margin-top:6px;">Macro: {{macro_env}} · Patterns: {{patterns_or_none}}</div>
+
+<!-- ━━━ 5. DECISIVE TRIGGERS ━━━ -->
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ DECISIVE TRIGGERS</span>
+</div>
+<table style="border-collapse:collapse;width:100%;font-size:12px;">
+  <thead>
+    <tr>
+      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Trigger</th>
+      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Direction</th>
+      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Threshold</th>
+      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Implication</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- 3~5 rows. Each row direction cell uses colored pill: -->
+    <!-- bullish pill: <span style="background:#DAFBE1;color:#1A7F5A;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">BULLISH</span> -->
+    <!-- bearish pill: <span style="background:#FFEBE9;color:#CF222B;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">BEARISH</span> -->
+    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{trigger1_name}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{pill}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;font-family:monospace;">{{threshold1}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{implication1}}</td></tr>
+    <tr style="background:#F6F8FA;">{{...}}</tr>
+    <tr style="background:#FFFFFF;">{{...}}</tr>
+  </tbody>
+</table>
+
+<!-- ━━━ 6. CONFIDENCE & LIMITATIONS ━━━ -->
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ CONFIDENCE & LIMITATIONS</span>
+  <span style="background:{{conf_bg}};color:{{conf_fg}};padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">{{MAX_CONFIDENCE}}</span>
+</div>
+<p style="font-size:12px;line-height:1.7;color:#1F2328;margin:0;">{{N_days일 시계열 · 누락 지표 · PARTIAL 섹션 등 data gap 명시}}</p>
+
 </div>
 
-REQUIRED SECTIONS (use this order, each with the header pattern):
+════ TEMPLATE END ════
 
-1. ▶ 핵심 발견 (KEY FINDING)
-   1-2 문장으로 가장 중요한 구조적 신호. 패러독스나 충돌이 있으면 우선.
-   Use <p style="font-size:13px;line-height:1.7;color:#1F2328;">.
-
-2. ▶ 4-LAYER SYNTHESIS
-   4개 카드 (grid 2×2): L1 Dark Pool / L2 Short-CTB / L3 Options / L4 Chart.
-   Each card:
-   <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
-     <div style="font-size:11px;color:#656D76;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">L1 DARK POOL</div>
-     <div style="font-size:15px;font-weight:600;color:#1A7F5A;">ACCUMULATION</div>
-     <div style="font-size:12px;color:#1F2328;line-height:1.6;margin-top:6px;">...</div>
-   </div>
-   Wrap 4 cards in grid:
-   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">...</div>
-
-3. ▶ ARCHITECT PHASE TIMELINE  (skip entirely if N_days < 7, instead show one-line notice)
-   3열 테이블: Phase | Dates | Description
-
-4. ▶ PROBABILITY MATRIX
-   위의 probability bar 패턴 3줄. 확률은 scenarios 값 그대로.
-   바 아래에 small: Raw Score · Macro · Confidence.
-
-5. ▶ DECISIVE TRIGGERS
-   테이블: Trigger | Direction | Threshold | Implication
-   3-5 rows with specific numeric thresholds.
-
-6. ▶ CONFIDENCE & LIMITATIONS
-   배지 하나: 신뢰도 {MAX_CONFIDENCE} (colored accordingly)
-   + 짧은 문단으로 data gap / PARTIAL 섹션 / 확보 일수 명시.
+COLOR MAPPING RULES:
+- {{l1_color}}, {{l2_color}}, {{l3_color}}, {{l4_color}}:
+    signal=BULLISH  → #1A7F5A
+    signal=BEARISH  → #CF222B
+    signal=NEUTRAL  → #9A6700
+- {{kf_badge_bg}}/{{kf_badge_fg}}: pick bull/bear/warn/info based on key finding tone.
+- {{conf_bg}}/{{conf_fg}}:
+    HIGH        → #DAFBE1 / #1A7F5A
+    MEDIUM      → #FFF8C5 / #9A6700
+    MEDIUM_LOW  → #FFF8C5 / #9A6700
+    LOW         → #FFEBE9 / #CF222B
 
 STRICT PROHIBITIONS:
-- 절대 <script>, <style>, <iframe>, event handlers(onclick= etc), external URLs(javascript:, data:) 포함 금지.
-- 주가 예측 금지. 시나리오 확률만.
+- Markdown syntax (# ## - ** ``` ) 사용 금지. 순수 HTML만.
+- <script>, <style>, <iframe>, onclick= 등 이벤트, javascript:/data: URI 금지.
+- 주가 예측 금지. 확률만.
 - 어떤 시나리오도 80% 초과 금지.
 - 주말/휴장일 날짜 금지.
 - 원본 JSON/CSV에 없는 숫자 언급 금지.
-- Markdown 문법(# ## - **) 사용 금지. 순수 HTML만.
-`;
+- 템플릿의 <div>/<table>/<tr> 구조를 생략·축약하지 마시오. 특히 2×2 카드와 Probability Bar는 필수.
+
+응답 시작은 반드시 <div style="font-family:... 로, 끝은 </div> 로 마무리.`;
 
 // ─── Utility ───
 function getKey() { return localStorage.getItem(LS_ANTH_KEY) || ''; }
