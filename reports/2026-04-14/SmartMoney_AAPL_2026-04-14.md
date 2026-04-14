@@ -16,12 +16,12 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Institutional OBV Δ | -62M |
-| Professional OBV Δ | 6M |
-| Retail OBV Δ       | -3M |
+| Institutional OBV Δ | -23M |
+| Professional OBV Δ | -17M |
+| Retail OBV Δ       | -19M |
 | Total OBV Δ        | -59M |
 | Dark Pool %        | 33.9% |
-| IAR                | 6.90 |
+| IAR                | 0.64 |
 | Short %            | 51.9% |
 | CTB Fee            | 0.25% |
 | Available Shares   | 10M |
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-14 | $259.20 | -62M | 6M | -3M | -59M | 51.9% | 0.25% | 10M | $254.36 | $255.00 |
+| 2026-04-14 | $259.20 | -23M | -17M | -19M | -59M | 51.9% | 0.25% | 10M | $254.36 | $255.00 |

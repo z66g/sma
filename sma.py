@@ -470,19 +470,22 @@ class SmartMoneyAnalyzer:
                 pass
             d = prev_trading_day(d); tried += 1
 
-        # OBV 4-way: Polygon 분봉 있으면 진짜 계산, 없으면 일봉 근사
-        obv_data, obv_note = None, "OBV 4-way: 일봉 근사(분봉 부재)."
+        # ─── OBV 4-way 재설계 ─────────────────────────────────────────
+        # 핵심: "Institutional" 버킷을 **FINRA 오프거래소 거래량**으로 정의.
+        #   - 다크풀·ATS·내부화는 거의 100% 기관 플로
+        #   - Polygon 분봉은 Lit 거래소만 포함 → 리테일/HFT만 측정됨
+        #   - yfinance 총거래량 - CNMS = Lit 거래량 (=리테일 + 프로)
+        #
+        # Polygon 분봉 있으면 Lit 거래를 **평균 트레이드 사이즈 v/n**로
+        # 프로/리테일 세분화.
+        minute_bars = []
         if POLYGON_API_KEY:
             try:
                 minute_bars = self._fetch_polygon_minutes(today, days=5)
-                if minute_bars:
-                    obv_data = self._compute_obv_4way_from_minutes(minute_bars)
-                    obv_note = (f"OBV 4-way: Polygon 1분봉 {len(minute_bars)}개 기준 "
-                                f"(top 20% 분봉=institutional, mid 60%=professional, bot 20%=retail).")
             except Exception as e:
-                obv_note = f"OBV 4-way: Polygon 호출 실패 ({e}) — 일봉 근사로 fallback."
-        if obv_data is None:
-            obv_data = self._approx_obv_4way(ohlcv)
+                self.warnings.append(f"obv polygon: {e}")
+
+        obv_data, obv_note = self._compute_obv_4way_v2(ohlcv, dp_rows, minute_bars)
 
         return {
             "sessions": list(reversed(dp_rows)),
@@ -490,6 +493,125 @@ class SmartMoneyAnalyzer:
             "_partial": len(dp_rows) < 3,
             "_note": obv_note,
         }
+
+    def _compute_obv_4way_v2(self, ohlcv: List[Dict], dp_rows: List[Dict],
+                              minute_bars: List[Dict]) -> Tuple[Dict, str]:
+        """
+        - Institutional: FINRA CNMS 오프거래소 signed volume
+        - Retail + Pro:  (yfinance 총거래 − CNMS) = Lit 거래소 signed volume
+                         Polygon 분봉 avg_trade_size로 프로/리테일 분리
+        """
+        if len(ohlcv) < 6 or not dp_rows:
+            return {"_partial": True}, "OBV 4-way: 데이터 부족"
+
+        # 날짜별 매핑
+        close_by_date = {c["date"]: c["close"] for c in ohlcv}
+        vol_by_date   = {c["date"]: c["volume"] for c in ohlcv}
+        cnms_by_date  = {r["date"]: r["off_exchange_volume"] for r in dp_rows}
+
+        # 최근 5 영업일 (dp_rows는 new→old 순으로 들어왔다가 나중에 reverse됨 — 원본 여기선 new first)
+        recent_dates = [r["date"] for r in dp_rows[:5]]
+        if not recent_dates:
+            return {"_partial": True}, "OBV 4-way: 최근 CNMS 부재"
+
+        inst_signed = 0.0
+        lit_signed  = 0.0
+        inst_abs    = 0.0
+        lit_abs     = 0.0
+        prev_close  = None
+
+        dates_asc = sorted(recent_dates)
+        for d in dates_asc:
+            today_c = close_by_date.get(d)
+            if today_c is None: continue
+            # 전일 종가
+            # 간단히: ohlcv에서 d의 prev index
+            if prev_close is None:
+                # 5일 윈도우 직전 거래일 종가 찾기
+                idx = next((i for i,c in enumerate(ohlcv) if c["date"] == d), None)
+                if idx is not None and idx > 0:
+                    prev_close = ohlcv[idx - 1]["close"]
+                else:
+                    prev_close = today_c
+            sign = 1 if today_c > prev_close else -1 if today_c < prev_close else 0
+            off = cnms_by_date.get(d, 0)
+            tot = vol_by_date.get(d, 0)
+            lit = max(tot - off, 0)
+            inst_signed += sign * off
+            lit_signed  += sign * lit
+            inst_abs    += off
+            lit_abs     += lit
+            prev_close   = today_c
+
+        # Lit 거래를 프로/리테일로 세분화 (Polygon 분봉 있을 때)
+        pro_share = 0.4   # 기본 40/60 (분봉 부재 시)
+        retail_share = 0.6
+        minute_src = "default_split"
+
+        if minute_bars:
+            df = pd.DataFrame(minute_bars)
+            if "n" in df.columns and len(df) > 60:
+                df["avg_size"] = df["v"] / df["n"].replace(0, 1)
+                # 임계: NVDA 기준 p90 ≈ 77, p99 ≈ 127. 종목별로 매우 다르므로 분위수로 처리.
+                # 자신의 분봉 분포에서 top 30%를 professional로 간주.
+                thr = df["avg_size"].quantile(0.70)
+                pro_vol = float(df.loc[df["avg_size"] >= thr, "v"].sum())
+                total_v = float(df["v"].sum())
+                if total_v > 0:
+                    pro_share = pro_vol / total_v
+                    retail_share = 1.0 - pro_share
+                    minute_src = f"polygon_1min_avg_size (p70={thr:.0f} shares)"
+
+        delta_inst   = inst_signed
+        delta_pro    = lit_signed * pro_share
+        delta_retail = lit_signed * retail_share
+        delta_total  = delta_inst + delta_pro + delta_retail
+
+        iar = safe_div(abs(delta_inst), (abs(delta_pro) + abs(delta_retail)), None)
+
+        # Divergence: 가격 5일 slope vs inst signed series slope
+        closes = [close_by_date[d] for d in dates_asc if d in close_by_date]
+        inst_cum = []
+        running = 0.0
+        prev_c = closes[0] if closes else 0
+        for d in dates_asc:
+            tc = close_by_date.get(d, prev_c)
+            s = 1 if tc > prev_c else -1 if tc < prev_c else 0
+            running += s * cnms_by_date.get(d, 0)
+            inst_cum.append(running)
+            prev_c = tc
+
+        price_slope = linregress_slope(closes)
+        inst_slope  = linregress_slope(inst_cum)
+        price_eps = max(abs(closes[-1]) * 0.001 if closes else 0.01, 0.01)
+        inst_eps  = max(inst_abs * 0.01 / max(len(dates_asc),1), 1000.0)
+        if price_slope < -price_eps and inst_slope > inst_eps:
+            divergence = "BULLISH_DIVERGENCE"
+        elif price_slope > price_eps and inst_slope < -inst_eps:
+            divergence = "BEARISH_DIVERGENCE"
+        elif abs(price_slope) < price_eps and abs(inst_slope) < inst_eps:
+            divergence = "NEUTRAL"
+        elif price_slope * inst_slope > 0:
+            divergence = "CONVERGENCE"
+        else:
+            divergence = "NEUTRAL"
+
+        note = (f"OBV 4-way: Inst=FINRA CNMS 오프거래소 signed ({len(dates_asc)}일 윈도우), "
+                f"Lit split via {minute_src}")
+        return {
+            "delta_institutional": delta_inst,
+            "delta_professional":  delta_pro,
+            "delta_retail":        delta_retail,
+            "delta_total":         delta_total,
+            "iar":                 iar,
+            "divergence":          divergence,
+            "_source":             "cnms_signed_v2",
+            "inst_abs_volume":     inst_abs,
+            "lit_abs_volume":      lit_abs,
+            "pro_share":           pro_share,
+            "retail_share":        retail_share,
+            "window_days":         len(dates_asc),
+        }, note
 
     # ── Polygon.io 분봉 수집 ──────────────────────────────────────────────
     def _fetch_polygon_minutes(self, today: date, days: int = 5) -> List[Dict[str, Any]]:
@@ -1779,6 +1901,10 @@ def render_json(a: Dict) -> str:
             "iar":                 obv.get("iar"),
             "divergence":          obv.get("divergence"),
             "obv_source":          obv.get("_source"),
+            "pro_share":           obv.get("pro_share"),
+            "retail_share":        obv.get("retail_share"),
+            "window_days":         obv.get("window_days"),
+            "inst_abs_volume":     obv.get("inst_abs_volume"),
         },
         "l2": {
             "scenario": l2.get("scenario"), "signal": l2.get("signal"),
