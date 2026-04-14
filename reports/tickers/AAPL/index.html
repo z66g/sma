@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NVDA · Smart Money History</title>
+<title>AAPL · Smart Money History</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1F2328; margin:0; padding:24px; font-size:13px; }
@@ -32,25 +32,25 @@
 <body>
 <div class="wrap">
   <div class="nav"><a href="../../">← 전체 대시보드</a></div>
-  <h1>NVDA</h1>
-  <div class="meta">Latest: 2026-04-14 · $189.31 · 1개 리포트 · <span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">FINAL_ABSORPTION</span></div>
+  <h1>AAPL</h1>
+  <div class="meta">Latest: 2026-04-14 · $259.20 · 1개 리포트 · <span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">FINAL_ABSORPTION</span></div>
 
   <h2>핵심 지표 (최신)</h2>
   <div class="grid">
     <div class="card"><div class="card-label">Scenario [A] Bullish</div>
-      <div class="card-value" style="color:#1A7F5A;">62.0%</div>
-      <div class="card-sub">Score +0.35 · Macro FAVORABLE</div>
+      <div class="card-value" style="color:#1A7F5A;">42.0%</div>
+      <div class="card-sub">Score +0.15 · Macro FAVORABLE</div>
     </div>
     <div class="card"><div class="card-label">Dark Pool % (L1)</div>
-      <div class="card-value">95.5%</div>
-      <div class="card-sub">IAR 4.24 · CONVERGENCE</div>
+      <div class="card-value">95.7%</div>
+      <div class="card-sub">IAR 1.19 · CONVERGENCE</div>
     </div>
     <div class="card"><div class="card-label">Short % · CTB (L2)</div>
-      <div class="card-value">45.5% · 0.28%</div>
+      <div class="card-value">51.9% · 0.25%</div>
       <div class="card-sub">CASE_2_DIRECTIONAL_SHORT</div>
     </div>
     <div class="card"><div class="card-label">Max Pain · GEX Flip (L3)</div>
-      <div class="card-value">$100.00 · N/A</div>
+      <div class="card-value">$175.00 · $179.63</div>
       <div class="card-sub">DTE 1 · HEDGING</div>
     </div>
   </div>
@@ -67,11 +67,11 @@
   <h2>전체 히스토리</h2>
   <table>
     <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>L1</th><th>L2 Case</th><th>L3</th><th>Link</th></tr></thead>
-    <tbody><tr><td>2026-04-14</td><td>$189.31</td><td style="color:#1A7F5A;font-weight:600;">[A]Bull 62%</td><td>ACCUMULATION</td><td>CASE_2_DIRECTIONAL_SHORT</td><td>HEDGING</td><td><a href="../../2026-04-14/NVDA_3Layer_Forensic_2026-04-14.html">리포트</a></td></tr></tbody>
+    <tbody><tr><td>2026-04-14</td><td>$259.20</td><td style="color:#1A7F5A;font-weight:600;">[A]Bull 42%</td><td>ACCUMULATION</td><td>CASE_2_DIRECTIONAL_SHORT</td><td>HEDGING</td><td><a href="../../2026-04-14/AAPL_3Layer_Forensic_2026-04-14.html">리포트</a></td></tr></tbody>
   </table>
 
   <div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
-    Data: <a href="../../data/NVDA.json">NVDA.json</a> ·
+    Data: <a href="../../data/AAPL.json">AAPL.json</a> ·
     <a href="../../">Back to dashboard</a>
   </div>
 </div>
@@ -91,22 +91,22 @@ function lineChart(id, datasets) {
     }
   });
 }
-lineChart('priceChart', [{label:'Price', data:[189.30999755859375], borderColor:'#0969DA', backgroundColor:'#DDF4FF'}]);
+lineChart('priceChart', [{label:'Price', data:[259.20001220703125], borderColor:'#0969DA', backgroundColor:'#DDF4FF'}]);
 lineChart('probChart', [
-  {label:'[A] Bullish', data:[62.0], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'[C] Bearish', data:[8.0], borderColor:'#CF222B', backgroundColor:'transparent'}
+  {label:'[A] Bullish', data:[42.0], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'[C] Bearish', data:[18.0], borderColor:'#CF222B', backgroundColor:'transparent'}
 ]);
 lineChart('shortChart', [
-  {label:'Short %', data:[45.51440819581565], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
-  {label:'CTB %', data:[0.2782], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
+  {label:'Short %', data:[51.922474221454365], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
+  {label:'CTB %', data:[0.25], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
 ]);
 lineChart('optChart', [
-  {label:'Max Pain', data:[100.0], borderColor:'#9A6700', backgroundColor:'transparent'},
-  {label:'GEX Flip', data:[null], borderColor:'#0969DA', backgroundColor:'transparent'}
+  {label:'Max Pain', data:[175.0], borderColor:'#9A6700', backgroundColor:'transparent'},
+  {label:'GEX Flip', data:[179.6338978935355], borderColor:'#0969DA', backgroundColor:'transparent'}
 ]);
 lineChart('obvChart', [
-  {label:'Institutional Δ', data:[23926314.754966002], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'Retail Δ', data:[-88804.611282], borderColor:'#CF222B', backgroundColor:'transparent'}
+  {label:'Institutional Δ', data:[1211576.2396949995], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Retail Δ', data:[3049.4009719999995], borderColor:'#CF222B', backgroundColor:'transparent'}
 ]);
 </script>
 </body>
