@@ -2075,63 +2075,6 @@ new Chart(document.getElementById('obv4way'), {{
   }}
 }});
 
-// Custom plugin: draw vertical marker lines at spot / max pain
-const GEX_MARKERS = {json.dumps([
-    {"value": spot,      "label": f"Spot ${spot:.2f}"       if spot     else None, "color": COLOR["info"], "dash": [6,4]}  if spot     else None,
-    {"value": max_pain,  "label": f"Max Pain ${max_pain:.2f}" if max_pain else None, "color": COLOR["warn"], "dash": [2,3]} if max_pain else None,
-])};
-const GEX_STRIKES = {json.dumps(gex_labels)};
-const gexMarkerPlugin = {{
-  id: 'gexMarkers',
-  afterDatasetsDraw(chart) {{
-    const {{ ctx, chartArea, scales }} = chart;
-    const xScale = scales.x;
-    const labels = xScale.getLabels().map(Number);
-    function xFor(value) {{
-      // 카테고리 축에서 숫자값을 픽셀로 변환 (strikes 사이 보간)
-      if (value == null || !labels.length) return null;
-      if (value <= labels[0])  return xScale.getPixelForValue(xScale.getLabels()[0]);
-      if (value >= labels[labels.length-1]) return xScale.getPixelForValue(xScale.getLabels()[labels.length-1]);
-      let i = 1;
-      while (i < labels.length && labels[i] < value) i++;
-      const s1 = labels[i-1], s2 = labels[i];
-      const x1 = xScale.getPixelForValue(xScale.getLabels()[i-1]);
-      const x2 = xScale.getPixelForValue(xScale.getLabels()[i]);
-      return x1 + (x2 - x1) * (value - s1) / (s2 - s1);
-    }}
-    ctx.save();
-    ctx.font = "11px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-    let yOffset = 0;
-    for (const m of GEX_MARKERS) {{
-      if (!m || m.value == null) continue;
-      const x = xFor(m.value);
-      if (x == null) continue;
-      ctx.beginPath();
-      ctx.strokeStyle = m.color;
-      ctx.lineWidth = 2;
-      ctx.setLineDash(m.dash);
-      ctx.moveTo(x, chartArea.top);
-      ctx.lineTo(x, chartArea.bottom);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      // 라벨: 위쪽에 배경 pill
-      ctx.fillStyle = m.color;
-      const text = m.label;
-      const w = ctx.measureText(text).width + 10;
-      const lx = Math.max(chartArea.left + 2, Math.min(x - w/2, chartArea.right - w - 2));
-      // 라벨을 차트 영역 위쪽 패딩 안에 배치 (데이터 영역 침범 방지)
-      const ly = chartArea.top - 22 + yOffset;
-      ctx.globalAlpha = 0.9;
-      ctx.fillRect(lx, ly, w, 16);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(text, lx + 5, ly + 12);
-      yOffset += 18;
-    }}
-    ctx.restore();
-  }}
-}};
-
 new Chart(document.getElementById('gexChart'), {{
   type:'bar',
   data:{{
@@ -2145,11 +2088,9 @@ new Chart(document.getElementById('gexChart'), {{
   }},
   options:{{
     maintainAspectRatio:false,
-    layout:{{ padding:{{ top:40 }} }},
     plugins:{{legend:{{display:false}},title:{{display:true,text:'Gamma Exposure (GEX) by Strike'}}}},
     scales:{{y:{{grid:{{color:'{COLOR['chart_grid']}'}}}},x:{{grid:{{display:false}}}}}}
-  }},
-  plugins:[gexMarkerPlugin]
+  }}
 }});
 
 new Chart(document.getElementById('probChart'), {{
