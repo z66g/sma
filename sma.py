@@ -51,8 +51,9 @@ except Exception as e:
 UA = {
     "User-Agent": "SMA-Rebuild/2.0 (contact: local-analyst@example.com)"
 }
-OUT_DIR = Path(__file__).resolve().parent / "output"
-OUT_DIR.mkdir(exist_ok=True)
+OUT_DIR = Path(os.environ.get("SMA_OUT_DIR",
+              str(Path(__file__).resolve().parent / "output"))).resolve()
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # 색상(§11.1)
 COLOR = {

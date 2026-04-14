@@ -65,6 +65,50 @@ SmartMoneyAnalyzer
 이들은 §2.2 data validation rule에 따라 `_partial: true`로 플래그되고
 Section 상단에 "데이터 부재" 문구가 들어갑니다.
 
+## GitHub Actions 자동화 (매일 실행)
+
+`.github/workflows/daily.yml`이 화~토 14:00 UTC(=23:00 KST, 미장 개장 30분 후)에
+`tickers.txt`의 종목을 순차 분석하고 `reports/YYYY-MM-DD/`에 HTML+MD를 커밋합니다.
+
+### 최초 1회 설정
+
+1. **GitHub 레포에 Secret 등록**
+   - 레포 페이지 → Settings → Secrets and variables → Actions → **New repository secret**
+   - Name: `POLYGON_API_KEY`
+   - Value: 실제 키
+   - **이게 GitHub Secrets이고, Actions 런너에만 자동 주입됩니다.**
+2. **Actions 권한 확인**
+   - Settings → Actions → General → Workflow permissions
+   - **Read and write permissions** 체크 (봇이 reports/ 커밋할 수 있도록)
+3. **GitHub Pages 활성화** (선택)
+   - Settings → Pages → Source: Deploy from a branch → **main** / **/ (root)** 또는 **/reports**
+   - 활성화하면 `https://z66g.github.io/sma/reports/index.html`에서 브라우저로 모든 리포트 열람
+
+### 감시 종목 수정
+
+`tickers.txt` 편집 후 커밋하면 다음 실행부터 반영됩니다:
+
+```
+NVDA
+IONQ
+TSLA
+# 주석은 무시됨
+SMR
+```
+
+### 즉시 실행 (스케줄 대기 없이)
+
+GitHub → Actions 탭 → **Daily Smart Money Analysis** → Run workflow → main 선택 → 실행.
+5~10분 뒤 `reports/{오늘날짜}/`에 결과 커밋됨.
+
+### 로컬에서 수동 인덱스 재생성
+
+```bash
+python3 build_index.py    # reports/index.html 갱신
+```
+
+---
+
 ## 구조 참조
 
 - `CLAUDE.md` §1–§12 스펙 전체 구현
