@@ -1,0 +1,85 @@
+name: Weekly AI Narrative
+
+on:
+  schedule:
+    # 02:00 UTC 토요일 = KST 11:00 토.
+    # daily.yml(01:30)로 금요일 데이터 fetch 완료 후 30분 뒤.
+    - cron: "0 2 * * 6"
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: "단일 티커만 생성하려면 입력 (빈 값이면 전체)"
+        required: false
+        default: ""
+      mode:
+        description: "weekly / adhoc"
+        required: false
+        default: "weekly"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sma-narrative
+  cancel-in-progress: false
+
+jobs:
+  narrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate narrative per ticker
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          set -e
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is not set"
+            exit 1
+          fi
+
+          MODE="${{ github.event.inputs.mode }}"
+          [ -z "${MODE}" ] && MODE="weekly"
+          SINGLE="${{ github.event.inputs.ticker }}"
+
+          if [ -n "${SINGLE}" ]; then
+            TICKERS="${SINGLE}"
+          else
+            TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
+          fi
+          echo "Narrating: ${TICKERS}  mode=${MODE}"
+
+          for T in ${TICKERS}; do
+            echo "=== Narrating ${T} ==="
+            python3 narrative.py "${T}" --mode "${MODE}" --days 30 || echo "WARN: ${T} narrative failed"
+          done
+
+          python3 build_index.py
+
+      - name: Commit narratives
+        run: |
+          git config user.name  "sma-bot"
+          git config user.email "sma-bot@users.noreply.github.com"
+          git add reports/
+          if git diff --staged --quiet; then
+            echo "No new narratives to commit"
+            exit 0
+          fi
+          DATE=$(date -u +%Y-%m-%d)
+          git commit -m "narratives: ${DATE} weekly [skip ci]"
+          git push

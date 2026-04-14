@@ -65,18 +65,23 @@ SmartMoneyAnalyzer
 이들은 §2.2 data validation rule에 따라 `_partial: true`로 플래그되고
 Section 상단에 "데이터 부재" 문구가 들어갑니다.
 
-## GitHub Actions 자동화 (매일 실행)
+## GitHub Actions 자동화
 
-`.github/workflows/daily.yml`이 화~토 14:00 UTC(=23:00 KST, 미장 개장 30분 후)에
-`tickers.txt`의 종목을 순차 분석하고 `reports/YYYY-MM-DD/`에 HTML+MD를 커밋합니다.
+### 스케줄
+| 워크플로 | 시간 | 동작 |
+|---|---|---|
+| **daily.yml** | 01:30 UTC 화~토 (= KST 10:30 토~일) | `tickers.txt`의 모든 종목 raw 데이터 수집 → `reports/YYYY-MM-DD/` 커밋. 미 애프터장 마감(8PM ET) 이후이므로 전일 FINRA 데이터가 완성된 상태에서 돌아감. |
+| **weekly.yml** | 02:00 UTC 토 (= KST 11:00 토) | 금요일 daily 완료 30분 뒤에 각 종목에 대해 Claude Sonnet 4.5로 주간 내러티브 생성 → `reports/tickers/{T}/narratives/{DATE}-weekly.html` 커밋. |
+
+**각 워크플로는 Actions 탭에서 수동 트리거(Run workflow)** 도 가능.
+weekly.yml은 `ticker`, `mode` 입력을 받을 수 있어 단일 종목만 재생성하거나 `adhoc`로 명명할 수 있음.
 
 ### 최초 1회 설정
 
-1. **GitHub 레포에 Secret 등록**
-   - 레포 페이지 → Settings → Secrets and variables → Actions → **New repository secret**
-   - Name: `POLYGON_API_KEY`
-   - Value: 실제 키
-   - **이게 GitHub Secrets이고, Actions 런너에만 자동 주입됩니다.**
+1. **GitHub 레포에 Secrets 등록** (Settings → Secrets and variables → Actions → New repository secret)
+   - `POLYGON_API_KEY` — Polygon.io (OBV 4-way 정밀 계산용)
+   - `ANTHROPIC_API_KEY` — Anthropic (주간 자동 AI 내러티브용, 없으면 weekly.yml 실패)
+   - Secrets는 Actions 런너에만 주입되며 커밋/로그에 노출되지 않음.
 2. **Actions 권한 확인**
    - Settings → Actions → General → Workflow permissions
    - **Read and write permissions** 체크 (봇이 reports/ 커밋할 수 있도록)

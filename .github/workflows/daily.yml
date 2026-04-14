@@ -2,13 +2,15 @@ name: Daily Smart Money Analysis
 
 on:
   schedule:
-    # 매일 평일 14:00 UTC = 23:00 KST (= 10:00 ET, 미장 개장 30분 후)
-    # FINRA T+1이라 "오늘 UTC 날짜" = "어제 미국 거래일" 데이터 기준
-    - cron: "0 14 * * 2-6"   # 화~토 (= 월~금 미국 시장 기준)
-  workflow_dispatch:        # 수동 실행 허용
+    # 01:30 UTC 화~토 = KST 10:30 토~일.
+    # FINRA 파일은 미국 장 마감 후 공개되므로 미 동부 전일 데이터를 안정적으로 얻으려면
+    # 미국 After-Hours 종료(8PM ET = 00:00 UTC EDT / 01:00 UTC EST) 이후여야 함.
+    # 01:30 UTC는 EDT·EST 모두 커버.
+    - cron: "30 1 * * 2-6"
+  workflow_dispatch:
 
 permissions:
-  contents: write           # reports/ 커밋용
+  contents: write
 
 concurrency:
   group: sma-daily
@@ -44,11 +46,9 @@ jobs:
           mkdir -p "${OUT_DIR}"
           export SMA_OUT_DIR="${OUT_DIR}"
 
-          # tickers.txt 파싱 (주석/빈줄 제외)
           TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
           echo "Tickers to analyze: ${TICKERS}"
 
-          # Polygon 무료 티어 5 req/min → 티커당 15초 간격
           FIRST=1
           for T in ${TICKERS}; do
             if [ $FIRST -eq 0 ]; then
@@ -60,7 +60,6 @@ jobs:
             python3 sma.py "${T}" || echo "WARN: ${T} failed, continuing"
           done
 
-          # 인덱스 재생성
           python3 build_index.py
 
       - name: Commit reports

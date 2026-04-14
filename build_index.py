@@ -55,6 +55,45 @@ def scan_reports():
         by_ticker[t].sort(key=lambda x: x.get("date", ""))
     return dict(by_ticker)
 
+def _render_narrative_archive(ticker: str) -> str:
+    items = scan_narratives(ticker)
+    if not items:
+        return f'<p style="font-size:12px;color:{COLOR["muted"]};">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>'
+    mode_meta = {
+        "weekly": ("주간 자동",   COLOR["alert_blue"],  COLOR["info"]),
+        "daily":  ("일일 자동",   COLOR["alert_green"], COLOR["bull"]),
+        "adhoc":  ("즉석(사용자)", COLOR["alert_amber"], COLOR["warn"]),
+    }
+    rows = []
+    for it in items[:40]:
+        label, bg, fg = mode_meta.get(it["mode"], ("?", COLOR["bg_panel"], COLOR["muted"]))
+        rows.append(
+            f'<tr>'
+            f'<td>{it["date"]}</td>'
+            f'<td><span style="background:{bg};color:{fg};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">{label}</span></td>'
+            f'<td><a href="narratives/{it["filename"]}">열기</a></td>'
+            f'</tr>'
+        )
+    return f"""<table>
+<thead><tr><th>Date</th><th>Mode</th><th>Link</th></tr></thead>
+<tbody>{''.join(rows)}</tbody>
+</table>"""
+
+
+def scan_narratives(ticker: str) -> list:
+    """reports/tickers/{T}/narratives/*.html → [{date, mode, filename}, ...] 최신순"""
+    ndir = TICKERS_DIR / ticker / "narratives"
+    if not ndir.exists():
+        return []
+    items = []
+    for p in ndir.glob("*.html"):
+        m = re.match(r"(\d{4}-\d{2}-\d{2})-(weekly|daily|adhoc)(?:-[\w\-]+)?\.html", p.name)
+        if m:
+            items.append({"date": m.group(1), "mode": m.group(2), "filename": p.name})
+    items.sort(key=lambda x: (x["date"], x["filename"]), reverse=True)
+    return items
+
+
 def render_ticker_page(ticker: str, series: list) -> str:
     latest = series[-1] if series else {}
     l1, l2, l3, l4 = latest.get("l1") or {}, latest.get("l2") or {}, latest.get("l3") or {}, latest.get("l4") or {}
@@ -169,6 +208,9 @@ def render_ticker_page(ticker: str, series: list) -> str:
     <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>L1</th><th>L2 Case</th><th>L3</th><th>Link</th></tr></thead>
     <tbody>{''.join(rows) if rows else '<tr><td colspan="7">아직 리포트 없음</td></tr>'}</tbody>
   </table>
+
+  <h2>🤖 AI 내러티브 아카이브</h2>
+  {_render_narrative_archive(ticker)}
 
   <div id="narrative-root"></div>
 
