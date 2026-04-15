@@ -453,7 +453,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
     <th>CTB %</th>
     <th>Max Pain</th>
     <th>Patterns</th>
-    <th>Reports</th>
+    <th>📄</th>
     <th></th>
   </tr></thead>
   <tbody id="tbody-active"></tbody>
@@ -479,7 +479,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
     <th>CTB %</th>
     <th>Max Pain</th>
     <th>Patterns</th>
-    <th>Reports</th>
+    <th>📄</th>
     <th></th>
   </tr></thead>
   <tbody id="tbody-archive"></tbody>
@@ -548,7 +548,7 @@ function rowHTML(r, mode) {
     <td>${fmtPct(r.ctb_fee, 2)}</td>
     <td>${fmtDol(r.max_pain)}</td>
     <td>${patBadges}</td>
-    <td>${r.report_count}</td>
+    <td><a href="tickers/${r.ticker}/" style="font-weight:600;">${r.report_count}</a></td>
     <td style="white-space:nowrap;">${actionBtn}<a href="tickers/${r.ticker}/">›</a></td>
   </tr>`;
 }
