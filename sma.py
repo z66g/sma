@@ -1940,6 +1940,9 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 </head>
 <body>
 <div class="wrap">
+<div style="margin-bottom:16px;font-size:12px;">
+  <a href="../tickers/{html.escape(meta['ticker'])}/" style="color:{COLOR['muted']};text-decoration:none;">← {html.escape(meta['ticker'])} 종목 페이지</a>
+</div>
 <div class="hdr">
   <h1>Smart Money Analyzer — {html.escape(meta['ticker'])}</h1>
   <div class="sub">Analysis Date: {meta['date']} · Current Price: ${price:.2f} · Expiry: {l3.get('expiry','N/A')} · Patterns: {', '.join(patterns) if patterns else 'none'}</div>
