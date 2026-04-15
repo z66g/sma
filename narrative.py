@@ -320,6 +320,8 @@ def main():
     ap.add_argument("--mode", default="weekly", choices=["weekly","daily","adhoc"],
                     help="파일명 접미어 + 프롬프트 맥락")
     ap.add_argument("--days", type=int, default=30, help="시계열 최대 일수")
+    ap.add_argument("--force", action="store_true",
+                    help="동일 경로 narrative 파일이 이미 있어도 덮어쓰기 (재호출 = 토큰 재지출)")
     args = ap.parse_args()
 
     ticker = args.ticker.upper()
@@ -337,6 +339,16 @@ def main():
     today = series[-1]
     n_days = len(series)
     cap, tier, note = classify_window(n_days)
+
+    # ── 이미 생성된 narrative 가 있으면 API 호출 전에 skip (토큰 절약) ──
+    date_str = today["date"]
+    out_dir = TICKERS_DIR / ticker / "narratives"
+    filename = f"{date_str}-{args.mode}.html"
+    out_path = out_dir / filename
+    if out_path.exists() and not args.force:
+        print(f"[narr] {ticker} skip: {out_path} already exists (use --force to overwrite)",
+              file=sys.stderr)
+        sys.exit(0)
 
     mode_hint = {
         "weekly": f"이번 주({today['date']} 포함 최근 5거래일) 흐름 중심으로 서술하되, 전체 {n_days}일 컨텍스트 참고.",
@@ -369,11 +381,7 @@ def main():
     out_tok = usage.get("output_tokens", 0) or 0
     cost = (in_tok * 3 + out_tok * 15) / 1e6
 
-    date_str = today["date"]
-    out_dir = TICKERS_DIR / ticker / "narratives"
     out_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{date_str}-{args.mode}.html"
-    out_path = out_dir / filename
 
     page = (
         f"<!DOCTYPE html><html lang=\"ko\"><head><meta charset=\"UTF-8\">"
