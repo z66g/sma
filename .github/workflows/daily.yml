@@ -83,4 +83,14 @@ jobs:
           fi
           DATE=$(date -u +%Y-%m-%d)
           git commit -m "reports: ${DATE} daily analysis [skip ci]"
-          git push
+          # weekly 워크플로우나 로컬 커밋과 경쟁할 수 있어 rebase-and-retry
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash origin main && git push; then
+              echo "push success on attempt $i"
+              exit 0
+            fi
+            echo "push attempt $i failed, sleeping 10s…"
+            sleep 10
+          done
+          echo "push failed after 5 attempts"
+          exit 1
