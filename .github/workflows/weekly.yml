@@ -2,9 +2,9 @@ name: Weekly AI Narrative
 
 on:
   schedule:
-    # 02:00 UTC 토요일 = KST 11:00 토.
-    # daily.yml(01:30)로 금요일 데이터 fetch 완료 후 30분 뒤.
-    - cron: "0 2 * * 6"
+    # 02:30 UTC 토요일 = KST 11:30 토.
+    # daily.yml(02:00 UTC = KST 11:00)로 금요일 데이터 fetch 완료 후 30분 뒤.
+    - cron: "30 2 * * 6"
   workflow_dispatch:
     inputs:
       ticker:
