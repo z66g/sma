@@ -51,7 +51,7 @@ function rowHTML(r, mode) {
     <td>${fmtDol(r.max_pain)}</td>
     <td>${patBadges}</td>
     <td><a href="tickers/${r.ticker}/" style="font-weight:600;">${r.report_count}</a></td>
-    <td style="white-space:nowrap;">${actionBtn}<a href="tickers/${r.ticker}/">›</a></td>
+    <td style="white-space:nowrap;">${actionBtn}</td>
   </tr>`;
 }
 
