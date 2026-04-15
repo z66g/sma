@@ -356,7 +356,7 @@ window.SMA_Narrative = {
   mount(rootEl, ticker) {
     rootEl.innerHTML = `
       <details open style="margin-top:24px;background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;">
-        <summary style="cursor:pointer;padding:10px 14px;font-weight:600;font-size:14px;color:#0969DA;">🤖 AI 심화 분석 (Claude Sonnet 4.5)</summary>
+        <summary style="cursor:pointer;padding:10px 14px;font-weight:600;font-size:14px;color:#0969DA;">AI 분석 레포트 요청하기 (Claude Sonnet 4.5)</summary>
         <div style="padding:14px;border-top:0.5px solid #D0D7DE;">
           <div id="narr-need-key-${ticker}" style="display:none;margin-bottom:10px;">
             <div style="font-size:12px;color:#656D76;margin-bottom:6px;">
@@ -368,7 +368,7 @@ window.SMA_Narrative = {
           </div>
           <div id="narr-panel-${ticker}" style="display:none;">
             <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
-              <button id="narr-gen-${ticker}" style="padding:8px 20px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600;">▶ 내러티브 생성</button>
+              <button id="narr-gen-${ticker}" style="padding:5px 12px;background:#EAEEF2;color:#1F2328;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:12px;">분석 요청</button>
               <button id="narr-key-edit-${ticker}" style="padding:6px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:11px;">API Key 변경</button>
               <span id="narr-status-${ticker}" style="font-size:11px;color:#656D76;"></span>
             </div>

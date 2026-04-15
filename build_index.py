@@ -289,7 +289,7 @@ def render_ticker_page(ticker: str, series: list) -> str:
     <tbody>{''.join(rows) if rows else '<tr><td colspan="7">아직 리포트 없음</td></tr>'}</tbody>
   </table>
 
-  <h2>🤖 AI 내러티브 아카이브</h2>
+  <h2>주간 AI 분석 리포트 히스토리</h2>
   {_render_narrative_archive(ticker)}
 
   <div id="narrative-root"></div>
