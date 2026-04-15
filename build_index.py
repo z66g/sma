@@ -625,7 +625,9 @@ function showPanel(hasToken) {
   mgmtPanel.style.display     = hasToken ? 'block' : 'none';
 }
 function setStatus(msg, isError) {
-  statusEl.textContent = msg || '';
+  // innerHTML 사용: 우리가 직접 조합한 <a>/<button> 조각을 렌더 가능하게
+  // (외부 사용자 입력을 직접 넣는 경로 없으므로 안전)
+  statusEl.innerHTML = msg || '';
   statusEl.style.color = isError ? '#CF222B' : '#656D76';
 }
 

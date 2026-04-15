@@ -166,7 +166,10 @@ def cluster_prices(prices: List[float], threshold_pct: float = 0.5) -> List[floa
 class SmartMoneyAnalyzer:
     def __init__(self, ticker: str, analysis_date: Optional[str] = None, config: Optional[dict] = None):
         self.ticker = ticker.upper().strip()
-        self.date_str = analysis_date or datetime.utcnow().strftime("%Y-%m-%d")
+        # 날짜 기준: KST (UTC+9). 워크플로우가 UTC 02:00에 돌면 KST 11:00 → 같은 날짜.
+        # 대시보드에서 아드혹 dispatch (KST 밤) 해도 KST 캘린더 기준으로 파일명이 매겨져
+        # "같은 KST 날 재분석 → 덮어쓰기" 가 일관되게 유지됨.
+        self.date_str = analysis_date or (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d")
         self.config = config or {}
         self.warnings: List[str] = []
         self.yf = yf.Ticker(self.ticker)
