@@ -94,6 +94,81 @@ def scan_narratives(ticker: str) -> list:
     return items
 
 
+def _overview_cards(scen: dict, l1: dict, l2: dict, l3: dict, latest: dict) -> str:
+    """Overview 4-card block with tooltips + dynamic top scenario label."""
+    # Block 1: TOP SCENARIO (A/B/C 중 최대)
+    sc_pairs = [("A", scen.get("A_bullish", 0), "Bullish", COLOR["bull"]),
+                ("B", scen.get("B_neutral", 0), "Neutral", COLOR["warn"]),
+                ("C", scen.get("C_bearish", 0), "Bearish", COLOR["bear"])]
+    top = max(sc_pairs, key=lambda x: x[1])
+    top_key, top_val, top_label, top_color = top
+    others = " · ".join(f"[{k}] {v:.0f}%" for k,v,_,_ in sc_pairs if k != top_key)
+    tt1 = (
+        "<b>가중 signal 합산 시나리오 확률</b><br>"
+        "A/B/C 중 가장 높은 확률이 대표 시나리오. "
+        "Score는 −1.00~+1.00 범위, Macro는 FRED 기반 유동성 분류."
+        "<br><br>" + others
+    )
+
+    # Block 2: Dark Pool %
+    dp = l1.get("dp_pct")
+    dp_str = f"{dp:.1f}%" if dp is not None else "N/A"
+    iar = l1.get("iar") or 0
+    div = l1.get("divergence","-")
+    tt2 = (
+        "<b>FINRA 오프거래소 거래량 ÷ yfinance 총거래량</b><br>"
+        "다크풀·ATS·내부화는 거의 100% 기관. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br>"
+        "<b>IAR</b> = |Inst Δ|/(|Pro Δ|+|Retail Δ|) — 1.5↑ 기관 지배.<br>"
+        "<b>Divergence</b>: 가격 slope vs 기관 OBV slope (5일 회귀)."
+    )
+
+    # Block 3: Short % · CTB
+    sp = l2.get("short_pct_latest"); sp_str = f"{sp:.1f}%" if sp is not None else "N/A"
+    cb = l2.get("ctb_fee"); cb_str = f"{cb:.2f}%" if cb is not None else "N/A"
+    case = l2.get("case","-")
+    tt3 = (
+        "<b>FINRA Reg SHO 공매도 비율</b> · <b>iborrowdesk 차입 비용</b><br>"
+        "Short%는 당일 공매도 체결 비율 — 포지션(short interest) 아님. "
+        "MM 헤지 포함이라 40-55% 구조적 정상. <b>절대값으로 bearish 판단 금지</b>, "
+        "slope + CTB 방향 + Case 조합으로만 해석.<br><br>"
+        "<b>CTB</b>: &lt;1% ETB · 5-15% HTB · &gt;15% Squeeze risk zone"
+    )
+
+    # Block 4: Max Pain · GEX Flip
+    mp = l3.get("max_pain"); mp_str = f"${mp:.2f}" if mp else "N/A"
+    fl = l3.get("flip_zone"); fl_str = f"${fl:.2f}" if fl else "N/A"
+    dte = l3.get("dte","-")
+    scn3 = l3.get("scenario","-")
+    tt4 = (
+        "<b>Max Pain</b>: 만기일 MM 헤지 비용이 최소화되는 주가 — 핀닝 중력점.<br>"
+        "<b>GEX Flip Zone</b>: MM gamma 부호가 +에서 −로 바뀌는 spot 근처 strike.<br>"
+        "spot &gt; Flip → 핀닝 regime(변동성 억제) · spot &lt; Flip → 증폭 regime.<br>"
+        "DTE ≤ 5 일 때만 pinning 신호 유효 (§8.2)."
+    )
+
+    def tt_icon(body_html):
+        return f'<span class="tt tt-i">ⓘ<span class="tt-body">{body_html}</span></span>'
+
+    return f"""
+    <div class="card"><div class="card-label">Top Scenario {tt_icon(tt1)}</div>
+      <div class="card-value" style="color:{top_color};">[{top_key}] {top_label} · {top_val:.1f}%</div>
+      <div class="card-sub">Score {scen.get('raw_score',0):+.2f} · Macro {latest.get('macro_env','-')}</div>
+    </div>
+    <div class="card"><div class="card-label">Dark Pool % {tt_icon(tt2)}</div>
+      <div class="card-value">{dp_str}</div>
+      <div class="card-sub">IAR {iar:.2f} · {div}</div>
+    </div>
+    <div class="card"><div class="card-label">Short % · CTB {tt_icon(tt3)}</div>
+      <div class="card-value">{sp_str} · {cb_str}</div>
+      <div class="card-sub">{case}</div>
+    </div>
+    <div class="card"><div class="card-label">Max Pain · GEX Flip {tt_icon(tt4)}</div>
+      <div class="card-value">{mp_str} · {fl_str}</div>
+      <div class="card-sub">DTE {dte} · {scn3}</div>
+    </div>
+    """
+
+
 def render_ticker_page(ticker: str, series: list) -> str:
     latest = series[-1] if series else {}
     l1, l2, l3, l4 = latest.get("l1") or {}, latest.get("l2") or {}, latest.get("l3") or {}, latest.get("l4") or {}
@@ -166,6 +241,27 @@ def render_ticker_page(ticker: str, series: list) -> str:
   @media (max-width:720px) {{ .chart-grid {{ grid-template-columns:1fr; }} }}
   .nav {{ margin-bottom:16px; font-size:12px; }}
   .nav a {{ color:{COLOR['muted']}; }}
+
+  /* Pure-CSS 툴팁 */
+  .tt {{ position:relative; display:inline-block; cursor:help; }}
+  .tt-i {{ color:{COLOR['info']}; margin-left:4px; font-weight:600; font-size:11px; }}
+  .tt .tt-body {{
+    visibility:hidden; opacity:0; transition:opacity 0.12s;
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:calc(100% + 8px); z-index:20;
+    background:#1F2328; color:#FFFFFF;
+    padding:8px 10px; border-radius:6px;
+    font-size:11px; line-height:1.5; text-align:left;
+    white-space:normal; width:max-content; max-width:320px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15); font-weight:400;
+  }}
+  .tt .tt-body::after {{
+    content:''; position:absolute; top:100%; left:50%;
+    margin-left:-5px; border:5px solid transparent; border-top-color:#1F2328;
+  }}
+  .tt:hover .tt-body {{ visibility:visible; opacity:1; }}
+  .tt-left .tt-body {{ left:0 !important; transform:none !important; }}
+  .tt-left .tt-body::after {{ left:14px !important; margin-left:0 !important; }}
 </style>
 </head>
 <body>
@@ -174,32 +270,16 @@ def render_ticker_page(ticker: str, series: list) -> str:
   <h1>{ticker}</h1>
   <div class="meta">Latest: {latest.get('date','N/A')} · ${latest.get('price',0):.2f} · {len(series)}개 리포트 · {pattern_badges}</div>
 
-  <h2>핵심 지표 (최신)</h2>
+  <h2>Overview (latest)</h2>
   <div class="grid">
-    <div class="card"><div class="card-label">Scenario [A] Bullish</div>
-      <div class="card-value" style="color:{COLOR['bull']};">{scen.get('A_bullish',0):.1f}%</div>
-      <div class="card-sub">Score {scen.get('raw_score',0):+.2f} · Macro {latest.get('macro_env','-')}</div>
-    </div>
-    <div class="card"><div class="card-label">Dark Pool % (L1)</div>
-      <div class="card-value">{(f'{l1.get("dp_pct"):.1f}%' if l1.get("dp_pct") is not None else "N/A")}</div>
-      <div class="card-sub">IAR {l1.get('iar') or 0:.2f} · {l1.get('divergence','-')}</div>
-    </div>
-    <div class="card"><div class="card-label">Short % · CTB (L2)</div>
-      <div class="card-value">{(f'{l2.get("short_pct_latest"):.1f}%' if l2.get("short_pct_latest") is not None else "N/A")} · {(f'{l2.get("ctb_fee"):.2f}%' if l2.get("ctb_fee") is not None else "N/A")}</div>
-      <div class="card-sub">{l2.get('case','-')}</div>
-    </div>
-    <div class="card"><div class="card-label">Max Pain · GEX Flip (L3)</div>
-      <div class="card-value">{('$'+format(l3.get('max_pain'),'.2f')) if l3.get('max_pain') else 'N/A'} · {('$'+format(l3.get('flip_zone'),'.2f')) if l3.get('flip_zone') else 'N/A'}</div>
-      <div class="card-sub">DTE {l3.get('dte','-')} · {l3.get('scenario','-')}</div>
-    </div>
+    {_overview_cards(scen, l1, l2, l3, latest)}
   </div>
 
   <h2>시계열 추이</h2>
   <div class="chart-grid">
-    <div class="card"><div class="card-label">Price</div><canvas id="priceChart"></canvas></div>
+    <div class="card" style="grid-column:1/-1;"><div class="card-label">Price · Max Pain · GEX Flip</div><canvas id="priceChart"></canvas></div>
     <div class="card"><div class="card-label">Scenario Probabilities (%)</div><canvas id="probChart"></canvas></div>
     <div class="card"><div class="card-label">Short % · CTB Fee</div><canvas id="shortChart"></canvas></div>
-    <div class="card"><div class="card-label">Max Pain · GEX Flip</div><canvas id="optChart"></canvas></div>
     <div class="card" style="grid-column:1/-1;"><div class="card-label">OBV Δ (Institutional vs Retail)</div><canvas id="obvChart"></canvas></div>
   </div>
 
@@ -243,7 +323,12 @@ function lineChart(id, datasets) {{
     }}
   }});
 }}
-lineChart('priceChart', [{{label:'Price', data:{json.dumps(prices)}, borderColor:'{COLOR["info"]}', backgroundColor:'{COLOR["alert_blue"]}'}}]);
+// Price · Max Pain · GEX Flip 통합 — 세 선 모두 같은 USD 축이라 한 차트에 넣기 자연스러움
+lineChart('priceChart', [
+  {{label:'Price',    data:{json.dumps(prices)},   borderColor:'{COLOR["info"]}', backgroundColor:'transparent', borderWidth:2.5}},
+  {{label:'Max Pain', data:{json.dumps(max_pain)}, borderColor:'{COLOR["warn"]}', backgroundColor:'transparent', borderDash:[4,3]}},
+  {{label:'GEX Flip', data:{json.dumps(flip)},     borderColor:'{COLOR["bull"]}', backgroundColor:'transparent', borderDash:[2,2]}}
+]);
 lineChart('probChart', [
   {{label:'[A] Bullish', data:{json.dumps(bull_probs)}, borderColor:'{COLOR["bull"]}', backgroundColor:'transparent'}},
   {{label:'[C] Bearish', data:{json.dumps(bear_probs)}, borderColor:'{COLOR["bear"]}', backgroundColor:'transparent'}}
@@ -251,10 +336,6 @@ lineChart('probChart', [
 lineChart('shortChart', [
   {{label:'Short %', data:{json.dumps(short_pct)}, borderColor:'{COLOR["bear"]}', yAxisID:'y', backgroundColor:'transparent'}},
   {{label:'CTB %', data:{json.dumps(ctb)}, borderColor:'{COLOR["warn"]}', yAxisID:'y', backgroundColor:'transparent'}}
-]);
-lineChart('optChart', [
-  {{label:'Max Pain', data:{json.dumps(max_pain)}, borderColor:'{COLOR["warn"]}', backgroundColor:'transparent'}},
-  {{label:'GEX Flip', data:{json.dumps(flip)}, borderColor:'{COLOR["info"]}', backgroundColor:'transparent'}}
 ]);
 lineChart('obvChart', [
   {{label:'Institutional Δ', data:{json.dumps(inst_obv)}, borderColor:'{COLOR["bull"]}', backgroundColor:'transparent'}},
