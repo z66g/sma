@@ -33,7 +33,7 @@
 <div class="wrap">
   <div class="nav"><a href="../../">← 전체 대시보드</a></div>
   <h1>TSLA</h1>
-  <div class="meta">Latest: 2026-04-14 · $363.94 · 1개 리포트 · <span style='color:#656D76;font-size:11px;'>패턴 없음</span></div>
+  <div class="meta">Latest: 2026-04-15 · $364.20 · 2개 리포트 · <span style='color:#656D76;font-size:11px;'>패턴 없음</span></div>
 
   <h2>핵심 지표 (최신)</h2>
   <div class="grid">
@@ -42,16 +42,16 @@
       <div class="card-sub">Score +0.15 · Macro FAVORABLE</div>
     </div>
     <div class="card"><div class="card-label">Dark Pool % (L1)</div>
-      <div class="card-value">56.7%</div>
-      <div class="card-sub">IAR 59.44 · CONVERGENCE</div>
+      <div class="card-value">56.1%</div>
+      <div class="card-sub">IAR 1.40 · CONVERGENCE</div>
     </div>
     <div class="card"><div class="card-label">Short % · CTB (L2)</div>
-      <div class="card-value">57.3% · 0.28%</div>
+      <div class="card-value">67.1% · 0.42%</div>
       <div class="card-sub">CASE_2_DIRECTIONAL_SHORT</div>
     </div>
     <div class="card"><div class="card-label">Max Pain · GEX Flip (L3)</div>
-      <div class="card-value">$350.00 · $350.50</div>
-      <div class="card-sub">DTE 1 · HEDGING</div>
+      <div class="card-value">$350.00 · $350.49</div>
+      <div class="card-sub">DTE 0 · HEDGING</div>
     </div>
   </div>
 
@@ -67,7 +67,7 @@
   <h2>전체 히스토리</h2>
   <table>
     <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Link</th></tr></thead>
-    <tbody><tr><td>2026-04-14</td><td>$363.94</td><td style="color:#9A6700;font-weight:600;">[B]Neut 40%</td><td>ACCUMULATION</td><td>2_DIRECTIONAL_SHORT</td><td>HEDGING</td><td><a href="../../2026-04-14/TSLA_3Layer_Forensic_2026-04-14.html">리포트</a></td></tr></tbody>
+    <tbody><tr><td>2026-04-15</td><td>$364.20</td><td style="color:#9A6700;font-weight:600;">[B]Neut 40%</td><td>ACCUMULATION</td><td>2_DIRECTIONAL_SHORT</td><td>HEDGING</td><td><a href="../../2026-04-15/TSLA_3Layer_Forensic_2026-04-15.html">리포트</a></td></tr><tr><td>2026-04-14</td><td>$363.94</td><td style="color:#9A6700;font-weight:600;">[B]Neut 40%</td><td>ACCUMULATION</td><td>2_DIRECTIONAL_SHORT</td><td>HEDGING</td><td><a href="../../2026-04-14/TSLA_3Layer_Forensic_2026-04-14.html">리포트</a></td></tr></tbody>
   </table>
 
   <h2>🤖 AI 내러티브 아카이브</h2>
@@ -92,7 +92,7 @@
 Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
 Chart.defaults.color = "#1F2328";
 Chart.defaults.plugins.legend.labels.boxWidth = 12;
-const DATES = ["2026-04-14"];
+const DATES = ["2026-04-14", "2026-04-15"];
 function lineChart(id, datasets) {
   new Chart(document.getElementById(id), {
     type:'line',
@@ -104,22 +104,22 @@ function lineChart(id, datasets) {
     }
   });
 }
-lineChart('priceChart', [{label:'Price', data:[363.94000244140625], borderColor:'#0969DA', backgroundColor:'#DDF4FF'}]);
+lineChart('priceChart', [{label:'Price', data:[363.94000244140625, 364.20001220703125], borderColor:'#0969DA', backgroundColor:'#DDF4FF'}]);
 lineChart('probChart', [
-  {label:'[A] Bullish', data:[37.0], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'[C] Bearish', data:[23.0], borderColor:'#CF222B', backgroundColor:'transparent'}
+  {label:'[A] Bullish', data:[37.0, 37.0], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'[C] Bearish', data:[23.0, 23.0], borderColor:'#CF222B', backgroundColor:'transparent'}
 ]);
 lineChart('shortChart', [
-  {label:'Short %', data:[57.30729190329682], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
-  {label:'CTB %', data:[0.2782], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
+  {label:'Short %', data:[57.30729190329682, 67.10992663074265], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
+  {label:'CTB %', data:[0.2782, 0.4187], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
 ]);
 lineChart('optChart', [
-  {label:'Max Pain', data:[350.0], borderColor:'#9A6700', backgroundColor:'transparent'},
-  {label:'GEX Flip', data:[350.496684155641], borderColor:'#0969DA', backgroundColor:'transparent'}
+  {label:'Max Pain', data:[350.0, 350.0], borderColor:'#9A6700', backgroundColor:'transparent'},
+  {label:'GEX Flip', data:[350.496684155641, 350.4867317524107], borderColor:'#0969DA', backgroundColor:'transparent'}
 ]);
 lineChart('obvChart', [
-  {label:'Institutional Δ', data:[13777177.510859992], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'Retail Δ', data:[-139066.5065159954], borderColor:'#CF222B', backgroundColor:'transparent'}
+  {label:'Institutional Δ', data:[13777177.510859992, 84218671.26293199], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Retail Δ', data:[-139066.5065159954, 29053547.517451074], borderColor:'#CF222B', backgroundColor:'transparent'}
 ]);
 </script>
 </body>
