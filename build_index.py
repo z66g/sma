@@ -525,7 +525,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 <div class="wrap">
 <header>
   <div>
-    <h1>Smart Money Analyzer</h1>
+    <h1><span style="color:{COLOR['info']};">S</span>mart <span style="color:{COLOR['info']};">M</span>oney <span style="color:{COLOR['info']};">A</span>nalyzer</h1>
     <div class="meta">Generated {generated}</div>
   </div>
   <div>
