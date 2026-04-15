@@ -797,7 +797,7 @@ document.addEventListener('click', async (e) => {
       if (row) row.is_active = true;
       renderWL();
       render();
-      setStatus(`✅ ${t} 워치리스트로 이동됨 (매일 10:30 KST 자동 분석 포함)`);
+      setStatus(`✅ ${t} 워치리스트로 이동됨 (매일 11:00 KST 자동분석 포함)`);
     } catch (err) {
       ticksCache = ticksCache.filter(x => x !== t);
       addBtn.disabled = false;
