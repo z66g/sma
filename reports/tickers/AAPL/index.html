@@ -116,6 +116,15 @@ Chart.defaults.color = "#1F2328";
 Chart.defaults.plugins.legend.labels.boxWidth = 12;
 const DATES = ["2026-04-14"];
 function lineChart(id, datasets) {
+  // 범례 마커를 '선 세그먼트'로 커스텀 렌더 (dash 패턴도 그대로 반영)
+  const lineLegendPlugin = {
+    id: 'lineLegendMarkers',
+    afterUpdate(chart) {
+      const items = chart.options.plugins.legend.labels._generated;
+      if (!items) return;
+      // generateLabels에서 채워진 후 처리 (직접 제어 대신 custom generator 사용)
+    }
+  };
   new Chart(document.getElementById(id), {
     type:'line',
     data:{ labels:DATES, datasets:datasets },
@@ -124,14 +133,32 @@ function lineChart(id, datasets) {
         legend:{
           display:datasets.length>1, position:'bottom',
           labels:{
-            usePointStyle:true, pointStyle:'line',  // 범례를 선 모양 + dash 반영
-            boxWidth:30, boxHeight:0, padding:12
+            padding:14,
+            // 각 데이터셋을 선 스타일 legend로 렌더링
+            generateLabels(chart) {
+              return chart.data.datasets.map((ds, i) => ({
+                text: ds.label,
+                fillStyle: 'transparent',
+                strokeStyle: ds.borderColor,
+                lineWidth: ds.borderWidth || 2,
+                lineDash: ds.borderDash || [],
+                pointStyle: 'line',
+                hidden: !chart.isDatasetVisible(i),
+                datasetIndex: i
+              }));
+            }
+          },
+          onClick(e, legendItem, legend) {
+            const idx = legendItem.datasetIndex;
+            const ci = legend.chart;
+            ci.setDatasetVisibility(idx, !ci.isDatasetVisible(idx));
+            ci.update();
           }
         },
         tooltip:{ usePointStyle:true }
       },
       scales:{y:{grid:{color:'#EAEEF2'}},x:{grid:{display:false}}},
-      elements:{point:{radius:2, pointStyle:'circle'},line:{tension:0.3,borderWidth:2}},
+      elements:{point:{radius:2},line:{tension:0.3,borderWidth:2}},
     }
   });
 }
