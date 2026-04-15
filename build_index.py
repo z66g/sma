@@ -102,10 +102,10 @@ def _overview_cards(scen: dict, l1: dict, l2: dict, l3: dict, latest: dict) -> s
                 ("C", scen.get("C_bearish", 0), "Bearish", COLOR["bear"])]
     top = max(sc_pairs, key=lambda x: x[1])
     top_key, top_val, top_label, top_color = top
-    others = " · ".join(f"[{k}] {v:.0f}%" for k,v,_,_ in sc_pairs if k != top_key)
+    others = " · ".join(f"{lbl} {v:.0f}%" for k,v,lbl,_ in sc_pairs if k != top_key)
     tt1 = (
         "<b>가중 signal 합산 시나리오 확률</b><br>"
-        "A/B/C 중 가장 높은 확률이 대표 시나리오. "
+        "Bullish/Neutral/Bearish 중 가장 높은 확률이 대표 시나리오. "
         "Score는 −1.00~+1.00 범위, Macro는 FRED 기반 유동성 분류."
         "<br><br>" + others
     )
@@ -125,7 +125,7 @@ def _overview_cards(scen: dict, l1: dict, l2: dict, l3: dict, latest: dict) -> s
     # Block 3: Short % · CTB
     sp = l2.get("short_pct_latest"); sp_str = f"{sp:.1f}%" if sp is not None else "N/A"
     cb = l2.get("ctb_fee"); cb_str = f"{cb:.2f}%" if cb is not None else "N/A"
-    case = l2.get("case","-")
+    case = re.sub(r"^CASE_\d+_|^CASE_", "", l2.get("case") or "-")
     tt3 = (
         "<b>FINRA Reg SHO 공매도 비율</b> · <b>iborrowdesk 차입 비용</b><br>"
         "Short%는 당일 공매도 체결 비율 — 포지션(short interest) 아님. "
@@ -151,7 +151,7 @@ def _overview_cards(scen: dict, l1: dict, l2: dict, l3: dict, latest: dict) -> s
 
     return f"""
     <div class="card"><div class="card-label">Top Scenario {tt_icon(tt1)}</div>
-      <div class="card-value" style="color:{top_color};">[{top_key}] {top_label} · {top_val:.1f}%</div>
+      <div class="card-value" style="color:{top_color};">{top_label} · {top_val:.1f}%</div>
       <div class="card-sub">Score {scen.get('raw_score',0):+.2f} · Macro {latest.get('macro_env','-')}</div>
     </div>
     <div class="card"><div class="card-label">Dark Pool % {tt_icon(tt2)}</div>
