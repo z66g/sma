@@ -24,9 +24,31 @@
   a:hover { text-decoration:underline; }
   canvas { max-height:200px; }
   .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
-  @media (max-width:720px) { .chart-grid { grid-template-columns:1fr; } }
   .nav { margin-bottom:16px; font-size:12px; }
   .nav a { color:#656D76; }
+
+  /* 표 가로 스크롤 wrapper (긴 테이블 대응) */
+  .t-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+  .t-scroll table { min-width:100%; }
+
+  /* ── 반응형 ────────────────────────────────────────── */
+  @media (max-width:1024px) {
+    .chart-grid { grid-template-columns:1fr; }
+    .grid { grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); }
+  }
+  @media (max-width:720px) {
+    body { padding:14px !important; font-size:12.5px; }
+    .wrap { max-width:100% !important; }
+    h1 { font-size:18px; }
+    h2 { font-size:13px; }
+    .grid { grid-template-columns:1fr; }
+    canvas { max-height:180px; }
+    .tt .tt-body { max-width:88vw; font-size:10px; }
+    /* narrative에서 Claude가 생성한 2x2 카드 그리드도 모바일에서 1열 */
+    #narrative-root div[style*="grid-template-columns:repeat(auto-fit"] {
+      grid-template-columns:1fr !important;
+    }
+  }
 
   /* Pure-CSS 툴팁 */
   .tt { position:relative; display:inline-block; cursor:help; }
@@ -87,10 +109,12 @@
   </div>
 
   <h2>전체 히스토리</h2>
+  <div class="t-scroll">
   <table>
     <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Link</th></tr></thead>
     <tbody><tr><td>2026-04-15</td><td>$47.37</td><td style="color:#1A7F5A;font-weight:600;">[A]Bull 62%</td><td>ACCUMULATION</td><td>1_MM_DELTA_HEDGE</td><td>HEDGING</td><td><a href="../../2026-04-15/IREN_3Layer_Forensic_2026-04-15.html">리포트</a></td></tr></tbody>
   </table>
+  </div>
 
   <h2>주간 AI 분석 리포트 히스토리</h2>
   <p style="font-size:12px;color:#656D76;">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>

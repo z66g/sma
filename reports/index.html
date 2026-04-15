@@ -30,8 +30,27 @@
   .pill-B { background:#FFF8C5; color:#9A6700; }
   .pill-C { background:#FFEBE9; color:#CF222B; }
   .pattern { font-size:9px; background:#FFF8C5; color:#9A6700; padding:1px 4px; border-radius:6px; margin-right:2px; }
-  .tbl-wrap { max-height:70vh; overflow:auto; border:0.5px solid #D0D7DE; border-radius:6px; }
+  .tbl-wrap { max-height:70vh; overflow:auto; border:0.5px solid #D0D7DE; border-radius:6px; -webkit-overflow-scrolling:touch; }
   .empty { padding:32px; text-align:center; color:#656D76; }
+
+  /* ── 반응형 ────────────────────────────────────────── */
+  @media (max-width:1024px) {
+    .wrap { max-width:100% !important; }
+    header { flex-direction:column; align-items:flex-start; gap:6px; }
+  }
+  @media (max-width:720px) {
+    body { padding:14px !important; font-size:12.5px; }
+    h1 { font-size:18px !important; }
+    h2 { font-size:13px; }
+    #mgmt { padding:10px 12px !important; }
+    #mgmt input[type="text"], #mgmt input[type="password"] { width:100% !important; max-width:320px; }
+    #mgmt button { white-space:nowrap; }
+    .tbl-wrap { max-height:none; }
+    th, td { padding:4px 6px; font-size:11px; }
+    /* 긴 영문 라벨 대응 */
+    .pill { font-size:9px; padding:1px 6px; }
+    .pattern { font-size:8px; }
+  }
 </style>
 </head>
 <body>
@@ -39,7 +58,7 @@
 <header>
   <div>
     <h1>Smart Money Analyzer</h1>
-    <div class="meta">Generated 2026-04-15 12:59 KST</div>
+    <div class="meta">Generated 2026-04-15 13:06 KST</div>
   </div>
   <div>
     <a href="https://github.com/z66g/sma" style="font-size:11px;">GitHub</a>

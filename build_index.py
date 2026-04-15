@@ -238,9 +238,31 @@ def render_ticker_page(ticker: str, series: list) -> str:
   a:hover {{ text-decoration:underline; }}
   canvas {{ max-height:200px; }}
   .chart-grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }}
-  @media (max-width:720px) {{ .chart-grid {{ grid-template-columns:1fr; }} }}
   .nav {{ margin-bottom:16px; font-size:12px; }}
   .nav a {{ color:{COLOR['muted']}; }}
+
+  /* 표 가로 스크롤 wrapper (긴 테이블 대응) */
+  .t-scroll {{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }}
+  .t-scroll table {{ min-width:100%; }}
+
+  /* ── 반응형 ────────────────────────────────────────── */
+  @media (max-width:1024px) {{
+    .chart-grid {{ grid-template-columns:1fr; }}
+    .grid {{ grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); }}
+  }}
+  @media (max-width:720px) {{
+    body {{ padding:14px !important; font-size:12.5px; }}
+    .wrap {{ max-width:100% !important; }}
+    h1 {{ font-size:18px; }}
+    h2 {{ font-size:13px; }}
+    .grid {{ grid-template-columns:1fr; }}
+    canvas {{ max-height:180px; }}
+    .tt .tt-body {{ max-width:88vw; font-size:10px; }}
+    /* narrative에서 Claude가 생성한 2x2 카드 그리드도 모바일에서 1열 */
+    #narrative-root div[style*="grid-template-columns:repeat(auto-fit"] {{
+      grid-template-columns:1fr !important;
+    }}
+  }}
 
   /* Pure-CSS 툴팁 */
   .tt {{ position:relative; display:inline-block; cursor:help; }}
@@ -284,10 +306,12 @@ def render_ticker_page(ticker: str, series: list) -> str:
   </div>
 
   <h2>전체 히스토리</h2>
+  <div class="t-scroll">
   <table>
     <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Link</th></tr></thead>
     <tbody>{''.join(rows) if rows else '<tr><td colspan="7">아직 리포트 없음</td></tr>'}</tbody>
   </table>
+  </div>
 
   <h2>주간 AI 분석 리포트 히스토리</h2>
   {_render_narrative_archive(ticker)}
@@ -462,8 +486,27 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
   .pill-B {{ background:{COLOR['alert_amber']}; color:{COLOR['warn']}; }}
   .pill-C {{ background:{COLOR['alert_red']}; color:{COLOR['bear']}; }}
   .pattern {{ font-size:9px; background:{COLOR['alert_amber']}; color:{COLOR['warn']}; padding:1px 4px; border-radius:6px; margin-right:2px; }}
-  .tbl-wrap {{ max-height:70vh; overflow:auto; border:0.5px solid {COLOR['border']}; border-radius:6px; }}
+  .tbl-wrap {{ max-height:70vh; overflow:auto; border:0.5px solid {COLOR['border']}; border-radius:6px; -webkit-overflow-scrolling:touch; }}
   .empty {{ padding:32px; text-align:center; color:{COLOR['muted']}; }}
+
+  /* ── 반응형 ────────────────────────────────────────── */
+  @media (max-width:1024px) {{
+    .wrap {{ max-width:100% !important; }}
+    header {{ flex-direction:column; align-items:flex-start; gap:6px; }}
+  }}
+  @media (max-width:720px) {{
+    body {{ padding:14px !important; font-size:12.5px; }}
+    h1 {{ font-size:18px !important; }}
+    h2 {{ font-size:13px; }}
+    #mgmt {{ padding:10px 12px !important; }}
+    #mgmt input[type="text"], #mgmt input[type="password"] {{ width:100% !important; max-width:320px; }}
+    #mgmt button {{ white-space:nowrap; }}
+    .tbl-wrap {{ max-height:none; }}
+    th, td {{ padding:4px 6px; font-size:11px; }}
+    /* 긴 영문 라벨 대응 */
+    .pill {{ font-size:9px; padding:1px 6px; }}
+    .pattern {{ font-size:8px; }}
+  }}
 </style>
 </head>
 <body>
