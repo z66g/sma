@@ -39,42 +39,59 @@
 <header>
   <div>
     <h1>Smart Money Analyzer</h1>
-    <div class="meta">Generated 2026-04-15 00:31 UTC</div>
+    <div class="meta">Generated 2026-04-15 00:54 UTC</div>
   </div>
   <div>
     <a href="https://github.com/z66g/sma" style="font-size:11px;">GitHub</a>
   </div>
 </header>
 
-<div class="stat-bar" id="statBar"></div>
+<div id="mgmt" style="margin-bottom:16px;background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:14px 16px;">
 
-<details id="mgmt" style="margin-bottom:14px;background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:0;">
-  <summary style="cursor:pointer;padding:10px 14px;font-weight:600;font-size:13px;color:#0969DA;">⚙ Manage Watchlist · Run Analysis</summary>
-  <div style="padding:12px 14px;border-top:0.5px solid #D0D7DE;">
-    <div id="mgmt-need-token" style="display:none;">
-      <div style="margin-bottom:8px;font-size:12px;color:#656D76;">
-        GitHub Personal Access Token이 필요합니다 (브라우저 localStorage에만 저장, repo에 커밋 안 됨).
-        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Fine-grained PAT 생성</a> →
-        Repository access: <b>z66g/sma</b> →
-        Permissions: <b>Contents: Read and write</b> + <b>Actions: Read and write</b>
-      </div>
-      <input id="pat" type="password" placeholder="ghp_… 또는 github_pat_…" style="width:420px;">
-      <button id="pat-save" style="padding:6px 14px;background:#0969DA;color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
-      <button id="pat-clear" style="padding:6px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;">지우기</button>
+  <!-- PAT 미설정 시 안내 -->
+  <div id="mgmt-need-token" style="display:none;">
+    <div style="margin-bottom:8px;font-size:12px;color:#656D76;">
+      GitHub Personal Access Token이 필요합니다 (브라우저 localStorage만 저장, repo 커밋 X).
+      <a href="https://github.com/settings/tokens/new" target="_blank">Classic PAT</a> 발급 →
+      <b>repo</b> + <b>workflow</b> 권한.
     </div>
-
-    <div id="mgmt-panel" style="display:none;">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-        <input id="new-ticker" type="text" placeholder="티커 추가 (예: PLTR)" style="text-transform:uppercase;">
-        <button id="add-btn" style="padding:6px 14px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;">＋ 추가</button>
-        <button id="run-btn" style="padding:6px 14px;background:#9A6700;color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ Run Analysis Now</button>
-        <button id="pat-edit" style="padding:6px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:11px;">PAT 변경</button>
-      </div>
-      <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
-      <div id="mgmt-status" style="font-size:11px;color:#656D76;min-height:16px;"></div>
-    </div>
+    <input id="pat" type="password" placeholder="ghp_… 또는 github_pat_…" style="width:360px;">
+    <button id="pat-save" style="padding:6px 14px;background:#0969DA;color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
+    <button id="pat-clear" style="padding:6px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;">지우기</button>
   </div>
-</details>
+
+  <!-- PAT 설정 후 컨트롤 패널 -->
+  <div id="mgmt-panel" style="display:none;">
+
+    <!-- 1) 단일 종목 즉시 분석 -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">
+        단일 종목 즉시 분석 — 워치리스트 변경 없이 1회만 수행
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input id="adhoc-ticker" type="text" placeholder="티커 (예: PLTR)" style="text-transform:uppercase;width:160px;">
+        <button id="adhoc-btn" style="padding:6px 14px;background:#0969DA;color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ 분석 실행</button>
+        <span style="font-size:11px;color:#656D76;">→ 결과는 ‘히스토리(Archive)’에 저장</span>
+      </div>
+    </div>
+
+    <!-- 2) 워치리스트 관리 -->
+    <div style="border-top:0.5px solid #D0D7DE;padding-top:14px;">
+      <div style="font-size:11px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">
+        워치리스트 — 매일 오전 10:30 KST 자동 분석되는 종목
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+        <input id="new-ticker" type="text" placeholder="티커 추가 (예: PLTR)" style="text-transform:uppercase;width:160px;">
+        <button id="add-btn" style="padding:6px 14px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;">＋ 워치리스트에 추가</button>
+        <button id="run-btn" style="padding:6px 14px;background:#9A6700;color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ 워치리스트 전체 즉시 분석</button>
+        <button id="pat-edit" style="padding:6px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:11px;margin-left:auto;">PAT 변경</button>
+      </div>
+      <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;"></div>
+    </div>
+
+    <div id="mgmt-status" style="font-size:11px;color:#656D76;min-height:16px;margin-top:8px;"></div>
+  </div>
+</div>
 
 <div class="controls">
   <input id="q" type="text" placeholder="티커 검색 (예: NVDA)...">
@@ -129,7 +146,7 @@
 </div>
 
 <details id="archive-wrap" style="margin-top:24px;">
-<summary style="cursor:pointer;font-size:14px;font-weight:700;color:#656D76;border-bottom:0.5px solid #D0D7DE;padding-bottom:4px;">▶ 히스토리 (Archive — 과거에 분석했지만 현재 감시 목록에 없는 종목) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
+<summary style="cursor:pointer;font-size:14px;font-weight:700;color:#656D76;border-bottom:0.5px solid #D0D7DE;padding-bottom:4px;">히스토리 (Archive — 과거에 분석했지만 현재 감시 목록에 없는 종목) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
 <div class="tbl-wrap" style="margin-top:8px;">
 <table id="tbl-archive">
   <thead><tr>

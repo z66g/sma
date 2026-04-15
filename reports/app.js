@@ -11,7 +11,6 @@ const fScenario = document.getElementById('filter-scenario');
 const fPattern = document.getElementById('filter-pattern');
 const sortSel = document.getElementById('sort');
 const countEl = document.getElementById('count');
-const statBar = document.getElementById('statBar');
 
 function fmtPct(v, dec){ return v==null ? '-' : (dec==null ? v.toFixed(1) : v.toFixed(dec)) + '%'; }
 function fmtDol(v){ return v==null ? '-' : '$' + (+v).toFixed(2); }
@@ -89,23 +88,7 @@ function render() {
   archiveWrap.style.display = archive.length ? '' : 'none';
 }
 
-function renderStats() {
-  const total = DB.length;
-  const bulls = DB.filter(r=>r.scenario==='A').length;
-  const bears = DB.filter(r=>r.scenario==='C').length;
-  const neuts = DB.filter(r=>r.scenario==='B').length;
-  const patterns = DB.filter(r=>(r.patterns||[]).length>0).length;
-  statBar.innerHTML = `
-    <div class="stat"><div class="stat-label">Tickers</div><div class="stat-value">${total}</div></div>
-    <div class="stat"><div class="stat-label">[A] Bullish</div><div class="stat-value" style="color:#1A7F5A;">${bulls}</div></div>
-    <div class="stat"><div class="stat-label">[B] Neutral</div><div class="stat-value" style="color:#9A6700;">${neuts}</div></div>
-    <div class="stat"><div class="stat-label">[C] Bearish</div><div class="stat-value" style="color:#CF222B;">${bears}</div></div>
-    <div class="stat"><div class="stat-label">With Patterns</div><div class="stat-value">${patterns}</div></div>
-  `;
-}
-
 [q, fScenario, fPattern, sortSel].forEach(el => el.addEventListener('input', render));
-renderStats();
 render();
 
 // ───── Watchlist management via GitHub API ─────
@@ -247,18 +230,32 @@ async function removeTicker(t) {
   }
 }
 
-async function runWorkflow() {
-  if (!confirm('지금 전체 티커 분석을 실행할까요? (5~10분 소요, Actions 탭에서 진행 확인)')) return;
+async function runWorkflow(singleTicker) {
+  const inputs = {};
+  if (singleTicker) inputs.ticker = singleTicker;
+  const msg = singleTicker
+    ? `${singleTicker} 한 종목만 분석할까요? (1~3분 소요)`
+    : `워치리스트 전체(${ticksCache.length}개)를 지금 분석할까요? (5~10분 소요)`;
+  if (!confirm(msg)) return;
   setStatus('워크플로우 dispatch 중...');
   try {
     await gh(`/repos/${REPO}/actions/workflows/daily.yml/dispatches`, {
       method: 'POST',
-      body: JSON.stringify({ ref: 'main' })
+      body: JSON.stringify({ ref: 'main', inputs })
     });
-    setStatus('✅ 실행 시작됨. https://github.com/' + REPO + '/actions 에서 진행 확인');
+    const detail = singleTicker ? `${singleTicker} 분석` : '워치리스트 전체 분석';
+    setStatus(`✅ ${detail} 시작됨 → https://github.com/${REPO}/actions`);
   } catch (e) {
     setStatus('실패: ' + e.message, true);
   }
+}
+
+async function runAdhoc() {
+  const t = (document.getElementById('adhoc-ticker').value || '').trim().toUpperCase();
+  if (!t) { setStatus('티커를 입력하세요', true); return; }
+  if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(t)) { setStatus(`"${t}"는 유효한 티커 형식이 아닙니다`, true); return; }
+  await runWorkflow(t);
+  document.getElementById('adhoc-ticker').value = '';
 }
 
 patSaveBtn.addEventListener('click', () => {
@@ -275,8 +272,10 @@ patSaveBtn.addEventListener('click', () => {
 patClearBtn.addEventListener('click', () => { clearPAT(); showPanel(false); });
 patEditBtn.addEventListener('click', () => { showPanel(false); });
 addBtn.addEventListener('click', addTicker);
+document.getElementById('adhoc-btn').addEventListener('click', runAdhoc);
+document.getElementById('adhoc-ticker').addEventListener('keydown', e => { if (e.key === 'Enter') runAdhoc(); });
 newTickerEl.addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
-runBtn.addEventListener('click', runWorkflow);
+runBtn.addEventListener('click', () => runWorkflow());
 
 // 초기화
 if (getPAT()) {

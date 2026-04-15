@@ -361,35 +361,52 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
   </div>
 </header>
 
-<div class="stat-bar" id="statBar"></div>
+<div id="mgmt" style="margin-bottom:16px;background:{COLOR['card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:14px 16px;">
 
-<details id="mgmt" style="margin-bottom:14px;background:{COLOR['card']};border:0.5px solid {COLOR['border']};border-radius:6px;padding:0;">
-  <summary style="cursor:pointer;padding:10px 14px;font-weight:600;font-size:13px;color:{COLOR['info']};">⚙ Manage Watchlist · Run Analysis</summary>
-  <div style="padding:12px 14px;border-top:0.5px solid {COLOR['border']};">
-    <div id="mgmt-need-token" style="display:none;">
-      <div style="margin-bottom:8px;font-size:12px;color:{COLOR['muted']};">
-        GitHub Personal Access Token이 필요합니다 (브라우저 localStorage에만 저장, repo에 커밋 안 됨).
-        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Fine-grained PAT 생성</a> →
-        Repository access: <b>z66g/sma</b> →
-        Permissions: <b>Contents: Read and write</b> + <b>Actions: Read and write</b>
-      </div>
-      <input id="pat" type="password" placeholder="ghp_… 또는 github_pat_…" style="width:420px;">
-      <button id="pat-save" style="padding:6px 14px;background:{COLOR['info']};color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
-      <button id="pat-clear" style="padding:6px 10px;background:none;color:{COLOR['muted']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">지우기</button>
+  <!-- PAT 미설정 시 안내 -->
+  <div id="mgmt-need-token" style="display:none;">
+    <div style="margin-bottom:8px;font-size:12px;color:{COLOR['muted']};">
+      GitHub Personal Access Token이 필요합니다 (브라우저 localStorage만 저장, repo 커밋 X).
+      <a href="https://github.com/settings/tokens/new" target="_blank">Classic PAT</a> 발급 →
+      <b>repo</b> + <b>workflow</b> 권한.
     </div>
-
-    <div id="mgmt-panel" style="display:none;">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-        <input id="new-ticker" type="text" placeholder="티커 추가 (예: PLTR)" style="text-transform:uppercase;">
-        <button id="add-btn" style="padding:6px 14px;background:{COLOR['bull']};color:#fff;border:0;border-radius:4px;cursor:pointer;">＋ 추가</button>
-        <button id="run-btn" style="padding:6px 14px;background:{COLOR['warn']};color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ Run Analysis Now</button>
-        <button id="pat-edit" style="padding:6px 10px;background:none;color:{COLOR['muted']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;font-size:11px;">PAT 변경</button>
-      </div>
-      <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
-      <div id="mgmt-status" style="font-size:11px;color:{COLOR['muted']};min-height:16px;"></div>
-    </div>
+    <input id="pat" type="password" placeholder="ghp_… 또는 github_pat_…" style="width:360px;">
+    <button id="pat-save" style="padding:6px 14px;background:{COLOR['info']};color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
+    <button id="pat-clear" style="padding:6px 10px;background:none;color:{COLOR['muted']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">지우기</button>
   </div>
-</details>
+
+  <!-- PAT 설정 후 컨트롤 패널 -->
+  <div id="mgmt-panel" style="display:none;">
+
+    <!-- 1) 단일 종목 즉시 분석 -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">
+        단일 종목 즉시 분석 — 워치리스트 변경 없이 1회만 수행
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input id="adhoc-ticker" type="text" placeholder="티커 (예: PLTR)" style="text-transform:uppercase;width:160px;">
+        <button id="adhoc-btn" style="padding:6px 14px;background:{COLOR['info']};color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ 분석 실행</button>
+        <span style="font-size:11px;color:{COLOR['muted']};">→ 결과는 ‘히스토리(Archive)’에 저장</span>
+      </div>
+    </div>
+
+    <!-- 2) 워치리스트 관리 -->
+    <div style="border-top:0.5px solid {COLOR['border']};padding-top:14px;">
+      <div style="font-size:11px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">
+        워치리스트 — 매일 오전 10:30 KST 자동 분석되는 종목
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+        <input id="new-ticker" type="text" placeholder="티커 추가 (예: PLTR)" style="text-transform:uppercase;width:160px;">
+        <button id="add-btn" style="padding:6px 14px;background:{COLOR['bull']};color:#fff;border:0;border-radius:4px;cursor:pointer;">＋ 워치리스트에 추가</button>
+        <button id="run-btn" style="padding:6px 14px;background:{COLOR['warn']};color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ 워치리스트 전체 즉시 분석</button>
+        <button id="pat-edit" style="padding:6px 10px;background:none;color:{COLOR['muted']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;font-size:11px;margin-left:auto;">PAT 변경</button>
+      </div>
+      <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;"></div>
+    </div>
+
+    <div id="mgmt-status" style="font-size:11px;color:{COLOR['muted']};min-height:16px;margin-top:8px;"></div>
+  </div>
+</div>
 
 <div class="controls">
   <input id="q" type="text" placeholder="티커 검색 (예: NVDA)...">
@@ -444,7 +461,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 </div>
 
 <details id="archive-wrap" style="margin-top:24px;">
-<summary style="cursor:pointer;font-size:14px;font-weight:700;color:{COLOR['muted']};border-bottom:0.5px solid {COLOR['border']};padding-bottom:4px;">▶ 히스토리 (Archive — 과거에 분석했지만 현재 감시 목록에 없는 종목) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
+<summary style="cursor:pointer;font-size:14px;font-weight:700;color:{COLOR['muted']};border-bottom:0.5px solid {COLOR['border']};padding-bottom:4px;">히스토리 (Archive — 과거에 분석했지만 현재 감시 목록에 없는 종목) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
 <div class="tbl-wrap" style="margin-top:8px;">
 <table id="tbl-archive">
   <thead><tr>
@@ -492,7 +509,6 @@ const fScenario = document.getElementById('filter-scenario');
 const fPattern = document.getElementById('filter-pattern');
 const sortSel = document.getElementById('sort');
 const countEl = document.getElementById('count');
-const statBar = document.getElementById('statBar');
 
 function fmtPct(v, dec){ return v==null ? '-' : (dec==null ? v.toFixed(1) : v.toFixed(dec)) + '%'; }
 function fmtDol(v){ return v==null ? '-' : '$' + (+v).toFixed(2); }
@@ -570,23 +586,7 @@ function render() {
   archiveWrap.style.display = archive.length ? '' : 'none';
 }
 
-function renderStats() {
-  const total = DB.length;
-  const bulls = DB.filter(r=>r.scenario==='A').length;
-  const bears = DB.filter(r=>r.scenario==='C').length;
-  const neuts = DB.filter(r=>r.scenario==='B').length;
-  const patterns = DB.filter(r=>(r.patterns||[]).length>0).length;
-  statBar.innerHTML = `
-    <div class="stat"><div class="stat-label">Tickers</div><div class="stat-value">${total}</div></div>
-    <div class="stat"><div class="stat-label">[A] Bullish</div><div class="stat-value" style="color:#1A7F5A;">${bulls}</div></div>
-    <div class="stat"><div class="stat-label">[B] Neutral</div><div class="stat-value" style="color:#9A6700;">${neuts}</div></div>
-    <div class="stat"><div class="stat-label">[C] Bearish</div><div class="stat-value" style="color:#CF222B;">${bears}</div></div>
-    <div class="stat"><div class="stat-label">With Patterns</div><div class="stat-value">${patterns}</div></div>
-  `;
-}
-
 [q, fScenario, fPattern, sortSel].forEach(el => el.addEventListener('input', render));
-renderStats();
 render();
 
 // ───── Watchlist management via GitHub API ─────
@@ -728,18 +728,32 @@ async function removeTicker(t) {
   }
 }
 
-async function runWorkflow() {
-  if (!confirm('지금 전체 티커 분석을 실행할까요? (5~10분 소요, Actions 탭에서 진행 확인)')) return;
+async function runWorkflow(singleTicker) {
+  const inputs = {};
+  if (singleTicker) inputs.ticker = singleTicker;
+  const msg = singleTicker
+    ? `${singleTicker} 한 종목만 분석할까요? (1~3분 소요)`
+    : `워치리스트 전체(${ticksCache.length}개)를 지금 분석할까요? (5~10분 소요)`;
+  if (!confirm(msg)) return;
   setStatus('워크플로우 dispatch 중...');
   try {
     await gh(`/repos/${REPO}/actions/workflows/daily.yml/dispatches`, {
       method: 'POST',
-      body: JSON.stringify({ ref: 'main' })
+      body: JSON.stringify({ ref: 'main', inputs })
     });
-    setStatus('✅ 실행 시작됨. https://github.com/' + REPO + '/actions 에서 진행 확인');
+    const detail = singleTicker ? `${singleTicker} 분석` : '워치리스트 전체 분석';
+    setStatus(`✅ ${detail} 시작됨 → https://github.com/${REPO}/actions`);
   } catch (e) {
     setStatus('실패: ' + e.message, true);
   }
+}
+
+async function runAdhoc() {
+  const t = (document.getElementById('adhoc-ticker').value || '').trim().toUpperCase();
+  if (!t) { setStatus('티커를 입력하세요', true); return; }
+  if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(t)) { setStatus(`"${t}"는 유효한 티커 형식이 아닙니다`, true); return; }
+  await runWorkflow(t);
+  document.getElementById('adhoc-ticker').value = '';
 }
 
 patSaveBtn.addEventListener('click', () => {
@@ -756,8 +770,10 @@ patSaveBtn.addEventListener('click', () => {
 patClearBtn.addEventListener('click', () => { clearPAT(); showPanel(false); });
 patEditBtn.addEventListener('click', () => { showPanel(false); });
 addBtn.addEventListener('click', addTicker);
+document.getElementById('adhoc-btn').addEventListener('click', runAdhoc);
+document.getElementById('adhoc-ticker').addEventListener('keydown', e => { if (e.key === 'Enter') runAdhoc(); });
 newTickerEl.addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
-runBtn.addEventListener('click', runWorkflow);
+runBtn.addEventListener('click', () => runWorkflow());
 
 // 초기화
 if (getPAT()) {

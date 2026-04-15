@@ -8,6 +8,11 @@ on:
     # 01:30 UTC는 EDT·EST 모두 커버.
     - cron: "30 1 * * 2-6"
   workflow_dispatch:
+    inputs:
+      ticker:
+        description: "단일 종목만 즉시 분석 (빈 값이면 tickers.txt 전체)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -46,8 +51,14 @@ jobs:
           mkdir -p "${OUT_DIR}"
           export SMA_OUT_DIR="${OUT_DIR}"
 
-          TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
-          echo "Tickers to analyze: ${TICKERS}"
+          SINGLE="${{ github.event.inputs.ticker }}"
+          if [ -n "${SINGLE}" ]; then
+            TICKERS="$(echo ${SINGLE} | tr 'a-z' 'A-Z' | xargs)"
+            echo "Single-ticker dispatch: ${TICKERS}"
+          else
+            TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
+            echo "Watchlist tickers: ${TICKERS}"
+          fi
 
           FIRST=1
           for T in ${TICKERS}; do
