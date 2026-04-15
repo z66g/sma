@@ -39,7 +39,7 @@
 <header>
   <div>
     <h1>Smart Money Analyzer</h1>
-    <div class="meta">Generated 2026-04-14 18:55 UTC</div>
+    <div class="meta">Generated 2026-04-15 00:31 UTC</div>
   </div>
   <div>
     <a href="https://github.com/z66g/sma" style="font-size:11px;">GitHub</a>
@@ -103,8 +103,9 @@
   <span id="count" style="color:#656D76;font-size:11px;"></span>
 </div>
 
+<h2 style="font-size:14px;color:#9A6700;margin:18px 0 6px;border-bottom:0.5px solid #9A6700;padding-bottom:4px;">▶ 감시 중 (Active Watchlist) <span id="active-count" style="font-size:11px;color:#656D76;font-weight:400;"></span></h2>
 <div class="tbl-wrap">
-<table id="tbl">
+<table id="tbl-active">
   <thead><tr>
     <th>Ticker</th>
     <th>Latest</th>
@@ -112,9 +113,9 @@
     <th>Top Scenario</th>
     <th>Score</th>
     <th>Macro</th>
-    <th>L1</th>
-    <th>L2 Case</th>
-    <th>L3</th>
+    <th>Darkpool</th>
+    <th>Short Case</th>
+    <th>Options</th>
     <th>DP %</th>
     <th>Short %</th>
     <th>CTB %</th>
@@ -123,12 +124,40 @@
     <th>Reports</th>
     <th></th>
   </tr></thead>
-  <tbody id="tbody"></tbody>
+  <tbody id="tbody-active"></tbody>
 </table>
+</div>
+
+<details id="archive-wrap" style="margin-top:24px;">
+<summary style="cursor:pointer;font-size:14px;font-weight:700;color:#656D76;border-bottom:0.5px solid #D0D7DE;padding-bottom:4px;">▶ 히스토리 (Archive — 과거에 분석했지만 현재 감시 목록에 없는 종목) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
+<div class="tbl-wrap" style="margin-top:8px;">
+<table id="tbl-archive">
+  <thead><tr>
+    <th>Ticker</th>
+    <th>Latest</th>
+    <th>Price</th>
+    <th>Top Scenario</th>
+    <th>Score</th>
+    <th>Macro</th>
+    <th>Darkpool</th>
+    <th>Short Case</th>
+    <th>Options</th>
+    <th>DP %</th>
+    <th>Short %</th>
+    <th>CTB %</th>
+    <th>Max Pain</th>
+    <th>Patterns</th>
+    <th>Reports</th>
+    <th></th>
+  </tr></thead>
+  <tbody id="tbody-archive"></tbody>
+</table>
+</div>
+</details>
 </div>
 </div>
 <script>
-window.__DB__ = [{"ticker": "AAPL", "latest_date": "2026-04-14", "price": 259.20001220703125, "scenario": "C", "scenario_pct": 43.0, "raw_score": -0.35, "patterns": [], "l1_scenario": "DISTRIBUTION", "l2_case": "CASE_1_MM_DELTA_HEDGE", "l3_scenario": "HEDGING", "macro_env": "FAVORABLE", "dp_pct": 33.89067312181006, "ctb_fee": 0.25, "short_pct": 51.922474221454365, "max_pain": 255.0, "report_count": 1}, {"ticker": "IONQ", "latest_date": "2026-04-14", "price": 34.55500030517578, "scenario": "A", "scenario_pct": 78.7, "raw_score": 0.65, "patterns": ["GAMMA_SQUEEZE_SETUP", "FINAL_ABSORPTION"], "l1_scenario": "ACCUMULATION", "l2_case": "MIXED", "l3_scenario": "GAMMA_SQUEEZE", "macro_env": "FAVORABLE", "dp_pct": 41.40943769544946, "ctb_fee": 0.4813, "short_pct": 52.535569478953924, "max_pain": 32.0, "report_count": 1}, {"ticker": "NVDA", "latest_date": "2026-04-14", "price": 189.30999755859375, "scenario": "A", "scenario_pct": 62.0, "raw_score": 0.35, "patterns": ["FINAL_ABSORPTION"], "l1_scenario": "ACCUMULATION", "l2_case": "CASE_1_MM_DELTA_HEDGE", "l3_scenario": "HEDGING", "macro_env": "FAVORABLE", "dp_pct": 45.556842375532206, "ctb_fee": 0.2782, "short_pct": 45.51440819581565, "max_pain": 185.0, "report_count": 1}, {"ticker": "SMR", "latest_date": "2026-04-14", "price": 10.070099830627441, "scenario": "A", "scenario_pct": 41.7, "raw_score": 0.15, "patterns": ["GAMMA_SQUEEZE_SETUP"], "l1_scenario": "DISTRIBUTION", "l2_case": "SHORT_COVERING", "l3_scenario": "GAMMA_SQUEEZE", "macro_env": "FAVORABLE", "dp_pct": 58.786337887265326, "ctb_fee": 0.3399, "short_pct": 17.826305132999813, "max_pain": 12.0, "report_count": 1}, {"ticker": "TSLA", "latest_date": "2026-04-14", "price": 363.94000244140625, "scenario": "B", "scenario_pct": 40.0, "raw_score": 0.15, "patterns": [], "l1_scenario": "ACCUMULATION", "l2_case": "CASE_2_DIRECTIONAL_SHORT", "l3_scenario": "HEDGING", "macro_env": "FAVORABLE", "dp_pct": 56.67635404255103, "ctb_fee": 0.2782, "short_pct": 57.30729190329682, "max_pain": 350.0, "report_count": 1}];
+window.__DB__ = [{"ticker": "AAPL", "is_active": false, "latest_date": "2026-04-14", "price": 259.20001220703125, "scenario": "C", "scenario_pct": 43.0, "raw_score": -0.35, "patterns": [], "l1_scenario": "DISTRIBUTION", "l2_case": "CASE_1_MM_DELTA_HEDGE", "l3_scenario": "HEDGING", "macro_env": "FAVORABLE", "dp_pct": 33.89067312181006, "ctb_fee": 0.25, "short_pct": 51.922474221454365, "max_pain": 255.0, "report_count": 1}, {"ticker": "IONQ", "is_active": true, "latest_date": "2026-04-14", "price": 34.55500030517578, "scenario": "A", "scenario_pct": 78.7, "raw_score": 0.65, "patterns": ["GAMMA_SQUEEZE_SETUP", "FINAL_ABSORPTION"], "l1_scenario": "ACCUMULATION", "l2_case": "MIXED", "l3_scenario": "GAMMA_SQUEEZE", "macro_env": "FAVORABLE", "dp_pct": 41.40943769544946, "ctb_fee": 0.4813, "short_pct": 52.535569478953924, "max_pain": 32.0, "report_count": 1}, {"ticker": "NVDA", "is_active": false, "latest_date": "2026-04-14", "price": 189.30999755859375, "scenario": "A", "scenario_pct": 62.0, "raw_score": 0.35, "patterns": ["FINAL_ABSORPTION"], "l1_scenario": "ACCUMULATION", "l2_case": "CASE_1_MM_DELTA_HEDGE", "l3_scenario": "HEDGING", "macro_env": "FAVORABLE", "dp_pct": 45.556842375532206, "ctb_fee": 0.2782, "short_pct": 45.51440819581565, "max_pain": 185.0, "report_count": 1}, {"ticker": "SMR", "is_active": true, "latest_date": "2026-04-14", "price": 10.070099830627441, "scenario": "A", "scenario_pct": 41.7, "raw_score": 0.15, "patterns": ["GAMMA_SQUEEZE_SETUP"], "l1_scenario": "DISTRIBUTION", "l2_case": "SHORT_COVERING", "l3_scenario": "GAMMA_SQUEEZE", "macro_env": "FAVORABLE", "dp_pct": 58.786337887265326, "ctb_fee": 0.3399, "short_pct": 17.826305132999813, "max_pain": 12.0, "report_count": 1}, {"ticker": "TSLA", "is_active": true, "latest_date": "2026-04-14", "price": 363.94000244140625, "scenario": "B", "scenario_pct": 40.0, "raw_score": 0.15, "patterns": [], "l1_scenario": "ACCUMULATION", "l2_case": "CASE_2_DIRECTIONAL_SHORT", "l3_scenario": "HEDGING", "macro_env": "FAVORABLE", "dp_pct": 56.67635404255103, "ctb_fee": 0.2782, "short_pct": 57.30729190329682, "max_pain": 350.0, "report_count": 1}];
 </script>
 <script src="app.js"></script>
 </body>

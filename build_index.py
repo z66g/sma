@@ -125,7 +125,7 @@ def render_ticker_page(ticker: str, series: list) -> str:
             f'<td>${s.get("price",0):.2f}</td>'
             f'<td style="color:{color};font-weight:600;">{scen_label} {max(sc.get("A_bullish",0),sc.get("B_neutral",0),sc.get("C_bearish",0)):.0f}%</td>'
             f'<td>{sl1.get("scenario","-")}</td>'
-            f'<td>{sl2.get("case","-")}</td>'
+            f'<td>{re.sub(r"^CASE_\\d+_|^CASE_", "", sl2.get("case") or "-")}</td>'
             f'<td>{sl3.get("scenario","-")}</td>'
             f'<td><a href="../../{d}/{ticker}_3Layer_Forensic_{d}.html">리포트</a></td>'
             f'</tr>'
@@ -205,7 +205,7 @@ def render_ticker_page(ticker: str, series: list) -> str:
 
   <h2>전체 히스토리</h2>
   <table>
-    <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>L1</th><th>L2 Case</th><th>L3</th><th>Link</th></tr></thead>
+    <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Link</th></tr></thead>
     <tbody>{''.join(rows) if rows else '<tr><td colspan="7">아직 리포트 없음</td></tr>'}</tbody>
   </table>
 
@@ -266,8 +266,23 @@ lineChart('obvChart', [
 """
 
 
-def render_dashboard(db: dict) -> tuple[str, str]:
-    """HTML + app.js 생성. Vanilla JS로 검색/필터 구현."""
+def load_watchlist() -> set:
+    """tickers.txt에서 현재 감시 종목 집합 로드 (주석/빈 줄 제외)."""
+    p = ROOT / "tickers.txt"
+    if not p.exists():
+        return set()
+    out = set()
+    for line in p.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if s and not s.startswith("#"):
+            out.add(s.upper())
+    return out
+
+
+def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
+    """HTML + app.js 생성. Vanilla JS로 검색/필터 구현. watchlist에 속한
+    티커는 'Active', 그 외 과거 데이터는 'Archive'로 분리 표시."""
+    watchlist = watchlist or set()
     # 티커별 요약 행
     summary = []
     for t, series in db.items():
@@ -279,6 +294,7 @@ def render_dashboard(db: dict) -> tuple[str, str]:
         top_val = sc.get({"A":"A_bullish","B":"B_neutral","C":"C_bearish"}[top], 0)
         summary.append({
             "ticker": t,
+            "is_active": t in watchlist,
             "latest_date": latest.get("date"),
             "price": latest.get("price"),
             "scenario": top, "scenario_pct": top_val,
@@ -402,8 +418,9 @@ def render_dashboard(db: dict) -> tuple[str, str]:
   <span id="count" style="color:{COLOR['muted']};font-size:11px;"></span>
 </div>
 
+<h2 style="font-size:14px;color:{COLOR['warn']};margin:18px 0 6px;border-bottom:0.5px solid {COLOR['warn']};padding-bottom:4px;">▶ 감시 중 (Active Watchlist) <span id="active-count" style="font-size:11px;color:{COLOR['muted']};font-weight:400;"></span></h2>
 <div class="tbl-wrap">
-<table id="tbl">
+<table id="tbl-active">
   <thead><tr>
     <th>Ticker</th>
     <th>Latest</th>
@@ -411,9 +428,9 @@ def render_dashboard(db: dict) -> tuple[str, str]:
     <th>Top Scenario</th>
     <th>Score</th>
     <th>Macro</th>
-    <th>L1</th>
-    <th>L2 Case</th>
-    <th>L3</th>
+    <th>Darkpool</th>
+    <th>Short Case</th>
+    <th>Options</th>
     <th>DP %</th>
     <th>Short %</th>
     <th>CTB %</th>
@@ -422,8 +439,36 @@ def render_dashboard(db: dict) -> tuple[str, str]:
     <th>Reports</th>
     <th></th>
   </tr></thead>
-  <tbody id="tbody"></tbody>
+  <tbody id="tbody-active"></tbody>
 </table>
+</div>
+
+<details id="archive-wrap" style="margin-top:24px;">
+<summary style="cursor:pointer;font-size:14px;font-weight:700;color:{COLOR['muted']};border-bottom:0.5px solid {COLOR['border']};padding-bottom:4px;">▶ 히스토리 (Archive — 과거에 분석했지만 현재 감시 목록에 없는 종목) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
+<div class="tbl-wrap" style="margin-top:8px;">
+<table id="tbl-archive">
+  <thead><tr>
+    <th>Ticker</th>
+    <th>Latest</th>
+    <th>Price</th>
+    <th>Top Scenario</th>
+    <th>Score</th>
+    <th>Macro</th>
+    <th>Darkpool</th>
+    <th>Short Case</th>
+    <th>Options</th>
+    <th>DP %</th>
+    <th>Short %</th>
+    <th>CTB %</th>
+    <th>Max Pain</th>
+    <th>Patterns</th>
+    <th>Reports</th>
+    <th></th>
+  </tr></thead>
+  <tbody id="tbody-archive"></tbody>
+</table>
+</div>
+</details>
 </div>
 </div>
 <script>
@@ -437,7 +482,11 @@ window.__DB__ = {json.dumps(summary, default=str)};
     app_js = r"""
 // Dashboard logic — operates on window.__DB__ (array of ticker summaries)
 const DB = window.__DB__ || [];
-const tbody = document.getElementById('tbody');
+const bodyActive  = document.getElementById('tbody-active');
+const bodyArchive = document.getElementById('tbody-archive');
+const archiveWrap = document.getElementById('archive-wrap');
+const activeCnt   = document.getElementById('active-count');
+const archiveCnt  = document.getElementById('archive-count');
 const q = document.getElementById('q');
 const fScenario = document.getElementById('filter-scenario');
 const fPattern = document.getElementById('filter-pattern');
@@ -451,6 +500,34 @@ function scenarioPill(s, v){
   const cls = 'pill pill-' + s;
   const lbl = { A: '[A] Bull', B: '[B] Neut', C: '[C] Bear' }[s] || s;
   return `<span class="${cls}">${lbl} ${v==null?'':v.toFixed(0)+'%'}</span>`;
+}
+// L2 case 표기에서 CASE_1_/CASE_2_ 같은 접두어 완전히 제거
+function casePretty(c){
+  if (!c) return '-';
+  return c.replace(/^CASE_\d+_/, '').replace(/^CASE_/, '');
+}
+function rowHTML(r) {
+  const patBadges = (r.patterns||[]).map(p => `<span class="pattern">${p}</span>`).join('') || '-';
+  const tickerLink = `<a href="tickers/${r.ticker}/"><b>${r.ticker}</b></a>`;
+  const dateLink = `<a href="${r.latest_date}/${r.ticker}_3Layer_Forensic_${r.latest_date}.html">${r.latest_date}</a>`;
+  return `<tr>
+    <td>${tickerLink}</td>
+    <td>${dateLink}</td>
+    <td>${fmtDol(r.price)}</td>
+    <td>${scenarioPill(r.scenario, r.scenario_pct)}</td>
+    <td>${r.raw_score==null?'-':r.raw_score.toFixed(2)}</td>
+    <td>${r.macro_env||'-'}</td>
+    <td>${r.l1_scenario||'-'}</td>
+    <td>${casePretty(r.l2_case)}</td>
+    <td>${r.l3_scenario||'-'}</td>
+    <td>${fmtPct(r.dp_pct)}</td>
+    <td>${fmtPct(r.short_pct)}</td>
+    <td>${fmtPct(r.ctb_fee, 2)}</td>
+    <td>${fmtDol(r.max_pain)}</td>
+    <td>${patBadges}</td>
+    <td>${r.report_count}</td>
+    <td><a href="tickers/${r.ticker}/">›</a></td>
+  </tr>`;
 }
 
 function render() {
@@ -472,34 +549,25 @@ function render() {
     if (typeof av === 'string') return dir==='desc' ? bv.localeCompare(av) : av.localeCompare(bv);
     return dir==='desc' ? bv-av : av-bv;
   });
-  countEl.textContent = `${rows.length} / ${DB.length} tickers`;
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="16" class="empty">조건에 맞는 종목이 없습니다. <code>tickers.txt</code>를 편집하거나 워크플로우를 실행하세요.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows.map(r => {
-    const patBadges = (r.patterns||[]).map(p => `<span class="pattern">${p}</span>`).join('') || '-';
-    const tickerLink = `<a href="tickers/${r.ticker}/"><b>${r.ticker}</b></a>`;
-    const dateLink = `<a href="${r.latest_date}/${r.ticker}_3Layer_Forensic_${r.latest_date}.html">${r.latest_date}</a>`;
-    return `<tr>
-      <td>${tickerLink}</td>
-      <td>${dateLink}</td>
-      <td>${fmtDol(r.price)}</td>
-      <td>${scenarioPill(r.scenario, r.scenario_pct)}</td>
-      <td>${r.raw_score==null?'-':r.raw_score.toFixed(2)}</td>
-      <td>${r.macro_env||'-'}</td>
-      <td>${r.l1_scenario||'-'}</td>
-      <td>${(r.l2_case||'').replace('CASE_','C')||'-'}</td>
-      <td>${r.l3_scenario||'-'}</td>
-      <td>${fmtPct(r.dp_pct)}</td>
-      <td>${fmtPct(r.short_pct)}</td>
-      <td>${fmtPct(r.ctb_fee, 2)}</td>
-      <td>${fmtDol(r.max_pain)}</td>
-      <td>${patBadges}</td>
-      <td>${r.report_count}</td>
-      <td><a href="tickers/${r.ticker}/">›</a></td>
-    </tr>`;
-  }).join('');
+
+  // Active vs Archive 분리
+  const active  = rows.filter(r => r.is_active);
+  const archive = rows.filter(r => !r.is_active);
+
+  countEl.textContent = `${rows.length} / ${DB.length} tickers (active ${active.length} / archive ${archive.length})`;
+  activeCnt.textContent  = `· ${active.length}개`;
+  archiveCnt.textContent = `· ${archive.length}개`;
+
+  bodyActive.innerHTML = active.length
+    ? active.map(rowHTML).join('')
+    : '<tr><td colspan="16" class="empty">감시 중 종목이 없습니다. 위 ⚙ 패널에서 추가하세요.</td></tr>';
+
+  bodyArchive.innerHTML = archive.length
+    ? archive.map(rowHTML).join('')
+    : '<tr><td colspan="16" class="empty">아카이브 비어있음.</td></tr>';
+
+  // 아카이브 비어있으면 details 자체 숨김
+  archiveWrap.style.display = archive.length ? '' : 'none';
 }
 
 function renderStats() {
@@ -728,7 +796,8 @@ def main():
         (tdir / "index.html").write_text(render_ticker_page(t, series), encoding="utf-8")
 
     # 3) 메인 대시보드
-    html, js = render_dashboard(db)
+    watchlist = load_watchlist()
+    html, js = render_dashboard(db, watchlist)
     (REPORTS / "index.html").write_text(html, encoding="utf-8")
     (REPORTS / "app.js").write_text(js, encoding="utf-8")
 

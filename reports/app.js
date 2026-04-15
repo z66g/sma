@@ -1,7 +1,11 @@
 
 // Dashboard logic — operates on window.__DB__ (array of ticker summaries)
 const DB = window.__DB__ || [];
-const tbody = document.getElementById('tbody');
+const bodyActive  = document.getElementById('tbody-active');
+const bodyArchive = document.getElementById('tbody-archive');
+const archiveWrap = document.getElementById('archive-wrap');
+const activeCnt   = document.getElementById('active-count');
+const archiveCnt  = document.getElementById('archive-count');
 const q = document.getElementById('q');
 const fScenario = document.getElementById('filter-scenario');
 const fPattern = document.getElementById('filter-pattern');
@@ -15,6 +19,34 @@ function scenarioPill(s, v){
   const cls = 'pill pill-' + s;
   const lbl = { A: '[A] Bull', B: '[B] Neut', C: '[C] Bear' }[s] || s;
   return `<span class="${cls}">${lbl} ${v==null?'':v.toFixed(0)+'%'}</span>`;
+}
+// L2 case 표기에서 CASE_1_/CASE_2_ 같은 접두어 완전히 제거
+function casePretty(c){
+  if (!c) return '-';
+  return c.replace(/^CASE_\d+_/, '').replace(/^CASE_/, '');
+}
+function rowHTML(r) {
+  const patBadges = (r.patterns||[]).map(p => `<span class="pattern">${p}</span>`).join('') || '-';
+  const tickerLink = `<a href="tickers/${r.ticker}/"><b>${r.ticker}</b></a>`;
+  const dateLink = `<a href="${r.latest_date}/${r.ticker}_3Layer_Forensic_${r.latest_date}.html">${r.latest_date}</a>`;
+  return `<tr>
+    <td>${tickerLink}</td>
+    <td>${dateLink}</td>
+    <td>${fmtDol(r.price)}</td>
+    <td>${scenarioPill(r.scenario, r.scenario_pct)}</td>
+    <td>${r.raw_score==null?'-':r.raw_score.toFixed(2)}</td>
+    <td>${r.macro_env||'-'}</td>
+    <td>${r.l1_scenario||'-'}</td>
+    <td>${casePretty(r.l2_case)}</td>
+    <td>${r.l3_scenario||'-'}</td>
+    <td>${fmtPct(r.dp_pct)}</td>
+    <td>${fmtPct(r.short_pct)}</td>
+    <td>${fmtPct(r.ctb_fee, 2)}</td>
+    <td>${fmtDol(r.max_pain)}</td>
+    <td>${patBadges}</td>
+    <td>${r.report_count}</td>
+    <td><a href="tickers/${r.ticker}/">›</a></td>
+  </tr>`;
 }
 
 function render() {
@@ -36,34 +68,25 @@ function render() {
     if (typeof av === 'string') return dir==='desc' ? bv.localeCompare(av) : av.localeCompare(bv);
     return dir==='desc' ? bv-av : av-bv;
   });
-  countEl.textContent = `${rows.length} / ${DB.length} tickers`;
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="16" class="empty">조건에 맞는 종목이 없습니다. <code>tickers.txt</code>를 편집하거나 워크플로우를 실행하세요.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows.map(r => {
-    const patBadges = (r.patterns||[]).map(p => `<span class="pattern">${p}</span>`).join('') || '-';
-    const tickerLink = `<a href="tickers/${r.ticker}/"><b>${r.ticker}</b></a>`;
-    const dateLink = `<a href="${r.latest_date}/${r.ticker}_3Layer_Forensic_${r.latest_date}.html">${r.latest_date}</a>`;
-    return `<tr>
-      <td>${tickerLink}</td>
-      <td>${dateLink}</td>
-      <td>${fmtDol(r.price)}</td>
-      <td>${scenarioPill(r.scenario, r.scenario_pct)}</td>
-      <td>${r.raw_score==null?'-':r.raw_score.toFixed(2)}</td>
-      <td>${r.macro_env||'-'}</td>
-      <td>${r.l1_scenario||'-'}</td>
-      <td>${(r.l2_case||'').replace('CASE_','C')||'-'}</td>
-      <td>${r.l3_scenario||'-'}</td>
-      <td>${fmtPct(r.dp_pct)}</td>
-      <td>${fmtPct(r.short_pct)}</td>
-      <td>${fmtPct(r.ctb_fee, 2)}</td>
-      <td>${fmtDol(r.max_pain)}</td>
-      <td>${patBadges}</td>
-      <td>${r.report_count}</td>
-      <td><a href="tickers/${r.ticker}/">›</a></td>
-    </tr>`;
-  }).join('');
+
+  // Active vs Archive 분리
+  const active  = rows.filter(r => r.is_active);
+  const archive = rows.filter(r => !r.is_active);
+
+  countEl.textContent = `${rows.length} / ${DB.length} tickers (active ${active.length} / archive ${archive.length})`;
+  activeCnt.textContent  = `· ${active.length}개`;
+  archiveCnt.textContent = `· ${archive.length}개`;
+
+  bodyActive.innerHTML = active.length
+    ? active.map(rowHTML).join('')
+    : '<tr><td colspan="16" class="empty">감시 중 종목이 없습니다. 위 ⚙ 패널에서 추가하세요.</td></tr>';
+
+  bodyArchive.innerHTML = archive.length
+    ? archive.map(rowHTML).join('')
+    : '<tr><td colspan="16" class="empty">아카이브 비어있음.</td></tr>';
+
+  // 아카이브 비어있으면 details 자체 숨김
+  archiveWrap.style.display = archive.length ? '' : 'none';
 }
 
 function renderStats() {
