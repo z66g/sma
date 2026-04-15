@@ -24,10 +24,13 @@ function casePretty(c){
   if (!c) return '-';
   return c.replace(/^CASE_\d+_/, '').replace(/^CASE_/, '');
 }
-function rowHTML(r) {
+function rowHTML(r, showAdd) {
   const patBadges = (r.patterns||[]).map(p => `<span class="pattern">${p}</span>`).join('') || '-';
   const tickerLink = `<a href="tickers/${r.ticker}/"><b>${r.ticker}</b></a>`;
   const dateLink = `<a href="${r.latest_date}/${r.ticker}_3Layer_Forensic_${r.latest_date}.html">${r.latest_date}</a>`;
+  const addBtn = showAdd
+    ? `<button class="add-wl-btn" data-t="${r.ticker}" title="워치리스트에 추가" style="padding:1px 7px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;margin-right:4px;">＋</button>`
+    : '';
   return `<tr>
     <td>${tickerLink}</td>
     <td>${dateLink}</td>
@@ -44,7 +47,7 @@ function rowHTML(r) {
     <td>${fmtDol(r.max_pain)}</td>
     <td>${patBadges}</td>
     <td>${r.report_count}</td>
-    <td><a href="tickers/${r.ticker}/">›</a></td>
+    <td style="white-space:nowrap;">${addBtn}<a href="tickers/${r.ticker}/">›</a></td>
   </tr>`;
 }
 
@@ -77,11 +80,11 @@ function render() {
   archiveCnt.textContent = `· ${archive.length}개`;
 
   bodyActive.innerHTML = active.length
-    ? active.map(rowHTML).join('')
+    ? active.map(r => rowHTML(r, false)).join('')
     : '<tr><td colspan="16" class="empty">감시 중 종목이 없습니다. 위 ⚙ 패널에서 추가하세요.</td></tr>';
 
   bodyArchive.innerHTML = archive.length
-    ? archive.map(rowHTML).join('')
+    ? archive.map(r => rowHTML(r, true)).join('')
     : '<tr><td colspan="16" class="empty">아카이브 비어있음.</td></tr>';
 
   // 아카이브 비어있으면 details 자체 숨김
@@ -230,21 +233,66 @@ async function removeTicker(t) {
   }
 }
 
+// ── 워크플로우 dispatch + status polling ─────────────────────────
+async function dispatchWorkflow(inputs) {
+  const dispatchTime = Date.now();
+  await gh(`/repos/${REPO}/actions/workflows/daily.yml/dispatches`, {
+    method: 'POST',
+    body: JSON.stringify({ ref: 'main', inputs: inputs || {} })
+  });
+  return dispatchTime;
+}
+
+async function pollRun(dispatchTime, label, timeoutMs) {
+  // GitHub은 dispatch 후 run이 나타나기까지 몇 초 걸림.
+  // 1차: workflow runs 목록에서 dispatchTime 이후의 event=workflow_dispatch run을 찾기.
+  const deadline = Date.now() + (timeoutMs || 15 * 60 * 1000);
+  let runId = null, runUrl = null;
+  const pre = Date.now();
+  setStatus(`${label}: 워크플로우 등록 대기 중...`);
+  while (!runId && Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 4000));
+    try {
+      const j = await gh(`/repos/${REPO}/actions/workflows/daily.yml/runs?event=workflow_dispatch&per_page=5`);
+      const found = (j.workflow_runs || []).find(r =>
+        new Date(r.created_at).getTime() >= dispatchTime - 3000);
+      if (found) { runId = found.id; runUrl = found.html_url; }
+    } catch (_) {}
+  }
+  if (!runId) throw new Error('워크플로우 run ID 조회 실패');
+  // 2차: 상태 폴링
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 12000));
+    try {
+      const r = await gh(`/repos/${REPO}/actions/runs/${runId}`);
+      const elapsed = Math.round((Date.now() - dispatchTime) / 1000);
+      const statusStr = r.status === 'completed'
+        ? (r.conclusion === 'success' ? '✅ 완료' : `❌ ${r.conclusion}`)
+        : r.status;
+      setStatus(
+        `${label}: ${statusStr} · ${elapsed}s 경과 · <a href="${runUrl}" target="_blank" style="color:#0969DA;">Actions 보기</a>`
+        + (r.status === 'completed' && r.conclusion === 'success'
+           ? ` · <button onclick="location.reload()" style="padding:2px 10px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:11px;">새로고침</button>`
+           : '')
+      );
+      if (r.status === 'completed') return r;
+    } catch (_) {}
+  }
+  throw new Error('타임아웃 (15분 초과)');
+}
+
 async function runWorkflow(singleTicker) {
   const inputs = {};
   if (singleTicker) inputs.ticker = singleTicker;
+  const label = singleTicker ? `${singleTicker} 분석` : `워치리스트 전체(${ticksCache.length}종목) 분석`;
   const msg = singleTicker
-    ? `${singleTicker} 한 종목만 분석할까요? (1~3분 소요)`
+    ? `${singleTicker} 한 종목만 분석할까요? (1~3분 소요, 자동으로 진행 추적)`
     : `워치리스트 전체(${ticksCache.length}개)를 지금 분석할까요? (5~10분 소요)`;
   if (!confirm(msg)) return;
-  setStatus('워크플로우 dispatch 중...');
   try {
-    await gh(`/repos/${REPO}/actions/workflows/daily.yml/dispatches`, {
-      method: 'POST',
-      body: JSON.stringify({ ref: 'main', inputs })
-    });
-    const detail = singleTicker ? `${singleTicker} 분석` : '워치리스트 전체 분석';
-    setStatus(`✅ ${detail} 시작됨 → https://github.com/${REPO}/actions`);
+    const t0 = await dispatchWorkflow(inputs);
+    setStatus(`${label}: dispatch 완료, 상태 추적 중...`);
+    await pollRun(t0, label);
   } catch (e) {
     setStatus('실패: ' + e.message, true);
   }
@@ -254,9 +302,36 @@ async function runAdhoc() {
   const t = (document.getElementById('adhoc-ticker').value || '').trim().toUpperCase();
   if (!t) { setStatus('티커를 입력하세요', true); return; }
   if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(t)) { setStatus(`"${t}"는 유효한 티커 형식이 아닙니다`, true); return; }
-  await runWorkflow(t);
   document.getElementById('adhoc-ticker').value = '';
+  await runWorkflow(t);
 }
+
+// ── Archive ＋ 버튼: 해당 티커를 워치리스트로 이동 ─────────
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.add-wl-btn');
+  if (!btn) return;
+  e.preventDefault();
+  const t = btn.dataset.t;
+  if (!t || !getPAT()) { setStatus('PAT 필요', true); return; }
+  if (ticksCache.includes(t)) { setStatus(`${t}는 이미 워치리스트에 있음`); return; }
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    ticksCache.push(t); ticksCache.sort();
+    await commitTickers(`watchlist: promote ${t} from archive`);
+    // 로컬 DB에 is_active 반영 + 즉시 리렌더
+    const row = DB.find(x => x.ticker === t);
+    if (row) row.is_active = true;
+    renderWL();
+    render();
+    setStatus(`✅ ${t} 워치리스트로 이동됨 (매일 10:30 KST 자동 분석 포함)`);
+  } catch (err) {
+    ticksCache = ticksCache.filter(x => x !== t);
+    btn.disabled = false;
+    btn.textContent = '＋';
+    setStatus('실패: ' + err.message, true);
+  }
+});
 
 patSaveBtn.addEventListener('click', () => {
   const v = patInput.value.trim();
