@@ -434,7 +434,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 </div>
 
 <details id="archive-wrap" style="margin-top:24px;">
-<summary style="cursor:pointer;font-size:14px;font-weight:700;color:{COLOR['muted']};border-bottom:0.5px solid {COLOR['border']};padding-bottom:4px;">히스토리 (Archive — 과거에 분석했지만 현재 감시 목록에 없는 종목) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
+<summary style="cursor:pointer;font-size:14px;font-weight:700;color:{COLOR['muted']};border-bottom:0.5px solid {COLOR['border']};padding-bottom:4px;">히스토리 (Archive) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
 <div class="tbl-wrap" style="margin-top:8px;">
 <table id="tbl-archive">
   <thead><tr>
