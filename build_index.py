@@ -656,12 +656,26 @@ function parseTickers(text) {
 
 async function loadTickers() {
   setStatus('tickers.txt 로드 중...');
-  const j = await gh(`/repos/${REPO}/contents/tickers.txt`);
+  // 캐시 우회: 같은 페이지 세션 내에서 직전 수정이 즉시 반영되도록 타임스탬프 쿼리
+  const j = await gh(`/repos/${REPO}/contents/tickers.txt?ref=main&_=${Date.now()}`);
   txtSha = j.sha;
   const text = atob(j.content.replace(/\n/g, ''));
   ticksCache = parseTickers(text);
+
+  // ── 핵심: 로컬 DB의 is_active 를 **실시간 tickers.txt** 기준으로 재동기화 ──
+  // (대시보드 정적 빌드 시 박힌 is_active 가 stale 상태일 수 있으므로,
+  //  pill 목록과 Active/Archive 테이블 사이의 불일치를 방지)
+  const active = new Set(ticksCache);
+  let flipped = 0;
+  for (const r of DB) {
+    const shouldBeActive = active.has(r.ticker);
+    if (r.is_active !== shouldBeActive) { r.is_active = shouldBeActive; flipped++; }
+  }
+
   renderWL();
-  setStatus(`${ticksCache.length}개 감시 중 · last commit ${j.sha.slice(0,7)}`);
+  if (flipped > 0) render();   // 테이블 재렌더해서 동기화 즉시 반영
+  setStatus(`${ticksCache.length}개 감시 중 · last commit ${j.sha.slice(0,7)}`
+            + (flipped ? ` · ${flipped}개 행 동기화` : ""));
 }
 
 function renderWL() {
