@@ -386,7 +386,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input id="adhoc-ticker" type="text" placeholder="티커 (예: PLTR)" style="text-transform:uppercase;width:160px;">
-        <button id="adhoc-btn" style="padding:6px 14px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">개별분석</button>
+        <button id="adhoc-btn" style="padding:4px 10px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;font-size:12px;">개별분석</button>
       </div>
     </div>
 
@@ -397,8 +397,8 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
         <input id="new-ticker" type="text" placeholder="티커 추가 (예: PLTR)" style="text-transform:uppercase;width:160px;">
-        <button id="add-btn" style="padding:6px 14px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">추가</button>
-        <button id="run-btn" style="padding:6px 14px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">리스트 전체 분석</button>
+        <button id="add-btn" style="padding:4px 10px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;font-size:12px;">추가</button>
+        <button id="run-btn" style="padding:4px 10px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;font-size:12px;">리스트 전체 분석</button>
         <button id="pat-edit" style="padding:6px 10px;background:none;color:{COLOR['muted']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;font-size:11px;margin-left:auto;">PAT 변경</button>
       </div>
       <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;"></div>
