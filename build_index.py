@@ -310,18 +310,10 @@ def render_ticker_page(ticker: str, series: list) -> str:
 <script>
 Chart.defaults.font.family = {json.dumps(FONT)};
 Chart.defaults.color = "{COLOR['text']}";
-Chart.defaults.plugins.legend.labels.boxWidth = 12;
+// 글로벌 legend defaults는 per-chart 설정으로 덮어씀 (lineChart 안에서 boxWidth=40, usePointStyle=true)
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
 const DATES = {json.dumps(dates)};
 function lineChart(id, datasets) {{
-  // 범례 마커를 '선 세그먼트'로 커스텀 렌더 (dash 패턴도 그대로 반영)
-  const lineLegendPlugin = {{
-    id: 'lineLegendMarkers',
-    afterUpdate(chart) {{
-      const items = chart.options.plugins.legend.labels._generated;
-      if (!items) return;
-      // generateLabels에서 채워진 후 처리 (직접 제어 대신 custom generator 사용)
-    }}
-  }};
   new Chart(document.getElementById(id), {{
     type:'line',
     data:{{ labels:DATES, datasets:datasets }},
@@ -330,29 +322,36 @@ function lineChart(id, datasets) {{
         legend:{{
           display:datasets.length>1, position:'bottom',
           labels:{{
-            padding:14,
-            // 각 데이터셋을 선 스타일 legend로 렌더링
+            usePointStyle:true,         // ← 이게 핵심
+            boxWidth:40, boxHeight:10, padding:14,
             generateLabels(chart) {{
               return chart.data.datasets.map((ds, i) => ({{
                 text: ds.label,
-                fillStyle: 'transparent',
+                fillStyle: ds.borderColor,      // 선 색으로 채움
                 strokeStyle: ds.borderColor,
                 lineWidth: ds.borderWidth || 2,
-                lineDash: ds.borderDash || [],
+                lineDash: ds.borderDash || [],  // dash 패턴 반영
                 pointStyle: 'line',
                 hidden: !chart.isDatasetVisible(i),
                 datasetIndex: i
               }}));
             }}
           }},
-          onClick(e, legendItem, legend) {{
-            const idx = legendItem.datasetIndex;
+          onClick(e, item, legend) {{
             const ci = legend.chart;
-            ci.setDatasetVisibility(idx, !ci.isDatasetVisible(idx));
+            ci.setDatasetVisibility(item.datasetIndex, !ci.isDatasetVisible(item.datasetIndex));
             ci.update();
           }}
         }},
-        tooltip:{{ usePointStyle:true }}
+        tooltip:{{
+          usePointStyle:true,
+          callbacks:{{
+            labelPointStyle(ctx) {{
+              // 툴팁의 마커도 선 형태로
+              return {{ pointStyle:'line', rotation:0 }};
+            }}
+          }}
+        }}
       }},
       scales:{{y:{{grid:{{color:'{COLOR['panel']}'}}}},x:{{grid:{{display:false}}}}}},
       elements:{{point:{{radius:2}},line:{{tension:0.3,borderWidth:2}}}},
