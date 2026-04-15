@@ -522,13 +522,17 @@ function casePretty(c){
   if (!c) return '-';
   return c.replace(/^CASE_\d+_/, '').replace(/^CASE_/, '');
 }
-function rowHTML(r, showAdd) {
+function rowHTML(r, mode) {
+  // mode: 'active' → × (remove) 버튼, 'archive' → ＋ (add) 버튼, undefined → 버튼 없음
   const patBadges = (r.patterns||[]).map(p => `<span class="pattern">${p}</span>`).join('') || '-';
   const tickerLink = `<a href="tickers/${r.ticker}/"><b>${r.ticker}</b></a>`;
   const dateLink = `<a href="${r.latest_date}/${r.ticker}_3Layer_Forensic_${r.latest_date}.html">${r.latest_date}</a>`;
-  const addBtn = showAdd
-    ? `<button class="add-wl-btn" data-t="${r.ticker}" title="워치리스트에 추가" style="padding:1px 7px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;margin-right:4px;">＋</button>`
-    : '';
+  let actionBtn = '';
+  if (mode === 'archive') {
+    actionBtn = `<button class="add-wl-btn" data-t="${r.ticker}" title="워치리스트에 추가" style="padding:1px 7px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;margin-right:4px;">＋</button>`;
+  } else if (mode === 'active') {
+    actionBtn = `<button class="rm-wl-btn" data-t="${r.ticker}" title="워치리스트에서 제거 (아카이브로 이동)" style="padding:1px 7px;background:#CF222B;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;margin-right:4px;">×</button>`;
+  }
   return `<tr>
     <td>${tickerLink}</td>
     <td>${dateLink}</td>
@@ -545,7 +549,7 @@ function rowHTML(r, showAdd) {
     <td>${fmtDol(r.max_pain)}</td>
     <td>${patBadges}</td>
     <td>${r.report_count}</td>
-    <td style="white-space:nowrap;">${addBtn}<a href="tickers/${r.ticker}/">›</a></td>
+    <td style="white-space:nowrap;">${actionBtn}<a href="tickers/${r.ticker}/">›</a></td>
   </tr>`;
 }
 
@@ -578,11 +582,11 @@ function render() {
   archiveCnt.textContent = `· ${archive.length}개`;
 
   bodyActive.innerHTML = active.length
-    ? active.map(r => rowHTML(r, false)).join('')
+    ? active.map(r => rowHTML(r, 'active')).join('')
     : '<tr><td colspan="16" class="empty">감시 중 종목이 없습니다. 위 ⚙ 패널에서 추가하세요.</td></tr>';
 
   bodyArchive.innerHTML = archive.length
-    ? archive.map(r => rowHTML(r, true)).join('')
+    ? archive.map(r => rowHTML(r, 'archive')).join('')
     : '<tr><td colspan="16" class="empty">아카이브 비어있음.</td></tr>';
 
   // 아카이브 비어있으면 details 자체 숨김
@@ -719,12 +723,17 @@ async function addTicker() {
 }
 
 async function removeTicker(t) {
-  if (!confirm(`${t} 제거?`)) return;
+  if (!confirm(`${t} 를 워치리스트에서 제거하고 아카이브로 이동할까요? (자동 분석에서 제외됨)`)) return;
   const prev = ticksCache.slice();
   ticksCache = ticksCache.filter(x => x !== t);
   try {
     await commitTickers(`watchlist: remove ${t}`);
+    // 로컬 DB에 반영 → 테이블 재렌더 → Active에서 Archive로 이동
+    const row = DB.find(x => x.ticker === t);
+    if (row) row.is_active = false;
     renderWL();
+    render();
+    setStatus(`✅ ${t} 워치리스트에서 제거됨 (아카이브로 이동)`);
   } catch (e) {
     ticksCache = prev;
     setStatus('실패: ' + e.message, true);
@@ -804,30 +813,40 @@ async function runAdhoc() {
   await runWorkflow(t);
 }
 
-// ── Archive ＋ 버튼: 해당 티커를 워치리스트로 이동 ─────────
+// ── Archive ＋ / Active × 버튼 클릭 위임 ─────────────────────
 document.addEventListener('click', async (e) => {
-  const btn = e.target.closest('.add-wl-btn');
-  if (!btn) return;
-  e.preventDefault();
-  const t = btn.dataset.t;
-  if (!t || !getPAT()) { setStatus('PAT 필요', true); return; }
-  if (ticksCache.includes(t)) { setStatus(`${t}는 이미 워치리스트에 있음`); return; }
-  btn.disabled = true;
-  btn.textContent = '…';
-  try {
-    ticksCache.push(t); ticksCache.sort();
-    await commitTickers(`watchlist: promote ${t} from archive`);
-    // 로컬 DB에 is_active 반영 + 즉시 리렌더
-    const row = DB.find(x => x.ticker === t);
-    if (row) row.is_active = true;
-    renderWL();
-    render();
-    setStatus(`✅ ${t} 워치리스트로 이동됨 (매일 10:30 KST 자동 분석 포함)`);
-  } catch (err) {
-    ticksCache = ticksCache.filter(x => x !== t);
-    btn.disabled = false;
-    btn.textContent = '＋';
-    setStatus('실패: ' + err.message, true);
+  // Archive → Watchlist 승격
+  const addBtn = e.target.closest('.add-wl-btn');
+  if (addBtn) {
+    e.preventDefault();
+    const t = addBtn.dataset.t;
+    if (!t || !getPAT()) { setStatus('PAT 필요', true); return; }
+    if (ticksCache.includes(t)) { setStatus(`${t}는 이미 워치리스트에 있음`); return; }
+    addBtn.disabled = true;
+    addBtn.textContent = '…';
+    try {
+      ticksCache.push(t); ticksCache.sort();
+      await commitTickers(`watchlist: promote ${t} from archive`);
+      const row = DB.find(x => x.ticker === t);
+      if (row) row.is_active = true;
+      renderWL();
+      render();
+      setStatus(`✅ ${t} 워치리스트로 이동됨 (매일 10:30 KST 자동 분석 포함)`);
+    } catch (err) {
+      ticksCache = ticksCache.filter(x => x !== t);
+      addBtn.disabled = false;
+      addBtn.textContent = '＋';
+      setStatus('실패: ' + err.message, true);
+    }
+    return;
+  }
+  // Active 테이블의 × 버튼 → removeTicker 호출 (확인창 포함)
+  const rmBtn = e.target.closest('.rm-wl-btn');
+  if (rmBtn) {
+    e.preventDefault();
+    const t = rmBtn.dataset.t;
+    if (!t || !getPAT()) { setStatus('PAT 필요', true); return; }
+    await removeTicker(t);
   }
 });
 
