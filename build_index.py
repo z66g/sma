@@ -190,9 +190,9 @@ def render_ticker_page(ticker: str, series: list) -> str:
         sc = s.get("scenarios") or {}
         sl1 = s.get("l1") or {}; sl2 = s.get("l2") or {}; sl3 = s.get("l3") or {}
         d = s["date"]
-        scen_label = "[A]Bull" if sc.get("A_bullish",0) >= max(sc.get("B_neutral",0), sc.get("C_bearish",0)) \
-                     else "[B]Neut" if sc.get("B_neutral",0) >= sc.get("C_bearish",0) \
-                     else "[C]Bear"
+        scen_label = "Bull" if sc.get("A_bullish",0) >= max(sc.get("B_neutral",0), sc.get("C_bearish",0)) \
+                     else "Neut" if sc.get("B_neutral",0) >= sc.get("C_bearish",0) \
+                     else "Bear"
         color = COLOR["bull"] if "Bull" in scen_label else COLOR["bear"] if "Bear" in scen_label else COLOR["warn"]
         rows.append(
             f'<tr>'
@@ -389,8 +389,8 @@ lineChart('priceChart', [
   {{label:'GEX Flip', data:{json.dumps(flip)},     borderColor:'{COLOR["bull"]}', backgroundColor:'transparent', borderDash:[2,2]}}
 ]);
 lineChart('probChart', [
-  {{label:'[A] Bullish', data:{json.dumps(bull_probs)}, borderColor:'{COLOR["bull"]}', backgroundColor:'transparent'}},
-  {{label:'[C] Bearish', data:{json.dumps(bear_probs)}, borderColor:'{COLOR["bear"]}', backgroundColor:'transparent'}}
+  {{label:'Bullish', data:{json.dumps(bull_probs)}, borderColor:'{COLOR["bull"]}', backgroundColor:'transparent'}},
+  {{label:'Bearish', data:{json.dumps(bear_probs)}, borderColor:'{COLOR["bear"]}', backgroundColor:'transparent'}}
 ]);
 lineChart('shortChart', [
   {{label:'Short %', data:{json.dumps(short_pct)}, borderColor:'{COLOR["bear"]}', yAxisID:'y', backgroundColor:'transparent'}},
