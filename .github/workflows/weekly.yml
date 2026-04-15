@@ -1,10 +1,11 @@
 name: Weekly AI Narrative
 
 on:
-  schedule:
-    # 02:30 UTC 토요일 = KST 11:30 토.
-    # daily.yml(02:00 UTC = KST 11:00)로 금요일 데이터 fetch 완료 후 30분 뒤.
-    - cron: "30 2 * * 6"
+  # GitHub native cron 비활성화 — cron-job.org 가 workflow_dispatch API 로
+  # KST 11:30 토 에 외부에서 트리거 (러너 큐 지연 회피).
+  # 필요 시 아래 schedule 블록 주석 해제하면 원래대로 복구.
+  # schedule:
+  #   - cron: "30 2 * * 6"
   workflow_dispatch:
     inputs:
       ticker:

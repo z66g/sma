@@ -1,12 +1,11 @@
 name: Daily Smart Money Analysis
 
 on:
-  schedule:
-    # 02:00 UTC 화~토 = KST 11:00 화~토.
-    # FINRA 파일은 미국 장 마감 후 공개되므로 미 동부 전일 데이터를 안정적으로 얻으려면
-    # 미국 After-Hours 종료(8PM ET = 00:00 UTC EDT / 01:00 UTC EST) 이후여야 함.
-    # 02:00 UTC는 EDT·EST 모두 커버 + Pages 트래픽 피크(01:30 근처)를 회피해 안정성 ↑
-    - cron: "0 2 * * 2-6"
+  # GitHub native cron 비활성화 — cron-job.org 가 workflow_dispatch API 로
+  # KST 11:00 화~토 에 외부에서 트리거 (러너 큐 지연 회피).
+  # 필요 시 아래 schedule 블록 주석 해제하면 원래대로 복구.
+  # schedule:
+  #   - cron: "0 2 * * 2-6"
   workflow_dispatch:
     inputs:
       ticker:
