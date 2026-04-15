@@ -6,11 +6,6 @@ const bodyArchive = document.getElementById('tbody-archive');
 const archiveWrap = document.getElementById('archive-wrap');
 const activeCnt   = document.getElementById('active-count');
 const archiveCnt  = document.getElementById('archive-count');
-const q = document.getElementById('q');
-const fScenario = document.getElementById('filter-scenario');
-const fPattern = document.getElementById('filter-pattern');
-const sortSel = document.getElementById('sort');
-const countEl = document.getElementById('count');
 
 function fmtPct(v, dec){ return v==null ? '-' : (dec==null ? v.toFixed(1) : v.toFixed(dec)) + '%'; }
 function fmtDol(v){ return v==null ? '-' : '$' + (+v).toFixed(2); }
@@ -56,30 +51,13 @@ function rowHTML(r, mode) {
 }
 
 function render() {
-  const qv = (q.value||'').toUpperCase().trim();
-  const fs = fScenario.value;
-  const fp = fPattern.value;
-  let rows = DB.filter(r => {
-    if (qv && !r.ticker.includes(qv)) return false;
-    if (fs && r.scenario !== fs) return false;
-    if (fp && !(r.patterns||[]).includes(fp)) return false;
-    return true;
-  });
-  const [key, dir] = (sortSel.value.split('-'));
-  rows.sort((a,b)=>{
-    const av = a[key]; const bv = b[key];
-    if (av==null && bv==null) return 0;
-    if (av==null) return 1;
-    if (bv==null) return -1;
-    if (typeof av === 'string') return dir==='desc' ? bv.localeCompare(av) : av.localeCompare(bv);
-    return dir==='desc' ? bv-av : av-bv;
-  });
+  // 티커 알파벳 오름차순 기본 정렬
+  const rows = DB.slice().sort((a,b) => a.ticker.localeCompare(b.ticker));
 
   // Active vs Archive 분리
   const active  = rows.filter(r => r.is_active);
   const archive = rows.filter(r => !r.is_active);
 
-  countEl.textContent = `${rows.length} / ${DB.length} tickers (active ${active.length} / archive ${archive.length})`;
   activeCnt.textContent  = `· ${active.length}개`;
   archiveCnt.textContent = `· ${archive.length}개`;
 
@@ -95,7 +73,6 @@ function render() {
   archiveWrap.style.display = archive.length ? '' : 'none';
 }
 
-[q, fScenario, fPattern, sortSel].forEach(el => el.addEventListener('input', render));
 render();
 
 // ───── Watchlist management via GitHub API ─────

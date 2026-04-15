@@ -385,7 +385,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input id="adhoc-ticker" type="text" placeholder="티커 (예: PLTR)" style="text-transform:uppercase;width:160px;">
-        <button id="adhoc-btn" style="padding:6px 14px;background:{COLOR['info']};color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ 분석 실행</button>
+        <button id="adhoc-btn" style="padding:6px 14px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">개별분석</button>
         <span style="font-size:11px;color:{COLOR['muted']};">→ 결과는 ‘히스토리(Archive)’에 저장</span>
       </div>
     </div>
@@ -393,12 +393,12 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
     <!-- 2) 워치리스트 관리 -->
     <div style="border-top:0.5px solid {COLOR['border']};padding-top:14px;">
       <div style="font-size:11px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">
-        워치리스트 — 매일 오전 10:30 KST 자동 분석되는 종목
+        워치리스트 — 매일 오전 11:00 KST 자동 분석되는 종목
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
         <input id="new-ticker" type="text" placeholder="티커 추가 (예: PLTR)" style="text-transform:uppercase;width:160px;">
-        <button id="add-btn" style="padding:6px 14px;background:{COLOR['bull']};color:#fff;border:0;border-radius:4px;cursor:pointer;">＋ 워치리스트에 추가</button>
-        <button id="run-btn" style="padding:6px 14px;background:{COLOR['warn']};color:#fff;border:0;border-radius:4px;cursor:pointer;">▶ 워치리스트 전체 즉시 분석</button>
+        <button id="add-btn" style="padding:6px 14px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">추가</button>
+        <button id="run-btn" style="padding:6px 14px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">리스트 전체 분석</button>
         <button id="pat-edit" style="padding:6px 10px;background:none;color:{COLOR['muted']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;font-size:11px;margin-left:auto;">PAT 변경</button>
       </div>
       <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;"></div>
@@ -406,33 +406,6 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 
     <div id="mgmt-status" style="font-size:11px;color:{COLOR['muted']};min-height:16px;margin-top:8px;"></div>
   </div>
-</div>
-
-<div class="controls">
-  <input id="q" type="text" placeholder="티커 검색 (예: NVDA)...">
-  <select id="filter-scenario">
-    <option value="">시나리오 전체</option>
-    <option value="A">[A] Bullish 우세</option>
-    <option value="B">[B] Neutral 우세</option>
-    <option value="C">[C] Bearish 우세</option>
-  </select>
-  <select id="filter-pattern">
-    <option value="">패턴 전체</option>
-    <option value="FINAL_ABSORPTION">FINAL_ABSORPTION</option>
-    <option value="THETA_BURN">THETA_BURN</option>
-    <option value="GAMMA_SQUEEZE_SETUP">GAMMA_SQUEEZE_SETUP</option>
-    <option value="SHORT_SQUEEZE_RISK">SHORT_SQUEEZE_RISK</option>
-    <option value="LOW_CTB_PARADOX">LOW_CTB_PARADOX</option>
-  </select>
-  <select id="sort">
-    <option value="ticker">Ticker ↓</option>
-    <option value="scenario_pct-desc">확률 높은순</option>
-    <option value="raw_score-desc">Score 높은순</option>
-    <option value="raw_score-asc">Score 낮은순</option>
-    <option value="ctb_fee-desc">CTB 높은순</option>
-    <option value="short_pct-desc">Short% 높은순</option>
-  </select>
-  <span id="count" style="color:{COLOR['muted']};font-size:11px;"></span>
 </div>
 
 <h2 style="font-size:14px;color:{COLOR['warn']};margin:18px 0 6px;border-bottom:0.5px solid {COLOR['warn']};padding-bottom:4px;">▶ 감시 중 (Active Watchlist) <span id="active-count" style="font-size:11px;color:{COLOR['muted']};font-weight:400;"></span></h2>
@@ -504,11 +477,6 @@ const bodyArchive = document.getElementById('tbody-archive');
 const archiveWrap = document.getElementById('archive-wrap');
 const activeCnt   = document.getElementById('active-count');
 const archiveCnt  = document.getElementById('archive-count');
-const q = document.getElementById('q');
-const fScenario = document.getElementById('filter-scenario');
-const fPattern = document.getElementById('filter-pattern');
-const sortSel = document.getElementById('sort');
-const countEl = document.getElementById('count');
 
 function fmtPct(v, dec){ return v==null ? '-' : (dec==null ? v.toFixed(1) : v.toFixed(dec)) + '%'; }
 function fmtDol(v){ return v==null ? '-' : '$' + (+v).toFixed(2); }
@@ -554,30 +522,13 @@ function rowHTML(r, mode) {
 }
 
 function render() {
-  const qv = (q.value||'').toUpperCase().trim();
-  const fs = fScenario.value;
-  const fp = fPattern.value;
-  let rows = DB.filter(r => {
-    if (qv && !r.ticker.includes(qv)) return false;
-    if (fs && r.scenario !== fs) return false;
-    if (fp && !(r.patterns||[]).includes(fp)) return false;
-    return true;
-  });
-  const [key, dir] = (sortSel.value.split('-'));
-  rows.sort((a,b)=>{
-    const av = a[key]; const bv = b[key];
-    if (av==null && bv==null) return 0;
-    if (av==null) return 1;
-    if (bv==null) return -1;
-    if (typeof av === 'string') return dir==='desc' ? bv.localeCompare(av) : av.localeCompare(bv);
-    return dir==='desc' ? bv-av : av-bv;
-  });
+  // 티커 알파벳 오름차순 기본 정렬
+  const rows = DB.slice().sort((a,b) => a.ticker.localeCompare(b.ticker));
 
   // Active vs Archive 분리
   const active  = rows.filter(r => r.is_active);
   const archive = rows.filter(r => !r.is_active);
 
-  countEl.textContent = `${rows.length} / ${DB.length} tickers (active ${active.length} / archive ${archive.length})`;
   activeCnt.textContent  = `· ${active.length}개`;
   archiveCnt.textContent = `· ${archive.length}개`;
 
@@ -593,7 +544,6 @@ function render() {
   archiveWrap.style.display = archive.length ? '' : 'none';
 }
 
-[q, fScenario, fPattern, sortSel].forEach(el => el.addEventListener('input', render));
 render();
 
 // ───── Watchlist management via GitHub API ─────
