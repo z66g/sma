@@ -72,6 +72,20 @@ jobs:
 
           python3 build_index.py
 
+      # Narrative 파일을 artifact 로 업로드 (push 실패 시 수동 복구용, 7일 보관).
+      # if: always() — 뒤에 Commit 단계가 실패해도 여기까진 반드시 실행.
+      - name: Upload narratives as artifact (safety net)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: narratives-${{ github.run_id }}
+          path: |
+            reports/tickers/*/narratives/*.html
+            reports/index.html
+            reports/tickers/*/index.html
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Commit narratives
         run: |
           git config user.name  "sma-bot"

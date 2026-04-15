@@ -72,6 +72,20 @@ jobs:
 
           python3 build_index.py
 
+      # 분석 결과를 artifact 로 업로드 (push 실패 시 수동 복구용, 7일 보관).
+      - name: Upload reports as artifact (safety net)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ github.run_id }}
+          path: |
+            reports/*/*.html
+            reports/data/*.json
+            reports/index.html
+            reports/tickers/*/index.html
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Commit reports
         run: |
           git config user.name  "sma-bot"
