@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LEU · Smart Money History</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1F2328; margin:0; padding:24px; font-size:13px; }
+  .wrap { max-width:1200px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px 0; }
+  h2 { font-size:14px; color:#9A6700; border-bottom:0.5px solid #9A6700; padding-bottom:4px; margin-top:24px; }
+  .meta { color:#656D76; font-size:12px; margin-bottom:16px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; }
+  .card { background:#F6F8FA; border:0.5px solid #D0D7DE; border-radius:6px; padding:12px; }
+  .card-label { font-size:11px; color:#656D76; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em; }
+  .card-value { font-size:18px; font-weight:600; }
+  .card-sub { font-size:11px; color:#656D76; margin-top:4px; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th,td { border:0.5px solid #D0D7DE; padding:6px 8px; text-align:left; }
+  th { background:#EAEEF2; color:#656D76; font-weight:600; }
+  tr:nth-child(even) { background:#F6F8FA; }
+  a { color:#0969DA; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  canvas { max-height:200px; }
+  .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+  @media (max-width:720px) { .chart-grid { grid-template-columns:1fr; } }
+  .nav { margin-bottom:16px; font-size:12px; }
+  .nav a { color:#656D76; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav"><a href="../../">← 전체 대시보드</a></div>
+  <h1>LEU</h1>
+  <div class="meta">Latest: 2026-04-15 · $193.11 · 1개 리포트 · <span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">GAMMA_SQUEEZE_SETUP</span></div>
+
+  <h2>핵심 지표 (최신)</h2>
+  <div class="grid">
+    <div class="card"><div class="card-label">Scenario [A] Bullish</div>
+      <div class="card-value" style="color:#1A7F5A;">60.2%</div>
+      <div class="card-sub">Score +0.45 · Macro FAVORABLE</div>
+    </div>
+    <div class="card"><div class="card-label">Dark Pool % (L1)</div>
+      <div class="card-value">47.7%</div>
+      <div class="card-sub">IAR 0.71 · CONVERGENCE</div>
+    </div>
+    <div class="card"><div class="card-label">Short % · CTB (L2)</div>
+      <div class="card-value">60.1% · 0.51%</div>
+      <div class="card-sub">CASE_2_DIRECTIONAL_SHORT</div>
+    </div>
+    <div class="card"><div class="card-label">Max Pain · GEX Flip (L3)</div>
+      <div class="card-value">$200.00 · $189.22</div>
+      <div class="card-sub">DTE 2 · GAMMA_SQUEEZE</div>
+    </div>
+  </div>
+
+  <h2>시계열 추이</h2>
+  <div class="chart-grid">
+    <div class="card"><div class="card-label">Price</div><canvas id="priceChart"></canvas></div>
+    <div class="card"><div class="card-label">Scenario Probabilities (%)</div><canvas id="probChart"></canvas></div>
+    <div class="card"><div class="card-label">Short % · CTB Fee</div><canvas id="shortChart"></canvas></div>
+    <div class="card"><div class="card-label">Max Pain · GEX Flip</div><canvas id="optChart"></canvas></div>
+    <div class="card" style="grid-column:1/-1;"><div class="card-label">OBV Δ (Institutional vs Retail)</div><canvas id="obvChart"></canvas></div>
+  </div>
+
+  <h2>전체 히스토리</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Link</th></tr></thead>
+    <tbody><tr><td>2026-04-15</td><td>$193.11</td><td style="color:#1A7F5A;font-weight:600;">[A]Bull 60%</td><td>ACCUMULATION</td><td>2_DIRECTIONAL_SHORT</td><td>GAMMA_SQUEEZE</td><td><a href="../../2026-04-15/LEU_3Layer_Forensic_2026-04-15.html">리포트</a></td></tr></tbody>
+  </table>
+
+  <h2>🤖 AI 내러티브 아카이브</h2>
+  <p style="font-size:12px;color:#656D76;">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>
+
+  <div id="narrative-root"></div>
+
+  <div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
+    Data: <a href="../../data/LEU.json">LEU.json</a> ·
+    <a href="../../">Back to dashboard</a>
+  </div>
+</div>
+<script src="../../narrative.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.SMA_Narrative) {
+      window.SMA_Narrative.mount(document.getElementById('narrative-root'), "LEU");
+    }
+  });
+</script>
+<script>
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
+Chart.defaults.color = "#1F2328";
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+const DATES = ["2026-04-15"];
+function lineChart(id, datasets) {
+  new Chart(document.getElementById(id), {
+    type:'line',
+    data:{ labels:DATES, datasets:datasets },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:datasets.length>1,position:'bottom'}},
+      scales:{y:{grid:{color:'#EAEEF2'}},x:{grid:{display:false}}},
+      elements:{point:{radius:2},line:{tension:0.3,borderWidth:2}},
+    }
+  });
+}
+lineChart('priceChart', [{label:'Price', data:[193.11000061035156], borderColor:'#0969DA', backgroundColor:'#DDF4FF'}]);
+lineChart('probChart', [
+  {label:'[A] Bullish', data:[60.2], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'[C] Bearish', data:[12.0], borderColor:'#CF222B', backgroundColor:'transparent'}
+]);
+lineChart('shortChart', [
+  {label:'Short %', data:[60.12781227605393], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
+  {label:'CTB %', data:[0.5097], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
+]);
+lineChart('optChart', [
+  {label:'Max Pain', data:[200.0], borderColor:'#9A6700', backgroundColor:'transparent'},
+  {label:'GEX Flip', data:[189.2190172777381], borderColor:'#0969DA', backgroundColor:'transparent'}
+]);
+lineChart('obvChart', [
+  {label:'Institutional Δ', data:[867040.4657130002], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Retail Δ', data:[520638.8719715935], borderColor:'#CF222B', backgroundColor:'transparent'}
+]);
+</script>
+</body>
+</html>
