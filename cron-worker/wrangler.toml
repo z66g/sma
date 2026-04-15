@@ -2,11 +2,13 @@ name = "sma-cron"
 main = "worker.js"
 compatibility_date = "2024-10-01"
 
-# UTC 기준 cron
-#   0 2 * * 2-6 → KST 11:00 화~토 (daily.yml)
-#   30 2 * * 6  → KST 11:30 토    (weekly.yml)
+# 단일 cron trigger (계정 한도 5개 절약) — 워커 내부에서 분기
+#   02:00 / 02:30 UTC 화~토 = KST 11:00 / 11:30 화~토
+#   - minute 0 → daily.yml
+#   - minute 30 & day-of-week 6(토) → weekly.yml
+#   - minute 30 & 그 외 요일 → skip
 [triggers]
-crons = ["0 2 * * 2-6", "30 2 * * 6"]
+crons = ["0,30 2 * * 2-6"]
 
 [vars]
 OWNER = "z66g"

@@ -35,23 +35,26 @@ async function dispatch(workflow, env) {
   return { workflow, status: res.status, ok: res.ok, body };
 }
 
-// cron expression (UTC) → which workflow to fire
-// wrangler.toml triggers.crons 와 동일 순서로 매칭
-function routeCron(cron) {
-  if (cron === "0 2 * * 2-6") return "daily.yml";
-  if (cron === "30 2 * * 6") return "weekly.yml";
-  return null;
+// 단일 cron "0,30 2 * * 2-6" 이 발사한 scheduled 이벤트를 분 / 요일로 분기.
+//   event.scheduledTime 은 ms epoch (UTC)
+function routeByTime(scheduledTime) {
+  const d = new Date(scheduledTime);
+  const minute = d.getUTCMinutes();
+  const dow = d.getUTCDay(); // 0=Sun … 6=Sat
+  if (minute === 0) return "daily.yml";
+  if (minute === 30 && dow === 6) return "weekly.yml";
+  return null; // 토요일이 아닌 날의 02:30 은 skip
 }
 
 export default {
   async scheduled(event, env, ctx) {
-    const wf = routeCron(event.cron);
+    const wf = routeByTime(event.scheduledTime);
     if (!wf) {
-      console.log("no workflow mapped for cron:", event.cron);
+      console.log(JSON.stringify({ event: "skip", scheduledTime: event.scheduledTime, cron: event.cron }));
       return;
     }
     const r = await dispatch(wf, env);
-    console.log(JSON.stringify({ event: "dispatched", ...r, cron: event.cron }));
+    console.log(JSON.stringify({ event: "dispatched", ...r, cron: event.cron, scheduledTime: event.scheduledTime }));
   },
 
   // 수동 테스트용: https://<worker>.workers.dev/daily 로 POST 하면 즉시 디스패치
