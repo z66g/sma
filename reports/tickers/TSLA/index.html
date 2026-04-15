@@ -120,9 +120,18 @@ function lineChart(id, datasets) {
     type:'line',
     data:{ labels:DATES, datasets:datasets },
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:datasets.length>1,position:'bottom'}},
+      plugins:{
+        legend:{
+          display:datasets.length>1, position:'bottom',
+          labels:{
+            usePointStyle:true, pointStyle:'line',  // 범례를 선 모양 + dash 반영
+            boxWidth:30, boxHeight:0, padding:12
+          }
+        },
+        tooltip:{ usePointStyle:true }
+      },
       scales:{y:{grid:{color:'#EAEEF2'}},x:{grid:{display:false}}},
-      elements:{point:{radius:2},line:{tension:0.3,borderWidth:2}},
+      elements:{point:{radius:2, pointStyle:'circle'},line:{tension:0.3,borderWidth:2}},
     }
   });
 }
