@@ -311,7 +311,8 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
             "report_count": len(series),
         })
 
-    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    from datetime import timedelta as _td
+    generated = (datetime.now(timezone.utc) + _td(hours=9)).strftime("%Y-%m-%d %H:%M KST")
 
     html = f"""<!DOCTYPE html>
 <html lang="ko">
@@ -381,19 +382,18 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
     <!-- 1) 단일 종목 즉시 분석 -->
     <div style="margin-bottom:14px;">
       <div style="font-size:11px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">
-        단일 종목 즉시 분석 — 워치리스트 변경 없이 1회만 수행
+        단일 종목 즉시 분석
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input id="adhoc-ticker" type="text" placeholder="티커 (예: PLTR)" style="text-transform:uppercase;width:160px;">
         <button id="adhoc-btn" style="padding:6px 14px;background:{COLOR['panel']};color:{COLOR['text']};border:0.5px solid {COLOR['border']};border-radius:4px;cursor:pointer;">개별분석</button>
-        <span style="font-size:11px;color:{COLOR['muted']};">→ 결과는 ‘히스토리(Archive)’에 저장</span>
       </div>
     </div>
 
     <!-- 2) 워치리스트 관리 -->
     <div style="border-top:0.5px solid {COLOR['border']};padding-top:14px;">
       <div style="font-size:11px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:6px;">
-        워치리스트 — 매일 오전 11:00 KST 자동 분석되는 종목
+        워치리스트 — 매일 오전 11:00 KST 자동분석
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
         <input id="new-ticker" type="text" placeholder="티커 추가 (예: PLTR)" style="text-transform:uppercase;width:160px;">
