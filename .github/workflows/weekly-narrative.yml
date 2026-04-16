@@ -128,18 +128,14 @@ jobs:
 
           LINKS=""
           for T in ${TICKERS}; do
-            LINKS="${LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/tickers/${T}/\">${T}</a>
-          "
+            LINKS="${LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/tickers/${T}/\">${T}</a>"$'\n'
           done
 
-          MSG="📝Weekly Narrative
-${DATE}
-
-${LINKS}
-<a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
+          NL=$'\n'
+          MSG="📝Weekly Narrative${NL}${DATE}${NL}${NL}${LINKS}${NL}<a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
 
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-            -d chat_id="${TG_CHAT}" \
-            -d parse_mode=HTML \
-            -d disable_web_page_preview=true \
-            -d text="${MSG}" || echo "WARN: Telegram notify failed"
+            --data-urlencode "chat_id=${TG_CHAT}" \
+            --data-urlencode "parse_mode=HTML" \
+            --data-urlencode "disable_web_page_preview=true" \
+            --data-urlencode "text=${MSG}" || echo "WARN: Telegram notify failed"
