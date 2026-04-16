@@ -2025,7 +2025,12 @@ def _triggers(l1, l2, l3, l4, price, max_pain, flip, raw_l4=None):
     if l2.get("ctb_fee") is not None:
         rows.append(["CTB &gt; 5%", "BULLISH", met(l2["ctb_fee"] > 5), "Squeeze setup"])
     if flip and price:
-        rows.append(["Price &gt; GEX Flip", "BULLISH", met(price > flip), "Vol dampened"])
+        if price > flip:
+            rows.append(["Price &gt; GEX Flip", "NEUTRAL", "MET",
+                         "Pinning regime — 변동성 억제, 하향 이탈 시 amplification 전환 주의"])
+        else:
+            rows.append(["Price &lt; GEX Flip", "NEUTRAL", "MET",
+                         "Amplification regime — 변동성 확대, 상향 돌파 시 pinning 전환(안정화)"])
     if max_pain and price:
         rows.append(["Price &lt; Max Pain", "BEARISH", met(price < max_pain), "Downward gravity"])
     if l4.get("sma50"):
@@ -2082,13 +2087,17 @@ def _triggers(l1, l2, l3, l4, price, max_pain, flip, raw_l4=None):
         rows.append(["Short↓ × CTB 안정", "BULLISH", met(cond),
                      "Final Absorption 조건 ④+⑤"])
 
-    # (d) Net GEX 부호 전환 임박 — flip zone 거리 ≤ 1%
+    # (d) Net GEX regime 전환 임박 — flip zone 거리 ≤ 1%
     if flip and price and price > 0:
         dist_pct = abs(price - flip) / price * 100
-        # 방향 — 현재가가 flip 위면 상승 시 유지 / 아래면 하락 시 가속
-        direction = "BEARISH" if price > flip else "BULLISH"
-        implication = ("Flip 위 — 하향 돌파 시 vol 확대" if price > flip
-                       else "Flip 아래 — 상향 돌파 시 gamma 점화")
+        if price > flip:
+            # Pinning → Amplification 전환 위험 (하방 가속 가능)
+            direction = "BEARISH"
+            implication = f"Flip 근접 ({dist_pct:.1f}%) — 하향 이탈 시 amplification 진입 (하방 가속)"
+        else:
+            # Amplification → Pinning 전환 가능 (안정화)
+            direction = "NEUTRAL"
+            implication = f"Flip 근접 ({dist_pct:.1f}%) — 상향 돌파 시 pinning 진입 (변동성 억제·안정화)"
         rows.append([f"|Price − Flip| ≤ 1% (현재 {dist_pct:.2f}%)",
                      direction, met(dist_pct <= 1.0), implication])
 
@@ -2200,7 +2209,12 @@ def _core_conclusions(a) -> str:
 
     # Body 3 — 결정적 트리거
     p3_triggers = []
-    if l3.get("flip_zone"): p3_triggers.append(f"가격이 GEX 플립(${l3['flip_zone']:.2f})을 돌파")
+    if l3.get("flip_zone"):
+        fp = l3["flip_zone"]
+        if price and price > fp:
+            p3_triggers.append(f"가격이 GEX 플립(${fp:.2f}) 아래로 이탈 시 amplification 전환 (하방 가속 위험)")
+        elif price:
+            p3_triggers.append(f"가격이 GEX 플립(${fp:.2f}) 상향 돌파 시 pinning 전환 (변동성 억제·안정화)")
     if l2.get("ctb_fee") is not None: p3_triggers.append(f"CTB가 {l2['ctb_fee']:.1f}%에서 +3pp 이상 급등")
     if l1.get("dp_pct") is not None: p3_triggers.append(f"다크풀 비중이 {l1['dp_pct']:.0f}%에서 2거래일 연속 45% 이상 유지")
     reset_cond = ("기관 OBV가 음전환(누적 5영업일 합산 &lt; 0)" if top[0]=="A" else
