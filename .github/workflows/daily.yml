@@ -108,3 +108,35 @@ jobs:
           done
           echo "push failed after 5 attempts"
           exit 1
+
+      - name: Notify Telegram
+        if: success()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT:  ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          SINGLE="${{ github.event.inputs.ticker }}"
+          if [ -n "${SINGLE}" ]; then
+            TICKERS="$(echo ${SINGLE} | tr 'a-z' 'A-Z')"
+          else
+            TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
+          fi
+
+          LINKS=""
+          for T in ${TICKERS}; do
+            LINKS="${LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html\">${T}</a>
+          "
+          done
+
+          MSG="📊 <b>Daily Report Complete</b>
+          ${DATE}
+
+          ${LINKS}
+          <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
+
+          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d chat_id="${TG_CHAT}" \
+            -d parse_mode=HTML \
+            -d disable_web_page_preview=true \
+            -d text="${MSG}" || echo "WARN: Telegram notify failed"
