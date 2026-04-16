@@ -1454,20 +1454,20 @@ def calculate_max_pain(chain: Dict) -> Optional[float]:
     return min(total_pain, key=total_pain.get) if total_pain else None
 
 def calculate_gex(chain: Dict, spot: float) -> Dict:
+    """
+    GEX 계산 — 업계 표준 (Perfiliev / SpotGamma convention).
+    공식: OI × Gamma × 100 × Spot² × 0.01
+    부호: Call = + (dealer dampening), Put = - (dealer amplifying)
+    단위: "1% 가격 변동 당 달러 노출"
+    Distance weighting 없음 (업계 표준에 부합).
+    """
     results = {}
     for opt_type in ("calls", "puts"):
         for opt in chain[opt_type]:
             strike = opt["strike"]; oi = opt["oi"]; gamma = opt["gamma"]
-            if spot <= 0: continue
-            dist_pct = abs(strike - spot) / spot * 100
-            if   dist_pct <= 2.5:  w = 1.00
-            elif dist_pct <= 5.0:  w = 0.90
-            elif dist_pct <= 10:   w = 0.65
-            elif dist_pct <= 15:   w = 0.35
-            elif dist_pct <= 20:   w = 0.18
-            else:                  w = 0.07
-            raw = oi * gamma * 100 * spot * spot
-            g = +raw * w if opt_type == "calls" else -raw * w
+            if spot <= 0 or gamma <= 0: continue
+            raw = oi * gamma * 100 * spot * spot * 0.01
+            g = +raw if opt_type == "calls" else -raw
             results[strike] = results.get(strike, 0) + g
     strikes = sorted(results.keys())
     # 모든 zero crossing 수집 후 spot에 가장 가까운 것을 채택.
