@@ -238,7 +238,7 @@ async function removeTicker(t) {
 // ── 워크플로우 dispatch + status polling ─────────────────────────
 async function dispatchWorkflow(inputs) {
   const dispatchTime = Date.now();
-  await gh(`/repos/${REPO}/actions/workflows/daily.yml/dispatches`, {
+  await gh(`/repos/${REPO}/actions/workflows/daily-analysis.yml/dispatches`, {
     method: 'POST',
     body: JSON.stringify({ ref: 'main', inputs: inputs || {} })
   });
@@ -255,7 +255,7 @@ async function pollRun(dispatchTime, label, timeoutMs) {
   while (!runId && Date.now() < deadline) {
     await new Promise(r => setTimeout(r, 4000));
     try {
-      const j = await gh(`/repos/${REPO}/actions/workflows/daily.yml/runs?event=workflow_dispatch&per_page=5`);
+      const j = await gh(`/repos/${REPO}/actions/workflows/daily-analysis.yml/runs?event=workflow_dispatch&per_page=5`);
       const found = (j.workflow_runs || []).find(r =>
         new Date(r.created_at).getTime() >= dispatchTime - 3000);
       if (found) { runId = found.id; runUrl = found.html_url; }
