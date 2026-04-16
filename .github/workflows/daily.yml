@@ -1,11 +1,11 @@
 name: Daily Smart Money Analysis
 
 on:
-  # GitHub native cron 비활성화 — cron-job.org 가 workflow_dispatch API 로
-  # KST 11:00 화~토 에 외부에서 트리거 (러너 큐 지연 회피).
-  # 필요 시 아래 schedule 블록 주석 해제하면 원래대로 복구.
-  # schedule:
-  #   - cron: "0 2 * * 2-6"
+  schedule:
+    # 실제 트리거는 cron-job.org 가 workflow_dispatch 로 수행.
+    # 아래 schedule 은 GitHub가 워크플로우를 "활성"으로 인식하게 하는 더미.
+    # 매년 2/29 04:00 UTC — 윤년에만 존재하고, cron-job.org 가 이미 처리하므로 실행 안 됨.
+    - cron: "0 4 29 2 *"
   workflow_dispatch:
     inputs:
       ticker:
