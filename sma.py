@@ -431,8 +431,25 @@ class SmartMoneyAnalyzer:
         """
         today = datetime.strptime(self.date_str, "%Y-%m-%d").date()
         ohlcv = l4.get("ohlcv", []) if l4 else []
-        # 일자별 yfinance 총거래량 맵 (ohlcv 재활용)
-        market_vol = {c["date"]: c["volume"] for c in ohlcv}
+        # 일자별 총거래량 맵 — prepost=True 로 프리/애프터 포함 볼륨 fetch.
+        # FINRA CNMS (분자)가 확장시간 포함이므로 분모도 맞춰야 dp% 편향 방지.
+        # L4 OHLCV(정규장)와 별도로 볼륨 전용 fetch.
+        try:
+            _ext = self.yf.history(period="1y", interval="1d", prepost=True)
+            if not _ext.empty:
+                _ext = _ext.reset_index()
+                _ext["Date"] = pd.to_datetime(_ext["Date"]).dt.tz_localize(None)
+                market_vol = {
+                    row["Date"].strftime("%Y-%m-%d"): float(row["Volume"])
+                    for _, row in _ext.iterrows()
+                    if not pd.isna(row["Volume"])
+                }
+            else:
+                market_vol = {c["date"]: c["volume"] for c in ohlcv}
+                self.warnings.append("prepost volume fetch empty, falling back to regular-hours volume")
+        except Exception as e:
+            market_vol = {c["date"]: c["volume"] for c in ohlcv}
+            self.warnings.append(f"prepost volume fetch failed ({e}), falling back to regular-hours volume")
 
         dp_rows = []
         d = prev_trading_day(today)
