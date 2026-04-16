@@ -129,11 +129,11 @@ jobs:
           "
           done
 
-          MSG="📊 <b>Daily Report Complete</b>
-          ${DATE}
+          MSG="📄Daily Report
+${DATE}
 
-          ${LINKS}
-          <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
+${LINKS}
+<a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
 
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             -d chat_id="${TG_CHAT}" \
