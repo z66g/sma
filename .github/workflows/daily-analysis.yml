@@ -1,11 +1,10 @@
 name: Daily Smart Money Analysis
 
 on:
-  schedule:
-    # 원래 스케줄 유지 (GitHub 워크플로우 등록용).
-    # 실제 트리거는 cron-job.org → workflow_dispatch. GitHub native cron이
-    # 혹시 뜨더라도 중복 실행될 뿐 해는 없음 (idempotent).
-    - cron: "0 2 * * 2-6"
+  # 네이티브 GitHub cron 비활성화 (지연 실행 문제).
+  # 트리거는 cron-job.org → workflow_dispatch 로 일원화.
+  # schedule:
+  #   - cron: "0 2 * * 2-6"
   workflow_dispatch:
     inputs:
       ticker:
