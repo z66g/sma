@@ -2207,22 +2207,24 @@ def _core_conclusions(a) -> str:
         f"해석이 틀릴 위험은 CTB와 기관 OBV의 동시 역전, 또는 다가오는 이벤트(어닝/FOMC)의 가이던스 변질이다."
     )
 
-    # Body 3 — 결정적 트리거
+    # Body 3 — 결정적 촉매 (방향성·레짐 전환 신호, spot 기준 객관적 서술)
     p3_triggers = []
-    if l3.get("flip_zone"):
+    if l3.get("flip_zone") and price:
         fp = l3["flip_zone"]
-        if price and price > fp:
-            p3_triggers.append(f"가격이 GEX 플립(${fp:.2f}) 아래로 이탈 시 amplification 전환 (하방 가속 위험)")
-        elif price:
-            p3_triggers.append(f"가격이 GEX 플립(${fp:.2f}) 상향 돌파 시 pinning 전환 (변동성 억제·안정화)")
-    if l2.get("ctb_fee") is not None: p3_triggers.append(f"CTB가 {l2['ctb_fee']:.1f}%에서 +3pp 이상 급등")
-    if l1.get("dp_pct") is not None: p3_triggers.append(f"다크풀 비중이 {l1['dp_pct']:.0f}%에서 2거래일 연속 45% 이상 유지")
+        if price > fp:
+            p3_triggers.append(f"가격이 GEX 플립(${fp:.2f}) 아래로 이탈 시 amplification 레짐 진입 (변동성 증폭)")
+        else:
+            p3_triggers.append(f"가격이 GEX 플립(${fp:.2f}) 상향 돌파 시 pinning 레짐 진입 (변동성 억제)")
+    if l2.get("ctb_fee") is not None:
+        p3_triggers.append(f"CTB가 {l2['ctb_fee']:.1f}%에서 +3pp 이상 급등 (차입 압박 구조 변화)")
+    if l1.get("dp_pct") is not None:
+        p3_triggers.append(f"다크풀 비중이 {l1['dp_pct']:.0f}%에서 2거래일 연속 45% 이상 유지 (기관 활동 지속)")
     reset_cond = ("기관 OBV가 음전환(누적 5영업일 합산 &lt; 0)" if top[0]=="A" else
                   "기관 OBV가 양전환하면서 CTB가 급락" if top[0]=="C" else
                   "L1·L2·L3 중 2개 레이어 신호가 동시에 반대 방향으로 고착")
     trigger_text = "; ".join(p3_triggers) if p3_triggers else "거래량 +150% 스파이크 + BB 확장"
     b3 = (
-        f"본 가설을 확정하는 단일 신호는 다음 중 어느 것이든 먼저 발동될 때다: <b>{trigger_text}</b>. "
+        f"본 분석의 방향성·레짐을 판가름할 단일 촉매는 다음 중 어느 것이든 먼저 발동될 때다: <b>{trigger_text}</b>. "
         f"반대로 <b>{reset_cond}</b>되면 본 분석의 방향성 가정은 재설정되어야 한다."
     )
 
