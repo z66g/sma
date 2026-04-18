@@ -2219,13 +2219,17 @@ def _core_conclusions(a) -> str:
         p3_triggers.append(f"CTB가 {l2['ctb_fee']:.1f}%에서 +3pp 이상 급등 (차입 압박 구조 변화)")
     if l1.get("dp_pct") is not None:
         p3_triggers.append(f"다크풀 비중이 {l1['dp_pct']:.0f}%에서 2거래일 연속 45% 이상 유지 (기관 활동 지속)")
-    reset_cond = ("기관 OBV가 음전환(누적 5영업일 합산 &lt; 0)" if top[0]=="A" else
-                  "기관 OBV가 양전환하면서 CTB가 급락" if top[0]=="C" else
-                  "L1·L2·L3 중 2개 레이어 신호가 동시에 반대 방향으로 고착")
+    # 기관 OBV 역전도 레짐 전환 촉매의 하나 — 동일 리스트에 편입
+    if top[0] == "A":
+        p3_triggers.append("기관 OBV가 음전환 (누적 5영업일 합산 &lt; 0, 축적 흐름 이탈)")
+    elif top[0] == "C":
+        p3_triggers.append("기관 OBV가 양전환하면서 CTB가 급락 (매집 재개 신호)")
+    else:
+        p3_triggers.append("L1·L2·L3 중 2개 레이어 신호가 동시에 반대 방향으로 고착 (레짐 교착)")
     trigger_text = "; ".join(p3_triggers) if p3_triggers else "거래량 +150% 스파이크 + BB 확장"
     b3 = (
         f"본 분석의 방향성·레짐을 판가름할 단일 촉매는 다음 중 어느 것이든 먼저 발동될 때다: <b>{trigger_text}</b>. "
-        f"반대로 <b>{reset_cond}</b>되면 본 분석의 방향성 가정은 재설정되어야 한다."
+        f"위 촉매 중 하나라도 현 가설과 반대 방향으로 발동되면 본 분석의 방향성 가정은 재설정되어야 한다."
     )
 
     # 각 결론 블록: 라벨 pill + 줄바꿈 + 본문 + 좌측 악센트 바 + 카드
