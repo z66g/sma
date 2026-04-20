@@ -1812,5 +1812,86 @@
         "immediate_support": 284.4100036621094
       }
     }
+  ],
+  "ASTS": [
+    {
+      "ticker": "ASTS",
+      "date": "2026-04-20",
+      "price": 78.5,
+      "warnings": [],
+      "patterns": [
+        "GAMMA_SQUEEZE_SETUP"
+      ],
+      "macro_env": "FAVORABLE",
+      "scenarios": {
+        "A_bullish": 41.7,
+        "B_neutral": 37.0,
+        "C_bearish": 21.3,
+        "raw_score": -0.05
+      },
+      "l1": {
+        "scenario": "DISTRIBUTION",
+        "signal": "BEARISH",
+        "confidence": "HIGH",
+        "dp_pct": 40.00295937531395,
+        "delta_institutional": -18317663.290884998,
+        "delta_professional": -11869937.337340195,
+        "delta_retail": -10300299.371774808,
+        "delta_total": -40487900.0,
+        "iar": 0.8262276822400336,
+        "divergence": "CONVERGENCE",
+        "obv_source": "cnms_signed_v2",
+        "pro_share": 0.5353996663671176,
+        "retail_share": 0.46460033363288245,
+        "window_days": 5,
+        "inst_abs_volume": 42919618.407523
+      },
+      "l2": {
+        "scenario": "MM_HEDGE",
+        "signal": "NEUTRAL",
+        "case": "CASE_1_MM_DELTA_HEDGE",
+        "short_pct_latest": 62.27998682802678,
+        "short_avg_14d": 51.842026776126126,
+        "short_slope": 0.8967385007471744,
+        "slope_dir": "RISING",
+        "anomaly_z": 1.2945387001307833,
+        "ctb_fee": 0.4143,
+        "ctb_delta_pct": -3.1103835360149623,
+        "shares_available": 3200000.0
+      },
+      "phase": {
+        "p1_date": "2026-04-06 ~ 2026-04-17",
+        "p2_date": "2026-04-20",
+        "p3_date": "2026-04-27 ~ 2026-05-18",
+        "p3_direction": "UPWARD",
+        "p3_target_hi": 101.50112472799668,
+        "p3_target_lo": 75.60487579080214,
+        "p3_bb_width": 29.243784921274646
+      },
+      "l3": {
+        "scenario": "GAMMA_SQUEEZE",
+        "signal": "BULLISH",
+        "expiry": "2026-04-24",
+        "dte": 4,
+        "max_pain": 88.0,
+        "max_pain_dist_pct": -10.795454545454545,
+        "pc_oi": 0.6032482233821772,
+        "pc_vol": 0.5116930401904495,
+        "skew": -0.05469999999999997,
+        "net_gex": -372275.1362054885,
+        "flip_zone": 87.20001987848745
+      },
+      "l4": {
+        "scenario": "RANGE_BOUND",
+        "signal": "NEUTRAL",
+        "ma_alignment": "MIXED",
+        "sma20": 88.55300025939941,
+        "sma50": 89.00609985351562,
+        "sma200": 72.47017477035523,
+        "bb_width_pct": 29.243784921274646,
+        "immediate_resistance": 87.25,
+        "immediate_support": 77.9000015258789
+      }
+    }
   ]
 }
