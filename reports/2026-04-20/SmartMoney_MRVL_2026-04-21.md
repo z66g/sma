@@ -6,7 +6,7 @@ generated_by: Smart Money Analyzer (sma.py)
 
 # Smart Money Analysis: MRVL
 **Analysis Date**: 2026-04-21  
-**Current Price**: $144.72  
+**Current Price**: $145.23  
 **Options Expiry**: 2026-04-24  
 **Analyst**: Smart Money Analyzer v2.0
 
@@ -37,7 +37,7 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-04-07 ~ 2026-04-20 — 주기/분배 이미 전개
 - **Phase 2 (Current)**:   2026-04-21 — ACCUMULATION × HEDGING
-- **Phase 3 (Target)**:    2026-04-28 ~ 2026-05-19 — UPWARD 방향 · 타겟 $149.17 / $78.18 (BB폭 62.5%)
+- **Phase 3 (Target)**:    2026-04-28 ~ 2026-05-19 — UPWARD 방향 · 타겟 $149.29 / $78.11 (BB폭 62.6%)
 
 ---
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-21 | $144.72 | 38M | 30M | 26M | 94M | 26.4% | 0.29% | 10M | $138.17 | $122.00 |
+| 2026-04-21 | $145.23 | 38M | 30M | 26M | 94M | 26.4% | 0.29% | 10M | $138.17 | $122.00 |
