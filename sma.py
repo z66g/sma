@@ -1806,7 +1806,7 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   기관/프로/리테일 분해는 FINRA CNMS 오프거래소 볼륨과 1분봉 avg_size 코호트 기반 <b>근사값</b>입니다.
   PFOF 리테일 내부화가 CNMS에 포함되어 기관 절대값은 과대 산정될 수 있습니다.
   <b>방향성 변화 감지용</b>으로 활용하시고, 코호트별 절대값 검증은 Market Chameleon 등 per-print 분류 소스를 참조하세요.
-  <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Trades/" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Trades</a>
+  <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume</a>
 </div>
 """
 
