@@ -544,23 +544,24 @@ class SmartMoneyAnalyzer:
                               minute_bars: List[Dict],
                               minute_src_label: Optional[str] = None) -> Tuple[Dict, str]:
         """
-        Signed-volume 산정 체계 — FINRA CNMS + 단일 R (per-bar CLV 가중)
-          - 볼륨 출처:
-              · Institutional 볼륨 = FINRA CNMS 오프거래소 volume (T+1 안정적)
-              · Professional/Retail 볼륨 = (total − CNMS) × pro_share / retail_share
-                (Lit 볼륨 내부에서 분봉 avg_size 기반 비율 산정)
-          - 부호 R ∈ [-1, +1] — 전 분봉 CLV 가중 평균:
-              R = Σ (CLV(bar) × v(bar)) / Σ v(bar)
+        Signed-volume 산정 체계 — FINRA CNMS + 2-way 분리 (Inst vs Non-Inst)
+          - 분봉 분류 (tight threshold):
+              · Inst bars: avg_size ≥ p85 AND v ≥ 5000 (블록 함유 가능성 높음)
+              · Non-Inst bars: 나머지 (pro + retail 합본)
+          - 각 버킷별 독립 R ∈ [-1, +1] — per-bar CLV 가중:
+              R_x = Σ (CLV(bar) × v(bar)) / Σ v(bar)   over bars in bucket x
               CLV(bar) = ((c-l) - (h-c)) / (h-l)
-              · 강한 상승 봉: CLV ≈ +0.9 (큰 양수 기여)
-              · 혼조 봉: CLV ≈ 0 (기여 없음, 부호 뒤집힘 방지)
-          - 세 코호트 모두 같은 R 공유 → 부호 일치. 분봉 avg_size 기반 코호트별
-            독립 signing 은 TIMING 아티팩트로 실제 참여자 행동과 무관하게 부호를
-            뒤집는 문제가 있어 제거함. 진짜 per-cohort 부호 발산은 tick 데이터
-            (개별 체결 + bid/ask) 없이는 구조적으로 표현 불가.
-          - 절대값은 MC per-print 분류와 다르지만 **방향성·규모 변화·반전 신호**는
-            안정적으로 포착.
-          - 폴백: 분봉 부재 시 일봉 CLV 사용.
+          - 적용:
+              inst_signed    = R_inst    × CNMS_off_exchange (T+1)
+              non_inst_signed= R_non_inst× lit_volume
+              (3-way chart 호환성 위해 non_inst는 pro_share/retail_share 로 분할)
+          - 2-way 설계 이유:
+              · 기관 R은 블록 함유 분봉 중심으로 좁혀져 노이즈 감소
+              · Non-inst 버킷 커서 timing 아티팩트 평균화
+              · Pro/Retail 경계의 허위 발산 제거
+          - MC 절대값 일치는 여전히 tick 데이터 없이 불가. **기관 방향성 신호**에
+            집중한 설계.
+          - 폴백: 분봉 부재 시 일봉 CLV 단일 R 사용.
         """
         if len(ohlcv) < 6 or not dp_rows:
             return {"_partial": True}, "OBV 4-way: 데이터 부족"
@@ -586,14 +587,19 @@ class SmartMoneyAnalyzer:
                     continue
                 minute_by_date.setdefault(ds, []).append(b)
 
-        # ── 글로벌 cohort 임계치 (avg_size = v/n 분위수) ──────────────────
-        cohort_p30 = cohort_p70 = None
+        # ── 글로벌 임계치: Inst 분봉 경계 (avg_size p85 + v ≥ 5000) ───
+        # 분봉 avg_size 상위 15% 가 블록 함유 가능성 높음 (top 30% 대비 잡음 감소).
+        # 추가로 절대 볼륨 5000 필터로 소규모 분봉이 avg_size만 높다고 inst 오분류되는 것 방지.
+        cohort_p85 = None
         cohort_enabled = False
+        cohort_p30 = None  # Lit pro/retail 비율 산출용 (chart 호환)
+        cohort_p70 = None
         if minute_bars:
             df_all = pd.DataFrame(minute_bars)
             if "n" in df_all.columns and df_all["n"].sum() > 0 and len(df_all) > 60:
                 df_all = df_all[df_all["n"] > 0].copy()
                 df_all["avg_size"] = df_all["v"] / df_all["n"]
+                cohort_p85 = float(df_all["avg_size"].quantile(0.85))
                 cohort_p30 = float(df_all["avg_size"].quantile(0.30))
                 cohort_p70 = float(df_all["avg_size"].quantile(0.70))
                 cohort_enabled = True
@@ -611,52 +617,56 @@ class SmartMoneyAnalyzer:
                 pro_share    = mid_v / (mid_v + bot_v)
                 retail_share = 1.0 - pro_share
 
-        # ── 일일 단일 R (부호, -1..+1) — 전 분봉 CLV × v 가중 평균 ──
-        # 코호트별 R 분리 제거: 분봉 avg_size 기반 코호트 분류는 TIMING 아티팩트로
-        # 실제 참여자 행동과 무관하게 부호를 뒤집는 문제가 있어, 단일 R 채택.
-        # 대신 per-bar CLV 가중으로 민감도는 유지 (혼조 봉은 0 근처, 강한 방향봉은 ±0.9).
-        # 세 코호트 모두 같은 R 공유 — 부호 일치 (MC와 최소 방향 정합).
-        def _daily_R(d: str) -> Tuple[float, str]:
+        # ── 일일 2-way R (Inst, Non-Inst) — per-bar CLV 가중 ─────────
+        def _daily_R2(d: str) -> Tuple[float, float, str]:
+            """Returns (R_inst, R_non_inst, src)"""
             bars = minute_by_date.get(d, [])
-            if len(bars) >= 30:
-                signed = 0.0; total = 0.0
+            if cohort_enabled and len(bars) >= 30:
+                ins_s = ins_t = non_s = non_t = 0.0
                 for b in bars:
                     c = b.get("c"); h = b.get("h"); l = b.get("l")
-                    v = b.get("v") or 0
-                    if c is None or h is None or l is None or v <= 0:
+                    v = b.get("v") or 0; n = b.get("n") or 0
+                    if c is None or h is None or l is None or v <= 0 or n <= 0:
                         continue
+                    avg = v / n
                     rng = h - l
-                    if rng > 0:
-                        clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / rng))
+                    clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / rng)) if rng > 0 else 0.0
+                    # Inst 분봉: avg_size ≥ p85 AND v ≥ 5000
+                    if avg >= cohort_p85 and v >= 5000:
+                        ins_s += clv * v; ins_t += v
                     else:
-                        clv = 0.0
-                    signed += clv * v
-                    total  += v
-                if total > 0:
-                    return max(-1.0, min(1.0, signed / total)), "barCLV"
-            # 폴백: 일봉 CLV
+                        non_s += clv * v; non_t += v
+                R_ins = max(-1.0, min(1.0, ins_s / ins_t)) if ins_t > 0 else 0.0
+                R_non = max(-1.0, min(1.0, non_s / non_t)) if non_t > 0 else 0.0
+                # Inst 분봉이 너무 적으면 (15% 이하 감지) 단일 R 폴백
+                if ins_t == 0:
+                    R_ins = R_non
+                return R_ins, R_non, "barCLV_2way"
+            # 폴백: 일봉 CLV 단일 R 양쪽 동일
             bar = ohlc_by_date.get(d)
             if bar:
                 h, l, c = bar["high"], bar["low"], bar["close"]
                 if (h - l) > 0:
-                    return max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l))), "dayclv"
-            return 0.0, "none"
+                    R = max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l)))
+                    return R, R, "dayclv"
+            return 0.0, 0.0, "none"
 
-        # ── 집계 — CNMS × 단일 R (세 코호트 공통 부호) ─────────────────
+        # ── 집계 — 2-way (CNMS × R_inst, Lit × R_non_inst) ─────────────
         delta_inst = delta_pro = delta_retail = 0.0
         inst_abs = 0.0; lit_abs = 0.0
         ratio_src_counts: Dict[str, int] = {}
-        daily_R: Dict[str, float] = {}
+        daily_R_inst: Dict[str, float] = {}
         for d in dates_asc:
-            R, src = _daily_R(d)
-            daily_R[d] = R
+            R_ins, R_non, src = _daily_R2(d)
+            daily_R_inst[d] = R_ins
             ratio_src_counts[src] = ratio_src_counts.get(src, 0) + 1
             off = cnms_by_date.get(d, 0); tot = vol_by_date.get(d, 0)
             lit = max(tot - off, 0)
             inst_abs += off; lit_abs += lit
-            delta_inst   += R * off
-            delta_pro    += R * lit * pro_share
-            delta_retail += R * lit * retail_share
+            delta_inst   += R_ins * off
+            # Non-inst 서명 볼륨을 pro/retail share 로 분할 (차트 호환)
+            delta_pro    += R_non * lit * pro_share
+            delta_retail += R_non * lit * retail_share
 
         delta_total = delta_inst + delta_pro + delta_retail
         iar = safe_div(abs(delta_inst), (abs(delta_pro) + abs(delta_retail)), None)
@@ -666,7 +676,7 @@ class SmartMoneyAnalyzer:
         inst_cum = []
         running = 0.0
         for d in dates_asc:
-            running += daily_R.get(d, 0) * cnms_by_date.get(d, 0)
+            running += daily_R_inst.get(d, 0) * cnms_by_date.get(d, 0)
             inst_cum.append(running)
 
         price_slope = linregress_slope(closes)
@@ -686,9 +696,9 @@ class SmartMoneyAnalyzer:
 
         src_desc = ", ".join(f"{k}={v}d" for k,v in ratio_src_counts.items())
         minute_tag = minute_src_label or "none"
-        cohort_info = (f"p30={cohort_p30:.0f}/p70={cohort_p70:.0f} sh"
+        cohort_info = (f"inst p85={cohort_p85:.0f} sh+v≥5000"
                        if cohort_enabled else "cohort_disabled")
-        note = (f"OBV 4-way: CNMS × per-cohort R ({len(dates_asc)}일, "
+        note = (f"OBV 2-way: CNMS × R_inst, Lit × R_non_inst ({len(dates_asc)}일, "
                 f"sign src: {src_desc}, 1m src: {minute_tag}, {cohort_info})")
         return {
             "delta_institutional": delta_inst,
@@ -697,7 +707,7 @@ class SmartMoneyAnalyzer:
             "delta_total":         delta_total,
             "iar":                 iar,
             "divergence":          divergence,
-            "_source":             "cnms_hybrid_R_v4",
+            "_source":             "cnms_2way_v5",
             "inst_abs_volume":     inst_abs,
             "lit_abs_volume":      lit_abs,
             "pro_share":           pro_share,
@@ -1801,11 +1811,11 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
   </div>
 </div>
 <div style="margin-top:10px;padding:8px 10px;background:{COLOR['alert_amber']};border-left:3px solid {COLOR['warn']};border-radius:4px;font-size:11px;line-height:1.5;">
-  <b style="color:{COLOR['warn']};">⚠ 4-way OBV 정확도 고지</b><br>
-  기관/프로/리테일 분해는 FINRA CNMS 오프거래소 볼륨과 1분봉 avg_size 코호트 기반 <b>근사값</b>입니다.
-  PFOF 리테일 내부화가 CNMS에 포함되어 기관 절대값은 과대 산정될 수 있습니다.
-  <b>방향성 변화 감지용</b>으로 활용하시고, 코호트별 절대값 검증은 Market Chameleon 등 per-print 분류 소스를 참조하세요.
-  <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume</a>
+  <b style="color:{COLOR['warn']};">⚠ OBV 산출 방식</b><br>
+  <b>2-way 설계</b> — 분봉 avg_size 상위 15% (+v≥5000) 을 <b>Institutional 프록시</b>로, 나머지를 Non-Inst 로 분리하여 각 버킷별 독립 부호(per-bar CLV 가중)를 계산합니다.
+  Pro/Retail 바는 Non-Inst signed volume 을 Lit 볼륨 비율로 분할한 <b>참고값</b>으로, 부호는 Non-Inst 와 동일합니다.
+  CNMS 오프거래소에는 PFOF 리테일 내부화가 포함되어 기관 절대값은 과대 산정될 수 있으며, 본 지표는 <b>방향성·추세 변화 감지용</b>입니다.
+  <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume (per-print 분류 검증)</a>
 </div>
 """
 
