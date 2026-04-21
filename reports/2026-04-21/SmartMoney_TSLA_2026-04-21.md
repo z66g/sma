@@ -22,9 +22,9 @@ generated_by: Smart Money Analyzer (sma.py)
 | Short %            | 65.4% |
 | CTB Fee            | 0.25% |
 | Available Shares   | 10M |
-| Max Pain           | $375.00 |
-| GEX Flip Zone      | $380.71 |
-| Net GEX            | 132M |
+| Max Pain           | $380.00 |
+| GEX Flip Zone      | $391.89 |
+| Net GEX            | 136M |
 | Scenario [A] Bull  | 55.0% |
 | Scenario [B] Neut  | 30.0% |
 | Scenario [C] Bear  | 15.0% |
@@ -41,7 +41,7 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Core Conclusion
 - L1 (Dark Pool): **ACCUMULATION** · signal=BULLISH · conf=HIGH
 - L2 (Short/CTB): **MM_HEDGE** · CASE_1_MM_DELTA_HEDGE · conf=MEDIUM
-- L3 (Options):   **HEDGING** · DTE=3 · net_gex=132M
+- L3 (Options):   **HEDGING** · DTE=3 · net_gex=136M
 - L4 (Chart):     **RANGE_BOUND** · MA=MIXED
 - Macro: **NEUTRAL** · Raw Score: **+0.35** · Patterns: **FINAL_ABSORPTION**
 
@@ -51,4 +51,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
-| 2026-04-21 | $392.50 | 27M | CONVERGENCE | 54.9% | 65.4% | 0.25% | 10M | $380.71 | $375.00 |
+| 2026-04-21 | $392.50 | 27M | CONVERGENCE | 54.9% | 65.4% | 0.25% | 10M | $391.89 | $380.00 |

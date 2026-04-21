@@ -23,8 +23,8 @@ generated_by: Smart Money Analyzer (sma.py)
 | CTB Fee            | 0.54% |
 | Available Shares   | 65,000 |
 | Max Pain           | $200.00 |
-| GEX Flip Zone      | $203.60 |
-| Net GEX            | 144,387 |
+| GEX Flip Zone      | $203.74 |
+| Net GEX            | 121,190 |
 | Scenario [A] Bull  | 20.0% |
 | Scenario [B] Neut  | 30.0% |
 | Scenario [C] Bear  | 50.0% |
@@ -41,7 +41,7 @@ generated_by: Smart Money Analyzer (sma.py)
 ## Core Conclusion
 - L1 (Dark Pool): **DISTRIBUTION** · signal=BEARISH · conf=HIGH
 - L2 (Short/CTB): **MM_HEDGE** · CASE_1_MM_DELTA_HEDGE · conf=MEDIUM
-- L3 (Options):   **HEDGING** · DTE=24 · net_gex=144,387
+- L3 (Options):   **HEDGING** · DTE=24 · net_gex=121,190
 - L4 (Chart):     **RANGE_BOUND** · MA=MIXED
 - Macro: **NEUTRAL** · Raw Score: **-0.35** · Patterns: **none**
 
@@ -51,4 +51,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
-| 2026-04-21 | $199.61 | -121,098 | BEARISH_DIVERGENCE | 44.1% | 50.5% | 0.54% | 65,000 | $203.60 | $200.00 |
+| 2026-04-21 | $199.61 | -121,098 | BEARISH_DIVERGENCE | 44.1% | 50.5% | 0.54% | 65,000 | $203.74 | $200.00 |
