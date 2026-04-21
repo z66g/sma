@@ -611,36 +611,41 @@ class SmartMoneyAnalyzer:
                 pro_share    = mid_v / (mid_v + bot_v)
                 retail_share = 1.0 - pro_share
 
-        # ── 일일 코호트별 R (부호, -1..+1) — 하이브리드 signing용 ─────
+        # ── 일일 코호트별 R (부호, -1..+1) — per-bar CLV 가중 signing ─
+        # 기존 tick rule (binary ±1) 대비 민감도 향상:
+        #   각 분봉 내부에서 CLV = ((c-l)-(h-c))/(h-l) ∈ [-1,+1] 계산 →
+        #   강한 상승 봉은 +0.9v, 약한 상승 봉은 +0.2v, 혼조 봉은 0 근처.
+        #   하루 종일 매수 우위인데 종가만 살짝 낮은 분봉이 ±1로 뒤집히는 문제 제거.
         def _daily_R(d: str) -> Tuple[Dict[str, float], str]:
             bars = minute_by_date.get(d, [])
             if cohort_enabled and len(bars) >= 30:
-                bars_sorted = sorted(bars, key=lambda x: x["t"])
                 bucks = {"inst": [0.0, 0.0], "pro": [0.0, 0.0], "retail": [0.0, 0.0]}
-                prev_c = None
-                for b in bars_sorted:
-                    c = b.get("c"); v = b.get("v") or 0; n = b.get("n") or 0
-                    if c is None or v <= 0 or n <= 0:
+                for b in bars:
+                    c = b.get("c"); h = b.get("h"); l = b.get("l")
+                    v = b.get("v") or 0; n = b.get("n") or 0
+                    if c is None or h is None or l is None or v <= 0 or n <= 0:
                         continue
                     avg = v / n
                     if   avg >= cohort_p70: k = "inst"
                     elif avg >= cohort_p30: k = "pro"
                     else:                   k = "retail"
-                    if prev_c is not None:
-                        if   c > prev_c: bucks[k][0] += v
-                        elif c < prev_c: bucks[k][0] -= v
-                        bucks[k][1] += v
-                    prev_c = c
+                    rng = h - l
+                    if rng > 0:
+                        clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / rng))
+                    else:
+                        clv = 0.0
+                    bucks[k][0] += clv * v
+                    bucks[k][1] += v
                 R = {k: (max(-1.0, min(1.0, s/t)) if t > 0 else 0.0)
                      for k, (s, t) in bucks.items()}
-                return R, "cohortR"
-            # 폴백: CLV 기반 단일 R 세 코호트에 동일
+                return R, "cohortCLV"
+            # 폴백: 일봉 CLV 단일값을 세 코호트에 동일 적용
             bar = ohlc_by_date.get(d)
             if bar:
                 h, l, c = bar["high"], bar["low"], bar["close"]
                 if (h - l) > 0:
                     clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l)))
-                    return {"inst": clv, "pro": clv, "retail": clv}, "clv"
+                    return {"inst": clv, "pro": clv, "retail": clv}, "dayclv"
             return {"inst": 0.0, "pro": 0.0, "retail": 0.0}, "none"
 
         # ── 집계 — 하이브리드 (CNMS × per-cohort R) ────────────────────
