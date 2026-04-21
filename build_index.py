@@ -237,7 +237,9 @@ def render_ticker_page(ticker: str, series: list) -> str:
 <title>{ticker} · Smart Money History</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  body {{ font-family:{FONT}; background:{COLOR['bg']}; color:{COLOR['text']}; margin:0; padding:24px; font-size:13px; }}
+  body {{ font-family:{FONT}; background:{COLOR['bg']}; color:{COLOR['text']}; margin:0; padding:24px; font-size:13px;
+         -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+         -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }}
   .wrap {{ max-width:1200px; margin:0 auto; }}
   h1 {{ font-size:22px; margin:0 0 4px 0; }}
   h2 {{ font-size:14px; color:{COLOR['warn']}; border-bottom:0.5px solid {COLOR['warn']}; padding-bottom:4px; margin-top:24px; }}
@@ -484,7 +486,9 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 <meta name="theme-color" content="#000000">
 <title>Smart Money Analyzer — Dashboard</title>
 <style>
-  body {{ font-family:{FONT}; background:{COLOR['bg']}; color:{COLOR['text']}; margin:0; padding:24px; font-size:13px; }}
+  body {{ font-family:{FONT}; background:{COLOR['bg']}; color:{COLOR['text']}; margin:0; padding:24px; font-size:13px;
+         -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+         -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }}
   .wrap {{ max-width:1400px; margin:0 auto; }}
   header {{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid {COLOR['border']}; padding-bottom:12px; margin-bottom:16px; flex-wrap:wrap; gap:12px; }}
   h1 {{ font-size:20px; margin:0; }}

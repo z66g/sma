@@ -2008,7 +2008,9 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 <title>{html.escape(title)}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  body {{ background:{COLOR['bg_outer']}; color:{COLOR['text']}; font-family:{FONT}; font-size:13px; margin:0; padding:24px; }}
+  body {{ background:{COLOR['bg_outer']}; color:{COLOR['text']}; font-family:{FONT}; font-size:13px; margin:0; padding:24px;
+         -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+         -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }}
   .wrap {{ max-width:1200px; margin:0 auto; }}
   .hdr  {{ border-bottom:1px solid {COLOR['border']}; padding-bottom:12px; margin-bottom:16px; }}
   .hdr h1 {{ font-size:20px; margin:0 0 4px 0; }}
@@ -2214,7 +2216,9 @@ new Chart(document.getElementById('gexChart'), {{
 <title>{html.escape(title)}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  body {{ background:{COLOR['bg_outer']}; color:{COLOR['text']}; font-family:{FONT}; font-size:13px; margin:0; padding:24px; }}
+  body {{ background:{COLOR['bg_outer']}; color:{COLOR['text']}; font-family:{FONT}; font-size:13px; margin:0; padding:24px;
+         -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+         -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }}
   .wrap {{ max-width:1200px; margin:0 auto; }}
   .hdr  {{ border-bottom:1px solid {COLOR['border']}; padding-bottom:12px; margin-bottom:16px; }}
   .hdr h1 {{ font-size:20px; margin:0 0 4px 0; }}
