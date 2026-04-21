@@ -544,23 +544,23 @@ class SmartMoneyAnalyzer:
                               minute_bars: List[Dict],
                               minute_src_label: Optional[str] = None) -> Tuple[Dict, str]:
         """
-        Signed-volume 산정 체계 — FINRA CNMS + per-cohort R 하이브리드 (T+1 일정 유지)
-          - 데이터 소스:
-              · Institutional 볼륨 = FINRA CNMS 오프거래소 volume (T+1 아침 반영)
-              · Professional/Retail 볼륨 = (total − CNMS) × share
-          - 부호 결정 — 분봉 avg_size(= v/n) 코호트별 독립 R ∈ [-1, +1]:
-              · R_inst   = top-30% avg_size 분봉들의 tick-rule signed / total
-              · R_pro    = mid-40% 분봉들
-              · R_retail = bot-30% 분봉들
-          - 적용:
-              inst_signed   = R_inst   × CNMS_off (그 날)
-              pro_signed    = R_pro    × lit × pro_share
-              retail_signed = R_retail × lit × retail_share
-          - 이 하이브리드 방식의 의미:
-              · Inst 절대 볼륨은 CNMS 기반 과대 산정 가능성 있음 (PFOF 내부화 포함됨)
-              · 그러나 방향성·반전 신호는 T+1 안정적 데이터로 산출됨
-              · MC per-print 분류와 절대값은 다르지만 **방향성 변화**는 포착됨
-          - 폴백: 분봉 부재 시 CLV 기반 단일 R 을 세 코호트에 동일 적용.
+        Signed-volume 산정 체계 — FINRA CNMS + 단일 R (per-bar CLV 가중)
+          - 볼륨 출처:
+              · Institutional 볼륨 = FINRA CNMS 오프거래소 volume (T+1 안정적)
+              · Professional/Retail 볼륨 = (total − CNMS) × pro_share / retail_share
+                (Lit 볼륨 내부에서 분봉 avg_size 기반 비율 산정)
+          - 부호 R ∈ [-1, +1] — 전 분봉 CLV 가중 평균:
+              R = Σ (CLV(bar) × v(bar)) / Σ v(bar)
+              CLV(bar) = ((c-l) - (h-c)) / (h-l)
+              · 강한 상승 봉: CLV ≈ +0.9 (큰 양수 기여)
+              · 혼조 봉: CLV ≈ 0 (기여 없음, 부호 뒤집힘 방지)
+          - 세 코호트 모두 같은 R 공유 → 부호 일치. 분봉 avg_size 기반 코호트별
+            독립 signing 은 TIMING 아티팩트로 실제 참여자 행동과 무관하게 부호를
+            뒤집는 문제가 있어 제거함. 진짜 per-cohort 부호 발산은 tick 데이터
+            (개별 체결 + bid/ask) 없이는 구조적으로 표현 불가.
+          - 절대값은 MC per-print 분류와 다르지만 **방향성·규모 변화·반전 신호**는
+            안정적으로 포착.
+          - 폴백: 분봉 부재 시 일봉 CLV 사용.
         """
         if len(ohlcv) < 6 or not dp_rows:
             return {"_partial": True}, "OBV 4-way: 데이터 부족"
@@ -611,58 +611,52 @@ class SmartMoneyAnalyzer:
                 pro_share    = mid_v / (mid_v + bot_v)
                 retail_share = 1.0 - pro_share
 
-        # ── 일일 코호트별 R (부호, -1..+1) — per-bar CLV 가중 signing ─
-        # 기존 tick rule (binary ±1) 대비 민감도 향상:
-        #   각 분봉 내부에서 CLV = ((c-l)-(h-c))/(h-l) ∈ [-1,+1] 계산 →
-        #   강한 상승 봉은 +0.9v, 약한 상승 봉은 +0.2v, 혼조 봉은 0 근처.
-        #   하루 종일 매수 우위인데 종가만 살짝 낮은 분봉이 ±1로 뒤집히는 문제 제거.
-        def _daily_R(d: str) -> Tuple[Dict[str, float], str]:
+        # ── 일일 단일 R (부호, -1..+1) — 전 분봉 CLV × v 가중 평균 ──
+        # 코호트별 R 분리 제거: 분봉 avg_size 기반 코호트 분류는 TIMING 아티팩트로
+        # 실제 참여자 행동과 무관하게 부호를 뒤집는 문제가 있어, 단일 R 채택.
+        # 대신 per-bar CLV 가중으로 민감도는 유지 (혼조 봉은 0 근처, 강한 방향봉은 ±0.9).
+        # 세 코호트 모두 같은 R 공유 — 부호 일치 (MC와 최소 방향 정합).
+        def _daily_R(d: str) -> Tuple[float, str]:
             bars = minute_by_date.get(d, [])
-            if cohort_enabled and len(bars) >= 30:
-                bucks = {"inst": [0.0, 0.0], "pro": [0.0, 0.0], "retail": [0.0, 0.0]}
+            if len(bars) >= 30:
+                signed = 0.0; total = 0.0
                 for b in bars:
                     c = b.get("c"); h = b.get("h"); l = b.get("l")
-                    v = b.get("v") or 0; n = b.get("n") or 0
-                    if c is None or h is None or l is None or v <= 0 or n <= 0:
+                    v = b.get("v") or 0
+                    if c is None or h is None or l is None or v <= 0:
                         continue
-                    avg = v / n
-                    if   avg >= cohort_p70: k = "inst"
-                    elif avg >= cohort_p30: k = "pro"
-                    else:                   k = "retail"
                     rng = h - l
                     if rng > 0:
                         clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / rng))
                     else:
                         clv = 0.0
-                    bucks[k][0] += clv * v
-                    bucks[k][1] += v
-                R = {k: (max(-1.0, min(1.0, s/t)) if t > 0 else 0.0)
-                     for k, (s, t) in bucks.items()}
-                return R, "cohortCLV"
-            # 폴백: 일봉 CLV 단일값을 세 코호트에 동일 적용
+                    signed += clv * v
+                    total  += v
+                if total > 0:
+                    return max(-1.0, min(1.0, signed / total)), "barCLV"
+            # 폴백: 일봉 CLV
             bar = ohlc_by_date.get(d)
             if bar:
                 h, l, c = bar["high"], bar["low"], bar["close"]
                 if (h - l) > 0:
-                    clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l)))
-                    return {"inst": clv, "pro": clv, "retail": clv}, "dayclv"
-            return {"inst": 0.0, "pro": 0.0, "retail": 0.0}, "none"
+                    return max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l))), "dayclv"
+            return 0.0, "none"
 
-        # ── 집계 — 하이브리드 (CNMS × per-cohort R) ────────────────────
+        # ── 집계 — CNMS × 단일 R (세 코호트 공통 부호) ─────────────────
         delta_inst = delta_pro = delta_retail = 0.0
         inst_abs = 0.0; lit_abs = 0.0
         ratio_src_counts: Dict[str, int] = {}
-        daily_R_inst: Dict[str, float] = {}
+        daily_R: Dict[str, float] = {}
         for d in dates_asc:
             R, src = _daily_R(d)
-            daily_R_inst[d] = R["inst"]
+            daily_R[d] = R
             ratio_src_counts[src] = ratio_src_counts.get(src, 0) + 1
             off = cnms_by_date.get(d, 0); tot = vol_by_date.get(d, 0)
             lit = max(tot - off, 0)
             inst_abs += off; lit_abs += lit
-            delta_inst   += R["inst"]   * off
-            delta_pro    += R["pro"]    * lit * pro_share
-            delta_retail += R["retail"] * lit * retail_share
+            delta_inst   += R * off
+            delta_pro    += R * lit * pro_share
+            delta_retail += R * lit * retail_share
 
         delta_total = delta_inst + delta_pro + delta_retail
         iar = safe_div(abs(delta_inst), (abs(delta_pro) + abs(delta_retail)), None)
@@ -672,7 +666,7 @@ class SmartMoneyAnalyzer:
         inst_cum = []
         running = 0.0
         for d in dates_asc:
-            running += daily_R_inst.get(d, 0) * cnms_by_date.get(d, 0)
+            running += daily_R.get(d, 0) * cnms_by_date.get(d, 0)
             inst_cum.append(running)
 
         price_slope = linregress_slope(closes)
