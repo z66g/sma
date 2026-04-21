@@ -16,21 +16,21 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Institutional OBV Δ | 17M |
-| Professional OBV Δ | 17M |
-| Retail OBV Δ       | 1M |
-| Total OBV Δ        | 35M |
-| Dark Pool %        | 45.0% |
-| IAR                | 0.92 |
+| Institutional OBV Δ | 5M |
+| Professional OBV Δ | 6M |
+| Retail OBV Δ       | 465,276 |
+| Total OBV Δ        | 12M |
+| Dark Pool %        | 44.4% |
+| IAR                | 0.81 |
 | Short %            | 32.5% |
 | CTB Fee            | 0.42% |
 | Available Shares   | 4M |
 | Max Pain           | $11.00 |
 | GEX Flip Zone      | $11.53 |
 | Net GEX            | 583,525 |
-| Scenario [A] Bull  | 78.7% |
+| Scenario [A] Bull  | 72.2% |
 | Scenario [B] Neut  | 18.5% |
-| Scenario [C] Bear  | 2.8% |
+| Scenario [C] Bear  | 9.3% |
 
 ---
 
@@ -46,7 +46,7 @@ generated_by: Smart Money Analyzer (sma.py)
 - L2 (Short/CTB): **SHORT_COVERING** · SHORT_COVERING · conf=MEDIUM
 - L3 (Options):   **GAMMA_SQUEEZE** · DTE=3 · net_gex=583,525
 - L4 (Chart):     **RANGE_BOUND** · MA=MIXED
-- Macro: **FAVORABLE** · Raw Score: **+0.85** · Patterns: **GAMMA_SQUEEZE_SETUP, FINAL_ABSORPTION**
+- Macro: **NEUTRAL** · Raw Score: **+0.85** · Patterns: **GAMMA_SQUEEZE_SETUP, FINAL_ABSORPTION**
 
 ---
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-21 | $12.79 | 17M | 17M | 1M | 35M | 32.5% | 0.42% | 4M | $11.53 | $11.00 |
+| 2026-04-21 | $12.79 | 5M | 6M | 465,276 | 12M | 32.5% | 0.42% | 4M | $11.53 | $11.00 |

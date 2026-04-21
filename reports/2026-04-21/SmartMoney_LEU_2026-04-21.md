@@ -16,37 +16,37 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Institutional OBV Δ | 210,572 |
-| Professional OBV Δ | 137,156 |
-| Retail OBV Δ       | 75,180 |
-| Total OBV Δ        | 422,908 |
-| Dark Pool %        | 44.2% |
-| IAR                | 0.99 |
+| Institutional OBV Δ | -52,851 |
+| Professional OBV Δ | -52,793 |
+| Retail OBV Δ       | -16,424 |
+| Total OBV Δ        | -122,068 |
+| Dark Pool %        | 44.1% |
+| IAR                | 0.76 |
 | Short %            | 50.5% |
 | CTB Fee            | 0.54% |
 | Available Shares   | 65,000 |
 | Max Pain           | $200.00 |
 | GEX Flip Zone      | $203.60 |
 | Net GEX            | 144,387 |
-| Scenario [A] Bull  | 62.0% |
+| Scenario [A] Bull  | 20.0% |
 | Scenario [B] Neut  | 30.0% |
-| Scenario [C] Bear  | 8.0% |
+| Scenario [C] Bear  | 50.0% |
 
 ---
 
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-04-07 ~ 2026-04-20 — 주기/분배 이미 전개
-- **Phase 2 (Current)**:   2026-04-21 — ACCUMULATION × HEDGING
-- **Phase 3 (Target)**:    2026-04-28 ~ 2026-05-19 — UPWARD 방향 · 타겟 $207.55 / $169.45 (BB폭 20.2%)
+- **Phase 2 (Current)**:   2026-04-21 — DISTRIBUTION × HEDGING
+- **Phase 3 (Target)**:    2026-04-28 ~ 2026-05-19 — DOWNWARD 방향 · 타겟 $200.00 / $169.45 (BB폭 20.2%)
 
 ---
 
 ## Core Conclusion
-- L1 (Dark Pool): **ACCUMULATION** · signal=BULLISH · conf=HIGH
+- L1 (Dark Pool): **DISTRIBUTION** · signal=BEARISH · conf=HIGH
 - L2 (Short/CTB): **MM_HEDGE** · CASE_1_MM_DELTA_HEDGE · conf=MEDIUM
 - L3 (Options):   **HEDGING** · DTE=24 · net_gex=144,387
 - L4 (Chart):     **RANGE_BOUND** · MA=MIXED
-- Macro: **FAVORABLE** · Raw Score: **+0.35** · Patterns: **FINAL_ABSORPTION**
+- Macro: **NEUTRAL** · Raw Score: **-0.35** · Patterns: **none**
 
 ---
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-21 | $199.61 | 210,572 | 137,156 | 75,180 | 422,908 | 50.5% | 0.54% | 65,000 | $203.60 | $200.00 |
+| 2026-04-21 | $199.61 | -52,851 | -52,793 | -16,424 | -122,068 | 50.5% | 0.54% | 65,000 | $203.60 | $200.00 |

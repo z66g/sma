@@ -16,28 +16,28 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Institutional OBV Δ | 2M |
-| Professional OBV Δ | 2M |
-| Retail OBV Δ       | 327,146 |
-| Total OBV Δ        | 4M |
+| Institutional OBV Δ | 397,572 |
+| Professional OBV Δ | 393,945 |
+| Retail OBV Δ       | 107,952 |
+| Total OBV Δ        | 899,469 |
 | Dark Pool %        | 44.7% |
-| IAR                | 0.69 |
+| IAR                | 0.79 |
 | Short %            | 33.4% |
 | CTB Fee            | 0.26% |
 | Available Shares   | 3M |
 | Max Pain           | $320.00 |
 | GEX Flip Zone      | $332.46 |
 | Net GEX            | -117,744 |
-| Scenario [A] Bull  | 42.0% |
+| Scenario [A] Bull  | 35.0% |
 | Scenario [B] Neut  | 40.0% |
-| Scenario [C] Bear  | 18.0% |
+| Scenario [C] Bear  | 25.0% |
 
 ---
 
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-04-07 ~ 2026-04-20 — 주기/분배 이미 전개
 - **Phase 2 (Current)**:   2026-04-21 — ACCUMULATION × VOLATILITY_EXPANSION
-- **Phase 3 (Target)**:    2026-04-28 ~ 2026-05-19 — UPWARD 방향 · 타겟 $351.49 / $206.70 (BB폭 51.9%)
+- **Phase 3 (Target)**:    2026-04-28 ~ 2026-05-19 — RANGE 방향 · 타겟 $351.49 / $241.36 (BB폭 51.9%)
 
 ---
 
@@ -46,7 +46,7 @@ generated_by: Smart Money Analyzer (sma.py)
 - L2 (Short/CTB): **NEUTRAL** · MIXED · conf=MEDIUM
 - L3 (Options):   **VOLATILITY_EXPANSION** · DTE=3 · net_gex=-117,744
 - L4 (Chart):     **UPTREND** · MA=FULL_BULL
-- Macro: **FAVORABLE** · Raw Score: **+0.20** · Patterns: **FINAL_ABSORPTION**
+- Macro: **NEUTRAL** · Raw Score: **+0.20** · Patterns: **FINAL_ABSORPTION**
 
 ---
 
@@ -54,4 +54,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-21 | $347.51 | 2M | 2M | 327,146 | 4M | 33.4% | 0.26% | 3M | $332.46 | $320.00 |
+| 2026-04-21 | $347.51 | 397,572 | 393,945 | 107,952 | 899,469 | 33.4% | 0.26% | 3M | $332.46 | $320.00 |
