@@ -1801,6 +1801,13 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
       {("<br>Sessions · " + " · ".join(f"{k}: {fmt_num(v,'',0)}" for k,v in (obv.get('session_volume') or {}).items())) if obv.get('session_volume') else ""}
       {"<br><span style='color:"+COLOR['info']+";'>Source: Polygon 1-min bars ("+str(obv.get('minute_bar_count','?'))+")</span>" if obv.get('_source')=='polygon_1min' else ""}
     </div>
+    <div style="margin-top:10px;padding:8px 10px;background:{COLOR['alert_amber']};border-left:3px solid {COLOR['warn']};border-radius:4px;font-size:11px;line-height:1.5;">
+      <b style="color:{COLOR['warn']};">⚠ OBV 산출 방식</b><br>
+      <b>2-way 설계</b> — 분봉 avg_size 상위 15% (+v≥5000) 을 <b>Institutional 프록시</b>로, 나머지를 Non-Inst 로 분리하여 각 버킷별 독립 부호(per-bar CLV 가중)를 계산합니다.
+      Pro/Retail 바는 Non-Inst signed volume 을 Lit 볼륨 비율로 분할한 <b>참고값</b>으로, 부호는 Non-Inst 와 동일합니다.
+      CNMS 오프거래소에는 PFOF 리테일 내부화가 포함되어 기관 절대값은 과대 산정될 수 있으며, 본 지표는 <b>방향성·추세 변화 감지용</b>입니다.
+      <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume (per-print 분류 검증)</a>
+    </div>
   </div>
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Off-Exchange Volume (10d, FINRA CNMS ÷ market total)</div>
@@ -1809,13 +1816,6 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
       {html.escape(raw.get('l1',{}).get('_note','')) if raw.get('l1') else ''}
     </p>
   </div>
-</div>
-<div style="margin-top:10px;padding:8px 10px;background:{COLOR['alert_amber']};border-left:3px solid {COLOR['warn']};border-radius:4px;font-size:11px;line-height:1.5;">
-  <b style="color:{COLOR['warn']};">⚠ OBV 산출 방식</b><br>
-  <b>2-way 설계</b> — 분봉 avg_size 상위 15% (+v≥5000) 을 <b>Institutional 프록시</b>로, 나머지를 Non-Inst 로 분리하여 각 버킷별 독립 부호(per-bar CLV 가중)를 계산합니다.
-  Pro/Retail 바는 Non-Inst signed volume 을 Lit 볼륨 비율로 분할한 <b>참고값</b>으로, 부호는 Non-Inst 와 동일합니다.
-  CNMS 오프거래소에는 PFOF 리테일 내부화가 포함되어 기관 절대값은 과대 산정될 수 있으며, 본 지표는 <b>방향성·추세 변화 감지용</b>입니다.
-  <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume (per-print 분류 검증)</a>
 </div>
 """
 
