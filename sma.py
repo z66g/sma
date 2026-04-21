@@ -499,13 +499,39 @@ class SmartMoneyAnalyzer:
         # Polygon 분봉 있으면 Lit 거래를 **평균 트레이드 사이즈 v/n**로
         # 프로/리테일 세분화.
         minute_bars = []
+        minute_src  = None
         if POLYGON_API_KEY:
             try:
                 minute_bars = self._fetch_polygon_minutes(today, days=5)
+                if minute_bars:
+                    minute_src = "polygon"
             except Exception as e:
                 self.warnings.append(f"obv polygon: {e}")
+        # Polygon 없거나 실패 → yfinance 1m 폴백 (최대 7일 제공)
+        if not minute_bars:
+            try:
+                yfm = self.yf.history(period="7d", interval="1m", prepost=False)
+                if not yfm.empty:
+                    yfm = yfm.reset_index()
+                    ts_col = "Datetime" if "Datetime" in yfm.columns else "Date"
+                    yfm[ts_col] = pd.to_datetime(yfm[ts_col]).dt.tz_localize(None)
+                    minute_bars = [
+                        {
+                            "t": int(r[ts_col].timestamp() * 1000),
+                            "o": float(r["Open"]),  "h": float(r["High"]),
+                            "l": float(r["Low"]),   "c": float(r["Close"]),
+                            "v": float(r["Volume"]) if not pd.isna(r["Volume"]) else 0.0,
+                            "n": 0,   # yfinance는 trade count 제공 안 함
+                        }
+                        for _, r in yfm.iterrows()
+                        if not pd.isna(r["Close"])
+                    ]
+                    if minute_bars:
+                        minute_src = "yfinance"
+            except Exception as e:
+                self.warnings.append(f"obv yf 1m: {e}")
 
-        obv_data, obv_note = self._compute_obv_4way_v2(ohlcv, dp_rows, minute_bars)
+        obv_data, obv_note = self._compute_obv_4way_v2(ohlcv, dp_rows, minute_bars, minute_src)
 
         return {
             "sessions": list(reversed(dp_rows)),
@@ -515,11 +541,24 @@ class SmartMoneyAnalyzer:
         }
 
     def _compute_obv_4way_v2(self, ohlcv: List[Dict], dp_rows: List[Dict],
-                              minute_bars: List[Dict]) -> Tuple[Dict, str]:
+                              minute_bars: List[Dict],
+                              minute_src_label: Optional[str] = None) -> Tuple[Dict, str]:
         """
-        - Institutional: FINRA CNMS 오프거래소 signed volume
-        - Retail + Pro:  (yfinance 총거래 − CNMS) = Lit 거래소 signed volume
-                         Polygon 분봉 avg_trade_size로 프로/리테일 분리
+        Signed-volume 산정 체계 (MC 대비 정확도 개선 버전, 코호트 분리)
+          - 분봉 avg_size (= v/n, Polygon `n` 필드 필요) 로 분봉을 3개 코호트로 분리:
+              · top 30% (큰 주문 밀집) → INST 방향 프록시
+              · mid 40%               → PRO 방향 프록시
+              · bot 30% (작은 주문 밀집) → RETAIL 방향 프록시
+          - 각 코호트별 독립 R ∈ [-1, +1]:
+              R_x = Σ signed_v(코호트 x 분봉) / Σ v(코호트 x 분봉)
+            → 기관이 매수하는데 리테일이 매도하는 발산 구조를 표현 가능.
+          - 적용:
+              inst_signed   = R_inst   × CNMS off-exchange (그 날)
+              pro_signed    = R_pro    × lit × pro_share
+              retail_signed = R_retail × lit × retail_share
+          - 폴백: Polygon `n` 부재 (yfinance 1m) 또는 분봉 자체 부재 시
+              단일 R (tick1m → CLV → c2c 우선순위) 을 세 코호트에 동일 적용.
+              이 경우 cohort divergence 는 표현되지 않음 (note 에 명시).
         """
         if len(ohlcv) < 6 or not dp_rows:
             return {"_partial": True}, "OBV 4-way: 데이터 부족"
@@ -527,79 +566,131 @@ class SmartMoneyAnalyzer:
         # 날짜별 매핑
         close_by_date = {c["date"]: c["close"] for c in ohlcv}
         vol_by_date   = {c["date"]: c["volume"] for c in ohlcv}
+        ohlc_by_date  = {c["date"]: c for c in ohlcv}
         cnms_by_date  = {r["date"]: r["off_exchange_volume"] for r in dp_rows}
 
-        # 최근 5 영업일 (dp_rows는 new→old 순으로 들어왔다가 나중에 reverse됨 — 원본 여기선 new first)
         recent_dates = [r["date"] for r in dp_rows[:5]]
         if not recent_dates:
             return {"_partial": True}, "OBV 4-way: 최근 CNMS 부재"
-
-        inst_signed = 0.0
-        lit_signed  = 0.0
-        inst_abs    = 0.0
-        lit_abs     = 0.0
-        prev_close  = None
-
         dates_asc = sorted(recent_dates)
+
+        # ── 분봉을 날짜별로 분류 ──────────────────────────────────────────
+        minute_by_date: Dict[str, List[Dict]] = {}
+        if minute_bars:
+            for b in minute_bars:
+                try:
+                    ds = datetime.utcfromtimestamp(b["t"]/1000).strftime("%Y-%m-%d")
+                except Exception:
+                    continue
+                minute_by_date.setdefault(ds, []).append(b)
+
+        # ── 글로벌 cohort 임계치 (avg_size = v/n 분위수) ──────────────────
+        cohort_p30 = cohort_p70 = None
+        cohort_enabled = False
+        pro_share = 0.4; retail_share = 0.6   # 기본값 (분봉 부재 시)
+        pro_src = "default_split"
+        if minute_bars:
+            df_all = pd.DataFrame(minute_bars)
+            if "n" in df_all.columns and df_all["n"].sum() > 0 and len(df_all) > 60:
+                df_all = df_all[df_all["n"] > 0].copy()
+                df_all["avg_size"] = df_all["v"] / df_all["n"]
+                cohort_p30 = float(df_all["avg_size"].quantile(0.30))
+                cohort_p70 = float(df_all["avg_size"].quantile(0.70))
+                cohort_enabled = True
+                # Lit pro/retail share: mid-40% vs bot-30% 볼륨 비 (top-30%는 inst 프록시)
+                mid = df_all[(df_all["avg_size"] >= cohort_p30) & (df_all["avg_size"] < cohort_p70)]
+                bot = df_all[df_all["avg_size"] <  cohort_p30]
+                mid_v = float(mid["v"].sum()); bot_v = float(bot["v"].sum())
+                if (mid_v + bot_v) > 0:
+                    pro_share    = mid_v / (mid_v + bot_v)
+                    retail_share = 1.0 - pro_share
+                    pro_src = f"cohort p30={cohort_p30:.0f}/p70={cohort_p70:.0f} sh"
+
+        # ── 일일 코호트별 R 또는 단일 R ─────────────────────────────────
+        def _daily_ratios(d: str) -> Tuple[Dict[str, float], str]:
+            bars = minute_by_date.get(d, [])
+            # ① 코호트 분리 가능 (Polygon n 필드 보유, 분봉 충분)
+            if cohort_enabled and len(bars) >= 30:
+                bars_sorted = sorted(bars, key=lambda x: x["t"])
+                bucks = {"inst": [0.0, 0.0], "pro": [0.0, 0.0], "retail": [0.0, 0.0]}
+                prev_c = None
+                for b in bars_sorted:
+                    c = b.get("c"); v = b.get("v") or 0; n = b.get("n") or 0
+                    if c is None or v <= 0 or n <= 0:
+                        continue
+                    avg = v / n
+                    if   avg >= cohort_p70: k = "inst"
+                    elif avg >= cohort_p30: k = "pro"
+                    else:                   k = "retail"
+                    if prev_c is not None:
+                        if   c > prev_c: bucks[k][0] += v
+                        elif c < prev_c: bucks[k][0] -= v
+                        bucks[k][1] += v
+                    prev_c = c
+                R = {k: (max(-1.0, min(1.0, s/t)) if t > 0 else 0.0)
+                     for k, (s, t) in bucks.items()}
+                return R, "cohort1m"
+            # ② 단일 R: 분봉 tick-rule
+            if len(bars) >= 30:
+                bars_sorted = sorted(bars, key=lambda x: x["t"])
+                signed = 0.0; total = 0.0; prev_c = None
+                for b in bars_sorted:
+                    c = b.get("c"); v = b.get("v") or 0
+                    if c is None or v <= 0: continue
+                    if prev_c is not None:
+                        if   c > prev_c: signed += v
+                        elif c < prev_c: signed -= v
+                    total += v; prev_c = c
+                if total > 0:
+                    R = max(-1.0, min(1.0, signed / total))
+                    return {"inst": R, "pro": R, "retail": R}, "tick1m"
+            # ③ CLV 폴백
+            bar = ohlc_by_date.get(d)
+            if bar:
+                h, l, c = bar["high"], bar["low"], bar["close"]
+                rng = h - l
+                if rng > 0:
+                    clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / rng))
+                    return {"inst": clv, "pro": clv, "retail": clv}, "clv"
+            # ④ 최종 폴백: c2c
+            idx = next((i for i, x in enumerate(ohlcv) if x["date"] == d), None)
+            if idx is not None and idx > 0:
+                prev = ohlcv[idx-1]["close"]; cur = ohlcv[idx]["close"]
+                R = 1.0 if cur > prev else -1.0 if cur < prev else 0.0
+                return {"inst": R, "pro": R, "retail": R}, "c2c"
+            return {"inst": 0.0, "pro": 0.0, "retail": 0.0}, "none"
+
+        inst_signed = 0.0; pro_signed = 0.0; retail_signed = 0.0
+        inst_abs    = 0.0; lit_abs    = 0.0
+        ratio_src_counts: Dict[str, int] = {}
+        daily_R_inst: Dict[str, float] = {}
         for d in dates_asc:
-            today_c = close_by_date.get(d)
-            if today_c is None: continue
-            # 전일 종가
-            # 간단히: ohlcv에서 d의 prev index
-            if prev_close is None:
-                # 5일 윈도우 직전 거래일 종가 찾기
-                idx = next((i for i,c in enumerate(ohlcv) if c["date"] == d), None)
-                if idx is not None and idx > 0:
-                    prev_close = ohlcv[idx - 1]["close"]
-                else:
-                    prev_close = today_c
-            sign = 1 if today_c > prev_close else -1 if today_c < prev_close else 0
+            R, src = _daily_ratios(d)
+            daily_R_inst[d] = R["inst"]
+            ratio_src_counts[src] = ratio_src_counts.get(src, 0) + 1
             off = cnms_by_date.get(d, 0)
             tot = vol_by_date.get(d, 0)
             lit = max(tot - off, 0)
-            inst_signed += sign * off
-            lit_signed  += sign * lit
-            inst_abs    += off
-            lit_abs     += lit
-            prev_close   = today_c
-
-        # Lit 거래를 프로/리테일로 세분화 (Polygon 분봉 있을 때)
-        pro_share = 0.4   # 기본 40/60 (분봉 부재 시)
-        retail_share = 0.6
-        minute_src = "default_split"
-
-        if minute_bars:
-            df = pd.DataFrame(minute_bars)
-            if "n" in df.columns and len(df) > 60:
-                df["avg_size"] = df["v"] / df["n"].replace(0, 1)
-                # 임계: NVDA 기준 p90 ≈ 77, p99 ≈ 127. 종목별로 매우 다르므로 분위수로 처리.
-                # 자신의 분봉 분포에서 top 30%를 professional로 간주.
-                thr = df["avg_size"].quantile(0.70)
-                pro_vol = float(df.loc[df["avg_size"] >= thr, "v"].sum())
-                total_v = float(df["v"].sum())
-                if total_v > 0:
-                    pro_share = pro_vol / total_v
-                    retail_share = 1.0 - pro_share
-                    minute_src = f"polygon_1min_avg_size (p70={thr:.0f} shares)"
+            inst_signed   += R["inst"]   * off
+            pro_signed    += R["pro"]    * lit * pro_share
+            retail_signed += R["retail"] * lit * retail_share
+            inst_abs      += off
+            lit_abs       += lit
 
         delta_inst   = inst_signed
-        delta_pro    = lit_signed * pro_share
-        delta_retail = lit_signed * retail_share
+        delta_pro    = pro_signed
+        delta_retail = retail_signed
         delta_total  = delta_inst + delta_pro + delta_retail
 
         iar = safe_div(abs(delta_inst), (abs(delta_pro) + abs(delta_retail)), None)
 
-        # Divergence: 가격 5일 slope vs inst signed series slope
+        # Divergence: 가격 slope vs inst signed 누적 slope
         closes = [close_by_date[d] for d in dates_asc if d in close_by_date]
         inst_cum = []
         running = 0.0
-        prev_c = closes[0] if closes else 0
         for d in dates_asc:
-            tc = close_by_date.get(d, prev_c)
-            s = 1 if tc > prev_c else -1 if tc < prev_c else 0
-            running += s * cnms_by_date.get(d, 0)
+            running += daily_R_inst.get(d, 0) * cnms_by_date.get(d, 0)
             inst_cum.append(running)
-            prev_c = tc
 
         price_slope = linregress_slope(closes)
         inst_slope  = linregress_slope(inst_cum)
@@ -616,8 +707,10 @@ class SmartMoneyAnalyzer:
         else:
             divergence = "NEUTRAL"
 
-        note = (f"OBV 4-way: Inst=FINRA CNMS 오프거래소 signed ({len(dates_asc)}일 윈도우), "
-                f"Lit split via {minute_src}")
+        src_desc = ", ".join(f"{k}={v}d" for k,v in ratio_src_counts.items())
+        minute_tag = minute_src_label or "none"
+        note = (f"OBV 4-way: R-weighted signed vol ({len(dates_asc)}일, sign src: {src_desc}, "
+                f"1m src: {minute_tag}), Lit split via {pro_src}")
         return {
             "delta_institutional": delta_inst,
             "delta_professional":  delta_pro,
