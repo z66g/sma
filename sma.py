@@ -1752,8 +1752,8 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
                     COLOR['bear'] if div_label == "BEARISH_DIVERGENCE" else
                     COLOR['info'] if div_label == "CONVERGENCE" else COLOR['muted'])
     s1 = _section_header(1, "Dark Pool Layer (L1)", l1_badges) + f"""
-<div class="sma-grid" style="display:grid;grid-template-columns:1.4fr 0.9fr;gap:12px;align-items:start;">
-  <div>
+<div class="sma-grid" style="display:grid;grid-template-columns:1.4fr 0.9fr;gap:12px;align-items:stretch;">
+  <div style="display:flex;flex-direction:column;">
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Net Signed Volume (5일 누적, CLV-weighted)</div>
     <div style="display:flex;align-items:center;gap:16px;padding:10px 12px;background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;margin-bottom:8px;">
       <div style="flex:0 0 auto;">
@@ -1765,15 +1765,9 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         <div style="font-size:13px;font-weight:600;color:{div_color};">{div_label}</div>
       </div>
     </div>
-    <div style="position:relative;height:160px;"><canvas id="obvCum"></canvas></div>
+    <div style="position:relative;flex:1;min-height:160px;"><canvas id="obvCum"></canvas></div>
     <div style="font-size:11px;color:{COLOR['text']};margin-top:6px;text-align:center;">
       <span class="tt tt-i">ⓘ Divergence 해석<span class="tt-body"><b>가격 slope vs Total OBV 누적 slope</b> (5일 회귀).<table><tr><th>상태</th><th>해석</th></tr><tr><td>BULLISH_DIV</td><td>가격↓ + OBV↑ = 공포 속 축적</td></tr><tr><td>BEARISH_DIV</td><td>가격↑ + OBV↓ = 강세 속 분배</td></tr><tr><td>CONVERGENCE</td><td>같은 방향 — 추세 확인</td></tr><tr><td>NEUTRAL</td><td>의미있는 기울기 없음</td></tr></table></span></span>
-    </div>
-    <div style="margin-top:10px;padding:8px 10px;background:{COLOR['alert_amber']};border-left:3px solid {COLOR['warn']};border-radius:4px;font-size:11px;line-height:1.5;">
-      <b style="color:{COLOR['warn']};">⚠ OBV 산출 방식</b><br>
-      <b>1-way Total OBV</b> — 분봉별 CLV (close location value, [-1..+1]) 를 거래량으로 가중해 시장 전체 네트 매수/매도 플로 방향만 산출합니다.
-      기관/프로/리테일 코호트 분리는 분봉 레벨로는 부호까지 틀려지는 구조적 한계가 확인되어 제거했습니다. 코호트별 상세는 Market Chameleon 등 per-print 분류 소스를 참조하세요.
-      <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume (Retail/Pro/Inst 분리 확인)</a>
     </div>
   </div>
   <div>
@@ -1783,6 +1777,12 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
       {html.escape(raw.get('l1',{}).get('_note','')) if raw.get('l1') else ''}
     </p>
   </div>
+</div>
+<div style="margin-top:10px;padding:8px 10px;background:{COLOR['alert_amber']};border-left:3px solid {COLOR['warn']};border-radius:4px;font-size:11px;line-height:1.5;">
+  <b style="color:{COLOR['warn']};">⚠ OBV 산출 방식</b><br>
+  <b>1-way Total OBV</b> — 분봉별 CLV (close location value, [-1..+1]) 를 거래량으로 가중해 시장 전체 네트 매수/매도 플로 방향만 산출합니다.
+  기관/프로/리테일 코호트 분리는 분봉 레벨로는 부호까지 틀려지는 구조적 한계가 확인되어 제거했습니다. 코호트별 상세는 Market Chameleon 등 per-print 분류 소스를 참조하세요.
+  <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume (Retail/Pro/Inst 분리 확인)</a>
 </div>
 """
 
