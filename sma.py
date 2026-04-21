@@ -2570,6 +2570,13 @@ def main():
     t0 = time.time()
     print(f"[sma] Analyzing {analyzer.ticker} @ {analyzer.date_str}...", file=sys.stderr)
     data = analyzer.fetch_all_data()
+    # Early abort for invalid/delisted tickers: no OHLCV ⇒ no meaningful analysis.
+    _l4 = data.get("l4") or {}
+    if _l4.get("_error") or not _l4.get("current_price"):
+        err = _l4.get("_error") or "no price data"
+        print(f"[sma] SKIP {analyzer.ticker}: {err}", file=sys.stderr)
+        print(f"SKIP: {analyzer.ticker}")  # stdout marker for workflow
+        sys.exit(2)
     analysis = analyzer.run_analysis(data)
     html_path, md_path, json_path = analyzer.generate_outputs(analysis)
     dt = time.time() - t0

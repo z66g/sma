@@ -200,10 +200,12 @@ def render_ticker_page(ticker: str, series: list) -> str:
                      else "Neut" if sc.get("B_neutral",0) >= sc.get("C_bearish",0) \
                      else "Bear"
         color = COLOR["bull"] if "Bull" in scen_label else COLOR["bear"] if "Bear" in scen_label else COLOR["warn"]
+        _price = s.get("price")
+        _price_str = f"${_price:.2f}" if isinstance(_price, (int, float)) else "—"
         rows.append(
             f'<tr>'
             f'<td>{d}</td>'
-            f'<td>${s.get("price",0):.2f}</td>'
+            f'<td>{_price_str}</td>'
             f'<td style="color:{color};font-weight:600;">{scen_label} {max(sc.get("A_bullish",0),sc.get("B_neutral",0),sc.get("C_bearish",0)):.0f}%</td>'
             f'<td>{sl1.get("scenario","-")}</td>'
             f'<td>{re.sub(r"^CASE_\\d+_|^CASE_", "", sl2.get("case") or "-")}</td>'
@@ -302,7 +304,7 @@ def render_ticker_page(ticker: str, series: list) -> str:
 <div class="wrap">
   <div class="nav"><a href="../../">← 전체 대시보드</a></div>
   <h1>{ticker}</h1>
-  <div class="meta">Latest: {latest.get('date','N/A')} · ${latest.get('price',0):.2f} · {len(series)}개 리포트 · {pattern_badges}</div>
+  <div class="meta">Latest: {latest.get('date','N/A')} · {('$'+format(latest.get('price'),'.2f')) if isinstance(latest.get('price'),(int,float)) else '—'} · {len(series)}개 리포트 · {pattern_badges}</div>
 
   <h2>Overview (latest)</h2>
   <div class="grid">

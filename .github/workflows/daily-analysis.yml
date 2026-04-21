@@ -58,6 +58,9 @@ jobs:
             echo "Watchlist tickers: ${TICKERS}"
           fi
 
+          SKIPPED_FILE="${OUT_DIR}/.skipped.txt"
+          : > "${SKIPPED_FILE}"
+
           FIRST=1
           for T in ${TICKERS}; do
             if [ $FIRST -eq 0 ]; then
@@ -66,8 +69,23 @@ jobs:
             fi
             FIRST=0
             echo "=== Analyzing ${T} ==="
-            python3 sma.py "${T}" || echo "WARN: ${T} failed, continuing"
+            set +e
+            python3 sma.py "${T}"
+            RC=$?
+            set -e
+            if [ $RC -eq 2 ]; then
+              echo "SKIP: ${T} (invalid/delisted ticker)"
+              echo "${T}" >> "${SKIPPED_FILE}"
+            elif [ $RC -ne 0 ]; then
+              echo "WARN: ${T} failed (exit ${RC}), continuing"
+            fi
           done
+
+          # Expose skipped list to later steps
+          if [ -s "${SKIPPED_FILE}" ]; then
+            SKIPPED_JOINED=$(tr '\n' ' ' < "${SKIPPED_FILE}" | xargs)
+            echo "SKIPPED_TICKERS=${SKIPPED_JOINED}" >> "$GITHUB_ENV"
+          fi
 
           python3 build_index.py
 
@@ -122,13 +140,26 @@ jobs:
             TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
           fi
 
+          SKIPPED="${SKIPPED_TICKERS:-}"
           LINKS=""
           for T in ${TICKERS}; do
+            # Exclude skipped tickers from the link list
+            if echo " ${SKIPPED} " | grep -q " ${T} "; then
+              continue
+            fi
             LINKS="${LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html\">${T}</a>"$'\n'
           done
 
           NL=$'\n'
-          MSG="📩 ${DATE} Daily Report${NL}${NL}${LINKS}${NL}📋 <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
+          SKIP_BLOCK=""
+          if [ -n "${SKIPPED}" ]; then
+            SKIP_LIST=""
+            for T in ${SKIPPED}; do
+              SKIP_LIST="${SKIP_LIST}${T} "
+            done
+            SKIP_BLOCK="${NL}❌ 유효하지 않은 티커: <b>${SKIP_LIST% }</b>${NL}"
+          fi
+          MSG="📩 ${DATE} Daily Report${NL}${NL}${LINKS}${SKIP_BLOCK}${NL}📋 <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
 
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TG_CHAT}" \
