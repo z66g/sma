@@ -16,42 +16,39 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Institutional OBV Δ | -440,472 |
-| Professional OBV Δ | 780,295 |
-| Retail OBV Δ       | 213,823 |
-| Total OBV Δ        | 553,646 |
+| Total OBV Δ (5d)   | 899,469 |
+| Divergence         | CONVERGENCE |
 | Dark Pool %        | 44.7% |
-| IAR                | 0.44 |
 | Short %            | 33.4% |
 | CTB Fee            | 0.26% |
 | Available Shares   | 3M |
 | Max Pain           | $320.00 |
 | GEX Flip Zone      | $332.46 |
 | Net GEX            | -117,744 |
-| Scenario [A] Bull  | 20.0% |
-| Scenario [B] Neut  | 30.0% |
-| Scenario [C] Bear  | 50.0% |
+| Scenario [A] Bull  | 35.0% |
+| Scenario [B] Neut  | 40.0% |
+| Scenario [C] Bear  | 25.0% |
 
 ---
 
 ## Architect Phase Structure
 - **Phase 1 (Completed)**: 2026-04-07 ~ 2026-04-20 — 주기/분배 이미 전개
-- **Phase 2 (Current)**:   2026-04-21 — DISTRIBUTION × VOLATILITY_EXPANSION
-- **Phase 3 (Target)**:    2026-04-28 ~ 2026-05-19 — DOWNWARD 방향 · 타겟 $357.94 / $206.70 (BB폭 51.9%)
+- **Phase 2 (Current)**:   2026-04-21 — ACCUMULATION × VOLATILITY_EXPANSION
+- **Phase 3 (Target)**:    2026-04-28 ~ 2026-05-19 — RANGE 방향 · 타겟 $351.49 / $241.36 (BB폭 51.9%)
 
 ---
 
 ## Core Conclusion
-- L1 (Dark Pool): **DISTRIBUTION** · signal=BEARISH · conf=HIGH
+- L1 (Dark Pool): **ACCUMULATION** · signal=BULLISH · conf=HIGH
 - L2 (Short/CTB): **NEUTRAL** · MIXED · conf=MEDIUM
 - L3 (Options):   **VOLATILITY_EXPANSION** · DTE=3 · net_gex=-117,744
 - L4 (Chart):     **UPTREND** · MA=FULL_BULL
-- Macro: **NEUTRAL** · Raw Score: **-0.50** · Patterns: **none**
+- Macro: **NEUTRAL** · Raw Score: **+0.20** · Patterns: **FINAL_ABSORPTION**
 
 ---
 
 ## Cumulative History
 
-| 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
-|------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-21 | $347.51 | -440,472 | 780,295 | 213,823 | 553,646 | 33.4% | 0.26% | 3M | $332.46 | $320.00 |
+| 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
+|------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
+| 2026-04-21 | $347.51 | 899,469 | CONVERGENCE | 44.7% | 33.4% | 0.26% | 3M | $332.46 | $320.00 |

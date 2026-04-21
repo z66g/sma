@@ -91,9 +91,9 @@
       <div class="card-value" style="color:#CF222B;">Bearish · 43.0%</div>
       <div class="card-sub">Score -0.35 · Macro FAVORABLE</div>
     </div>
-    <div class="card"><div class="card-label">Dark Pool % <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA 오프거래소 거래량 ÷ yfinance 총거래량</b><br>다크풀·ATS·내부화는 거의 100% 기관. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br><b>IAR</b> = |Inst Δ|/(|Pro Δ|+|Retail Δ|) — 1.5↑ 기관 지배.<br><b>Divergence</b>: 가격 slope vs 기관 OBV slope (5일 회귀).</span></span></div>
+    <div class="card"><div class="card-label">Dark Pool % <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA 오프거래소 거래량 ÷ 총거래량</b><br>다크풀·ATS·내부화 비중. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br><b>Total OBV (5d)</b>: CLV 가중 signed volume 누적 — 전체 시장 방향.<br><b>Divergence</b>: 가격 slope vs OBV 누적 slope (5일 회귀).</span></span></div>
       <div class="card-value">30.9%</div>
-      <div class="card-sub">IAR 0.55 · CONVERGENCE</div>
+      <div class="card-sub">OBV -3.4M · CONVERGENCE</div>
     </div>
     <div class="card"><div class="card-label">Short % · CTB <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA Reg SHO 공매도 비율</b> · <b>iborrowdesk 차입 비용</b><br>Short%는 당일 공매도 체결 비율 — 포지션(short interest) 아님. MM 헤지 포함이라 40-55% 구조적 정상. <b>절대값으로 bearish 판단 금지</b>, slope + CTB 방향 + Case 조합으로만 해석.<br><br><b>CTB</b>: &lt;1% ETB · 5-15% HTB · &gt;15% Squeeze risk zone</span></span></div>
       <div class="card-value">43.3% · 0.25%</div>
@@ -109,7 +109,7 @@
   <h2>시계열 추이</h2>
   <div class="chart-grid">
     <div class="card" style="grid-column:1/-1;"><div class="card-label">Price · Max Pain · GEX Flip</div><canvas id="priceChart"></canvas></div>
-    <div class="card"><div class="card-label">OBV Δ (Institutional vs Retail)</div><canvas id="obvChart"></canvas></div>
+    <div class="card"><div class="card-label">Total OBV (5d) vs Dark Pool %</div><canvas id="obvChart"></canvas></div>
     <div class="card"><div class="card-label">Short % · CTB Fee</div><canvas id="shortChart"></canvas></div>
     <div class="card" style="grid-column:1/-1;"><div class="card-label">Scenario Probabilities (%)</div><canvas id="probChart"></canvas></div>
   </div>
@@ -206,8 +206,8 @@ lineChart('shortChart', [
   {label:'CTB %', data:[0.25], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
 ]);
 lineChart('obvChart', [
-  {label:'Institutional Δ', data:[-1205639.264698], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'Retail Δ', data:[-756700.2622582307], borderColor:'#CF222B', backgroundColor:'transparent'}
+  {label:'Total OBV (5d)', data:[-3405600.0], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Dark Pool %',   data:[30.935574088144886], borderColor:'#0969DA', backgroundColor:'transparent', yAxisID:'y1'}
 ]);
 </script>
 </body>

@@ -16,12 +16,9 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Institutional OBV Δ | 8M |
-| Professional OBV Δ | -470,056 |
-| Retail OBV Δ       | -28,732 |
-| Total OBV Δ        | 7M |
+| Total OBV Δ (5d)   | 4M |
+| Divergence         | BULLISH_DIVERGENCE |
 | Dark Pool %        | 41.8% |
-| IAR                | 15.43 |
 | Short %            | 45.8% |
 | CTB Fee            | 0.36% |
 | Available Shares   | 3M |
@@ -52,6 +49,6 @@ generated_by: Smart Money Analyzer (sma.py)
 
 ## Cumulative History
 
-| 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
-|------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
-| 2026-04-21 | $81.00 | 8M | -470,056 | -28,732 | 7M | 45.8% | 0.36% | 3M | $87.20 | $88.00 |
+| 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
+|------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
+| 2026-04-21 | $81.00 | 4M | BULLISH_DIVERGENCE | 41.8% | 45.8% | 0.36% | 3M | $87.20 | $88.00 |
