@@ -81,6 +81,25 @@ jobs:
             fi
           done
 
+          # Index (지수) 루프 — indexes.txt 에서 읽음, 단일 dispatch 일 때는 생략
+          INDEXES_FILE="indexes.txt"
+          if [ -z "${SINGLE}" ] && [ -f "${INDEXES_FILE}" ]; then
+            INDEXES=$(grep -v '^#' "${INDEXES_FILE}" | grep -v '^\s*$' | tr -d '\r' | xargs)
+            echo "Index symbols: ${INDEXES}"
+            for IDX in ${INDEXES}; do
+              echo "sleeping 15s (Polygon rate limit)..."
+              sleep 15
+              echo "=== Analyzing INDEX ${IDX} ==="
+              set +e
+              python3 sma.py "${IDX}"
+              RC=$?
+              set -e
+              if [ $RC -ne 0 ]; then
+                echo "WARN: ${IDX} failed (exit ${RC}), continuing"
+              fi
+            done
+          fi
+
           # Expose skipped list to later steps
           if [ -s "${SKIPPED_FILE}" ]; then
             SKIPPED_JOINED=$(tr '\n' ' ' < "${SKIPPED_FILE}" | xargs)
@@ -141,16 +160,31 @@ jobs:
           fi
 
           SKIPPED="${SKIPPED_TICKERS:-}"
-          LINKS=""
+          NL=$'\n'
+
+          # 개별 종목 링크
+          STOCK_LINKS=""
           for T in ${TICKERS}; do
-            # Exclude skipped tickers from the link list
             if echo " ${SKIPPED} " | grep -q " ${T} "; then
               continue
             fi
-            LINKS="${LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html\">${T}</a>"$'\n'
+            STOCK_LINKS="${STOCK_LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html\">${T}</a>"$'\n'
           done
 
-          NL=$'\n'
+          # 지수 링크 (단일 dispatch 일 때는 생략)
+          INDEX_LINKS=""
+          INDEX_BLOCK=""
+          if [ -z "${SINGLE}" ] && [ -f "indexes.txt" ]; then
+            INDEXES=$(grep -v '^#' indexes.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
+            for IDX in ${INDEXES}; do
+              TAG="${IDX#^}"   # strip caret for filename
+              INDEX_LINKS="${INDEX_LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/${DATE}/${TAG}_Index_${DATE}.html\">${TAG}</a>"$'\n'
+            done
+            if [ -n "${INDEX_LINKS}" ]; then
+              INDEX_BLOCK="${NL}📊 <b>지수 옵션 (L3 GEX)</b>${NL}${INDEX_LINKS}"
+            fi
+          fi
+
           SKIP_BLOCK=""
           if [ -n "${SKIPPED}" ]; then
             SKIP_LIST=""
@@ -159,7 +193,8 @@ jobs:
             done
             SKIP_BLOCK="${NL}❌ 유효하지 않은 티커: <b>${SKIP_LIST% }</b>${NL}"
           fi
-          MSG="📩 ${DATE} Daily Report${NL}${NL}${LINKS}${SKIP_BLOCK}${NL}📋 <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
+
+          MSG="📩 ${DATE} Daily Report${NL}${NL}📈 <b>개별 종목</b>${NL}${STOCK_LINKS}${INDEX_BLOCK}${SKIP_BLOCK}${NL}📋 <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
 
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TG_CHAT}" \

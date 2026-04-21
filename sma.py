@@ -173,6 +173,23 @@ class SmartMoneyAnalyzer:
         self.config = config or {}
         self.warnings: List[str] = []
         self.yf = yf.Ticker(self.ticker)
+        # Index tickers: CBOE uses "_SPX", OCC symbols use "SPX"/"SPXW" etc.
+        self.is_index = self.ticker.startswith("^")
+        if self.is_index:
+            base = self.ticker[1:]
+            self.cboe_symbol = "_" + base
+            self.display_ticker = base                  # filenames/URL 용 (^ 제거)
+            _root_map = {
+                "SPX": {"SPX", "SPXW"},
+                "NDX": {"NDX", "NDXP"},
+                "RUT": {"RUT", "RUTW"},
+                "VIX": {"VIX", "VIXW"},
+            }
+            self.option_roots = _root_map.get(base, {base})
+        else:
+            self.cboe_symbol = self.ticker
+            self.display_ticker = self.ticker
+            self.option_roots = {self.ticker.replace(".", "").replace("-", "")}
 
     # ─── 2. Data Acquisition ──────────────────────────────────────────────
     def fetch_all_data(self) -> Dict[str, Any]:
@@ -262,7 +279,9 @@ class SmartMoneyAnalyzer:
             # 모든 만기가 OI 빈약 → 그냥 가장 많은 OI 가진 것
             best = max(by_expiry.items(), key=lambda kv: oi_total(kv[1]))
             primary, chain = best
-            total_oi = oi_total(chain)
+            total_oi = oi_total(chain) or 0
+            if total_oi != total_oi:  # NaN guard
+                total_oi = 0
             self.warnings.append(f"l3: all expiries low-OI, picked {primary} with OI={int(total_oi)}")
 
         # Greeks 보강: CBOE가 delta/gamma 주면 그대로, 없으면 BS 근사
@@ -292,7 +311,7 @@ class SmartMoneyAnalyzer:
         CBOE delayed quotes JSON → {expiry_date: {calls:[...], puts:[...]}}
         OCC 심볼 파싱: NVDA260415C00100000 = NVDA / 2026-04-15 / Call / $100.00
         """
-        url = f"https://cdn.cboe.com/api/global/delayed_quotes/options/{self.ticker}.json"
+        url = f"https://cdn.cboe.com/api/global/delayed_quotes/options/{self.cboe_symbol}.json"
         r = requests.get(url, headers=UA, timeout=20)
         if r.status_code != 200:
             raise RuntimeError(f"CBOE HTTP {r.status_code}")
@@ -302,20 +321,17 @@ class SmartMoneyAnalyzer:
             raise RuntimeError("CBOE empty options array")
 
         # 심볼 파싱용 정규식: ROOT + YYMMDD + C/P + 8자리 strike
-        pat = re.compile(rf"^{re.escape(self.ticker)}(\d{{6}})([CP])(\d{{8}})$")
+        # 지수 옵션(SPX/NDX)은 같은 만기에 표준(SPX) + 주간(SPXW) 두 루트가 공존
+        pat_any = re.compile(r"^([A-Z]{1,6})(\d{6})([CP])(\d{8})$")
         out: Dict[str, Dict[str, list]] = {}
         for o in raw_opts:
             sym = o.get("option", "")
-            m = pat.match(sym)
+            m = pat_any.match(sym)
             if not m:
-                # 루트 티커가 다를 수 있음 (예: BRK.B → BRK). 관대하게 매칭
-                m2 = re.match(r"^([A-Z]{1,6})(\d{6})([CP])(\d{8})$", sym)
-                if not m2: continue
-                root, ymd, cp, strike8 = m2.groups()
-                if root != self.ticker.replace(".", "").replace("-", ""):
-                    continue
-            else:
-                ymd, cp, strike8 = m.groups()
+                continue
+            root, ymd, cp, strike8 = m.groups()
+            if root not in self.option_roots:
+                continue
 
             # 만기
             y = 2000 + int(ymd[0:2]); mo = int(ymd[2:4]); d = int(ymd[4:6])
@@ -1428,6 +1444,8 @@ class SmartMoneyAnalyzer:
             "raw_data": data,
             "meta": {
                 "ticker": self.ticker, "date": self.date_str,
+                "display_ticker": self.display_ticker,
+                "is_index": self.is_index,
                 "price": l4.get("current_price"),
                 "warnings": self.warnings,
             },
@@ -1435,12 +1453,22 @@ class SmartMoneyAnalyzer:
 
     # ─── 12. Output ───────────────────────────────────────────────────────
     def generate_outputs(self, analysis: Dict) -> Tuple[str, str, str]:
+        json_str = render_json(analysis)
+        tag = self.display_ticker
+        if self.is_index:
+            # 지수: L3 전용 컴팩트 리포트. MD 생략 (주간 내러티브 대상 아님).
+            html_str = render_index_html(analysis, self)
+            html_path = OUT_DIR / f"{tag}_Index_{self.date_str}.html"
+            json_path = OUT_DIR / f"{tag}_{self.date_str}.json"
+            html_path.write_text(html_str, encoding="utf-8")
+            json_path.write_text(json_str, encoding="utf-8")
+            return str(html_path), "", str(json_path)
+        # 개별 종목: 기존 풀 리포트 그대로
         html_str = render_html(analysis, self)
         md_str   = render_markdown(analysis, self)
-        json_str = render_json(analysis)
-        html_path = OUT_DIR / f"{self.ticker}_3Layer_Forensic_{self.date_str}.html"
-        md_path   = OUT_DIR / f"SmartMoney_{self.ticker}_{self.date_str}.md"
-        json_path = OUT_DIR / f"{self.ticker}_{self.date_str}.json"
+        html_path = OUT_DIR / f"{tag}_3Layer_Forensic_{self.date_str}.html"
+        md_path   = OUT_DIR / f"SmartMoney_{tag}_{self.date_str}.md"
+        json_path = OUT_DIR / f"{tag}_{self.date_str}.json"
         html_path.write_text(html_str, encoding="utf-8")
         md_path.write_text(md_str, encoding="utf-8")
         json_path.write_text(json_str, encoding="utf-8")
@@ -2046,6 +2074,185 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
 """
 
 
+# ─── Index-only compact report (L3 focus) ────────────────────────────────────
+def render_index_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
+    """지수(^SPX/^NDX) 전용 컴팩트 L3 리포트.
+    L1(다크풀)·L2(공매도)는 지수에 N/A이므로 옵션 GEX 분석만 단일 섹션으로 출력."""
+    meta = a["meta"]; l3 = a["l3"]; l4 = a["l4"]
+    price = meta.get("price") or l3.get("spot") or 0
+    tag = meta.get("display_ticker") or meta.get("ticker","").lstrip("^")
+    title = f"{tag} Index Options — {meta['date']}"
+
+    gex_by_strike = l3.get("gex_by_strike", {}) or {}
+    gex_labels = sorted(gex_by_strike.keys())
+    gex_vals   = [gex_by_strike[k] for k in gex_labels]
+    net_gex = l3.get("net_gex") or 0
+    flip    = l3.get("flip_zone")
+    mp      = l3.get("max_pain")
+    mp_dist = l3.get("max_pain_dist_pct")
+
+    # 레짐 해석 (positive GEX = pinning, negative = amplification)
+    if net_gex > 0:
+        regime = "POSITIVE GEX — Pinning Regime"
+        regime_color = COLOR["bull"]
+        regime_desc = "MM 가 롱감마 포지션 → 가격을 현 수준으로 수렴시키는 힘 작용. 변동성 억제."
+    elif net_gex < 0:
+        regime = "NEGATIVE GEX — Amplification Regime"
+        regime_color = COLOR["bear"]
+        regime_desc = "MM 이 숏감마 포지션 → 방향성 움직임을 증폭. 변동성 확대 가능."
+    else:
+        regime = "NEUTRAL"
+        regime_color = COLOR["muted"]
+        regime_desc = "포지셔닝 방향성 미약."
+
+    # Spot vs Flip Zone 위치
+    flip_note = ""
+    if flip and price:
+        if price > flip:
+            flip_note = f"Spot(${price:.2f}) > Flip(${flip:.2f}) → 현재 핀닝 구간"
+        else:
+            flip_note = f"Spot(${price:.2f}) < Flip(${flip:.2f}) → 현재 증폭 구간"
+
+    # Max Pain 방향
+    mp_note = ""
+    if mp and price:
+        pull = "상방" if mp > price else "하방"
+        mp_note = f"Max Pain(${mp:.2f})은 스팟 대비 {pull} ({mp_dist:+.2f}%)"
+
+    # 3-tile overview
+    def _tile(label, value, sub, color):
+        return f"""
+<div style="flex:1;min-width:140px;background:{COLOR['bg_card']};border-left:3px solid {color};
+            border-radius:0 6px 6px 0;padding:10px 14px;">
+  <div style="font-size:10px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.05em;">{label}</div>
+  <div style="font-size:18px;font-weight:700;color:{color};margin-top:2px;">{value}</div>
+  <div style="font-size:11px;color:{COLOR['muted']};margin-top:2px;">{sub}</div>
+</div>"""
+
+    tiles = (
+        _tile("Spot Price", f"${price:.2f}",
+              f"Expiry {l3.get('expiry','-')} · DTE {l3.get('dte','-')}", COLOR['info'])
+      + _tile("Net GEX", fmt_num(net_gex, '', 0),
+              regime.split(' — ')[0], regime_color)
+      + _tile("Max Pain", f"${mp:.2f}" if mp else "N/A",
+              f"{mp_dist:+.2f}%" if mp_dist is not None else "-", COLOR['warn'])
+      + _tile("GEX Flip Zone", f"${flip:.2f}" if flip else "N/A",
+              flip_note if flip else "-", COLOR['warn'])
+    )
+
+    # L3 metrics table
+    rows = [
+        ["Expiry",         l3.get("expiry","-")],
+        ["DTE",            str(l3.get("dte","-"))],
+        ["Spot",           f"${price:.2f}"],
+        ["Max Pain",       f"${mp:.2f}" if mp else "N/A"],
+        ["Max Pain Dist",  fmt_pct(mp_dist) if mp_dist is not None else "N/A"],
+        ["Net GEX",        fmt_num(net_gex, '', 0)],
+        ["GEX Flip Zone",  f"${flip:.2f}" if flip else "N/A"],
+        ["P/C OI",         f"{l3.get('pc_oi'):.2f}" if l3.get("pc_oi") is not None else "N/A"],
+        ["P/C Volume",     f"{l3.get('pc_vol'):.2f}" if l3.get("pc_vol") is not None else "N/A"],
+        ["IV Skew (P-C)",  f"{l3.get('skew')*100:+.2f}pp" if l3.get("skew") is not None else "N/A"],
+        ["Calls / Puts",   f"{len(l3.get('calls') or [])} / {len(l3.get('puts') or [])}"],
+        ["Data Source",    l3.get("_source","cboe_delayed")],
+    ]
+    table_html = f'<div class="tbl-scroll">{_table(["Metric","Value"], rows)}</div>'
+
+    # GEX chart data → JS
+    gex_bar_colors = [COLOR['bull'] if v >= 0 else COLOR['bear'] for v in gex_vals]
+    annotations = []
+    if flip:
+        annotations.append(f"{{type:'line',scaleID:'x',value:{flip},borderColor:'{COLOR['warn']}',borderWidth:1.5,label:{{display:true,content:'Flip ${flip:.2f}',position:'start'}}}}")
+    if price:
+        annotations.append(f"{{type:'line',scaleID:'x',value:{price},borderColor:'{COLOR['info']}',borderWidth:1.5,borderDash:[6,4],label:{{display:true,content:'Spot ${price:.2f}'}}}}")
+    if mp:
+        annotations.append(f"{{type:'line',scaleID:'x',value:{mp},borderColor:'{COLOR['warn']}',borderWidth:1.5,borderDash:[2,3],label:{{display:true,content:'Max Pain ${mp:.2f}'}}}}")
+
+    chart_js = f"""
+Chart.defaults.font.family = {json.dumps(FONT)};
+Chart.defaults.color = "{COLOR['text']}";
+new Chart(document.getElementById('gexChart'), {{
+  type:'bar',
+  data:{{
+    labels:{json.dumps([f'{s:.0f}' for s in gex_labels])},
+    datasets:[{{ label:'GEX', data:{json.dumps(gex_vals)}, backgroundColor:{json.dumps(gex_bar_colors)}, borderWidth:0 }}]
+  }},
+  options:{{
+    maintainAspectRatio:false,
+    plugins:{{ legend:{{display:false}}, title:{{display:true,text:'Gamma Exposure (GEX) by Strike — {tag}'}} }},
+    scales:{{ y:{{grid:{{color:'{COLOR['chart_grid']}'}}}}, x:{{grid:{{display:false}}}} }}
+  }}
+}});
+"""
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<title>{html.escape(title)}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body {{ background:{COLOR['bg_outer']}; color:{COLOR['text']}; font-family:{FONT}; font-size:13px; margin:0; padding:24px; }}
+  .wrap {{ max-width:1200px; margin:0 auto; }}
+  .hdr  {{ border-bottom:1px solid {COLOR['border']}; padding-bottom:12px; margin-bottom:16px; }}
+  .hdr h1 {{ font-size:20px; margin:0 0 4px 0; }}
+  .hdr .sub {{ font-size:12px; color:{COLOR['muted']}; }}
+  .tbl-scroll {{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }}
+  .tbl-scroll table {{ min-width:100%; border-collapse:collapse; font-size:12px; }}
+  .tbl-scroll th, .tbl-scroll td {{ border:0.5px solid {COLOR['border']}; padding:4px 6px; }}
+  .tbl-scroll th {{ background:{COLOR['bg_panel']}; color:{COLOR['muted']}; text-align:left; }}
+  @media (max-width: 900px) {{ .tiles {{ flex-direction:column !important; }} }}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div style="margin-bottom:16px;font-size:12px;">
+  <a href="../../" style="color:{COLOR['muted']};text-decoration:none;">← Dashboard</a>
+</div>
+<div class="hdr">
+  <h1>{html.escape(title)}</h1>
+  <div class="sub">{tag} 지수 옵션 GEX / Max Pain / Flip Zone · Data: CBOE delayed quotes (15-min)</div>
+</div>
+
+<div class="tiles" style="display:flex;gap:10px;margin-bottom:16px;">{tiles}</div>
+
+<div style="padding:10px 14px;background:{COLOR['alert_blue']};border-left:3px solid {regime_color};
+            border-radius:0 6px 6px 0;margin-bottom:16px;">
+  <div style="font-size:13px;font-weight:700;color:{regime_color};">{regime}</div>
+  <div style="font-size:12px;color:{COLOR['text']};margin-top:4px;">{regime_desc}</div>
+  {f'<div style="font-size:11px;color:{COLOR["muted"]};margin-top:6px;">{flip_note}</div>' if flip_note else ''}
+  {f'<div style="font-size:11px;color:{COLOR["muted"]};margin-top:2px;">{mp_note}</div>' if mp_note else ''}
+</div>
+
+<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:12px;align-items:start;">
+  <div>
+    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">GEX by Strike</div>
+    <div style="position:relative;height:380px;"><canvas id="gexChart"></canvas></div>
+  </div>
+  <div>
+    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">L3 Metrics</div>
+    {table_html}
+  </div>
+</div>
+
+<div style="margin-top:16px;padding:8px 12px;background:{COLOR['alert_amber']};border-left:3px solid {COLOR['warn']};
+            border-radius:0 4px 4px 0;font-size:11px;color:{COLOR['text']};">
+  <b style="color:{COLOR['warn']};">ⓘ 지수 리포트 범위</b> —
+  지수는 현물 주식이 없어 <b>L1 다크풀</b>·<b>L2 공매도</b> 분석이 N/A. L3 옵션 GEX 만 수록.
+  주간 AI 내러티브도 생성되지 않음 (개별 종목 전용). 해석은 참고용이며 투자 조언 아님.
+</div>
+
+<div style="margin-top:24px;font-size:10px;color:{COLOR['muted']};text-align:center;">
+  Generated by sma.py · Data: CBOE delayed options quotes, Yahoo Finance spot
+</div>
+</div>
+<script>{chart_js}</script>
+</body>
+</html>
+"""
+
+
 def _one_liner_l1(l1, raw_l1):
     dp = l1.get("dp_pct"); obv = l1.get("obv", {})
     iar = obv.get("iar"); div = obv.get("divergence","N/A")
@@ -2415,6 +2622,7 @@ def render_json(a: Dict) -> str:
         "ticker":        a["meta"]["ticker"],
         "date":          a["meta"]["date"],
         "price":         a["meta"].get("price"),
+        "is_index":      a["meta"].get("is_index", False),
         "warnings":      a["meta"].get("warnings", []),
         "patterns":      a.get("patterns", []),
         "macro_env":     a.get("macro_env"),

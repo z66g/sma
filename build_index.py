@@ -47,6 +47,9 @@ def scan_reports():
         t, d = m.group(1), m.group(2)
         try:
             j = json.loads(jpath.read_text(encoding="utf-8"))
+            # 지수 리포트는 메인 대시보드(종목 시계열)에서 제외 — 별도 섹션 예정
+            if j.get("is_index"):
+                continue
             by_ticker[t].append(j)
         except Exception as e:
             print(f"WARN: failed to parse {jpath}: {e}")
