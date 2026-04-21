@@ -51,7 +51,11 @@ CORE STANCE:
 - Prefer "insufficient data" to speculation.
 
 LAYERS:
-- L1 Dark Pool: delta_institutional is derived from FINRA CNMS off-exchange volume × intraday cohort signing. **IMPORTANT ACCURACY NOTE**: CNMS off-exchange includes retail PFOF internalization (Citadel/Virtu), so absolute inst cohort magnitudes may be overstated vs Market Chameleon's per-print classification. Focus on **direction changes and trend reversals**, not absolute cohort ratios. When describing inst/pro/retail breakdown, use cautious language ("방향 전환", "부호 반전") rather than quantitative claims ("기관이 X주 매수"). IAR = |inst|/(|pro|+|retail|). High IAR = dark pool dominates directionally.
+- L1 Dark Pool: **1-way Total OBV** design. `delta_total` = 5-day sum of per-bar CLV-weighted signed volume across all minute bars (full market net flow direction). Previous institutional/professional/retail cohort split was removed because bar-level classification produced sign inversions vs Market Chameleon's per-print ground truth (the fields `delta_institutional`, `delta_professional`, `delta_retail`, `iar` are all null in the JSON now). Interpret L1 via three dimensions only:
+  · `delta_total` sign & magnitude → net buying vs selling pressure (all participants combined)
+  · `dp_pct` (FINRA CNMS off-exchange %) → institutional/block activity level (>45% = heavy, 30-45% normal, <30% retail-lit)
+  · `divergence` (BULLISH_DIVERGENCE / BEARISH_DIVERGENCE / CONVERGENCE / NEUTRAL) → price slope vs OBV slope relation, the strongest Architect signal
+  Combine: high dp_pct + positive Total OBV + BULLISH_DIVERGENCE = strong accumulation. Never quantify institutional-only vs retail-only flow.
 - L2 Short Volume: FINRA Reg SHO short volume != short interest. 40-55% is structurally normal. Judge only by slope + CTB + anomaly_z. NEVER read "short% > 50" as bearish.
 - L3 Options: Max Pain, P/C, Net GEX, Flip Zone, IV Skew. Pinning meaningful only DTE <= 5. Positive Net GEX = long gamma (pin regime). Flip crossing = vol regime change.
 - L4 Chart: MA alignment, BB width, immediate/key S&R.
@@ -100,7 +104,7 @@ The 2x2 CARD GRID and the PROBABILITY BAR are MANDATORY visual elements — not 
   <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
     <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L1 DARK POOL</div>
     <div style="font-size:15px;font-weight:600;color:{{l1_color}};margin-bottom:6px;">{{l1_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L1 설명: 기관 OBV 방향성·IAR·Divergence 해석. 절대 규모보다 방향 전환·부호 반전 중심. 코호트별 절대값은 근사치임을 인지하고 "방향성" 언어로 서술}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L1 설명: Total OBV(5d) 방향+규모, 다크풀 % 수준, Divergence(BULL_DIV/BEAR_DIV/CONV/NEU) 조합으로 서술. 기관/리테일 분리 언급 금지 — 데이터에 없음}}</div>
   </div>
   <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
     <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L2 SHORT · CTB</div>
@@ -229,7 +233,7 @@ def to_csv(series: List[Dict]) -> str:
     if not series:
         return ""
     cols = ["date","price","scen_A","scen_C","raw_score","macro",
-            "dp_pct","inst_delta","pro_delta","retail_delta","iar","divergence",
+            "dp_pct","total_obv_5d","divergence",
             "short_pct","short_slope","slope_dir","ctb_fee",
             "max_pain","max_pain_dist","pc_oi","net_gex_bn","flip_zone",
             "ma_align","bb_width","patterns"]
@@ -251,8 +255,8 @@ def to_csv(series: List[Dict]) -> str:
             f(sc.get("A_bullish"), 0), f(sc.get("C_bearish"), 0), f(sc.get("raw_score"), 2),
             s.get("macro_env","") or "",
             f(l1.get("dp_pct"), 1),
-            i(l1.get("delta_institutional")), i(l1.get("delta_professional")), i(l1.get("delta_retail")),
-            f(l1.get("iar"), 2), l1.get("divergence","") or "",
+            i(l1.get("delta_total")),
+            l1.get("divergence","") or "",
             f(l2.get("short_pct_latest"), 1), f(l2.get("short_slope"), 2),
             l2.get("slope_dir","") or "",
             f(l2.get("ctb_fee"), 2),

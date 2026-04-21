@@ -544,24 +544,20 @@ class SmartMoneyAnalyzer:
                               minute_bars: List[Dict],
                               minute_src_label: Optional[str] = None) -> Tuple[Dict, str]:
         """
-        Signed-volume 산정 체계 — FINRA CNMS + 2-way 분리 (Inst vs Non-Inst)
-          - 분봉 분류 (tight threshold):
-              · Inst bars: avg_size ≥ p85 AND v ≥ 5000 (블록 함유 가능성 높음)
-              · Non-Inst bars: 나머지 (pro + retail 합본)
-          - 각 버킷별 독립 R ∈ [-1, +1] — per-bar CLV 가중:
-              R_x = Σ (CLV(bar) × v(bar)) / Σ v(bar)   over bars in bucket x
-              CLV(bar) = ((c-l) - (h-c)) / (h-l)
-          - 적용:
-              inst_signed    = R_inst    × CNMS_off_exchange (T+1)
-              non_inst_signed= R_non_inst× lit_volume
-              (3-way chart 호환성 위해 non_inst는 pro_share/retail_share 로 분할)
-          - 2-way 설계 이유:
-              · 기관 R은 블록 함유 분봉 중심으로 좁혀져 노이즈 감소
-              · Non-inst 버킷 커서 timing 아티팩트 평균화
-              · Pro/Retail 경계의 허위 발산 제거
-          - MC 절대값 일치는 여전히 tick 데이터 없이 불가. **기관 방향성 신호**에
-            집중한 설계.
-          - 폴백: 분봉 부재 시 일봉 CLV 단일 R 사용.
+        Signed-volume 산정 체계 — 1-way Total (per-bar CLV 가중)
+          - 이전 2-way·4-way 분리는 MC per-print 기준과 부호까지 반전되는
+            근본 한계가 확인되어 (분봉 레벨로 체결 방향 불가 + PFOF 내부화
+            CNMS 섞임), 단일 Total OBV 지표로 단순화.
+          - 계산:
+              R = Σ (CLV(bar) × v(bar)) / Σ v(bar)   over all minute bars
+              CLV(bar) = ((c-l) - (h-c)) / (h-l)   ∈ [-1, +1]
+              delta_total(day) = R(day) × total_volume(day)
+              delta_total     = Σ over 5 영업일
+          - 일별 누적 시리즈(delta_total_cum)도 반환 → 추세 차트용
+          - 폴백: 분봉 부재 시 일봉 CLV 기반 R.
+          - MC per-print 분류와 절대값은 여전히 다를 수 있으나 **방향성 신뢰도
+            상승** (코호트 허위 발산 제거).
+          - dp_pct (다크풀 %) 는 분리 산출되어 별도로 institutional proxy 역할.
         """
         if len(ohlcv) < 6 or not dp_rows:
             return {"_partial": True}, "OBV 4-way: 데이터 부족"
@@ -587,131 +583,89 @@ class SmartMoneyAnalyzer:
                     continue
                 minute_by_date.setdefault(ds, []).append(b)
 
-        # ── 글로벌 임계치: Inst 분봉 경계 (avg_size p85 + v ≥ 5000) ───
-        # 분봉 avg_size 상위 15% 가 블록 함유 가능성 높음 (top 30% 대비 잡음 감소).
-        # 추가로 절대 볼륨 5000 필터로 소규모 분봉이 avg_size만 높다고 inst 오분류되는 것 방지.
-        cohort_p85 = None
-        cohort_enabled = False
-        cohort_p30 = None  # Lit pro/retail 비율 산출용 (chart 호환)
-        cohort_p70 = None
-        if minute_bars:
-            df_all = pd.DataFrame(minute_bars)
-            if "n" in df_all.columns and df_all["n"].sum() > 0 and len(df_all) > 60:
-                df_all = df_all[df_all["n"] > 0].copy()
-                df_all["avg_size"] = df_all["v"] / df_all["n"]
-                cohort_p85 = float(df_all["avg_size"].quantile(0.85))
-                cohort_p30 = float(df_all["avg_size"].quantile(0.30))
-                cohort_p70 = float(df_all["avg_size"].quantile(0.70))
-                cohort_enabled = True
-
-        # ── Lit 프로/리테일 share ────────────────────────────────────────
-        pro_share = 0.4; retail_share = 0.6
-        if cohort_enabled:
-            df_all = pd.DataFrame(minute_bars)
-            df_all = df_all[df_all["n"] > 0].copy()
-            df_all["avg_size"] = df_all["v"] / df_all["n"]
-            mid = df_all[(df_all["avg_size"] >= cohort_p30) & (df_all["avg_size"] < cohort_p70)]
-            bot = df_all[df_all["avg_size"] <  cohort_p30]
-            mid_v = float(mid["v"].sum()); bot_v = float(bot["v"].sum())
-            if (mid_v + bot_v) > 0:
-                pro_share    = mid_v / (mid_v + bot_v)
-                retail_share = 1.0 - pro_share
-
-        # ── 일일 2-way R (Inst, Non-Inst) — per-bar CLV 가중 ─────────
-        def _daily_R2(d: str) -> Tuple[float, float, str]:
-            """Returns (R_inst, R_non_inst, src)"""
+        # ── 일일 R (단일, per-bar CLV 가중) ────────────────────────────
+        def _daily_R(d: str) -> Tuple[float, str]:
             bars = minute_by_date.get(d, [])
-            if cohort_enabled and len(bars) >= 30:
-                ins_s = ins_t = non_s = non_t = 0.0
+            if len(bars) >= 30:
+                signed = 0.0; total = 0.0
                 for b in bars:
                     c = b.get("c"); h = b.get("h"); l = b.get("l")
-                    v = b.get("v") or 0; n = b.get("n") or 0
-                    if c is None or h is None or l is None or v <= 0 or n <= 0:
+                    v = b.get("v") or 0
+                    if c is None or h is None or l is None or v <= 0:
                         continue
-                    avg = v / n
                     rng = h - l
                     clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / rng)) if rng > 0 else 0.0
-                    # Inst 분봉: avg_size ≥ p85 AND v ≥ 5000
-                    if avg >= cohort_p85 and v >= 5000:
-                        ins_s += clv * v; ins_t += v
-                    else:
-                        non_s += clv * v; non_t += v
-                R_ins = max(-1.0, min(1.0, ins_s / ins_t)) if ins_t > 0 else 0.0
-                R_non = max(-1.0, min(1.0, non_s / non_t)) if non_t > 0 else 0.0
-                # Inst 분봉이 너무 적으면 (15% 이하 감지) 단일 R 폴백
-                if ins_t == 0:
-                    R_ins = R_non
-                return R_ins, R_non, "barCLV_2way"
-            # 폴백: 일봉 CLV 단일 R 양쪽 동일
+                    signed += clv * v
+                    total  += v
+                if total > 0:
+                    return max(-1.0, min(1.0, signed / total)), "barCLV"
+            # 폴백: 일봉 CLV
             bar = ohlc_by_date.get(d)
             if bar:
                 h, l, c = bar["high"], bar["low"], bar["close"]
                 if (h - l) > 0:
-                    R = max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l)))
-                    return R, R, "dayclv"
-            return 0.0, 0.0, "none"
+                    return max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l))), "dayclv"
+            return 0.0, "none"
 
-        # ── 집계 — 2-way (CNMS × R_inst, Lit × R_non_inst) ─────────────
-        delta_inst = delta_pro = delta_retail = 0.0
-        inst_abs = 0.0; lit_abs = 0.0
+        # ── 집계 ─────────────────────────────────────────────────────────
+        delta_total = 0.0
+        inst_abs = 0.0; lit_abs = 0.0   # dp% 참고 집계
         ratio_src_counts: Dict[str, int] = {}
-        daily_R_inst: Dict[str, float] = {}
+        daily_R: Dict[str, float] = {}
+        delta_daily: List[Tuple[str, float]] = []   # [(date, delta_that_day)]
         for d in dates_asc:
-            R_ins, R_non, src = _daily_R2(d)
-            daily_R_inst[d] = R_ins
+            R, src = _daily_R(d)
+            daily_R[d] = R
             ratio_src_counts[src] = ratio_src_counts.get(src, 0) + 1
             off = cnms_by_date.get(d, 0); tot = vol_by_date.get(d, 0)
-            lit = max(tot - off, 0)
-            inst_abs += off; lit_abs += lit
-            delta_inst   += R_ins * off
-            # Non-inst 서명 볼륨을 pro/retail share 로 분할 (차트 호환)
-            delta_pro    += R_non * lit * pro_share
-            delta_retail += R_non * lit * retail_share
+            inst_abs += off; lit_abs += max(tot - off, 0)
+            dday = R * tot
+            delta_total += dday
+            delta_daily.append((d, dday))
 
-        delta_total = delta_inst + delta_pro + delta_retail
-        iar = safe_div(abs(delta_inst), (abs(delta_pro) + abs(delta_retail)), None)
-
-        # Divergence: 가격 slope vs inst signed 누적 slope
-        closes = [close_by_date[d] for d in dates_asc if d in close_by_date]
-        inst_cum = []
+        # 누적 시리즈 (추세 차트용)
+        delta_total_cum: List[Dict[str, Any]] = []
         running = 0.0
-        for d in dates_asc:
-            running += daily_R_inst.get(d, 0) * cnms_by_date.get(d, 0)
-            inst_cum.append(running)
+        for d, dd in delta_daily:
+            running += dd
+            delta_total_cum.append({"date": d, "cum": running, "day": dd})
 
+        # Divergence: 가격 slope vs total signed 누적 slope
+        closes = [close_by_date[d] for d in dates_asc if d in close_by_date]
+        total_cum_vals = [x["cum"] for x in delta_total_cum]
         price_slope = linregress_slope(closes)
-        inst_slope  = linregress_slope(inst_cum)
+        total_slope = linregress_slope(total_cum_vals)
         price_eps = max(abs(closes[-1]) * 0.001 if closes else 0.01, 0.01)
-        inst_eps  = max(inst_abs * 0.01 / max(len(dates_asc),1), 1000.0)
-        if price_slope < -price_eps and inst_slope > inst_eps:
+        avg_vol = (inst_abs + lit_abs) / max(len(dates_asc), 1)
+        total_eps = max(avg_vol * 0.01, 1000.0)
+        if price_slope < -price_eps and total_slope > total_eps:
             divergence = "BULLISH_DIVERGENCE"
-        elif price_slope > price_eps and inst_slope < -inst_eps:
+        elif price_slope > price_eps and total_slope < -total_eps:
             divergence = "BEARISH_DIVERGENCE"
-        elif abs(price_slope) < price_eps and abs(inst_slope) < inst_eps:
+        elif abs(price_slope) < price_eps and abs(total_slope) < total_eps:
             divergence = "NEUTRAL"
-        elif price_slope * inst_slope > 0:
+        elif price_slope * total_slope > 0:
             divergence = "CONVERGENCE"
         else:
             divergence = "NEUTRAL"
 
         src_desc = ", ".join(f"{k}={v}d" for k,v in ratio_src_counts.items())
         minute_tag = minute_src_label or "none"
-        cohort_info = (f"inst p85={cohort_p85:.0f} sh+v≥5000"
-                       if cohort_enabled else "cohort_disabled")
-        note = (f"OBV 2-way: CNMS × R_inst, Lit × R_non_inst ({len(dates_asc)}일, "
-                f"sign src: {src_desc}, 1m src: {minute_tag}, {cohort_info})")
+        note = (f"OBV Total: 1-way CLV-weighted signed volume "
+                f"({len(dates_asc)}일, sign src: {src_desc}, 1m src: {minute_tag})")
         return {
-            "delta_institutional": delta_inst,
-            "delta_professional":  delta_pro,
-            "delta_retail":        delta_retail,
+            # 단일 핵심 지표
             "delta_total":         delta_total,
-            "iar":                 iar,
             "divergence":          divergence,
-            "_source":             "cnms_2way_v5",
+            "cumulative_daily":    delta_total_cum,   # 추세 차트용
+            # 레거시 호환 (4-way 참조처 잔존 대비 — 전 코호트 Total과 동일)
+            "delta_institutional": None,
+            "delta_professional":  None,
+            "delta_retail":        None,
+            "iar":                 None,
+            "_source":             "total_only_v6",
             "inst_abs_volume":     inst_abs,
             "lit_abs_volume":      lit_abs,
-            "pro_share":           pro_share,
-            "retail_share":        retail_share,
             "window_days":         len(dates_asc),
         }, note
 
@@ -1096,17 +1050,17 @@ class SmartMoneyAnalyzer:
         else:
             dp_class = "RETAIL_DOMINANT"
 
-        inst_delta = obv.get("delta_institutional", 0) or 0
-        divergence = obv.get("divergence", "NEUTRAL")
+        total_delta = obv.get("delta_total", 0) or 0
+        divergence  = obv.get("divergence", "NEUTRAL")
 
-        # Scenario
+        # Scenario — 1-way Total OBV + dp_pct + Divergence 조합
         if divergence == "BULLISH_DIVERGENCE" and (dp_pct_latest or 0) > 35:
             scenario, signal = "ACCUMULATION", "BULLISH"
         elif divergence == "BEARISH_DIVERGENCE" and (dp_pct_latest or 0) > 35:
             scenario, signal = "DISTRIBUTION", "BEARISH"
-        elif inst_delta > 0 and divergence != "BEARISH_DIVERGENCE":
+        elif total_delta > 0 and divergence != "BEARISH_DIVERGENCE":
             scenario, signal = "ACCUMULATION", "BULLISH"
-        elif inst_delta < 0 and divergence != "BULLISH_DIVERGENCE":
+        elif total_delta < 0 and divergence != "BULLISH_DIVERGENCE":
             scenario, signal = "DISTRIBUTION", "BEARISH"
         else:
             scenario, signal = "NEUTRAL", "NEUTRAL"
@@ -1355,7 +1309,7 @@ class SmartMoneyAnalyzer:
             if l1 and (l1.get("dp_pct") or 0) > 40: score += 1
             if l2 and (l2.get("slope") or 0) < 0: score += 1
             if l2 and l2.get("ctb_delta_pct") is not None and l2["ctb_delta_pct"] >= -5 and l2["ctb_delta_pct"] < 5: score += 1
-            if l1 and (l1.get("obv", {}).get("delta_institutional", 0) or 0) > 0: score += 1
+            if l1 and (l1.get("obv", {}).get("delta_total", 0) or 0) > 0: score += 1
             if score >= 3:
                 patterns.append("FINAL_ABSORPTION")
         except Exception: pass
@@ -1783,30 +1737,43 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
                      fmt_num(s.get("market_volume"), "", 0),
                      f"{s.get('dp_pct'):.1f}%" if s.get("dp_pct") is not None else "N/A"]
                     for s in reversed(sessions[-10:])] or [["-","-","-","-"]]
+    # 1-way Total OBV 데이터
+    cum_series = obv.get("cumulative_daily", []) or []
     obv_chart_data = {
-        "labels": ["Institutional","Professional","Retail","Total"],
-        "values": [obv.get("delta_institutional",0) or 0,
-                   obv.get("delta_professional",0) or 0,
-                   obv.get("delta_retail",0) or 0,
-                   obv.get("delta_total",0) or 0],
+        "labels": [x["date"] for x in cum_series],
+        "values": [x["cum"]  for x in cum_series],
+        "daily":  [x["day"]  for x in cum_series],
     }
+    delta_total  = obv.get("delta_total", 0) or 0
+    total_color  = COLOR['bull'] if delta_total > 0 else COLOR['bear'] if delta_total < 0 else COLOR['muted']
+    total_sign   = "+" if delta_total >= 0 else ""
+    div_label    = obv.get('divergence','N/A')
+    div_color    = (COLOR['bull'] if div_label == "BULLISH_DIVERGENCE" else
+                    COLOR['bear'] if div_label == "BEARISH_DIVERGENCE" else
+                    COLOR['info'] if div_label == "CONVERGENCE" else COLOR['muted'])
     s1 = _section_header(1, "Dark Pool Layer (L1)", l1_badges) + f"""
 <div class="sma-grid" style="display:grid;grid-template-columns:1.4fr 0.9fr;gap:12px;align-items:start;">
   <div>
-    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">OBV 4-Way Decomposition (Δ)</div>
-    <div style="position:relative;height:200px;"><canvas id="obv4way"></canvas></div>
-    <div style="font-size:11px;color:{COLOR['text']};margin-top:8px;text-align:center;">
-      IAR (Institutional Absorption Ratio): <b>{fmt_num(obv.get('iar'),'',2)}</b><span class="tt tt-i">ⓘ<span class="tt-body"><b>IAR = |Inst Δ| / (|Pro Δ| + |Retail Δ|)</b><br>기관 플로 지배력 측정.<table><tr><th>IAR</th><th>해석</th></tr><tr><td>&gt; 1.5</td><td>기관 지배적 — 방향성 의도 강함</td></tr><tr><td>0.8–1.5</td><td>혼합 — 기관 주도 불분명</td></tr><tr><td>&lt; 0.8</td><td>리테일/프로 주도 — 신뢰도 낮음</td></tr></table></span></span>
-      · Divergence: <b>{obv.get('divergence','N/A')}</b><span class="tt tt-i">ⓘ<span class="tt-body"><b>가격 slope vs 기관 cumulative signed volume slope</b> (5일 회귀).<table><tr><th>상태</th><th>Architect 해석</th></tr><tr><td>BULLISH_DIV</td><td>가격↓ + 기관↑ = 공포 속 축적</td></tr><tr><td>BEARISH_DIV</td><td>가격↑ + 기관↓ = 강세 속 분배</td></tr><tr><td>CONVERGENCE</td><td>같은 방향 — 추세 확인</td></tr><tr><td>NEUTRAL</td><td>의미있는 기울기 없음</td></tr></table></span></span>
-      {("<br>Sessions · " + " · ".join(f"{k}: {fmt_num(v,'',0)}" for k,v in (obv.get('session_volume') or {}).items())) if obv.get('session_volume') else ""}
-      {"<br><span style='color:"+COLOR['info']+";'>Source: Polygon 1-min bars ("+str(obv.get('minute_bar_count','?'))+")</span>" if obv.get('_source')=='polygon_1min' else ""}
+    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">Net Signed Volume (5일 누적, CLV-weighted)</div>
+    <div style="display:flex;align-items:center;gap:16px;padding:10px 12px;background:{COLOR['bg_card']};border:0.5px solid {COLOR['border']};border-radius:6px;margin-bottom:8px;">
+      <div style="flex:0 0 auto;">
+        <div style="font-size:10px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.04em;">Total OBV Δ (5d)</div>
+        <div style="font-size:20px;font-weight:700;color:{total_color};">{total_sign}{fmt_num(delta_total,'',0)}</div>
+      </div>
+      <div style="flex:0 0 auto;border-left:0.5px solid {COLOR['border']};padding-left:16px;">
+        <div style="font-size:10px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.04em;">Divergence</div>
+        <div style="font-size:13px;font-weight:600;color:{div_color};">{div_label}</div>
+      </div>
+    </div>
+    <div style="position:relative;height:160px;"><canvas id="obvCum"></canvas></div>
+    <div style="font-size:11px;color:{COLOR['text']};margin-top:6px;text-align:center;">
+      <span class="tt tt-i">ⓘ Divergence 해석<span class="tt-body"><b>가격 slope vs Total OBV 누적 slope</b> (5일 회귀).<table><tr><th>상태</th><th>해석</th></tr><tr><td>BULLISH_DIV</td><td>가격↓ + OBV↑ = 공포 속 축적</td></tr><tr><td>BEARISH_DIV</td><td>가격↑ + OBV↓ = 강세 속 분배</td></tr><tr><td>CONVERGENCE</td><td>같은 방향 — 추세 확인</td></tr><tr><td>NEUTRAL</td><td>의미있는 기울기 없음</td></tr></table></span></span>
     </div>
     <div style="margin-top:10px;padding:8px 10px;background:{COLOR['alert_amber']};border-left:3px solid {COLOR['warn']};border-radius:4px;font-size:11px;line-height:1.5;">
       <b style="color:{COLOR['warn']};">⚠ OBV 산출 방식</b><br>
-      <b>2-way 설계</b> — 분봉 avg_size 상위 15% (+v≥5000) 을 <b>Institutional 프록시</b>로, 나머지를 Non-Inst 로 분리하여 각 버킷별 독립 부호(per-bar CLV 가중)를 계산합니다.
-      Pro/Retail 바는 Non-Inst signed volume 을 Lit 볼륨 비율로 분할한 <b>참고값</b>으로, 부호는 Non-Inst 와 동일합니다.
-      CNMS 오프거래소에는 PFOF 리테일 내부화가 포함되어 기관 절대값은 과대 산정될 수 있으며, 본 지표는 <b>방향성·추세 변화 감지용</b>입니다.
-      <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume (per-print 분류 검증)</a>
+      <b>1-way Total OBV</b> — 분봉별 CLV (close location value, [-1..+1]) 를 거래량으로 가중해 시장 전체 네트 매수/매도 플로 방향만 산출합니다.
+      기관/프로/리테일 코호트 분리는 분봉 레벨로는 부호까지 틀려지는 구조적 한계가 확인되어 제거했습니다. 코호트별 상세는 Market Chameleon 등 per-print 분류 소스를 참조하세요.
+      <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Volume (Retail/Pro/Inst 분리 확인)</a>
     </div>
   </div>
   <div>
@@ -2124,10 +2091,10 @@ def _triggers(l1, l2, l3, l4, price, max_pain, flip, raw_l4=None):
         rows.append(["Price &lt; Max Pain", "BEARISH", met(price < max_pain), "Downward gravity"])
     if l4.get("sma50"):
         rows.append(["Close &gt; SMA50", "BULLISH", met(l4["current_price"] > l4["sma50"]), "Trend support"])
-    if (l1.get("obv") or {}).get("delta_institutional") is not None:
-        rows.append(["Inst OBV &gt; 0", "BULLISH",
-                     met(l1["obv"]["delta_institutional"] > 0),
-                     "Institutional accumulation"])
+    if (l1.get("obv") or {}).get("delta_total") is not None:
+        rows.append(["Total OBV (5d) &gt; 0", "BULLISH",
+                     met(l1["obv"]["delta_total"] > 0),
+                     "Net accumulation 우위"])
     if l2.get("slope_dir"):
         rows.append(["Short% slope FALLING", "BULLISH",
                      met(l2["slope_dir"] == "FALLING"),
@@ -2279,21 +2246,22 @@ def _core_conclusions(a) -> str:
     )
 
     # Body 2 — 구조적 메커니즘
-    obv_d = (l1.get('obv') or {}).get('delta_institutional') or 0
-    iar   = (l1.get('obv') or {}).get('iar')
+    obv_total = (l1.get('obv') or {}).get('delta_total') or 0
+    dp_pct_l  = l1.get('dp_pct')
     div   = (l1.get('obv') or {}).get('divergence','N/A')
     ctb_s = f"{l2['ctb_fee']:.2f}%" if l2.get('ctb_fee') is not None else "N/A"
     flip_s= ('$'+format(l3.get('flip_zone'),'.2f')) if l3.get('flip_zone') else 'N/A'
     align = "정합적으로" if (l1.get("signal")==l3.get("signal")) else "부분 상충적으로"
     macro_sign = "+" if scen['macro']=="FAVORABLE" else ("−" if scen['macro']=="RESTRICTED" else "0")
+    dp_s = f"{dp_pct_l:.0f}%" if dp_pct_l is not None else "N/A"
     b2 = (
-        f"다크풀 기관 Δ는 <b>{fmt_num(obv_d,'',0)}</b>, IAR <b>{fmt_num(iar,'',2)}</b>, "
+        f"Total OBV(5영업일 누적) <b>{fmt_num(obv_total,'',0)}</b>, 다크풀 비중 <b>{dp_s}</b>, "
         f"Divergence <b>{div}</b>로 기록되며, "
         f"L2에서 Short% 기울기 <b>{l2.get('slope',0):+.3f}</b> · CTB <b>{ctb_s}</b> 조합은 "
         f"L3 GEX 플립 <b>{flip_s}</b> 및 Max Pain 거리 <b>{l3.get('max_pain_dist_pct') or 0:+.1f}%</b>와 "
         f"<b>{align}</b> 맞물린다. "
         f"매크로는 <b>{scen['macro']}</b>로 분류되어 확률을 <b>{macro_sign}5~10%p</b> 조정했다. "
-        f"해석이 틀릴 위험은 CTB와 기관 OBV의 동시 역전, 또는 다가오는 이벤트(어닝/FOMC)의 가이던스 변질이다."
+        f"해석이 틀릴 위험은 CTB와 Total OBV의 동시 역전, 또는 다가오는 이벤트(어닝/FOMC)의 가이던스 변질이다."
     )
 
     # Body 3 — 결정적 촉매 (방향성·레짐 전환 신호, spot 기준 객관적 서술)
@@ -2308,11 +2276,11 @@ def _core_conclusions(a) -> str:
         p3_triggers.append(f"CTB가 {l2['ctb_fee']:.1f}%에서 +3pp 이상 급등 (차입 압박 구조 변화)")
     if l1.get("dp_pct") is not None:
         p3_triggers.append(f"다크풀 비중이 {l1['dp_pct']:.0f}%에서 2거래일 연속 45% 이상 유지 (기관 활동 지속)")
-    # 기관 OBV 역전도 레짐 전환 촉매의 하나 — 동일 리스트에 편입
+    # Total OBV 역전도 레짐 전환 촉매의 하나 — 동일 리스트에 편입
     if top[0] == "A":
-        p3_triggers.append("기관 OBV가 음전환 (누적 5영업일 합산 &lt; 0, 축적 흐름 이탈)")
+        p3_triggers.append("Total OBV가 음전환 (누적 5영업일 합산 &lt; 0, 축적 흐름 이탈)")
     elif top[0] == "C":
-        p3_triggers.append("기관 OBV가 양전환하면서 CTB가 급락 (매집 재개 신호)")
+        p3_triggers.append("Total OBV가 양전환하면서 CTB가 급락 (매집 재개 신호)")
     else:
         p3_triggers.append("L1·L2·L3 중 2개 레이어 신호가 동시에 반대 방향으로 고착 (레짐 교착)")
     trigger_text = "; ".join(p3_triggers) if p3_triggers else "거래량 +150% 스파이크 + BB 확장"
@@ -2344,7 +2312,11 @@ def _core_conclusions(a) -> str:
 
 
 def _chart_js(obv_data, gex_labels, gex_vals, flip, spot, max_pain, scenarios) -> str:
-    obv_colors = [COLOR["bull"], COLOR["warn"], COLOR["bear"], "#A32D2D"]
+    # 누적 OBV 라인 — 끝값 부호로 색상 결정
+    cum_vals = obv_data.get("values", []) or []
+    end_val = cum_vals[-1] if cum_vals else 0
+    line_color = COLOR["bull"] if end_val > 0 else COLOR["bear"] if end_val < 0 else COLOR["muted"]
+    fill_color = "rgba(26,127,90,0.10)" if end_val > 0 else ("rgba(207,34,43,0.10)" if end_val < 0 else "rgba(101,109,118,0.08)")
     gex_bar_colors = [COLOR["bull"] if v >= 0 else COLOR["bear"] for v in gex_vals]
     annotations = []
     if flip:
@@ -2358,26 +2330,32 @@ def _chart_js(obv_data, gex_labels, gex_vals, flip, spot, max_pain, scenarios) -
 Chart.defaults.font.family = {json.dumps(FONT)};
 Chart.defaults.color = "{COLOR['text']}";
 
-new Chart(document.getElementById('obv4way'), {{
-  type:'bar',
+new Chart(document.getElementById('obvCum'), {{
+  type:'line',
   data:{{
     labels:{json.dumps(obv_data['labels'])},
     datasets:[{{
-      label:'Δ OBV',
-      data:{json.dumps(obv_data['values'])},
-      backgroundColor:{json.dumps(obv_colors)},
-      borderWidth:0,
-      barThickness:14,
-      maxBarThickness:14,
-      categoryPercentage:0.6,
-      barPercentage:0.6
+      label:'Cumulative OBV',
+      data:{json.dumps(cum_vals)},
+      borderColor:'{line_color}',
+      backgroundColor:'{fill_color}',
+      borderWidth:2,
+      tension:0.2,
+      fill:true,
+      pointRadius:3,
+      pointBackgroundColor:'{line_color}'
     }}]
   }},
   options:{{
-    indexAxis:'y',
     maintainAspectRatio:false,
-    plugins:{{legend:{{display:false}},title:{{display:true,text:'OBV 4-Way Decomposition (Δ from prior session)'}}}},
-    scales:{{x:{{grid:{{color:'{COLOR['chart_grid']}'}}}},y:{{grid:{{display:false}}}}}}
+    plugins:{{
+      legend:{{display:false}},
+      title:{{display:true,text:'Total OBV 누적 시리즈 (5영업일)'}}
+    }},
+    scales:{{
+      y:{{grid:{{color:'{COLOR['chart_grid']}'}},ticks:{{callback:function(v){{return (v/1000).toFixed(0)+'k';}}}}}},
+      x:{{grid:{{display:false}}}}
+    }}
   }}
 }});
 
@@ -2449,18 +2427,14 @@ def render_json(a: Dict) -> str:
         "l1": {
             "scenario": l1.get("scenario"), "signal": l1.get("signal"),
             "confidence": l1.get("confidence"),
-            "dp_pct": l1.get("dp_pct"),
-            "delta_institutional": obv.get("delta_institutional"),
-            "delta_professional":  obv.get("delta_professional"),
-            "delta_retail":        obv.get("delta_retail"),
+            "dp_pct":              l1.get("dp_pct"),
             "delta_total":         obv.get("delta_total"),
-            "iar":                 obv.get("iar"),
             "divergence":          obv.get("divergence"),
+            "cumulative_daily":    obv.get("cumulative_daily"),
             "obv_source":          obv.get("_source"),
-            "pro_share":           obv.get("pro_share"),
-            "retail_share":        obv.get("retail_share"),
             "window_days":         obv.get("window_days"),
             "inst_abs_volume":     obv.get("inst_abs_volume"),
+            "lit_abs_volume":      obv.get("lit_abs_volume"),
         },
         "l2": {
             "scenario": l2.get("scenario"), "signal": l2.get("signal"),
@@ -2535,12 +2509,9 @@ def render_markdown(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         "",
         "| Metric | Value |",
         "|--------|-------|",
-        f"| Institutional OBV Δ | {fmt_num(obv.get('delta_institutional'),'',0)} |",
-        f"| Professional OBV Δ | {fmt_num(obv.get('delta_professional'),'',0)} |",
-        f"| Retail OBV Δ       | {fmt_num(obv.get('delta_retail'),'',0)} |",
-        f"| Total OBV Δ        | {fmt_num(obv.get('delta_total'),'',0)} |",
+        f"| Total OBV Δ (5d)   | {fmt_num(obv.get('delta_total'),'',0)} |",
+        f"| Divergence         | {obv.get('divergence','N/A')} |",
         f"| Dark Pool %        | {dp_pct_s} |",
-        f"| IAR                | {fmt_num(obv.get('iar'),'',2)} |",
         f"| Short %            | {short_pct_s} |",
         f"| CTB Fee            | {ctb_s} |",
         f"| Available Shares   | {fmt_num(l2.get('shares_available'),'',0)} |",
@@ -2571,11 +2542,10 @@ def render_markdown(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         "",
         "## Cumulative History",
         "",
-        "| 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |",
-        "|------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|",
-        (f"| {m['date']} | ${price:.2f} | {fmt_num(obv.get('delta_institutional'),'',0)} | "
-         f"{fmt_num(obv.get('delta_professional'),'',0)} | {fmt_num(obv.get('delta_retail'),'',0)} | "
-         f"{fmt_num(obv.get('delta_total'),'',0)} | {short_pct_s} | {ctb_s} | "
+        "| 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |",
+        "|------|------|-------------|------------|-----|--------|-----|---------|---------|---------|",
+        (f"| {m['date']} | ${price:.2f} | {fmt_num(obv.get('delta_total'),'',0)} | "
+         f"{obv.get('divergence','N/A')} | {dp_pct_s} | {short_pct_s} | {ctb_s} | "
          f"{fmt_num(l2.get('shares_available'),'',0)} | {flip_s} | {pain_s} |"),
         "",
     ]

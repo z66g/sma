@@ -113,13 +113,19 @@ def _overview_cards(scen: dict, l1: dict, l2: dict, l3: dict, latest: dict) -> s
     # Block 2: Dark Pool %
     dp = l1.get("dp_pct")
     dp_str = f"{dp:.1f}%" if dp is not None else "N/A"
-    iar = l1.get("iar") or 0
+    obv_total = l1.get("delta_total") or 0
     div = l1.get("divergence","-")
+    obv_sign = "+" if obv_total >= 0 else ""
+    # 천 단위 k/M 축약
+    _av = abs(obv_total)
+    if _av >= 1_000_000:   obv_fmt = f"{obv_total/1_000_000:.1f}M"
+    elif _av >= 1_000:     obv_fmt = f"{obv_total/1_000:.0f}k"
+    else:                  obv_fmt = f"{obv_total:.0f}"
     tt2 = (
-        "<b>FINRA 오프거래소 거래량 ÷ yfinance 총거래량</b><br>"
-        "다크풀·ATS·내부화는 거의 100% 기관. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br>"
-        "<b>IAR</b> = |Inst Δ|/(|Pro Δ|+|Retail Δ|) — 1.5↑ 기관 지배.<br>"
-        "<b>Divergence</b>: 가격 slope vs 기관 OBV slope (5일 회귀)."
+        "<b>FINRA 오프거래소 거래량 ÷ 총거래량</b><br>"
+        "다크풀·ATS·내부화 비중. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br>"
+        "<b>Total OBV (5d)</b>: CLV 가중 signed volume 누적 — 전체 시장 방향.<br>"
+        "<b>Divergence</b>: 가격 slope vs OBV 누적 slope (5일 회귀)."
     )
 
     # Block 3: Short % · CTB
@@ -156,7 +162,7 @@ def _overview_cards(scen: dict, l1: dict, l2: dict, l3: dict, latest: dict) -> s
     </div>
     <div class="card"><div class="card-label">Dark Pool % {tt_icon(tt2)}</div>
       <div class="card-value">{dp_str}</div>
-      <div class="card-sub">IAR {iar:.2f} · {div}</div>
+      <div class="card-sub">OBV {obv_sign}{obv_fmt} · {div}</div>
     </div>
     <div class="card"><div class="card-label">Short % · CTB {tt_icon(tt3)}</div>
       <div class="card-value">{sp_str} · {cb_str}</div>
@@ -181,8 +187,8 @@ def render_ticker_page(ticker: str, series: list) -> str:
     short_pct = [(s.get("l2") or {}).get("short_pct_latest") for s in series]
     max_pain = [(s.get("l3") or {}).get("max_pain") for s in series]
     flip = [(s.get("l3") or {}).get("flip_zone") for s in series]
-    inst_obv = [(s.get("l1") or {}).get("delta_institutional") for s in series]
-    retail_obv = [(s.get("l1") or {}).get("delta_retail") for s in series]
+    total_obv = [(s.get("l1") or {}).get("delta_total") for s in series]
+    dp_pct_series = [(s.get("l1") or {}).get("dp_pct") for s in series]
 
     # 히스토리 테이블
     rows = []
@@ -306,7 +312,7 @@ def render_ticker_page(ticker: str, series: list) -> str:
   <h2>시계열 추이</h2>
   <div class="chart-grid">
     <div class="card" style="grid-column:1/-1;"><div class="card-label">Price · Max Pain · GEX Flip</div><canvas id="priceChart"></canvas></div>
-    <div class="card"><div class="card-label">OBV Δ (Institutional vs Retail)</div><canvas id="obvChart"></canvas></div>
+    <div class="card"><div class="card-label">Total OBV (5d) vs Dark Pool %</div><canvas id="obvChart"></canvas></div>
     <div class="card"><div class="card-label">Short % · CTB Fee</div><canvas id="shortChart"></canvas></div>
     <div class="card" style="grid-column:1/-1;"><div class="card-label">Scenario Probabilities (%)</div><canvas id="probChart"></canvas></div>
   </div>
@@ -403,8 +409,8 @@ lineChart('shortChart', [
   {{label:'CTB %', data:{json.dumps(ctb)}, borderColor:'{COLOR["warn"]}', yAxisID:'y', backgroundColor:'transparent'}}
 ]);
 lineChart('obvChart', [
-  {{label:'Institutional Δ', data:{json.dumps(inst_obv)}, borderColor:'{COLOR["bull"]}', backgroundColor:'transparent'}},
-  {{label:'Retail Δ', data:{json.dumps(retail_obv)}, borderColor:'{COLOR["bear"]}', backgroundColor:'transparent'}}
+  {{label:'Total OBV (5d)', data:{json.dumps(total_obv)}, borderColor:'{COLOR["bull"]}', backgroundColor:'transparent'}},
+  {{label:'Dark Pool %',   data:{json.dumps(dp_pct_series)}, borderColor:'{COLOR["info"]}', backgroundColor:'transparent', yAxisID:'y1'}}
 ]);
 </script>
 </body>
