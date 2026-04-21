@@ -1523,7 +1523,13 @@ def calculate_gex(chain: Dict, spot: float) -> Dict:
     공식: OI × Gamma × 100 × Spot² × 0.01
     부호: Call = + (dealer dampening), Put = - (dealer amplifying)
     단위: "1% 가격 변동 당 달러 노출"
-    Distance weighting 없음 (업계 표준에 부합).
+
+    Flip zone = 누적(cumulative) GEX 가 0 을 가로지르는 지점.
+    이유: per-strike 부호 전환은 유동성 낮은 strike 사이에서 micro-oscillation 을
+    만들어 노이즈가 많고 (특히 지수 옵션처럼 strike 간격이 조밀할 때 18+ 교차 발생),
+    실제 dealer gamma regime 전환을 나타내지 못함. SpotGamma/Cboe Vol Labs 표준은
+    strike 오름차순으로 GEX 를 누적한 뒤 0 crossing 을 찾는 방식 — monotonic 에 가까워
+    보통 단일 교차가 나오며 실제 레짐 전환을 포착.
     """
     results = {}
     for opt_type in ("calls", "puts"):
@@ -1534,15 +1540,18 @@ def calculate_gex(chain: Dict, spot: float) -> Dict:
             g = +raw if opt_type == "calls" else -raw
             results[strike] = results.get(strike, 0) + g
     strikes = sorted(results.keys())
-    # 모든 zero crossing 수집 후 spot에 가장 가까운 것을 채택.
-    # 이유: 유동성 낮은 깊은 OTM 스트라이크는 noise 많아 여러 crossing이 생기는데,
-    # MM gamma regime 전환의 실제 의미를 지니는 건 spot 근처 crossing.
-    crossings = []
-    for i in range(len(strikes)-1):
-        g1 = results[strikes[i]]; g2 = results[strikes[i+1]]
-        if g1 * g2 < 0 and (abs(g1) + abs(g2)) > 0:
-            f = (strikes[i]*abs(g2) + strikes[i+1]*abs(g1)) / (abs(g1)+abs(g2))
+
+    # Cumulative GEX crossings (low → high strike)
+    cum = 0.0
+    prev_cum = 0.0
+    crossings: List[float] = []
+    for i, s in enumerate(strikes):
+        cum += results[s]
+        if i > 0 and prev_cum * cum < 0 and (abs(prev_cum) + abs(cum)) > 0:
+            f = (strikes[i-1] * abs(cum) + s * abs(prev_cum)) / (abs(prev_cum) + abs(cum))
             crossings.append(f)
+        prev_cum = cum
+
     flip = None
     if crossings and spot > 0:
         flip = min(crossings, key=lambda x: abs(x - spot))
