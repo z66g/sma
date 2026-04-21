@@ -544,20 +544,23 @@ class SmartMoneyAnalyzer:
                               minute_bars: List[Dict],
                               minute_src_label: Optional[str] = None) -> Tuple[Dict, str]:
         """
-        Signed-volume 산정 체계 — Market Chameleon 방법론 정합 (per-print size 기반)
-          - 각 코호트의 signed volume 은 분봉 avg_size(= v/n) 코호트에 속한 분봉들의
-            tick-rule signed volume **직접 합산**. CNMS 오프거래소 볼륨 스케일링 제거.
-            (오프거래소 = 기관 가정은 잘못됨: 리테일 내부화 PFOF가 대부분 차지)
-          - 코호트 분류 (Polygon `n` 필요):
-              · top 30% avg_size → Institutional
-              · mid 40%          → Professional
-              · bot 30%          → Retail
-          - 각 코호트별:
-              delta_x = Σ over 5 영업일 of (Σ bar in cohort x: tick_sign(bar) × v(bar))
-          - 이 방식은 "기관이 사고 리테일이 파는" 부호 발산도 자연스럽게 표현.
-          - 폴백 (Polygon `n` 없음 = yfinance 1m 만 있음 또는 분봉 부재):
-              CLV 기반 단일 R 로 세 코호트에 동일 적용 (분리 불가 플래그).
-          - CNMS 오프거래소 데이터는 별도 '다크풀 %' 지표로만 사용됨.
+        Signed-volume 산정 체계 — FINRA CNMS + per-cohort R 하이브리드 (T+1 일정 유지)
+          - 데이터 소스:
+              · Institutional 볼륨 = FINRA CNMS 오프거래소 volume (T+1 아침 반영)
+              · Professional/Retail 볼륨 = (total − CNMS) × share
+          - 부호 결정 — 분봉 avg_size(= v/n) 코호트별 독립 R ∈ [-1, +1]:
+              · R_inst   = top-30% avg_size 분봉들의 tick-rule signed / total
+              · R_pro    = mid-40% 분봉들
+              · R_retail = bot-30% 분봉들
+          - 적용:
+              inst_signed   = R_inst   × CNMS_off (그 날)
+              pro_signed    = R_pro    × lit × pro_share
+              retail_signed = R_retail × lit × retail_share
+          - 이 하이브리드 방식의 의미:
+              · Inst 절대 볼륨은 CNMS 기반 과대 산정 가능성 있음 (PFOF 내부화 포함됨)
+              · 그러나 방향성·반전 신호는 T+1 안정적 데이터로 산출됨
+              · MC per-print 분류와 절대값은 다르지만 **방향성 변화**는 포착됨
+          - 폴백: 분봉 부재 시 CLV 기반 단일 R 을 세 코호트에 동일 적용.
         """
         if len(ohlcv) < 6 or not dp_rows:
             return {"_partial": True}, "OBV 4-way: 데이터 부족"
@@ -595,13 +598,25 @@ class SmartMoneyAnalyzer:
                 cohort_p70 = float(df_all["avg_size"].quantile(0.70))
                 cohort_enabled = True
 
-        # ── 일일 코호트별 signed volume (절대 share 수) ─────────────────
-        def _daily_cohort(d: str) -> Tuple[Optional[Dict[str, float]], str]:
+        # ── Lit 프로/리테일 share ────────────────────────────────────────
+        pro_share = 0.4; retail_share = 0.6
+        if cohort_enabled:
+            df_all = pd.DataFrame(minute_bars)
+            df_all = df_all[df_all["n"] > 0].copy()
+            df_all["avg_size"] = df_all["v"] / df_all["n"]
+            mid = df_all[(df_all["avg_size"] >= cohort_p30) & (df_all["avg_size"] < cohort_p70)]
+            bot = df_all[df_all["avg_size"] <  cohort_p30]
+            mid_v = float(mid["v"].sum()); bot_v = float(bot["v"].sum())
+            if (mid_v + bot_v) > 0:
+                pro_share    = mid_v / (mid_v + bot_v)
+                retail_share = 1.0 - pro_share
+
+        # ── 일일 코호트별 R (부호, -1..+1) — 하이브리드 signing용 ─────
+        def _daily_R(d: str) -> Tuple[Dict[str, float], str]:
             bars = minute_by_date.get(d, [])
             if cohort_enabled and len(bars) >= 30:
                 bars_sorted = sorted(bars, key=lambda x: x["t"])
-                bucks = {"inst": 0.0, "pro": 0.0, "retail": 0.0}
-                vol   = {"inst": 0.0, "pro": 0.0, "retail": 0.0}
+                bucks = {"inst": [0.0, 0.0], "pro": [0.0, 0.0], "retail": [0.0, 0.0]}
                 prev_c = None
                 for b in bars_sorted:
                     c = b.get("c"); v = b.get("v") or 0; n = b.get("n") or 0
@@ -612,52 +627,39 @@ class SmartMoneyAnalyzer:
                     elif avg >= cohort_p30: k = "pro"
                     else:                   k = "retail"
                     if prev_c is not None:
-                        if   c > prev_c: bucks[k] += v
-                        elif c < prev_c: bucks[k] -= v
-                        vol[k] += v
+                        if   c > prev_c: bucks[k][0] += v
+                        elif c < prev_c: bucks[k][0] -= v
+                        bucks[k][1] += v
                     prev_c = c
-                return {**{f"signed_{k}": bucks[k] for k in bucks},
-                        **{f"vol_{k}":    vol[k]    for k in vol}}, "cohort1m"
-            return None, "unavailable"
+                R = {k: (max(-1.0, min(1.0, s/t)) if t > 0 else 0.0)
+                     for k, (s, t) in bucks.items()}
+                return R, "cohortR"
+            # 폴백: CLV 기반 단일 R 세 코호트에 동일
+            bar = ohlc_by_date.get(d)
+            if bar:
+                h, l, c = bar["high"], bar["low"], bar["close"]
+                if (h - l) > 0:
+                    clv = max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l)))
+                    return {"inst": clv, "pro": clv, "retail": clv}, "clv"
+            return {"inst": 0.0, "pro": 0.0, "retail": 0.0}, "none"
 
-        # ── 집계 ─────────────────────────────────────────────────────────
+        # ── 집계 — 하이브리드 (CNMS × per-cohort R) ────────────────────
         delta_inst = delta_pro = delta_retail = 0.0
-        vol_inst = vol_pro = vol_retail = 0.0
-        inst_abs = 0.0; lit_abs = 0.0  # 다크풀 %용 참고 집계
+        inst_abs = 0.0; lit_abs = 0.0
         ratio_src_counts: Dict[str, int] = {}
-        cohort_days = 0
-        fallback_R: Dict[str, float] = {}
-
+        daily_R_inst: Dict[str, float] = {}
         for d in dates_asc:
-            res, src = _daily_cohort(d)
+            R, src = _daily_R(d)
+            daily_R_inst[d] = R["inst"]
             ratio_src_counts[src] = ratio_src_counts.get(src, 0) + 1
             off = cnms_by_date.get(d, 0); tot = vol_by_date.get(d, 0)
-            inst_abs += off; lit_abs += max(tot - off, 0)
-            if res is not None:
-                delta_inst   += res["signed_inst"]
-                delta_pro    += res["signed_pro"]
-                delta_retail += res["signed_retail"]
-                vol_inst     += res["vol_inst"]
-                vol_pro      += res["vol_pro"]
-                vol_retail   += res["vol_retail"]
-                cohort_days  += 1
-            else:
-                # 폴백: 분봉 없는 날 → CLV 기반 단일 R 을 그 날의 총거래량에 적용,
-                # 기본 split (30/40/30) 로 3코호트에 분배 (분리 불가 상태로 명시)
-                bar = ohlc_by_date.get(d)
-                R = 0.0
-                if bar:
-                    h, l, c = bar["high"], bar["low"], bar["close"]
-                    if (h - l) > 0:
-                        R = max(-1.0, min(1.0, ((c - l) - (h - c)) / (h - l)))
-                fallback_R[d] = R
-                tv = tot
-                delta_inst   += R * tv * 0.30
-                delta_pro    += R * tv * 0.40
-                delta_retail += R * tv * 0.30
+            lit = max(tot - off, 0)
+            inst_abs += off; lit_abs += lit
+            delta_inst   += R["inst"]   * off
+            delta_pro    += R["pro"]    * lit * pro_share
+            delta_retail += R["retail"] * lit * retail_share
 
         delta_total = delta_inst + delta_pro + delta_retail
-
         iar = safe_div(abs(delta_inst), (abs(delta_pro) + abs(delta_retail)), None)
 
         # Divergence: 가격 slope vs inst signed 누적 slope
@@ -665,8 +667,7 @@ class SmartMoneyAnalyzer:
         inst_cum = []
         running = 0.0
         for d in dates_asc:
-            res, src = _daily_cohort(d)
-            running += (res["signed_inst"] if res else fallback_R.get(d, 0) * vol_by_date.get(d, 0) * 0.30)
+            running += daily_R_inst.get(d, 0) * cnms_by_date.get(d, 0)
             inst_cum.append(running)
 
         price_slope = linregress_slope(closes)
@@ -686,13 +687,10 @@ class SmartMoneyAnalyzer:
 
         src_desc = ", ".join(f"{k}={v}d" for k,v in ratio_src_counts.items())
         minute_tag = minute_src_label or "none"
-        partial = (cohort_days < len(dates_asc))
-        mode = "cohort_per_print" if cohort_days == len(dates_asc) else \
-               "mixed" if cohort_days > 0 else "fallback_clv"
         cohort_info = (f"p30={cohort_p30:.0f}/p70={cohort_p70:.0f} sh"
                        if cohort_enabled else "cohort_disabled")
-        note = (f"OBV 4-way: per-print cohort signed vol ({len(dates_asc)}일, "
-                f"sign src: {src_desc}, 1m src: {minute_tag}, {cohort_info}, mode: {mode})")
+        note = (f"OBV 4-way: CNMS × per-cohort R ({len(dates_asc)}일, "
+                f"sign src: {src_desc}, 1m src: {minute_tag}, {cohort_info})")
         return {
             "delta_institutional": delta_inst,
             "delta_professional":  delta_pro,
@@ -700,16 +698,12 @@ class SmartMoneyAnalyzer:
             "delta_total":         delta_total,
             "iar":                 iar,
             "divergence":          divergence,
-            "_source":             "cohort_per_print_v3",
+            "_source":             "cnms_hybrid_R_v4",
             "inst_abs_volume":     inst_abs,
             "lit_abs_volume":      lit_abs,
-            "vol_inst_cohort":     vol_inst,
-            "vol_pro_cohort":      vol_pro,
-            "vol_retail_cohort":   vol_retail,
+            "pro_share":           pro_share,
+            "retail_share":        retail_share,
             "window_days":         len(dates_asc),
-            "cohort_days":         cohort_days,
-            "_partial":            partial,
-            "mode":                mode,
         }, note
 
     # ── Polygon.io 분봉 수집 ──────────────────────────────────────────────
@@ -1806,6 +1800,13 @@ def render_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
       {html.escape(raw.get('l1',{}).get('_note','')) if raw.get('l1') else ''}
     </p>
   </div>
+</div>
+<div style="margin-top:10px;padding:8px 10px;background:{COLOR['alert_amber']};border-left:3px solid {COLOR['warn']};border-radius:4px;font-size:11px;line-height:1.5;">
+  <b style="color:{COLOR['warn']};">⚠ 4-way OBV 정확도 고지</b><br>
+  기관/프로/리테일 분해는 FINRA CNMS 오프거래소 볼륨과 1분봉 avg_size 코호트 기반 <b>근사값</b>입니다.
+  PFOF 리테일 내부화가 CNMS에 포함되어 기관 절대값은 과대 산정될 수 있습니다.
+  <b>방향성 변화 감지용</b>으로 활용하시고, 코호트별 절대값 검증은 Market Chameleon 등 per-print 분류 소스를 참조하세요.
+  <br><a href="https://marketchameleon.com/Overview/{analyzer.ticker}/Trades/" target="_blank" rel="noopener" style="color:{COLOR['info']};text-decoration:none;font-weight:600;">🔗 Market Chameleon — {analyzer.ticker} Dark Pool Trades</a>
 </div>
 """
 
