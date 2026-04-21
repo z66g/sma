@@ -2161,7 +2161,7 @@ def render_index_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         ["P/C OI",         f"{l3.get('pc_oi'):.2f}" if l3.get("pc_oi") is not None else "N/A"],
         ["P/C Volume",     f"{l3.get('pc_vol'):.2f}" if l3.get("pc_vol") is not None else "N/A"],
         ["IV Skew (P-C)",  f"{l3.get('skew')*100:+.2f}pp" if l3.get("skew") is not None else "N/A"],
-        ["Calls / Puts",   f"{len(l3.get('calls') or [])} / {len(l3.get('puts') or [])}"],
+        ["Strike 개수",    str(len({c['strike'] for c in (l3.get('calls') or [])} | {p['strike'] for p in (l3.get('puts') or [])}))],
         ["Data Source",    l3.get("_source","cboe_delayed")],
     ]
     table_html = f'<div class="tbl-scroll">{_table(["Metric","Value"], rows)}</div>'
