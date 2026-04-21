@@ -87,13 +87,13 @@
   <h2>Overview (latest)</h2>
   <div class="grid">
     
-    <div class="card"><div class="card-label">Top Scenario <span class="tt tt-i">ⓘ<span class="tt-body"><b>가중 signal 합산 시나리오 확률</b><br>Bullish/Neutral/Bearish 중 가장 높은 확률이 대표 시나리오. Score는 −1.00~+1.00 범위, Macro는 FRED 기반 유동성 분류.<br><br>Neutral 37% · Bearish 21%</span></span></div>
-      <div class="card-value" style="color:#1A7F5A;">Bullish · 41.7%</div>
-      <div class="card-sub">Score -0.05 · Macro FAVORABLE</div>
+    <div class="card"><div class="card-label">Top Scenario <span class="tt tt-i">ⓘ<span class="tt-body"><b>가중 signal 합산 시나리오 확률</b><br>Bullish/Neutral/Bearish 중 가장 높은 확률이 대표 시나리오. Score는 −1.00~+1.00 범위, Macro는 FRED 기반 유동성 분류.<br><br>Neutral 18% · Bearish 7%</span></span></div>
+      <div class="card-value" style="color:#1A7F5A;">Bullish · 74.1%</div>
+      <div class="card-sub">Score +0.65 · Macro FAVORABLE</div>
     </div>
     <div class="card"><div class="card-label">Dark Pool % <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA 오프거래소 거래량 ÷ yfinance 총거래량</b><br>다크풀·ATS·내부화는 거의 100% 기관. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br><b>IAR</b> = |Inst Δ|/(|Pro Δ|+|Retail Δ|) — 1.5↑ 기관 지배.<br><b>Divergence</b>: 가격 slope vs 기관 OBV slope (5일 회귀).</span></span></div>
       <div class="card-value">42.3%</div>
-      <div class="card-sub">IAR 0.78 · CONVERGENCE</div>
+      <div class="card-sub">IAR 1.78 · BULLISH_DIVERGENCE</div>
     </div>
     <div class="card"><div class="card-label">Short % · CTB <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA Reg SHO 공매도 비율</b> · <b>iborrowdesk 차입 비용</b><br>Short%는 당일 공매도 체결 비율 — 포지션(short interest) 아님. MM 헤지 포함이라 40-55% 구조적 정상. <b>절대값으로 bearish 판단 금지</b>, slope + CTB 방향 + Case 조합으로만 해석.<br><br><b>CTB</b>: &lt;1% ETB · 5-15% HTB · &gt;15% Squeeze risk zone</span></span></div>
       <div class="card-value">45.8% · 0.36%</div>
@@ -118,7 +118,7 @@
   <div class="t-scroll">
   <table>
     <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Link</th></tr></thead>
-    <tbody><tr><td>2026-04-21</td><td>$81.00</td><td style="color:#1A7F5A;font-weight:600;">Bull 42%</td><td>DISTRIBUTION</td><td>1_MM_DELTA_HEDGE</td><td>GAMMA_SQUEEZE</td><td><a href="../../2026-04-21/ASTS_3Layer_Forensic_2026-04-21.html">리포트</a></td></tr><tr><td>2026-04-20</td><td>$78.50</td><td style="color:#1A7F5A;font-weight:600;">Bull 42%</td><td>DISTRIBUTION</td><td>1_MM_DELTA_HEDGE</td><td>GAMMA_SQUEEZE</td><td><a href="../../2026-04-20/ASTS_3Layer_Forensic_2026-04-20.html">리포트</a></td></tr></tbody>
+    <tbody><tr><td>2026-04-21</td><td>$81.00</td><td style="color:#1A7F5A;font-weight:600;">Bull 74%</td><td>ACCUMULATION</td><td>1_MM_DELTA_HEDGE</td><td>GAMMA_SQUEEZE</td><td><a href="../../2026-04-21/ASTS_3Layer_Forensic_2026-04-21.html">리포트</a></td></tr><tr><td>2026-04-20</td><td>$78.50</td><td style="color:#1A7F5A;font-weight:600;">Bull 42%</td><td>DISTRIBUTION</td><td>1_MM_DELTA_HEDGE</td><td>GAMMA_SQUEEZE</td><td><a href="../../2026-04-20/ASTS_3Layer_Forensic_2026-04-20.html">리포트</a></td></tr></tbody>
   </table>
   </div>
 
@@ -198,16 +198,16 @@ lineChart('priceChart', [
   {label:'GEX Flip', data:[87.20001987848745, 87.19756208588338],     borderColor:'#1A7F5A', backgroundColor:'transparent', borderDash:[2,2]}
 ]);
 lineChart('probChart', [
-  {label:'Bullish', data:[41.7, 41.7], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'Bearish', data:[21.3, 21.3], borderColor:'#CF222B', backgroundColor:'transparent'}
+  {label:'Bullish', data:[41.7, 74.1], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Bearish', data:[21.3, 7.4], borderColor:'#CF222B', backgroundColor:'transparent'}
 ]);
 lineChart('shortChart', [
   {label:'Short %', data:[62.27998682802678, 45.75982902082189], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
   {label:'CTB %', data:[0.4143, 0.3633], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
 ]);
 lineChart('obvChart', [
-  {label:'Institutional Δ', data:[-18317663.290884998, -40643595.238961995], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'Retail Δ', data:[-10300299.371774808, -23506668.548167847], borderColor:'#CF222B', backgroundColor:'transparent'}
+  {label:'Institutional Δ', data:[-18317663.290884998, 18943235.444841173], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Retail Δ', data:[-10300299.371774808, 764421.3315963557], borderColor:'#CF222B', backgroundColor:'transparent'}
 ]);
 </script>
 </body>
