@@ -196,7 +196,7 @@ class SmartMoneyAnalyzer:
         data: Dict[str, Any] = {"partial": {}}
         print(f"[fetch] L4 chart (yfinance OHLCV)...", file=sys.stderr)
         data["l4"]   = self._safe(self.fetch_l4_chart,      "l4")
-        print(f"[fetch] L3 options (yfinance chain)...", file=sys.stderr)
+        print(f"[fetch] L3 options (CBOE delayed → yfinance fallback)...", file=sys.stderr)
         data["l3"]   = self._safe(self.fetch_l3_options,    "l3", data.get("l4", {}))
         print(f"[fetch] L2 short vol (FINRA)...", file=sys.stderr)
         data["l2"]   = self._safe(self.fetch_l2_short,      "l2")
@@ -1524,13 +1524,19 @@ def calculate_gex(chain: Dict, spot: float) -> Dict:
     부호: Call = + (dealer dampening), Put = - (dealer amplifying)
     단위: "1% 가격 변동 당 달러 노출"
 
-    Flip zone = 누적(cumulative) GEX 가 0 을 가로지르는 지점.
-    이유: per-strike 부호 전환은 유동성 낮은 strike 사이에서 micro-oscillation 을
-    만들어 노이즈가 많고 (특히 지수 옵션처럼 strike 간격이 조밀할 때 18+ 교차 발생),
-    실제 dealer gamma regime 전환을 나타내지 못함. SpotGamma/Cboe Vol Labs 표준은
-    strike 오름차순으로 GEX 를 누적한 뒤 0 crossing 을 찾는 방식 — monotonic 에 가까워
-    보통 단일 교차가 나오며 실제 레짐 전환을 포착.
+    Flip zone = magnitude-filtered per-strike GEX 0-crossing, spot 최근접 선택.
+
+    배경:
+      · Per-strike 단순 crossing 은 조밀한 strike grid (지수 $5 간격) 에서 유동성
+        낮은 strike 끼리의 micro-oscillation 을 집어 노이즈 (SPX 18+ 교차).
+      · Cumulative crossing 은 지수에는 단일 깨끗한 교차 주지만, 개별 주식 (MSTR
+        $170 → flip $146 등) 에서는 deep ITM put wall 이 누적을 끌어내려 실제
+        spot 근처 감마 regime 전환점이 아닌 put-wall 위치를 반환.
+      · 해결: 각 crossing 의 양옆 GEX 절대값이 "전체 max|GEX| × FLIP_MIN_RATIO"
+        이상인 것만 유효 crossing 으로 간주 후 spot 최근접 선택. 노이즈 필터 +
+        spot 근처 실효 전환점 유지. 지수·주식 모두에 일관.
     """
+    FLIP_MIN_RATIO = 0.05   # max|GEX| 대비 5% 이상이어야 유효 crossing
     results = {}
     for opt_type in ("calls", "puts"):
         for opt in chain[opt_type]:
@@ -1540,17 +1546,25 @@ def calculate_gex(chain: Dict, spot: float) -> Dict:
             g = +raw if opt_type == "calls" else -raw
             results[strike] = results.get(strike, 0) + g
     strikes = sorted(results.keys())
+    max_abs = max((abs(v) for v in results.values()), default=0)
+    threshold = max_abs * FLIP_MIN_RATIO
 
-    # Cumulative GEX crossings (low → high strike)
-    cum = 0.0
-    prev_cum = 0.0
+    # Per-strike crossings, magnitude-filtered
     crossings: List[float] = []
-    for i, s in enumerate(strikes):
-        cum += results[s]
-        if i > 0 and prev_cum * cum < 0 and (abs(prev_cum) + abs(cum)) > 0:
-            f = (strikes[i-1] * abs(cum) + s * abs(prev_cum)) / (abs(prev_cum) + abs(cum))
+    for i in range(len(strikes)-1):
+        g1 = results[strikes[i]]; g2 = results[strikes[i+1]]
+        if g1 * g2 < 0 and (abs(g1) + abs(g2)) > 0 and max(abs(g1), abs(g2)) >= threshold:
+            f = (strikes[i]*abs(g2) + strikes[i+1]*abs(g1)) / (abs(g1)+abs(g2))
             crossings.append(f)
-        prev_cum = cum
+
+    # Fallback: 필터 통과한 crossing 없으면 (모든 crossing 이 micro-noise)
+    #   max-magnitude crossing 을 강제 채택 (threshold 무시)
+    if not crossings:
+        for i in range(len(strikes)-1):
+            g1 = results[strikes[i]]; g2 = results[strikes[i+1]]
+            if g1 * g2 < 0 and (abs(g1) + abs(g2)) > 0:
+                f = (strikes[i]*abs(g2) + strikes[i+1]*abs(g1)) / (abs(g1)+abs(g2))
+                crossings.append(f)
 
     flip = None
     if crossings and spot > 0:
