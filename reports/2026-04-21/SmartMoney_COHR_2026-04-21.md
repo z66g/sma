@@ -23,7 +23,7 @@ generated_by: Smart Money Analyzer (sma.py)
 | CTB Fee            | 0.26% |
 | Available Shares   | 3M |
 | Max Pain           | $320.00 |
-| GEX Flip Zone      | N/A |
+| GEX Flip Zone      | $332.46 |
 | Net GEX            | -117,744 |
 | Scenario [A] Bull  | 35.0% |
 | Scenario [B] Neut  | 40.0% |
@@ -51,4 +51,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
-| 2026-04-21 | $347.51 | 901,929 | CONVERGENCE | 44.7% | 33.4% | 0.26% | 3M | N/A | $320.00 |
+| 2026-04-21 | $347.51 | 901,929 | CONVERGENCE | 44.7% | 33.4% | 0.26% | 3M | $332.46 | $320.00 |
