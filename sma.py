@@ -2107,12 +2107,30 @@ def render_index_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
     title = f"{tag} Index Options — {meta['date']}"
 
     gex_by_strike = l3.get("gex_by_strike", {}) or {}
-    gex_labels = sorted(gex_by_strike.keys())
-    gex_vals   = [gex_by_strike[k] for k in gex_labels]
+    all_strikes = sorted(gex_by_strike.keys())
     net_gex = l3.get("net_gex") or 0
     flip    = l3.get("flip_zone")
     mp      = l3.get("max_pain")
     mp_dist = l3.get("max_pain_dist_pct")
+
+    # 차트 X축: spot ±5% 윈도우 + 그 내에서도 |GEX| 가 전체 max 의 0.5% 이상인 strike 만.
+    # 지수 chain 은 ±60% 까지 strike 가 나열되고 spot 근처라도 대부분 micro-OI 라
+    # 단순 윈도우만으론 200+ bar 가 겹쳐 보기 힘듦. magnitude 임계로 실효 bar 만 남김.
+    if price > 0 and all_strikes and gex_by_strike:
+        lo, hi = price * 0.95, price * 1.05
+        max_abs = max(abs(v) for v in gex_by_strike.values()) or 1
+        thr = max_abs * 0.005
+        view_strikes = [s for s in all_strikes if lo <= s <= hi and abs(gex_by_strike[s]) >= thr]
+        # fallback: 윈도우 안 bar 가 너무 적으면 임계 풀고 윈도우만 적용
+        if len(view_strikes) < 20:
+            view_strikes = [s for s in all_strikes if lo <= s <= hi]
+        # 또 적으면 전체
+        if len(view_strikes) < 10:
+            view_strikes = all_strikes
+    else:
+        view_strikes = all_strikes
+    gex_labels = view_strikes
+    gex_vals   = [gex_by_strike[k] for k in view_strikes]
 
     # 레짐 해석 (positive GEX = pinning, negative = amplification)
     if net_gex > 0:
@@ -2128,68 +2146,41 @@ def render_index_html(a: Dict, analyzer: SmartMoneyAnalyzer) -> str:
         regime_color = COLOR["muted"]
         regime_desc = "포지셔닝 방향성 미약."
 
-    # Spot vs Flip Zone 위치
     flip_note = ""
     if flip and price:
-        if price > flip:
-            flip_note = f"Spot(${price:.2f}) > Flip(${flip:.2f}) → 현재 핀닝 구간"
-        else:
-            flip_note = f"Spot(${price:.2f}) < Flip(${flip:.2f}) → 현재 증폭 구간"
+        flip_note = (f"Spot(${price:.2f}) > Flip(${flip:.2f}) → 현재 핀닝 구간" if price > flip
+                     else f"Spot(${price:.2f}) < Flip(${flip:.2f}) → 현재 증폭 구간")
 
-    # Max Pain 방향
     mp_note = ""
     if mp and price:
         pull = "상방" if mp > price else "하방"
         mp_note = f"Max Pain(${mp:.2f})은 스팟 대비 {pull} ({mp_dist:+.2f}%)"
 
-    # 3-tile overview
-    def _tile(label, value, sub, color):
-        return f"""
-<div style="flex:1;min-width:140px;background:{COLOR['bg_card']};border-left:3px solid {color};
-            border-radius:0 6px 6px 0;padding:10px 14px;">
-  <div style="font-size:10px;color:{COLOR['muted']};text-transform:uppercase;letter-spacing:0.05em;">{label}</div>
-  <div style="font-size:18px;font-weight:700;color:{color};margin-top:2px;">{value}</div>
-  <div style="font-size:11px;color:{COLOR['muted']};margin-top:2px;">{sub}</div>
-</div>"""
-
-    tiles = (
-        _tile("Spot Price", f"${price:.2f}",
-              f"Expiry {l3.get('expiry','-')} · DTE {l3.get('dte','-')}", COLOR['info'])
-      + _tile("Net GEX", fmt_num(net_gex, '', 0),
-              regime.split(' — ')[0], regime_color)
-      + _tile("Max Pain", f"${mp:.2f}" if mp else "N/A",
-              f"{mp_dist:+.2f}%" if mp_dist is not None else "-", COLOR['warn'])
-      + _tile("GEX Flip Zone", f"${flip:.2f}" if flip else "N/A",
-              flip_note if flip else "-", COLOR['warn'])
-    )
-
-    # L3 metrics table
+    # L3 metrics table — 핵심 4개 행은 배경색으로 강조
     rows = [
         ["Expiry",         l3.get("expiry","-")],
         ["DTE",            str(l3.get("dte","-"))],
-        ["Spot",           f"${price:.2f}"],
-        ["Max Pain",       f"${mp:.2f}" if mp else "N/A"],
+        ["Spot",           f"${price:.2f}"],                                                   # 2: blue
+        ["Max Pain",       f"${mp:.2f}" if mp else "N/A"],                                     # 3: red
         ["Max Pain Dist",  fmt_pct(mp_dist) if mp_dist is not None else "N/A"],
-        ["Net GEX",        fmt_num(net_gex, '', 0)],
-        ["GEX Flip Zone",  f"${flip:.2f}" if flip else "N/A"],
+        ["Net GEX",        fmt_num(net_gex, '', 0)],                                           # 5: amber
+        ["GEX Flip Zone",  f"${flip:.2f}" if flip else "N/A"],                                 # 6: amber
         ["P/C OI",         f"{l3.get('pc_oi'):.2f}" if l3.get("pc_oi") is not None else "N/A"],
         ["P/C Volume",     f"{l3.get('pc_vol'):.2f}" if l3.get("pc_vol") is not None else "N/A"],
         ["IV Skew (P-C)",  f"{l3.get('skew')*100:+.2f}pp" if l3.get("skew") is not None else "N/A"],
         ["Strike 개수",    str(len({c['strike'] for c in (l3.get('calls') or [])} | {p['strike'] for p in (l3.get('puts') or [])}))],
         ["Data Source",    l3.get("_source","cboe_delayed")],
     ]
-    table_html = f'<div class="tbl-scroll">{_table(["Metric","Value"], rows)}</div>'
+    highlight = {
+        2: COLOR['alert_blue'],    # Spot
+        3: COLOR['alert_red'],     # Max Pain
+        5: COLOR['alert_amber'],   # Net GEX
+        6: COLOR['alert_amber'],   # GEX Flip Zone
+    }
+    table_html = f'<div class="tbl-scroll">{_table(["Metric","Value"], rows, highlight_rows=highlight)}</div>'
 
-    # GEX chart data → JS
+    # GEX chart — X축: 필터된 윈도우. Chart.js category 축이라 bar 사이 간격 자동.
     gex_bar_colors = [COLOR['bull'] if v >= 0 else COLOR['bear'] for v in gex_vals]
-    annotations = []
-    if flip:
-        annotations.append(f"{{type:'line',scaleID:'x',value:{flip},borderColor:'{COLOR['warn']}',borderWidth:1.5,label:{{display:true,content:'Flip ${flip:.2f}',position:'start'}}}}")
-    if price:
-        annotations.append(f"{{type:'line',scaleID:'x',value:{price},borderColor:'{COLOR['info']}',borderWidth:1.5,borderDash:[6,4],label:{{display:true,content:'Spot ${price:.2f}'}}}}")
-    if mp:
-        annotations.append(f"{{type:'line',scaleID:'x',value:{mp},borderColor:'{COLOR['warn']}',borderWidth:1.5,borderDash:[2,3],label:{{display:true,content:'Max Pain ${mp:.2f}'}}}}")
-
     chart_js = f"""
 Chart.defaults.font.family = {json.dumps(FONT)};
 Chart.defaults.color = "{COLOR['text']}";
@@ -2201,8 +2192,15 @@ new Chart(document.getElementById('gexChart'), {{
   }},
   options:{{
     maintainAspectRatio:false,
-    plugins:{{ legend:{{display:false}}, title:{{display:true,text:'Gamma Exposure (GEX) by Strike — {tag}'}} }},
-    scales:{{ y:{{grid:{{color:'{COLOR['chart_grid']}'}}}}, x:{{grid:{{display:false}}}} }}
+    plugins:{{ legend:{{display:false}}, title:{{display:true,text:'GEX by Strike — {tag} (spot ±5%, 주요 strike 만)'}} }},
+    scales:{{
+      y:{{ grid:{{color:'{COLOR['chart_grid']}'}}, ticks:{{ callback:function(v){{
+        var a=Math.abs(v); if(a>=1e9)return (v/1e9).toFixed(1)+'B';
+        if(a>=1e6)return (v/1e6).toFixed(0)+'M';
+        if(a>=1e3)return (v/1e3).toFixed(0)+'k'; return v;
+      }} }} }},
+      x:{{ grid:{{display:false}}, ticks:{{ maxRotation:60, minRotation:45, autoSkip:true, maxTicksLimit:20 }} }}
+    }}
   }}
 }});
 """
@@ -2225,7 +2223,23 @@ new Chart(document.getElementById('gexChart'), {{
   .tbl-scroll table {{ min-width:100%; border-collapse:collapse; font-size:12px; }}
   .tbl-scroll th, .tbl-scroll td {{ border:0.5px solid {COLOR['border']}; padding:4px 6px; }}
   .tbl-scroll th {{ background:{COLOR['bg_panel']}; color:{COLOR['muted']}; text-align:left; }}
-  @media (max-width: 900px) {{ .tiles {{ flex-direction:column !important; }} }}
+  .chart-wrap {{ position:relative; height:420px; }}
+  .grid-2 {{ display:grid; grid-template-columns:1.6fr 1fr; gap:12px; align-items:start; }}
+
+  /* 태블릿/좁은 창 — 차트와 표 세로 스택 */
+  @media (max-width: 1024px) {{
+    .grid-2 {{ grid-template-columns:1fr !important; }}
+    .chart-wrap {{ height:360px; }}
+  }}
+  /* 모바일 — 여백·폰트 축소, 차트 낮게 */
+  @media (max-width: 700px) {{
+    body {{ padding:14px !important; font-size:12.5px; }}
+    .wrap {{ max-width:100% !important; }}
+    .hdr h1 {{ font-size:17px; }}
+    .hdr .sub {{ font-size:11px; }}
+    .chart-wrap {{ height:300px; }}
+    canvas {{ max-width:100%; }}
+  }}
 </style>
 </head>
 <body>
@@ -2238,8 +2252,6 @@ new Chart(document.getElementById('gexChart'), {{
   <div class="sub">{tag} 지수 옵션 GEX / Max Pain / Flip Zone · Data: CBOE delayed quotes (15-min)</div>
 </div>
 
-<div class="tiles" style="display:flex;gap:10px;margin-bottom:16px;">{tiles}</div>
-
 <div style="padding:10px 14px;background:{COLOR['alert_blue']};border-left:3px solid {regime_color};
             border-radius:0 6px 6px 0;margin-bottom:16px;">
   <div style="font-size:13px;font-weight:700;color:{regime_color};">{regime}</div>
@@ -2248,10 +2260,10 @@ new Chart(document.getElementById('gexChart'), {{
   {f'<div style="font-size:11px;color:{COLOR["muted"]};margin-top:2px;">{mp_note}</div>' if mp_note else ''}
 </div>
 
-<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:12px;align-items:start;">
+<div class="grid-2">
   <div>
-    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">GEX by Strike</div>
-    <div style="position:relative;height:380px;"><canvas id="gexChart"></canvas></div>
+    <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">GEX by Strike (spot ±5%, 주요 strike 만)</div>
+    <div class="chart-wrap"><canvas id="gexChart"></canvas></div>
   </div>
   <div>
     <div style="font-weight:600;font-size:12px;color:{COLOR['muted']};margin-bottom:6px;">L3 Metrics</div>
