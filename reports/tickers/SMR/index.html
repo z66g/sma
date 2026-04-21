@@ -93,14 +93,14 @@
     </div>
     <div class="card"><div class="card-label">Dark Pool % <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA 오프거래소 거래량 ÷ 총거래량</b><br>다크풀·ATS·내부화 비중. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br><b>Total OBV (5d)</b>: CLV 가중 signed volume 누적 — 전체 시장 방향.<br><b>Divergence</b>: 가격 slope vs OBV 누적 slope (5일 회귀).</span></span></div>
       <div class="card-value">44.4%</div>
-      <div class="card-sub">OBV +12.2M · CONVERGENCE</div>
+      <div class="card-sub">OBV +12.0M · CONVERGENCE</div>
     </div>
     <div class="card"><div class="card-label">Short % · CTB <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA Reg SHO 공매도 비율</b> · <b>iborrowdesk 차입 비용</b><br>Short%는 당일 공매도 체결 비율 — 포지션(short interest) 아님. MM 헤지 포함이라 40-55% 구조적 정상. <b>절대값으로 bearish 판단 금지</b>, slope + CTB 방향 + Case 조합으로만 해석.<br><br><b>CTB</b>: &lt;1% ETB · 5-15% HTB · &gt;15% Squeeze risk zone</span></span></div>
       <div class="card-value">32.5% · 0.42%</div>
       <div class="card-sub">SHORT_COVERING</div>
     </div>
     <div class="card"><div class="card-label">Max Pain · GEX Flip <span class="tt tt-i">ⓘ<span class="tt-body"><b>Max Pain</b>: 만기일 MM 헤지 비용이 최소화되는 주가 — 핀닝 중력점.<br><b>GEX Flip Zone</b>: MM gamma 부호가 +에서 −로 바뀌는 spot 근처 strike.<br>spot &gt; Flip → 핀닝 regime(변동성 억제) · spot &lt; Flip → 증폭 regime.<br>DTE ≤ 5 일 때만 pinning 신호 유효 (§8.2).</span></span></div>
-      <div class="card-value">$11.00 · $11.53</div>
+      <div class="card-value">$11.00 · $11.57</div>
       <div class="card-sub">DTE 3 · GAMMA_SQUEEZE</div>
     </div>
     
@@ -195,7 +195,7 @@ function lineChart(id, datasets) {
 lineChart('priceChart', [
   {label:'Price',    data:[10.070099830627441, 10.25, 12.789999961853027],   borderColor:'#0969DA', backgroundColor:'transparent', borderWidth:2.5},
   {label:'Max Pain', data:[12.0, 12.0, 11.0], borderColor:'#9A6700', backgroundColor:'transparent', borderDash:[4,3]},
-  {label:'GEX Flip', data:[10.462787036264476, 10.453107725982616, 11.531687315569828],     borderColor:'#1A7F5A', backgroundColor:'transparent', borderDash:[2,2]}
+  {label:'GEX Flip', data:[10.462787036264476, 10.453107725982616, 11.568952841947597],     borderColor:'#1A7F5A', backgroundColor:'transparent', borderDash:[2,2]}
 ]);
 lineChart('probChart', [
   {label:'Bullish', data:[41.7, 77.0, 72.2], borderColor:'#1A7F5A', backgroundColor:'transparent'},
@@ -206,7 +206,7 @@ lineChart('shortChart', [
   {label:'CTB %', data:[0.3399, 0.454, 0.4244], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
 ]);
 lineChart('obvChart', [
-  {label:'Total OBV (5d)', data:[-21172300.0, 57942600.0, 12194469.019577807], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Total OBV (5d)', data:[-21172300.0, 57942600.0, 11991637.931181617], borderColor:'#1A7F5A', backgroundColor:'transparent'},
   {label:'Dark Pool %',   data:[58.786337887265326, 44.85218367354909, 44.37692100873249], borderColor:'#0969DA', backgroundColor:'transparent', yAxisID:'y1'}
 ]);
 </script>

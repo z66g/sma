@@ -16,14 +16,14 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Total OBV Δ (5d)   | 690,353 |
+| Total OBV Δ (5d)   | 690,414 |
 | Divergence         | BULLISH_DIVERGENCE |
 | Dark Pool %        | 43.5% |
 | Short %            | 66.2% |
 | CTB Fee            | 0.43% |
 | Available Shares   | 4M |
 | Max Pain           | $125.00 |
-| GEX Flip Zone      | $125.01 |
+| GEX Flip Zone      | $127.38 |
 | Net GEX            | 1M |
 | Scenario [A] Bull  | 72.2% |
 | Scenario [B] Neut  | 18.5% |
@@ -51,4 +51,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
-| 2026-04-21 | $120.46 | 690,353 | BULLISH_DIVERGENCE | 43.5% | 66.2% | 0.43% | 4M | $125.01 | $125.00 |
+| 2026-04-21 | $120.46 | 690,414 | BULLISH_DIVERGENCE | 43.5% | 66.2% | 0.43% | 4M | $127.38 | $125.00 |
