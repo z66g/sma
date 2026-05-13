@@ -1426,5 +1426,107 @@
       "immediate_resistance": null,
       "immediate_support": 16.010000228881836
     }
+  },
+  {
+    "ticker": "FLNC",
+    "date": "2026-05-13",
+    "price": 21.280000686645508,
+    "is_index": false,
+    "warnings": [],
+    "patterns": [
+      "GAMMA_SQUEEZE_SETUP"
+    ],
+    "macro_env": "NEUTRAL",
+    "scenarios": {
+      "A_bullish": 35.2,
+      "B_neutral": 37.0,
+      "C_bearish": 27.8,
+      "raw_score": 0.15
+    },
+    "l1": {
+      "scenario": "DISTRIBUTION",
+      "signal": "BEARISH",
+      "confidence": "HIGH",
+      "dp_pct": 44.88437522219776,
+      "delta_total": -11488656.895168928,
+      "divergence": "BEARISH_DIVERGENCE",
+      "cumulative_daily": [
+        {
+          "date": "2026-05-06",
+          "cum": -64352.637286433004,
+          "day": -64352.637286433004
+        },
+        {
+          "date": "2026-05-07",
+          "cum": -1531636.9960517434,
+          "day": -1467284.3587653104
+        },
+        {
+          "date": "2026-05-08",
+          "cum": -901864.3521515332,
+          "day": 629772.6439002102
+        },
+        {
+          "date": "2026-05-11",
+          "cum": 95481.32893691387,
+          "day": 997345.6810884471
+        },
+        {
+          "date": "2026-05-12",
+          "cum": -11488656.895168928,
+          "day": -11584138.224105842
+        }
+      ],
+      "obv_source": "total_only_v6",
+      "window_days": 5,
+      "inst_abs_volume": 69979749.039276,
+      "lit_abs_volume": 76355649.960724
+    },
+    "l2": {
+      "scenario": "SHORT_COVERING",
+      "signal": "BULLISH",
+      "case": "SHORT_COVERING",
+      "short_pct_latest": 42.94507090488168,
+      "short_avg_14d": 59.63421144249163,
+      "short_slope": -0.4340173536753642,
+      "slope_dir": "FALLING",
+      "anomaly_z": -2.188821704742641,
+      "ctb_fee": 0.4298,
+      "ctb_delta_pct": 12.9863301787592,
+      "shares_available": 300000.0
+    },
+    "phase": {
+      "p1_date": "2026-04-29 ~ 2026-05-12",
+      "p2_date": "2026-05-13",
+      "p3_date": "2026-05-20 ~ 2026-06-11",
+      "p3_direction": "RANGE",
+      "p3_target_hi": 22.90417993692922,
+      "p3_target_lo": 16.010000228881836,
+      "p3_bb_width": 105.74066786590728
+    },
+    "l3": {
+      "scenario": "GAMMA_SQUEEZE",
+      "signal": "BULLISH",
+      "expiry": "2026-05-15",
+      "dte": 2,
+      "max_pain": 16.0,
+      "max_pain_dist_pct": 33.000004291534424,
+      "pc_oi": 0.4671008524087731,
+      "pc_vol": 0.8199242014076882,
+      "skew": -0.14320000000000022,
+      "net_gex": 1139782.688408254,
+      "flip_zone": 22.993208055096463
+    },
+    "l4": {
+      "scenario": "RANGE_BOUND",
+      "signal": "NEUTRAL",
+      "ma_alignment": "MIXED",
+      "sma20": 14.98274998664856,
+      "sma50": 14.984899997711182,
+      "sma200": 16.154825019836426,
+      "bb_width_pct": 105.74066786590728,
+      "immediate_resistance": null,
+      "immediate_support": 16.010000228881836
+    }
   }
 ]
