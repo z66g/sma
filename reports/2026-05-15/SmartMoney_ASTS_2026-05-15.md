@@ -16,9 +16,9 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Total OBV Δ (5d)   | 23M |
+| Total OBV Δ (5d)   | 5M |
 | Divergence         | CONVERGENCE |
-| Dark Pool %        | 39.2% |
+| Dark Pool %        | 38.7% |
 | Short %            | 44.6% |
 | CTB Fee            | 0.40% |
 | Available Shares   | 5M |
@@ -51,4 +51,4 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
 |------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
-| 2026-05-15 | $83.01 | 23M | CONVERGENCE | 39.2% | 44.6% | 0.40% | 5M | $72.52 | $79.00 |
+| 2026-05-15 | $83.01 | 5M | CONVERGENCE | 38.7% | 44.6% | 0.40% | 5M | $72.52 | $79.00 |
