@@ -1,0 +1,102 @@
+{
+  "ticker": "MDT",
+  "date": "2026-05-27",
+  "price": 77.5999984741211,
+  "is_index": false,
+  "warnings": [],
+  "patterns": [
+    "GAMMA_SQUEEZE_SETUP"
+  ],
+  "macro_env": "NEUTRAL",
+  "scenarios": {
+    "A_bullish": 53.7,
+    "B_neutral": 27.8,
+    "C_bearish": 18.5,
+    "raw_score": 0.5
+  },
+  "l1": {
+    "scenario": "ACCUMULATION",
+    "signal": "BULLISH",
+    "confidence": "HIGH",
+    "dp_pct": 44.05296710015065,
+    "delta_total": 2060830.9461263237,
+    "divergence": "BULLISH_DIVERGENCE",
+    "cumulative_daily": [
+      {
+        "date": "2026-05-19",
+        "cum": 860712.183496131,
+        "day": 860712.183496131
+      },
+      {
+        "date": "2026-05-20",
+        "cum": 1906830.0132975816,
+        "day": 1046117.8298014505
+      },
+      {
+        "date": "2026-05-21",
+        "cum": 3065539.409643038,
+        "day": 1158709.3963454564
+      },
+      {
+        "date": "2026-05-22",
+        "cum": 2599698.6319212154,
+        "day": -465840.7777218228
+      },
+      {
+        "date": "2026-05-26",
+        "cum": 2060830.9461263237,
+        "day": -538867.6857948918
+      }
+    ],
+    "obv_source": "total_only_v6",
+    "window_days": 5,
+    "inst_abs_volume": 18232514.607490003,
+    "lit_abs_volume": 26346785.392509997
+  },
+  "l2": {
+    "scenario": "MM_HEDGE",
+    "signal": "NEUTRAL",
+    "case": "CASE_1_MM_DELTA_HEDGE",
+    "short_pct_latest": 21.979191594502808,
+    "short_avg_14d": 18.15850041796521,
+    "short_slope": 0.4811552904698194,
+    "slope_dir": "RISING",
+    "anomaly_z": 0.7142369146033523,
+    "ctb_fee": 0.2566,
+    "ctb_delta_pct": -33.60931435963778,
+    "shares_available": 10000000.0
+  },
+  "phase": {
+    "p1_date": "2026-05-12 ~ 2026-05-26",
+    "p2_date": "2026-05-27",
+    "p3_date": "2026-06-03 ~ 2026-06-25",
+    "p3_direction": "UPWARD",
+    "p3_target_hi": 81.30324448219646,
+    "p3_target_lo": 74.4000015258789,
+    "p3_bb_width": 8.586182883346718
+  },
+  "l3": {
+    "scenario": "GAMMA_SQUEEZE",
+    "signal": "BULLISH",
+    "expiry": "2026-05-29",
+    "dte": 2,
+    "max_pain": 78.0,
+    "max_pain_dist_pct": -0.5128224690755208,
+    "pc_oi": 0.6547640736017489,
+    "pc_vol": 0.4706734250543085,
+    "skew": 0.2722,
+    "net_gex": -519842.261604279,
+    "flip_zone": 78.9086444210022
+  },
+  "l4": {
+    "scenario": "DOWNTREND",
+    "signal": "BEARISH",
+    "ma_alignment": "FULL_BEAR",
+    "sma20": 77.95650062561035,
+    "sma50": 82.98720031738281,
+    "sma200": 93.07654991149903,
+    "bb_width_pct": 8.586182883346718,
+    "immediate_resistance": 79.05500030517578,
+    "immediate_support": 74.4000015258789
+  }
+}
