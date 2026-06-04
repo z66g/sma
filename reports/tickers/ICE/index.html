@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<title>ICE · Smart Money History</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1F2328; margin:0; padding:24px; font-size:13px;
+         -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+         -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
+  .wrap { max-width:1200px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px 0; }
+  h2 { font-size:14px; color:#9A6700; border-bottom:0.5px solid #9A6700; padding-bottom:4px; margin-top:24px; }
+  .meta { color:#656D76; font-size:12px; margin-bottom:16px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; }
+  .card { background:#F6F8FA; border:0.5px solid #D0D7DE; border-radius:6px; padding:12px; }
+  .card-label { font-size:11px; color:#656D76; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em; }
+  .card-value { font-size:18px; font-weight:600; }
+  .card-sub { font-size:11px; color:#656D76; margin-top:4px; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th,td { border:0.5px solid #D0D7DE; padding:6px 8px; text-align:left; }
+  th { background:#EAEEF2; color:#656D76; font-weight:600; }
+  tr:nth-child(even) { background:#F6F8FA; }
+  a { color:#0969DA; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  canvas { max-height:200px; }
+  .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+  .nav { margin-bottom:16px; font-size:12px; }
+  .nav a { color:#656D76; }
+
+  /* 표 가로 스크롤 wrapper (긴 테이블 대응) */
+  .t-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+  .t-scroll table { min-width:100%; }
+
+  /* ── 반응형 ────────────────────────────────────────── */
+  @media (max-width:1024px) {
+    .chart-grid { grid-template-columns:1fr; }
+    .grid { grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); }
+  }
+  @media (max-width:720px) {
+    body { padding:14px !important; font-size:12.5px; }
+    .wrap { max-width:100% !important; }
+    h1 { font-size:18px; }
+    h2 { font-size:13px; }
+    .grid { grid-template-columns:1fr; }
+    canvas { max-height:180px; }
+    .tt .tt-body { max-width:88vw; font-size:10px; }
+    /* narrative에서 Claude가 생성한 2x2 카드 그리드도 모바일에서 1열 */
+    #narrative-root div[style*="grid-template-columns:repeat(auto-fit"] {
+      grid-template-columns:1fr !important;
+    }
+  }
+
+  /* Pure-CSS 툴팁 */
+  .tt { position:relative; display:inline-block; cursor:help; }
+  .tt-i { color:#0969DA; margin-left:4px; font-weight:600; font-size:11px; }
+  .tt .tt-body {
+    visibility:hidden; opacity:0; transition:opacity 0.12s;
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:calc(100% + 8px); z-index:20;
+    background:#1F2328; color:#FFFFFF;
+    padding:8px 10px; border-radius:6px;
+    font-size:11px; line-height:1.5; text-align:left;
+    white-space:normal; width:max-content; max-width:320px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15); font-weight:400;
+  }
+  .tt .tt-body::after {
+    content:''; position:absolute; top:100%; left:50%;
+    margin-left:-5px; border:5px solid transparent; border-top-color:#1F2328;
+  }
+  .tt:hover .tt-body { visibility:visible; opacity:1; }
+  .tt-left .tt-body { left:0 !important; transform:none !important; }
+  .tt-left .tt-body::after { left:14px !important; margin-left:0 !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav"><a href="../../">← 전체 대시보드</a></div>
+  <h1>ICE</h1>
+  <div class="meta">Latest: 2026-06-04 · $138.45 · 1개 리포트 · <span style='color:#656D76;font-size:11px;'>패턴 없음</span></div>
+
+  <h2>Overview (latest)</h2>
+  <div class="grid">
+    
+    <div class="card"><div class="card-label">Top Scenario <span class="tt tt-i">ⓘ<span class="tt-body"><b>가중 signal 합산 시나리오 확률</b><br>Bullish/Neutral/Bearish 중 가장 높은 확률이 대표 시나리오. Score는 −1.00~+1.00 범위, Macro는 FRED 기반 유동성 분류.<br><br>Bullish 30% · Bearish 30%</span></span></div>
+      <div class="card-value" style="color:#9A6700;">Neutral · 40.0%</div>
+      <div class="card-sub">Score -0.10 · Macro NEUTRAL</div>
+    </div>
+    <div class="card"><div class="card-label">Dark Pool % <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA 오프거래소 거래량 ÷ 총거래량</b><br>다크풀·ATS·내부화 비중. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br><b>Total OBV (5d)</b>: CLV 가중 signed volume 누적 — 전체 시장 방향.<br><b>Divergence</b>: 가격 slope vs OBV 누적 slope (5일 회귀).</span></span></div>
+      <div class="card-value">35.0%</div>
+      <div class="card-sub">OBV +803k · BULLISH_DIVERGENCE</div>
+    </div>
+    <div class="card"><div class="card-label">Short % · CTB <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA Reg SHO 공매도 비율</b> · <b>iborrowdesk 차입 비용</b><br>Short%는 당일 공매도 체결 비율 — 포지션(short interest) 아님. MM 헤지 포함이라 40-55% 구조적 정상. <b>절대값으로 bearish 판단 금지</b>, slope + CTB 방향 + Case 조합으로만 해석.<br><br><b>CTB</b>: &lt;1% ETB · 5-15% HTB · &gt;15% Squeeze risk zone</span></span></div>
+      <div class="card-value">27.8% · 0.41%</div>
+      <div class="card-sub">MIXED</div>
+    </div>
+    <div class="card"><div class="card-label">Max Pain · GEX Flip <span class="tt tt-i">ⓘ<span class="tt-body"><b>Max Pain</b>: 만기일 MM 헤지 비용이 최소화되는 주가 — 핀닝 중력점.<br><b>GEX Flip Zone</b>: MM gamma 부호가 +에서 −로 바뀌는 spot 근처 strike.<br>spot &gt; Flip → 핀닝 regime(변동성 억제) · spot &lt; Flip → 증폭 regime.<br>DTE ≤ 5 일 때만 pinning 신호 유효 (§8.2).</span></span></div>
+      <div class="card-value">$143.00 · $142.01</div>
+      <div class="card-sub">DTE 1 · VOLATILITY_EXPANSION</div>
+    </div>
+    
+  </div>
+
+  <h2>시계열 추이</h2>
+  <div class="chart-grid">
+    <div class="card" style="grid-column:1/-1;"><div class="card-label">Price · Max Pain · GEX Flip</div><canvas id="priceChart"></canvas></div>
+    <div class="card"><div class="card-label">Total OBV (5d) vs Dark Pool %</div><canvas id="obvChart"></canvas></div>
+    <div class="card"><div class="card-label">Short % · CTB Fee</div><canvas id="shortChart"></canvas></div>
+    <div class="card" style="grid-column:1/-1;"><div class="card-label">Scenario Probabilities (%)</div><canvas id="probChart"></canvas></div>
+  </div>
+
+  <h2>전체 히스토리</h2>
+  <div class="t-scroll">
+  <table>
+    <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Link</th></tr></thead>
+    <tbody><tr><td>2026-06-04</td><td>$138.45</td><td style="color:#9A6700;font-weight:600;">Neut 40%</td><td>ACCUMULATION</td><td>MIXED</td><td>VOLATILITY_EXPANSION</td><td><a href="../../2026-06-04/ICE_3Layer_Forensic_2026-06-04.html">리포트</a></td></tr></tbody>
+  </table>
+  </div>
+
+  <h2>주간 AI 분석 리포트 히스토리</h2>
+  <p style="font-size:12px;color:#656D76;">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>
+
+  <div id="narrative-root"></div>
+
+  <div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
+    Data: <a href="../../data/ICE.json">ICE.json</a> ·
+    <a href="../../">Back to dashboard</a>
+  </div>
+</div>
+<script src="../../narrative.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.SMA_Narrative) {
+      window.SMA_Narrative.mount(document.getElementById('narrative-root'), "ICE");
+    }
+  });
+</script>
+<script>
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
+Chart.defaults.color = "#1F2328";
+// 글로벌 legend defaults는 per-chart 설정으로 덮어씀 (lineChart 안에서 boxWidth=40, usePointStyle=true)
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+const DATES = ["2026-06-04"];
+function lineChart(id, datasets) {
+  new Chart(document.getElementById(id), {
+    type:'line',
+    data:{ labels:DATES, datasets:datasets },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          display:datasets.length>1, position:'bottom',
+          labels:{
+            usePointStyle:true,         // ← 이게 핵심
+            boxWidth:40, boxHeight:10, padding:14,
+            generateLabels(chart) {
+              return chart.data.datasets.map((ds, i) => ({
+                text: ds.label,
+                fillStyle: ds.borderColor,      // 선 색으로 채움
+                strokeStyle: ds.borderColor,
+                lineWidth: ds.borderWidth || 2,
+                lineDash: ds.borderDash || [],  // dash 패턴 반영
+                pointStyle: 'line',
+                hidden: !chart.isDatasetVisible(i),
+                datasetIndex: i
+              }));
+            }
+          },
+          onClick(e, item, legend) {
+            const ci = legend.chart;
+            ci.setDatasetVisibility(item.datasetIndex, !ci.isDatasetVisible(item.datasetIndex));
+            ci.update();
+          }
+        },
+        tooltip:{
+          usePointStyle:true,
+          callbacks:{
+            labelPointStyle(ctx) {
+              // 툴팁의 마커도 선 형태로
+              return { pointStyle:'line', rotation:0 };
+            }
+          }
+        }
+      },
+      scales:{y:{grid:{color:'#EAEEF2'}},x:{grid:{display:false}}},
+      elements:{point:{radius:2},line:{tension:0.3,borderWidth:2}},
+    }
+  });
+}
+// Price · Max Pain · GEX Flip 통합 — 세 선 모두 같은 USD 축이라 한 차트에 넣기 자연스러움
+lineChart('priceChart', [
+  {label:'Price',    data:[138.4499969482422],   borderColor:'#0969DA', backgroundColor:'transparent', borderWidth:2.5},
+  {label:'Max Pain', data:[143.0], borderColor:'#9A6700', backgroundColor:'transparent', borderDash:[4,3]},
+  {label:'GEX Flip', data:[142.01302106881272],     borderColor:'#1A7F5A', backgroundColor:'transparent', borderDash:[2,2]}
+]);
+lineChart('probChart', [
+  {label:'Bullish', data:[30.0], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Bearish', data:[30.0], borderColor:'#CF222B', backgroundColor:'transparent'}
+]);
+lineChart('shortChart', [
+  {label:'Short %', data:[27.80115869412998], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
+  {label:'CTB %', data:[0.4081], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
+]);
+lineChart('obvChart', [
+  {label:'Total OBV (5d)', data:[803411.7500995293], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Dark Pool %',   data:[35.041918067516114], borderColor:'#0969DA', backgroundColor:'transparent', yAxisID:'y1'}
+]);
+</script>
+</body>
+</html>
