@@ -84,7 +84,7 @@
 <div class="wrap">
   <div class="nav"><a href="../../">← 전체 대시보드</a></div>
   <h1>LITE</h1>
-  <div class="meta">Latest: 2026-06-05 · $945.08 · 1개 리포트 · <span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">FINAL_ABSORPTION</span></div>
+  <div class="meta">Latest: 2026-06-05 · $945.08 · 2개 리포트 · <span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">FINAL_ABSORPTION</span></div>
 
   <h2>Overview (latest)</h2>
   <div class="grid">
@@ -120,7 +120,7 @@
   <div class="t-scroll">
   <table>
     <thead><tr><th>Date</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Link</th></tr></thead>
-    <tbody><tr><td>2026-06-05</td><td>$945.08</td><td style="color:#1A7F5A;font-weight:600;">Bull 55%</td><td>ACCUMULATION</td><td>MIXED</td><td>HEDGING</td><td><a href="../../2026-06-05/LITE_3Layer_Forensic_2026-06-05.html">리포트</a></td></tr></tbody>
+    <tbody><tr><td>2026-06-05</td><td>$945.08</td><td style="color:#1A7F5A;font-weight:600;">Bull 55%</td><td>ACCUMULATION</td><td>MIXED</td><td>HEDGING</td><td><a href="../../2026-06-05/LITE_3Layer_Forensic_2026-06-05.html">리포트</a></td></tr><tr><td>2026-06-05</td><td>$945.08</td><td style="color:#1A7F5A;font-weight:600;">Bull 55%</td><td>ACCUMULATION</td><td>MIXED</td><td>HEDGING</td><td><a href="../../2026-06-05/LITE_3Layer_Forensic_2026-06-05.html">리포트</a></td></tr></tbody>
   </table>
   </div>
 
@@ -147,7 +147,7 @@ Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", s
 Chart.defaults.color = "#1F2328";
 // 글로벌 legend defaults는 per-chart 설정으로 덮어씀 (lineChart 안에서 boxWidth=40, usePointStyle=true)
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
-const DATES = ["2026-06-05"];
+const DATES = ["2026-06-05", "2026-06-05"];
 function lineChart(id, datasets) {
   new Chart(document.getElementById(id), {
     type:'line',
@@ -195,21 +195,21 @@ function lineChart(id, datasets) {
 }
 // Price · Max Pain · GEX Flip 통합 — 세 선 모두 같은 USD 축이라 한 차트에 넣기 자연스러움
 lineChart('priceChart', [
-  {label:'Price',    data:[945.0800170898438],   borderColor:'#0969DA', backgroundColor:'transparent', borderWidth:2.5},
-  {label:'Max Pain', data:[900.0], borderColor:'#9A6700', backgroundColor:'transparent', borderDash:[4,3]},
-  {label:'GEX Flip', data:[946.5895061728394],     borderColor:'#1A7F5A', backgroundColor:'transparent', borderDash:[2,2]}
+  {label:'Price',    data:[945.0800170898438, 945.0800170898438],   borderColor:'#0969DA', backgroundColor:'transparent', borderWidth:2.5},
+  {label:'Max Pain', data:[900.0, 900.0], borderColor:'#9A6700', backgroundColor:'transparent', borderDash:[4,3]},
+  {label:'GEX Flip', data:[946.5895061728394, 946.5895061728394],     borderColor:'#1A7F5A', backgroundColor:'transparent', borderDash:[2,2]}
 ]);
 lineChart('probChart', [
-  {label:'Bullish', data:[55.0], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'Bearish', data:[15.0], borderColor:'#CF222B', backgroundColor:'transparent'}
+  {label:'Bullish', data:[55.0, 55.0], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Bearish', data:[15.0, 15.0], borderColor:'#CF222B', backgroundColor:'transparent'}
 ]);
 lineChart('shortChart', [
-  {label:'Short %', data:[45.95329160073606], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
-  {label:'CTB %', data:[0.25], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
+  {label:'Short %', data:[45.95329160073606, 45.95329160073606], borderColor:'#CF222B', yAxisID:'y', backgroundColor:'transparent'},
+  {label:'CTB %', data:[0.25, 0.2542], borderColor:'#9A6700', yAxisID:'y', backgroundColor:'transparent'}
 ]);
 lineChart('obvChart', [
-  {label:'Total OBV (5d)', data:[4366971.773615284], borderColor:'#1A7F5A', backgroundColor:'transparent'},
-  {label:'Dark Pool %',   data:[47.80582023420853], borderColor:'#0969DA', backgroundColor:'transparent', yAxisID:'y1'}
+  {label:'Total OBV (5d)', data:[4366971.773615284, 4366971.773615284], borderColor:'#1A7F5A', backgroundColor:'transparent'},
+  {label:'Dark Pool %',   data:[47.80582023420853, 47.80582023420853], borderColor:'#0969DA', backgroundColor:'transparent', yAxisID:'y1'}
 ]);
 </script>
 </body>
