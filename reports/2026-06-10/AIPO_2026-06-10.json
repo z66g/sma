@@ -1,0 +1,105 @@
+{
+  "ticker": "AIPO",
+  "date": "2026-06-10",
+  "price": 30.93000030517578,
+  "is_index": false,
+  "warnings": [
+    "l3 cboe: CBOE HTTP 403 — falling back to yfinance",
+    "l3: yfinance: no expiries"
+  ],
+  "patterns": [
+    "FINAL_ABSORPTION"
+  ],
+  "macro_env": "NEUTRAL",
+  "scenarios": {
+    "A_bullish": 55.0,
+    "B_neutral": 30.0,
+    "C_bearish": 15.0,
+    "raw_score": 0.35
+  },
+  "l1": {
+    "scenario": "ACCUMULATION",
+    "signal": "BULLISH",
+    "confidence": "HIGH",
+    "dp_pct": 74.92321408308075,
+    "delta_total": 8073.780823309338,
+    "divergence": "CONVERGENCE",
+    "cumulative_daily": [
+      {
+        "date": "2026-06-03",
+        "cum": 86310.81437206874,
+        "day": 86310.81437206874
+      },
+      {
+        "date": "2026-06-04",
+        "cum": 56615.643847291576,
+        "day": -29695.170524777164
+      },
+      {
+        "date": "2026-06-05",
+        "cum": 32357.591408679873,
+        "day": -24258.052438611703
+      },
+      {
+        "date": "2026-06-08",
+        "cum": 56625.216833056795,
+        "day": 24267.625424376918
+      },
+      {
+        "date": "2026-06-09",
+        "cum": 8073.780823309338,
+        "day": -48551.43600974746
+      }
+    ],
+    "obv_source": "total_only_v6",
+    "window_days": 5,
+    "inst_abs_volume": 5320123.119549001,
+    "lit_abs_volume": 3459668.880451
+  },
+  "l2": {
+    "scenario": "NEUTRAL",
+    "signal": "NEUTRAL",
+    "case": "SHORT_COVERING",
+    "short_pct_latest": 29.273145552119917,
+    "short_avg_14d": 54.546192050941045,
+    "short_slope": -1.9934243806299827,
+    "slope_dir": "FALLING",
+    "anomaly_z": -1.8794688223210263,
+    "ctb_fee": 1.1815,
+    "ctb_delta_pct": 1.1644832605531346,
+    "shares_available": 500000.0
+  },
+  "phase": {
+    "p1_date": "2026-05-27 ~ 2026-06-09",
+    "p2_date": "2026-06-10",
+    "p3_date": "2026-06-17 ~ 2026-07-10",
+    "p3_direction": "UPWARD",
+    "p3_target_hi": 34.39151027468917,
+    "p3_target_lo": 29.719999313354492,
+    "p3_bb_width": 12.30965309349748
+  },
+  "l3": {
+    "scenario": null,
+    "signal": "NEUTRAL",
+    "expiry": null,
+    "dte": null,
+    "max_pain": null,
+    "max_pain_dist_pct": null,
+    "pc_oi": null,
+    "pc_vol": null,
+    "skew": null,
+    "net_gex": null,
+    "flip_zone": null
+  },
+  "l4": {
+    "scenario": "RANGE_BOUND",
+    "signal": "NEUTRAL",
+    "ma_alignment": "MIXED",
+    "sma20": 32.397500324249265,
+    "sma50": 30.40960018157959,
+    "sma200": 25.35562002182007,
+    "bb_width_pct": 12.30965309349748,
+    "immediate_resistance": 31.079999923706055,
+    "immediate_support": 29.719999313354492
+  }
+}
