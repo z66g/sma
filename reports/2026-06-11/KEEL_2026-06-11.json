@@ -1,0 +1,102 @@
+{
+  "ticker": "KEEL",
+  "date": "2026-06-11",
+  "price": 5.25,
+  "is_index": false,
+  "warnings": [],
+  "patterns": [
+    "GAMMA_SQUEEZE_SETUP"
+  ],
+  "macro_env": "NEUTRAL",
+  "scenarios": {
+    "A_bullish": 35.2,
+    "B_neutral": 37.0,
+    "C_bearish": 27.8,
+    "raw_score": -0.05
+  },
+  "l1": {
+    "scenario": "DISTRIBUTION",
+    "signal": "BEARISH",
+    "confidence": "HIGH",
+    "dp_pct": 50.03570692968097,
+    "delta_total": -32567808.985802405,
+    "divergence": "CONVERGENCE",
+    "cumulative_daily": [
+      {
+        "date": "2026-06-04",
+        "cum": 651273.3063894906,
+        "day": 651273.3063894906
+      },
+      {
+        "date": "2026-06-05",
+        "cum": 6571483.1160796415,
+        "day": 5920209.80969015
+      },
+      {
+        "date": "2026-06-08",
+        "cum": 14779931.771214575,
+        "day": 8208448.655134933
+      },
+      {
+        "date": "2026-06-09",
+        "cum": 12977756.453456298,
+        "day": -1802175.317758277
+      },
+      {
+        "date": "2026-06-10",
+        "cum": -32567808.985802405,
+        "day": -45545565.4392587
+      }
+    ],
+    "obv_source": "total_only_v6",
+    "window_days": 5,
+    "inst_abs_volume": 205957243.636858,
+    "lit_abs_volume": 177566714.363142
+  },
+  "l2": {
+    "scenario": "MM_HEDGE",
+    "signal": "NEUTRAL",
+    "case": "CASE_1_MM_DELTA_HEDGE",
+    "short_pct_latest": 35.94647998691701,
+    "short_avg_14d": 28.857300451959127,
+    "short_slope": 1.2723706569630937,
+    "slope_dir": "RISING",
+    "anomaly_z": 0.8338979791323287,
+    "ctb_fee": 0.4027,
+    "ctb_delta_pct": 0.0,
+    "shares_available": 10000000.0
+  },
+  "phase": {
+    "p1_date": "2026-05-28 ~ 2026-06-10",
+    "p2_date": "2026-06-11",
+    "p3_date": "2026-06-18 ~ 2026-07-13",
+    "p3_direction": "RANGE",
+    "p3_target_hi": 6.449999809265137,
+    "p3_target_lo": 4.809999942779541,
+    "p3_bb_width": 53.219644897960514
+  },
+  "l3": {
+    "scenario": "GAMMA_SQUEEZE",
+    "signal": "BULLISH",
+    "expiry": "2026-06-12",
+    "dte": 1,
+    "max_pain": 5.5,
+    "max_pain_dist_pct": -4.545454545454546,
+    "pc_oi": 0.3720387561507635,
+    "pc_vol": 0.1859777845714868,
+    "skew": -0.3686999999999998,
+    "net_gex": 65617.9169625,
+    "flip_zone": 4.764011815785298
+  },
+  "l4": {
+    "scenario": "RANGE_BOUND",
+    "signal": "NEUTRAL",
+    "ma_alignment": "FULL_BULL",
+    "sma20": 5.146749973297119,
+    "sma50": 3.808699998855591,
+    "sma200": 3.027399998307228,
+    "bb_width_pct": 53.219644897960514,
+    "immediate_resistance": 6.449999809265137,
+    "immediate_support": 4.809999942779541
+  }
+}
