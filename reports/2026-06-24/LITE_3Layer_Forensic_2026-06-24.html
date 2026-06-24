@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<title>LITE Smart Money Forensic · 2026-06-24</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { background:#FFFFFF; color:#1F2328; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:13px; margin:0; padding:24px;
+         -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+         -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
+  .wrap { max-width:1200px; margin:0 auto; }
+  .hdr  { border-bottom:1px solid #D0D7DE; padding-bottom:12px; margin-bottom:16px; }
+  .hdr h1 { font-size:20px; margin:0 0 4px 0; }
+  .hdr .sub { font-size:12px; color:#656D76; }
+  @media print { body{padding:12px;font-size:11px} canvas{max-height:220px} }
+
+  /* Hover tooltip (pure CSS) — positioning only, styling via inline */
+  .tt { position:relative; display:inline-block; cursor:help; }
+  .tt-i { color:#0969DA; margin-left:3px; font-weight:600; font-size:11px; }
+  /* 섹션 헤더 오른쪽 배지는 오른쪽 끝 기준 정렬 — 뷰포트 바깥 잘림 방지 */
+  .tt-right .tt-body { left:auto !important; right:0 !important; transform:none !important; }
+  .tt-right .tt-body::after { left:auto !important; right:14px !important; margin-left:0 !important; }
+  /* 왼쪽 가장자리 ⓘ는 왼쪽 끝 기준 정렬 */
+  .tt-left .tt-body { left:0 !important; right:auto !important; transform:none !important; }
+  .tt-left .tt-body::after { left:14px !important; right:auto !important; margin-left:0 !important; }
+  .tt .tt-body {
+    visibility:hidden; opacity:0; transition:opacity 0.12s;
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:calc(100% + 8px); z-index:20;
+    background:#1F2328; color:#FFFFFF;
+    padding:8px 10px; border-radius:6px;
+    font-size:11px; line-height:1.5; text-align:left;
+    white-space:normal; width:max-content; max-width:480px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    font-weight:400;
+  }
+  .tt .tt-body::after {
+    content:''; position:absolute; top:100%; left:50%;
+    margin-left:-5px; border:5px solid transparent; border-top-color:#1F2328;
+  }
+  .tt:hover .tt-body { visibility:visible; opacity:1; }
+  .tt table { border-collapse:collapse; margin-top:4px; }
+  .tt th, .tt td { padding:2px 6px; border:0.5px solid #555; text-align:left; color:#fff; }
+
+  /* ── Responsive ──────────────────────────────────────────────
+     Tablet portrait / 창 900px 이하 → 2-column 섹션을 수직 스택 */
+  @media (max-width: 1024px) {
+    .sma-grid { grid-template-columns: 1fr !important; }
+    .hdr h1 { font-size:18px; }
+  }
+  /* 모바일 / 700px 이하 → 본문 여백 줄이고, 모든 그리드 1열, 폰트 축소 */
+  @media (max-width: 700px) {
+    body { padding:14px !important; font-size:12.5px; }
+    .wrap { max-width:100% !important; }
+    .sma-grid { grid-template-columns: 1fr !important; }
+    canvas { max-width:100%; }
+    h1 { font-size:17px !important; }
+    h2 { font-size:13px !important; }
+  }
+  /* 모든 표는 좁은 화면에서 가로 스크롤로 살리기 */
+  .tbl-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+  .tbl-scroll table { min-width:100%; }
+
+  /* 툴팁이 모바일에서 뷰포트 밖으로 넘치지 않게 */
+  @media (max-width: 700px) {
+    .tt .tt-body { max-width:88vw; font-size:10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div style="margin-bottom:16px;font-size:12px;">
+  <a href="../tickers/LITE/" style="color:#656D76;text-decoration:none;">← LITE 종목 페이지</a>
+</div>
+<div class="hdr">
+  <h1>Smart Money Analyzer — LITE</h1>
+  <div class="sub">Analysis Date: 2026-06-24 · Current Price: $827.92 · Expiry: 2026-06-26 · Patterns: FINAL_ABSORPTION</div>
+</div>
+
+
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 0 · News · Events · Filings · Macro</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+</div>
+
+<div class="sma-grid" style="display:grid;grid-template-columns:1.2fr 0.9fr 1.6fr;gap:12px;align-items:start;">
+
+  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Upcoming Events (30d)</div>
+    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Event</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Signal</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-07-17 <span style="color:#656D76;font-size:10px;">(D-23)</span></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Monthly Options Expiry</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><span style="background:#DDF4FF;color:#0969DA;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">LOW</span></td></tr></tbody></table></div>
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin:14px 0 6px;">Macro Environment</div>
+    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Indicator</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Δ</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Fed Funds</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3.63%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Δ -0.01pp</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">DXY 20d</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">101.41</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+2.3%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">RRP</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">6B</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Oil (WTI)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">72.68</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Liquidity</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NEUTRAL</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr></tbody></table></div>
+  </div>
+
+  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">SEC Filings</div>
+    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Form / Title</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-04</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">4  - Statement of changes in beneficial ownership of securities</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-02</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">144  - Report of proposed sale of securities</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-01</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">4  - Statement of changes in beneficial ownership of securities</td></tr></tbody></table></div>
+  </div>
+
+  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;min-width:0;overflow:hidden;">
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Recent News (7d)</div>
+    <div style="overflow-wrap:anywhere;word-break:break-word;">
+      <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Headline</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Publisher</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-24</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://finance.yahoo.com/technology/ai/articles/lumentum-lite-turning-ai-optics-001935686.html" target="_blank" style="color:#0969DA;text-decoration:none;">Is Lumentum (LITE) Turning Its AI Optics Backlog Into a Durable Data Center Edge?</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Simply Wall St.</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-23</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://finance.yahoo.com/markets/stocks/articles/lumentum-lite-stock-strong-multi-231334906.html" target="_blank" style="color:#0969DA;text-decoration:none;">Lumentum (LITE) Stock After Strong Multi‑Year Run Is There Still Upside Potential</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Simply Wall St.</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-23</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://247wallst.com/investing/2026/06/23/applied-optoelectronics-plunges-13-coherent-drops-9-lumentum-falls-8-has-an-optics-valuation-reckoning-begun/" target="_blank" style="color:#0969DA;text-decoration:none;">Applied Optoelectronics Plunges 13%, Coherent Drops 9%, Lumentum Falls 8%: Has an Optics Valuation R</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">24/7 Wall St.</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-19</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://finance.yahoo.com/markets/stocks/articles/why-lumentum-lite-remains-tied-143429339.html" target="_blank" style="color:#0969DA;text-decoration:none;">Why Lumentum (LITE) Remains Tied to the Optical Bottleneck Inside AI Data Centers</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Insider Monkey</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-18</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://www.barchart.com/story/news/2527605/lumentum-holdings-stock-is-lite-outperforming-the-technology-sector" target="_blank" style="color:#0969DA;text-decoration:none;">Lumentum Holdings Stock: Is LITE Outperforming the Technology Sector?</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Barchart</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-18</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://www.trefis.com/articles/603340/coherents-good-news-gets-a-cold-shoulder/2026-06-17" target="_blank" style="color:#0969DA;text-decoration:none;">Coherent&#x27;s Good News Gets A Cold Shoulder</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Trefis</td></tr></tbody></table></div>
+    </div>
+  </div>
+
+</div>
+
+
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 1 · Dark Pool Layer (L1)</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span class="tt tt-right" style="background:#FFEBE9;color:#CF222B;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">DISTRIBUTION<span class="tt-body"><b>L1 Dark Pool 시나리오</b><br>기관 OBV 방향·다크풀 %·Divergence 조합.<table><tr><th>시나리오</th><th>조건</th><th>색</th></tr><tr><td>ACCUMULATION</td><td>Inst Δ &gt; 0 or BULLISH_DIV × DP%&gt;35</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>DISTRIBUTION</td><td>Inst Δ &lt; 0 or BEARISH_DIV × DP%&gt;35</td><td><span style="display:inline-block;background:#FFEBE9;color:#CF222B;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BEAR</span></td></tr><tr><td>NEUTRAL</td><td>명확한 방향 없음</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr><tr><td>AMBIGUOUS</td><td>상충 신호</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr></table></span></span><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Conf HIGH</span></div>
+</div>
+
+<div class="sma-grid" style="display:grid;grid-template-columns:1.4fr 0.9fr;gap:12px;align-items:stretch;">
+  <div style="display:flex;flex-direction:column;">
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Net Signed Volume (5일 누적, CLV-weighted)</div>
+    <div style="display:flex;align-items:center;gap:16px;padding:10px 12px;background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;margin-bottom:8px;">
+      <div style="flex:0 0 auto;">
+        <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.04em;">Total OBV Δ (5d)</div>
+        <div style="font-size:20px;font-weight:700;color:#CF222B;">-2M</div>
+      </div>
+      <div style="flex:0 0 auto;border-left:0.5px solid #D0D7DE;padding-left:16px;">
+        <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.04em;">Divergence</div>
+        <div style="font-size:13px;font-weight:600;color:#0969DA;">CONVERGENCE</div>
+      </div>
+    </div>
+    <div style="position:relative;flex:1;min-height:160px;"><canvas id="obvCum"></canvas></div>
+    <div style="font-size:11px;color:#1F2328;margin-top:6px;text-align:center;">
+      <span class="tt tt-i">ⓘ Divergence 해석<span class="tt-body"><b>가격 slope vs Total OBV 누적 slope</b> (5일 회귀).<table><tr><th>상태</th><th>해석</th></tr><tr><td>BULLISH_DIV</td><td>가격↓ + OBV↑ = 공포 속 축적</td></tr><tr><td>BEARISH_DIV</td><td>가격↑ + OBV↓ = 강세 속 분배</td></tr><tr><td>CONVERGENCE</td><td>같은 방향 — 추세 확인</td></tr><tr><td>NEUTRAL</td><td>의미있는 기울기 없음</td></tr></table></span></span>
+    </div>
+  </div>
+  <div>
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Off-Exchange Volume (10d, FINRA CNMS ÷ market total)</div>
+    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Off-Exch Vol</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Market Vol</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">DP %</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-23</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">4M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">41.5%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-22</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">7M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">45.6%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-18</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">8M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">28.0%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-17</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">5M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">40.8%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-16</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">6M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">48.7%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-15</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">5M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">54.6%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-12</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">5M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">48.5%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-11</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">5M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">51.2%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-10</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">6M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">49.5%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-09</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">4M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">8M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">44.8%</td></tr></tbody></table></div>
+    <p style="font-size:11px;color:#656D76;margin-top:6px;">
+      OBV Total: 1-way CLV-weighted signed volume (5일, sign src: barCLV=4d, dayclv=1d, 1m src: polygon)
+    </p>
+  </div>
+</div>
+<div style="margin-top:10px;padding:8px 10px;background:#FFF8C5;border-left:3px solid #9A6700;border-radius:4px;font-size:11px;line-height:1.5;">
+  <b style="color:#9A6700;">⚠ OBV 산출 방식</b><br>
+  <b>1-way Total OBV</b> — 분봉별 CLV (close location value, [-1..+1]) 를 거래량으로 가중해 시장 전체 네트 매수/매도 플로 방향만 산출합니다.
+  기관/프로/리테일 코호트 분리는 분봉 레벨로는 부호까지 틀려지는 구조적 한계가 확인되어 제거했습니다. 코호트별 상세는 Market Chameleon 등 per-print 분류 소스를 참조하세요.
+  <br><a href="https://marketchameleon.com/Overview/LITE/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:#0969DA;text-decoration:none;font-weight:600;">🔗 Market Chameleon — LITE Dark Pool Volume (Retail/Pro/Inst 분리 확인)</a>
+</div>
+
+
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 2 · Short Volume Layer (L2)</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span class="tt tt-right" style="background:#FFEBE9;color:#CF222B;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">DIRECTIONAL_SHORT<span class="tt-body"><b>L2 Short Volume 시나리오</b><br>Short% slope + CTB 방향 + anomaly_z.<table><tr><th>시나리오</th><th>조건</th><th>색</th></tr><tr><td>SHORT_SQUEEZE_RISK</td><td>HTB(&gt;15%) × slope RISING</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>SHORT_COVERING</td><td>slope FALLING × CTB 하락/ETB</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>DIRECTIONAL_SHORT</td><td>CTB↑ + slope RISING (CASE ②)</td><td><span style="display:inline-block;background:#FFEBE9;color:#CF222B;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BEAR</span></td></tr><tr><td>MM_HEDGE</td><td>slope RISING + CTB 변동 없음 (CASE ①)</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr><tr><td>NEUTRAL</td><td>기타</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr></table></span></span><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Case MIXED</span></div>
+</div>
+
+<div class="sma-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
+  <div>
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Short % (FINRA consolidated, 14d)</div>
+    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Short Vol</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Total Vol</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Short %</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-23</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">931,305</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">51.1%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-22</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">32.6%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-18</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">863,622</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">36.9%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-17</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">913,893</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">43.5%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-16</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">37.7%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-15</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">42.7%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-12</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">828,238</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">37.5%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-11</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">915,327</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">38.3%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-10</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">41.6%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-09</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">4M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">47.3%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-08</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">45.4%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-05</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">4M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">41.3%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-04</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">46.0%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-03</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">40.8%</td></tr></tbody></table></div>
+    <div style="font-size:11px;color:#1F2328;margin-top:6px;">
+      14d Avg Short%: <b>41.2%</b> · Slope: <b>-0.244</b>
+    </div>
+  </div>
+  <div>
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">CTB / Borrow (iborrowdesk)</div>
+    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Metric</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Δ %</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">CTB Fee</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0.28%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+0.0%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Class</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">ETB</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Shares Available</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr></tbody></table></div>
+  </div>
+</div>
+
+
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 3 · Options Layer (L3)</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span class="tt tt-right" style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">VOLATILITY_EXPANSION<span class="tt-body"><b>L3 Options 시나리오</b><br>Max Pain 거리·Net GEX 부호·P/C·IV Skew.<table><tr><th>시나리오</th><th>조건</th><th>색</th></tr><tr><td>PINNING</td><td>DTE≤5 × |spot−MP|/MP&lt;0.5%</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr><tr><td>GAMMA_SQUEEZE</td><td>P/C&lt;0.7 × call-heavy skew</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>VOLATILITY_EXPANSION</td><td>Net GEX &lt; 0 (MM short gamma)</td><td><span style="display:inline-block;background:#EAEEF2;color:#656D76;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">VAR</span></td></tr><tr><td>HEDGING</td><td>기본/중립 헤지 구간</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr></table></span></span><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">DTE 2</span></div>
+</div>
+
+<div class="sma-grid" style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;align-items:start;">
+  <div>
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">GEX by Strike</div>
+    <div style="position:relative;height:300px;"><canvas id="gexChart"></canvas></div>
+  </div>
+  <div><div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Metric</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Expiry</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-26</td></tr><tr style="background:#DDF4FF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Spot</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$827.92</td></tr><tr style="background:#FFEBE9;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Max Pain</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$867.50</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Max Pain Dist</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-4.6%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">P/C OI</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1.20</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">P/C Vol</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0.55</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">IV Skew (put−call)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+11.88pp</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Net GEX</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-8M</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">GEX Flip Zone</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$831.85</td></tr></tbody></table></div></div>
+</div>
+
+
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 4 · Chart / Technical Layer (L4)</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span class="tt tt-right" style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">RANGE_BOUND<span class="tt-body"><b>L4 Chart 시나리오</b><br>MA 배열 × short/med slope × BB width.<table><tr><th>시나리오</th><th>조건</th><th>색</th></tr><tr><td>UPTREND</td><td>FULL_BULL/RECOVERING × +slope</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>DOWNTREND</td><td>FULL_BEAR × −slope</td><td><span style="display:inline-block;background:#FFEBE9;color:#CF222B;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BEAR</span></td></tr><tr><td>BREAKOUT_PENDING</td><td>BB 수축 × 단기 +slope</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr><tr><td>RANGE_BOUND</td><td>명확한 방향 없음</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr></table></span></span><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">MIXED</span></div>
+</div>
+<div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Metric</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Current</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$827.92</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">SMA 20 / 50 / 200</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$893.28 / $904.18 / $519.68</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BB Upper / Lower</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$988.90 / $797.66</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BB Width %</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">21.41%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BB Position</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0.16</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Immediate R / S</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$896.11  /  $818.00</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Key R / S</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$925.50  /  $806.62</td></tr></tbody></table></div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 5 · 3-Layer Integrated Scenario</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Score -0.55</span><span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Macro NEUTRAL</span></div>
+</div>
+
+<div style="font-weight:600;font-size:12px;color:#656D76;margin:8px 0 4px;">Architect Phase Table</div>
+<div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Phase</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Dates</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Description</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Status</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Phase 1 — Setup (완료)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-09 ~ 2026-06-23</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">축적/분배 완료 구간</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">COMPLETE</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Phase 2 — Transition (현재)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-06-24</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">DISTRIBUTION × VOLATILITY_EXPANSION</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">IN PROGRESS</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Phase 3 — Resolution (미래)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-07-01 ~ 2026-07-23</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">DOWNWARD · 타겟 $867.50 / $797.66 (BB폭 21.4%)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">PENDING</td></tr></tbody></table></div>
+<div style="font-weight:600;font-size:12px;color:#656D76;margin:12px 0 4px;">Probability Bar</div>
+<div style="position:relative;height:105px;"><canvas id="probChart"></canvas></div>
+<div style="font-size:11px;color:#656D76;margin-top:6px;">
+  Raw Score: <b>-0.55</b><span class="tt tt-i tt-left">ⓘ<span class="tt-body"><b>가중 signal 합산 (−1.00 ~ +1.00)</b><br>raw_score = Σ(layer_signal × weight) where BULLISH=+1, NEUTRAL=0, BEARISH=−1.<table><tr><th>Layer</th><th>Weight</th><th>근거</th></tr><tr><td>L1 Dark Pool</td><td>0.35</td><td>기관 의도 직접</td></tr><tr><td>L3 Options</td><td>0.30</td><td>MM 행동 예측력</td></tr><tr><td>L2 Short/CTB</td><td>0.20</td><td>구조적·해석 복잡</td></tr><tr><td>L4 Chart</td><td>0.15</td><td>후행 지표</td></tr></table><br><b>Score → 시나리오 매핑</b><table><tr><th>Score</th><th>A Bull</th><th>B Neut</th><th>C Bear</th></tr><tr><td>&gt; +0.50</td><td>65%</td><td>20%</td><td>15%</td></tr><tr><td>+0.20~+0.50</td><td>50%</td><td>30%</td><td>20%</td></tr><tr><td>−0.20~+0.20</td><td>30%</td><td>40%</td><td>30%</td></tr><tr><td>−0.50~−0.20</td><td>20%</td><td>30%</td><td>50%</td></tr><tr><td>&lt; −0.50</td><td>15%</td><td>20%</td><td>65%</td></tr></table>추가로 Macro (±7pp)·Pattern bonus (FINAL_ABSORPTION +5, GAMMA_SQUEEZE +8 등) 적용 후 80% 상한으로 정규화.</span></span> | Macro: <b>NEUTRAL</b> | Patterns: <b>FINAL_ABSORPTION</b>
+</div>
+<div style="font-weight:600;font-size:12px;color:#656D76;margin:12px 0 4px;">Key Price Level Map</div>
+<div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Level Type</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Price</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Distance</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Significance</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Current Price</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$827.92</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">—</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Max Pain</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$867.50</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+4.8%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">HIGH</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">GEX Flip</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$831.85</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+0.5%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">HIGH</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Imm Resistance</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$896.11</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+8.2%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">HIGH</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Key Resistance</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$925.50</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+11.8%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MED</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Imm Support</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$818.00</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-1.2%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">HIGH</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Key Support</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$806.62</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-2.6%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MED</td></tr></tbody></table></div>
+
+
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 6 · Summary &amp; Action Points</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">3-Line Summary</span></div>
+</div>
+
+<div class="summary-row" style="font-size:11px;line-height:1.7;color:#1F2328;margin-bottom:10px;">
+  <div><b style="color:#CF222B;">①</b> [DARK POOL] 다크풀/OBV 부분 데이터. CONVERGENCE. 시나리오: DISTRIBUTION.</div>
+  <div><b style="color:#CF222B;">②</b> [SHORT/CTB] Short% 51.1 (14d avg 41.2), CTB 0.28%  MIXED → DIRECTIONAL_SHORT.</div>
+  <div><b style="color:#CF222B;">③</b> [OPTIONS] Max Pain $867.50 (-4.6%), Net GEX -8M, Flip $831.85. 시나리오: VOLATILITY_EXPANSION.</div>
+</div>
+
+<div style="background:#FFF8C5;border:0.5px solid #D0D7DE;border-radius:6px;padding:10px 14px;margin:4px 0 12px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;">
+    <div style="font-size:12px;color:#656D76;font-weight:600;">Positioning Strength</div>
+    <div style="font-size:13px;color:#9A6700;font-weight:700;">Neutral (net +0)</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
+    <span style="color:#CF222B;min-width:80px;text-align:right;">Bear 1/1 MET</span>
+    <div style="flex:1;display:flex;height:10px;background:#EAEEF2;border-radius:5px;overflow:hidden;">
+      <div style="width:50%;background:#CF222B;"></div>
+      <div style="flex:1;"></div>
+      <div style="width:50%;background:#1A7F5A;"></div>
+    </div>
+    <span style="color:#1A7F5A;min-width:80px;">Bull 1/8 MET</span>
+  </div>
+</div>
+
+<div style="font-weight:600;font-size:12px;color:#656D76;margin:8px 0 4px;">Trigger Checklist</div>
+<div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Trigger</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Type</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Status</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Implication</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Volume spike &gt; 150%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">WATCHING</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Breakout start</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">CTB &gt; 5%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Squeeze setup</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Price &lt; GEX Flip</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NEUTRAL</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Amplification regime — 변동성 확대, 상향 돌파 시 pinning 전환(안정화)</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Price &lt; Max Pain</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BEARISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Downward gravity</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Close &gt; SMA50</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Trend support</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Total OBV (5d) &gt; 0</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Net accumulation 우위</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Short% slope FALLING</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Short covering 진행</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BB Width ≤ 52w low × 1.2</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Theta Burn 임박 (cur 21.4% / 52w low 11.4%)</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">DP% &gt; 40 for 2d</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Final Absorption 조건 ③ (46% → 41%)</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Short↓ × CTB 안정</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Final Absorption 조건 ④+⑤</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">|Price − Flip| ≤ 1% (현재 0.47%)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NEUTRAL</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Flip 근접 (0.5%) — 상향 돌파 시 pinning 진입 (변동성 억제·안정화)</td></tr></tbody></table></div>
+<div style="font-weight:600;font-size:12px;color:#656D76;margin:12px 0 4px;">Risk Factors</div>
+<ul style="font-size:12px;color:#1F2328;margin-left:18px;">
+  <li>[CATALYST_RISK]: 미공개 공시 발생 시 가정 붕괴 가능. Section 0 확인 필수.</li><li>[LIQUIDITY_SHOCK]: 시장 전체 유동성 급변 시 구조적 포지션 재조정.</li>
+</ul>
+
+
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 7 · Core Conclusions</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+</div>
+<div style="margin-top:4px;"><div style="background:#F6F8FA;border-left:3px solid #0969DA;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:12px;">  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">    <span style="font-size:13px;font-weight:700;color:#0969DA;">핵심 단일 발견</span>    <span style="font-size:10px;color:#656D76;letter-spacing:0.08em;text-transform:uppercase;">Key Finding</span>  </div>  <div style="font-size:13px;line-height:1.8;color:#1F2328;">LITE의 4개 레이어 가중합 점수는 <b>-0.55</b> · 시나리오 확률은 [A] 20.0% / [B] 20.0% / [C] 60.0%로 수렴하며, 최우선은 <b style="color:#CF222B;">시나리오 [C] (60.0%)</b>이다. L1은 DISTRIBUTION (BEARISH), L2는 DIRECTIONAL_SHORT (MIXED), L3은 VOLATILITY_EXPANSION (Max Pain $867.50, Net GEX -8M)의 구조적 배치를 보여준다. 패턴 탐지 결과: <b>FINAL_ABSORPTION</b>. 이 조합에서 Architect의 의도는 <b>분배(distribution)</b>의 단계에 가깝다고 해석된다.</div></div><div style="background:#F6F8FA;border-left:3px solid #9A6700;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:12px;">  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">    <span style="font-size:13px;font-weight:700;color:#9A6700;">구조적 메커니즘</span>    <span style="font-size:10px;color:#656D76;letter-spacing:0.08em;text-transform:uppercase;">Structural Mechanism</span>  </div>  <div style="font-size:13px;line-height:1.8;color:#1F2328;">Total OBV(5영업일 누적) <b>-2M</b>, 다크풀 비중 <b>41%</b>, Divergence <b>CONVERGENCE</b>로 기록되며, L2에서 Short% 기울기 <b>-0.244</b> · CTB <b>0.28%</b> 조합은 L3 GEX 플립 <b>$831.85</b> 및 Max Pain 거리 <b>-4.6%</b>와 <b>부분 상충적으로</b> 맞물린다. 매크로는 <b>NEUTRAL</b>로 분류되어 확률을 <b>05~10%p</b> 조정했다. 해석이 틀릴 위험은 CTB와 Total OBV의 동시 역전, 또는 다가오는 이벤트(어닝/FOMC)의 가이던스 변질이다.</div></div><div style="background:#F6F8FA;border-left:3px solid #1A7F5A;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:12px;">  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">    <span style="font-size:13px;font-weight:700;color:#1A7F5A;">결정적 트리거</span>    <span style="font-size:10px;color:#656D76;letter-spacing:0.08em;text-transform:uppercase;">Decisive Trigger</span>  </div>  <div style="font-size:13px;line-height:1.8;color:#1F2328;">본 분석의 방향성·레짐을 판가름할 단일 촉매는 다음 중 어느 것이든 먼저 발동될 때다: <b>가격이 GEX 플립($831.85) 상향 돌파 시 pinning 레짐 진입 (변동성 억제); CTB가 0.3%에서 +3pp 이상 급등 (차입 압박 구조 변화); 다크풀 비중이 41%에서 2거래일 연속 45% 이상 유지 (기관 활동 지속); Total OBV가 양전환하면서 CTB가 급락 (매집 재개 신호)</b>. 위 촉매 중 하나라도 현 가설과 반대 방향으로 발동되면 본 분석의 방향성 가정은 재설정되어야 한다.</div></div></div>
+<div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
+  Generated by sma.py · Data: Yahoo Finance, FINRA, FRED, SEC EDGAR, iborrowdesk (free tier only)
+</div>
+</div>
+<div id="md-archive" style="display:none;"><pre id="md-archive-text">---
+ticker: LITE
+date: 2026-06-24
+generated_by: Smart Money Analyzer (sma.py)
+---
+
+# Smart Money Analysis: LITE
+**Analysis Date**: 2026-06-24  
+**Current Price**: $827.92  
+**Options Expiry**: 2026-06-26  
+**Analyst**: Smart Money Analyzer v2.0
+
+---
+
+## Key Metrics Summary
+
+| Metric | Value |
+|--------|-------|
+| Total OBV Δ (5d)   | -2M |
+| Divergence         | CONVERGENCE |
+| Dark Pool %        | 41.5% |
+| Short %            | 51.1% |
+| CTB Fee            | 0.28% |
+| Available Shares   | 2M |
+| Max Pain           | $867.50 |
+| GEX Flip Zone      | $831.85 |
+| Net GEX            | -8M |
+| Scenario [A] Bull  | 20.0% |
+| Scenario [B] Neut  | 20.0% |
+| Scenario [C] Bear  | 60.0% |
+
+---
+
+## Architect Phase Structure
+- **Phase 1 (Completed)**: 2026-06-09 ~ 2026-06-23 — 주기/분배 이미 전개
+- **Phase 2 (Current)**:   2026-06-24 — DISTRIBUTION × VOLATILITY_EXPANSION
+- **Phase 3 (Target)**:    2026-07-01 ~ 2026-07-23 — DOWNWARD 방향 · 타겟 $867.50 / $797.66 (BB폭 21.4%)
+
+---
+
+## Core Conclusion
+- L1 (Dark Pool): **DISTRIBUTION** · signal=BEARISH · conf=HIGH
+- L2 (Short/CTB): **DIRECTIONAL_SHORT** · MIXED · conf=MEDIUM
+- L3 (Options):   **VOLATILITY_EXPANSION** · DTE=2 · net_gex=-8M
+- L4 (Chart):     **RANGE_BOUND** · MA=MIXED
+- Macro: **NEUTRAL** · Raw Score: **-0.55** · Patterns: **FINAL_ABSORPTION**
+
+---
+
+## Cumulative History
+
+| 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
+|------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
+| 2026-06-24 | $827.92 | -2M | CONVERGENCE | 41.5% | 51.1% | 0.28% | 2M | $831.85 | $867.50 |
+</pre></div>
+<script>
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
+Chart.defaults.color = "#1F2328";
+
+new Chart(document.getElementById('obvCum'), {
+  type:'line',
+  data:{
+    labels:["2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23"],
+    datasets:[{
+      label:'Cumulative OBV',
+      data:[-633742.108195093, -794052.8517616037, -1100091.1568235445, -373065.428690008, -1732968.8614809457],
+      borderColor:'#CF222B',
+      backgroundColor:'rgba(207,34,43,0.10)',
+      borderWidth:2,
+      tension:0.2,
+      fill:true,
+      pointRadius:3,
+      pointBackgroundColor:'#CF222B'
+    }]
+  },
+  options:{
+    maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      title:{display:true,text:'Total OBV 누적 시리즈 (5영업일)'}
+    },
+    scales:{
+      y:{grid:{color:'#EAEEF2'},ticks:{callback:function(v){return (v/1000).toFixed(0)+'k';}}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+new Chart(document.getElementById('gexChart'), {
+  type:'bar',
+  data:{
+    labels:["430", "435", "440", "445", "450", "455", "460", "465", "470", "475", "480", "485", "490", "495", "500", "505", "510", "515", "520", "525", "530", "535", "540", "545", "550", "555", "560", "565", "568", "570", "572", "575", "578", "580", "582", "585", "588", "590", "592", "595", "598", "600", "602", "605", "608", "610", "612", "615", "618", "620", "622", "625", "628", "630", "632", "635", "638", "640", "642", "645", "648", "650", "652", "655", "658", "660", "662", "665", "668", "670", "672", "675", "678", "680", "682", "685", "688", "690", "692", "695", "698", "700", "702", "705", "708", "710", "712", "715", "718", "720", "722", "725", "728", "730", "732", "735", "738", "740", "742", "745", "748", "750", "755", "760", "765", "770", "775", "780", "785", "790", "795", "800", "805", "810", "815", "820", "825", "830", "835", "840", "845", "850", "855", "858", "860", "862", "865", "868", "870", "872", "875", "878", "880", "882", "885", "890", "895", "900", "905", "910", "912", "915", "918", "920", "925", "930", "932", "935", "938", "940", "942", "945", "948", "950", "952", "955", "960", "965", "970", "975", "980", "985", "990", "995", "1000", "1005", "1010", "1015", "1020", "1025", "1030", "1035", "1040", "1045", "1050", "1055", "1060", "1065", "1070", "1075", "1080", "1085", "1090", "1095", "1100", "1105", "1110", "1115", "1120", "1125", "1130", "1135", "1140", "1145", "1150", "1155", "1160", "1165", "1170", "1175", "1180", "1185", "1190", "1195", "1200", "1205", "1210", "1215", "1220", "1225", "1230", "1235", "1240", "1245", "1250", "1255", "1260", "1265", "1270", "1275", "1280", "1285", "1290", "1300", "1310", "1320", "1330", "1340", "1350", "1360", "1370", "1380", "1390", "1400", "1410", "1420", "1430", "1440", "1450", "1460", "1470", "1480", "1490", "1500", "1510", "1520", "1530", "1540", "1550", "1560", "1570", "1580", "1590", "1600"],
+    datasets:[{
+      label:'GEX',
+      data:[10.864518599598554, -723.38158086919, -1322.49568100751, -23.455848249208547, -1989.5622222788825, 0.0, 41.841693265321474, 0.0, -423.6329157549134, -523.6918244233096, -677.5066608469316, -106.44667541173119, -1482.3210249429897, 0.0, -1044.1675531301746, -448.88263071333074, -93.7791043070966, -386.1376401271266, -235.15786578832035, -103.93215377772933, -755.2573643844291, -616.9063482917581, -959.6320973427346, -479.8160486713673, -3084.5317414587903, -68.54514981019534, -6306.153782537971, -274.18059924078136, -68.54514981019534, -548.3611984815627, -274.18059924078136, -411.2708988611721, 0.0, -822.5417977223442, -137.09029962039068, -1782.1738950650786, -137.09029962039068, -548.3611984815627, -3153.0768912689855, -3975.6186889913292, -4661.070187093284, -22345.718838123685, -6443.244082158363, -4386.889587852502, -3701.438089750549, -15628.29415672454, -24264.98303280915, -16862.10685330805, -15422.658707293953, -8842.324325515197, -10693.043370390471, -15902.474755965319, -9047.959774945786, -49626.68846258144, -21386.08674078095, -13160.668763557505, -8499.598576464225, -49352.50786334064, -21591.72219021153, -27760.785673129118, -18507.190448752746, -246762.5393167032, -6580.334381778753, -23442.441235086804, -21386.086740780942, -14394.481460141023, -19192.6419468547, -46610.70187093284, -52094.313855748456, -55384.48104663784, -29611.50471800439, -91302.1395471802, -28994.598369712625, -138461.20261659462, -40441.63838801526, -33929.8491560467, -39207.82569143173, -137364.48021963143, -2467.625393167032, -34546.75550433845, -50791.95600935475, -734118.5544671923, -2878.896292028204, 19535.36769590567, -16450.83595444688, -141477.18920824322, 1165.2675467733206, -130509.96523861193, -18507.190448752743, -217493.76034774986, -2604.715692787423, -244020.73332429543, -4318.344438042306, -298925.3983222619, -12063.946366594382, -171842.6905741597, -18095.91954989157, -253342.87369848197, -8568.143726274418, -550691.7335751094, -11104.314269251649, -1189943.8007049912, -284119.6459632597, -1410933.3636930613, -316678.59212310245, -1004460.6253186025, -212215.78381236477, -737134.5410588406, -168415.43308364993, -361918.3909978314, -310920.7995390461, -5547084.793539869, -162863.2759490242, -394820.0629067252, -336351.0501186285, -403593.84208243026, -233259.14480409474, -576670.3453531733, 985816.3445702295, 731788.0193736455, 18918.461347613935, -441430.7647776583, -6169.063482917569, -243678.0075752444, 1063135.27355613, 3015.986591648594, -24127.892733188768, -1358770.5046875023, -44211.62162757601, 51820.133256507674, 138187.02201735383, 47775.96941770616, -241278.92733188753, 2741.805992407819, -125643.25960208806, 424568.65792434994, -25224.615130151913, 798893.7210378269, 622252.8699769533, 1408191.557700653, 570295.6464208253, 327234.5451938726, 240593.47583378566, 428201.5508642902, 17273.37775216927, 109192.42364764118, 5346.521685195237, 147372.07209191998, -6854.514981019534, 129961.60404013038, 37836.92269522784, 80403.46072735917, 75399.66479121489, 1434101.624328907, 46062.34067245126, 28788.962920282058, 37768.377545417636, 28377.692021420866, 72246.5878999459, 190829.69707158385, 288917.80644997343, 27829.330822939304, 94043.94553958802, 42772.17348156189, 569198.924023862, 18849.916197803723, 52779.765353850424, -30159.865916485945, 59154.46428619857, 9253.59522437637, 29611.504718004395, 18644.280748373134, 75810.93569007605, 47021.97276979401, 194668.2254609547, -2056.35449430586, 89657.0559517355, -2124.8996441160552, 15079.932958242975, 7882.692228172464, 5757.7925840564085, 6854.514981019534, 9870.50157266813, 6580.334381778753, 147234.9817922996, 2467.6253931670317, 1233.8126965835158, 822.541797722344, 2673.260842597618, 616.906348291758, 2878.8962920282042, 1507.9932958242975, 2193.444793926251, 411.2708988611721, 25910.06662825384, 137.09029962039068, 753.9966479121489, 274.18059924078136, 342.7257490509768, 1028.17724715293, 411.2708988611721, 68.54514981019534, 479.8160486713673, 137.09029962039068, 13983.210561279853, 0.0, 3290.167190889377, 0.0, 479.8160486713673, 0.0, 2947.4414418384, 0.0, 1370.902996203907, 68.54514981019534, 2536.170542977228, 0.0, 548.3611984815627, 0.0, 1066.95776810848, 2377.2604416019512, 3682.1089869899206, 0.0, 718.1483098436635, 1289.127683443356, 1714.8020392984158, 889.0408734223615, 1189.186263168022, 1367.6053438832157, 146.42863115448455, 1297.770627102139, 194.6476385091724, 0.0, 92.63420155721955, 361.80380631755384, 0.0, 1036.0706323637219, 0.0, 1568.7340906283857, 129.93280254112892, 395.4237253336496, 619.55938576139, 379.30929890528773, 148.69025321307728, 23.590908853270818, 55.84779688315535, 68.37702072302646, 71.74504819711332, 94.85744689280858, 34.29146998762841, 182.7395068580419, 63.97340514080383, 21.194037083681796, 2164.304074002923, 103.07245276840209],
+      backgroundColor:["#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#1A7F5A", "#CF222B", "#1A7F5A", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#1A7F5A", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A"],
+      borderWidth:0
+    }]
+  },
+  options:{
+    maintainAspectRatio:false,
+    plugins:{legend:{display:false},title:{display:true,text:'Gamma Exposure (GEX) by Strike'}},
+    scales:{y:{grid:{color:'#EAEEF2'}},x:{grid:{display:false}}}
+  }
+});
+
+new Chart(document.getElementById('probChart'), {
+  type:'bar',
+  data:{
+    labels:['[A] Bullish','[B] Neutral','[C] Bearish'],
+    datasets:[{
+      label:'Probability %',
+      data:[20.0,20.0,60.0],
+      backgroundColor:['#1A7F5A','#9A6700','#CF222B'],
+      borderWidth:0,
+      barThickness:8,
+      maxBarThickness:8,
+      categoryPercentage:0.45,
+      barPercentage:0.45
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    maintainAspectRatio:false,
+    plugins:{legend:{display:false},title:{display:false}},
+    scales:{x:{max:80,grid:{color:'#EAEEF2'}},y:{grid:{display:false}}}
+  }
+});
+</script>
+</body>
+</html>
