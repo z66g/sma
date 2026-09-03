@@ -1,0 +1,103 @@
+{
+  "ticker": "VRT",
+  "date": "2026-09-03",
+  "price": 256.70001220703125,
+  "is_index": false,
+  "warnings": [],
+  "patterns": [
+    "GAMMA_SQUEEZE_SETUP",
+    "FINAL_ABSORPTION"
+  ],
+  "macro_env": "NEUTRAL",
+  "scenarios": {
+    "A_bullish": 72.2,
+    "B_neutral": 18.5,
+    "C_bearish": 9.3,
+    "raw_score": 0.85
+  },
+  "l1": {
+    "scenario": "ACCUMULATION",
+    "signal": "BULLISH",
+    "confidence": "HIGH",
+    "dp_pct": 49.39656192102816,
+    "delta_total": 1097878.7504318904,
+    "divergence": "BULLISH_DIVERGENCE",
+    "cumulative_daily": [
+      {
+        "date": "2026-08-27",
+        "cum": 197592.3027931229,
+        "day": 197592.3027931229
+      },
+      {
+        "date": "2026-08-28",
+        "cum": 168247.87152414734,
+        "day": -29344.43126897554
+      },
+      {
+        "date": "2026-08-31",
+        "cum": 458196.4549460433,
+        "day": 289948.583421896
+      },
+      {
+        "date": "2026-09-01",
+        "cum": 446318.7238762055,
+        "day": -11877.731069837806
+      },
+      {
+        "date": "2026-09-02",
+        "cum": 1097878.7504318904,
+        "day": 651560.0265556849
+      }
+    ],
+    "obv_source": "total_only_v6",
+    "window_days": 5,
+    "inst_abs_volume": 8243515.692733999,
+    "lit_abs_volume": 11574784.307266
+  },
+  "l2": {
+    "scenario": "SHORT_COVERING",
+    "signal": "BULLISH",
+    "case": "SHORT_COVERING",
+    "short_pct_latest": 48.19292409355166,
+    "short_avg_14d": 51.698196604889496,
+    "short_slope": -0.8740353056595688,
+    "slope_dir": "FALLING",
+    "anomaly_z": -0.538030809299979,
+    "ctb_fee": null,
+    "ctb_delta_pct": null,
+    "shares_available": null
+  },
+  "phase": {
+    "p1_date": "2026-08-20 ~ 2026-09-02",
+    "p2_date": "2026-09-03",
+    "p3_date": "2026-09-11 ~ 2026-10-02",
+    "p3_direction": "UPWARD",
+    "p3_target_hi": 294.92428874452474,
+    "p3_target_lo": 244.43371296445963,
+    "p3_bb_width": 18.72247213171328
+  },
+  "l3": {
+    "scenario": "GAMMA_SQUEEZE",
+    "signal": "BULLISH",
+    "expiry": "2026-09-04",
+    "dte": 1,
+    "max_pain": 260.0,
+    "max_pain_dist_pct": -1.26922607421875,
+    "pc_oi": 0.6652337452982268,
+    "pc_vol": 0.556441717791411,
+    "skew": 0.09420000000000006,
+    "net_gex": 577609.1290744421,
+    "flip_zone": 261.4554102259215
+  },
+  "l4": {
+    "scenario": "RANGE_BOUND",
+    "signal": "NEUTRAL",
+    "ma_alignment": "MIXED",
+    "sma20": 269.6790008544922,
+    "sma50": 284.5504000854492,
+    "sma200": 256.34415031433105,
+    "bb_width_pct": 18.72247213171328,
+    "immediate_resistance": 274.760009765625,
+    "immediate_support": 249.97000122070312
+  }
+}
