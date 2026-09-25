@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<title>NDX Index Options — 2026-09-25</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { background:#FFFFFF; color:#1F2328; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:13px; margin:0; padding:24px;
+         -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+         -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
+  .wrap { max-width:1200px; margin:0 auto; }
+  .hdr  { border-bottom:1px solid #D0D7DE; padding-bottom:12px; margin-bottom:16px; }
+  .hdr h1 { font-size:20px; margin:0 0 4px 0; }
+  .hdr .sub { font-size:12px; color:#656D76; }
+  .tbl-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+  .tbl-scroll table { min-width:100%; border-collapse:collapse; font-size:12px; }
+  .tbl-scroll th, .tbl-scroll td { border:0.5px solid #D0D7DE; padding:4px 6px; }
+  .tbl-scroll th { background:#EAEEF2; color:#656D76; text-align:left; }
+  .chart-wrap { position:relative; height:420px; }
+  .grid-2 { display:grid; grid-template-columns:1.6fr 1fr; gap:12px; align-items:start; }
+
+  /* 태블릿/좁은 창 — 차트와 표 세로 스택 */
+  @media (max-width: 1024px) {
+    .grid-2 { grid-template-columns:1fr !important; }
+    .chart-wrap { height:360px; }
+  }
+  /* 모바일 — 여백·폰트 축소, 차트 낮게 */
+  @media (max-width: 700px) {
+    body { padding:14px !important; font-size:12.5px; }
+    .wrap { max-width:100% !important; }
+    .hdr h1 { font-size:17px; }
+    .hdr .sub { font-size:11px; }
+    .chart-wrap { height:300px; }
+    canvas { max-width:100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div style="margin-bottom:16px;font-size:12px;">
+  <a href="../../" style="color:#656D76;text-decoration:none;">← Dashboard</a>
+</div>
+<div class="hdr">
+  <h1>NDX Index Options — 2026-09-25</h1>
+  <div class="sub">NDX 지수 옵션 GEX / Max Pain / Flip Zone · Data: CBOE delayed quotes (15-min)</div>
+</div>
+
+<div style="padding:10px 14px;background:#DDF4FF;border-left:3px solid #1A7F5A;
+            border-radius:0 6px 6px 0;margin-bottom:16px;">
+  <div style="font-size:13px;font-weight:700;color:#1A7F5A;">POSITIVE GEX — Pinning Regime</div>
+  <div style="font-size:12px;color:#1F2328;margin-top:4px;">MM 가 롱감마 포지션 → 가격을 현 수준으로 수렴시키는 힘 작용. 변동성 억제.</div>
+  <div style="font-size:11px;color:#656D76;margin-top:6px;">Spot($30478.86) > Flip($30452.97) → 현재 핀닝 구간</div>
+  <div style="font-size:11px;color:#656D76;margin-top:2px;">Max Pain($30180.00)은 스팟 대비 하방 (+0.99%)</div>
+</div>
+
+<div class="grid-2">
+  <div>
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">GEX by Strike (spot ±5%, 주요 strike 만)</div>
+    <div class="chart-wrap"><canvas id="gexChart"></canvas></div>
+  </div>
+  <div>
+    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">L3 Metrics</div>
+    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Metric</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Expiry</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-09-25</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">DTE</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0</td></tr><tr style="background:#DDF4FF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Spot</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$30478.86</td></tr><tr style="background:#FFEBE9;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Max Pain</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$30180.00</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Max Pain Dist</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+1.0%</td></tr><tr style="background:#FFF8C5;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Net GEX</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">284M</td></tr><tr style="background:#FFF8C5;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">GEX Flip Zone</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$30452.97</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">P/C OI</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1.35</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">P/C Volume</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0.82</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">IV Skew (P-C)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+18.95pp</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Strike 개수</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">483</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Data Source</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">cboe_delayed</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<div style="margin-top:16px;padding:8px 12px;background:#FFF8C5;border-left:3px solid #9A6700;
+            border-radius:0 4px 4px 0;font-size:11px;color:#1F2328;">
+  <b style="color:#9A6700;">ⓘ 지수 리포트 범위</b> —
+  지수는 현물 주식이 없어 <b>L1 다크풀</b>·<b>L2 공매도</b> 분석이 N/A. L3 옵션 GEX 만 수록.
+  주간 AI 내러티브도 생성되지 않음 (개별 종목 전용). 해석은 참고용이며 투자 조언 아님.
+</div>
+
+<div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
+  Generated by sma.py · Data: CBOE delayed options quotes, Yahoo Finance spot
+</div>
+</div>
+<script>
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
+Chart.defaults.color = "#1F2328";
+new Chart(document.getElementById('gexChart'), {
+  type:'bar',
+  data:{
+    labels:["29100", "29200", "29250", "29300", "29370", "29400", "29450", "29500", "29560", "29570", "29600", "29625", "29700", "29800", "29820", "29840", "29850", "29875", "29890", "29900", "29910", "29925", "29950", "29960", "29970", "29975", "29980", "29990", "30000", "30020", "30025", "30030", "30050", "30060", "30070", "30075", "30080", "30090", "30100", "30110", "30125", "30130", "30140", "30150", "30160", "30170", "30175", "30180", "30190", "30200", "30210", "30220", "30225", "30230", "30240", "30250", "30260", "30270", "30275", "30280", "30290", "30300", "30310", "30320", "30325", "30330", "30350", "30360", "30370", "30375", "30380", "30390", "30400", "30410", "30420", "30425", "30430", "30450", "30460", "30470", "30475", "30480", "30490", "30500", "30510", "30520", "30525", "30530", "30540", "30550", "30560", "30570", "30575", "30580", "30590", "30600", "30610", "30620", "30625", "30630", "30650", "30660", "30670", "30675", "30680", "30690", "30700", "30710", "30720", "30725", "30730", "30750", "30760", "30770", "30775", "30780", "30790", "30800", "30820", "30825", "30830", "30840", "30850", "30870", "30875", "30880", "30890", "30900", "30925", "30930", "30940", "30950", "30975", "30980", "30990", "31000", "31010", "31020", "31025", "31050", "31070", "31080", "31100", "31200", "31210", "31250", "31300", "31400", "31500", "31600", "31800", "32000"],
+    datasets:[{ label:'GEX', data:[-938369.8294371713, -2418774.2236534692, -786472.7033683828, -2840192.4435816775, -12540968.514246851, -3901634.6488767974, 1300544.8829589328, -1857921.2613699038, -1114752.7568219423, -836064.5676164568, -2693985.8289863598, -3530050.3966028173, -9289606.30684952, -4273218.901150777, -928960.6306849519, -836064.5676164567, -4459011.027287767, 3065570.081260341, -3622946.4596713115, -7803269.297753595, -1114752.7568219423, 1114752.7568219425, 16721291.352329133, -1486337.009095923, -4830595.27956175, 2972674.018191847, -1114752.7568219423, -3715842.5227398076, -32049141.75863084, -1393440.9460274277, 9754086.622191992, -928960.6306849519, 11147527.568219423, -2786881.8920548554, -2229505.513643884, -1672129.1352329124, -3344258.2704658266, -3901634.6488767974, 16907083.478466123, -1950817.3244383987, 1950817.3244383978, -8174853.550027575, -1486337.0090959228, -2972674.018191848, -11890696.072767384, -4459011.027287769, 1486337.009095925, -2508193.70284937, -1672129.1352329133, -9196710.243781023, -12540968.51424685, -11147527.568219421, -13934409.460274277, -7431685.045479615, -9289606.306849517, -16721291.352329135, 2786881.8920548568, -7152996.856274129, -23502703.95632929, -1021856.6937534469, -11240423.631287917, -2043713.3875068948, -8174853.550027575, -1114752.756821942, 4459011.027287766, -5573763.784109712, -25639313.406904668, -3344258.2704658266, -3344258.2704658266, 8453541.739233062, -7245892.919342624, -1207648.8198904376, 8453541.739233058, 1207648.8198904386, -3622946.4596713115, 18114732.298356563, 18114732.298356563, 12076488.198904375, -28611987.42509651, -2601089.765917865, -27311442.54213758, -10404359.06367146, -16907083.47846612, -3901634.6488768086, 3901634.6488767974, 5202179.531835729, -10404359.063671455, 1207648.8198904374, 4830595.27956175, 7245892.919342624, 1207648.8198904367, 7245892.919342624, -4830595.2795617515, -2415297.639780875, -2415297.6397808734, 42360604.759233795, -1114752.756821942, 4459011.027287768, 8918022.054575536, 5573763.784109711, 39852411.05638443, -15327850.406301703, 1021856.6937534469, 13934409.460274275, 1857921.2613699045, 3715842.5227398076, 156065385.9550719, 9196710.243781023, 1672129.1352329133, 4180322.838082283, 10032774.811397478, 63169322.88657672, 7431685.045479614, 2601089.7659178646, 20158445.685863458, 5202179.531835729, 7803269.297753595, 45147486.65128866, 2786881.8920548554, 1672129.1352329133, 2229505.5136438846, 3901634.6488767974, 18579212.613699038, 928960.6306849519, 3251362.2073973315, 7431685.045479615, 6316932.288657673, 24152976.39780875, 1486337.0090959228, 1114752.7568219423, 836064.5676164567, 3622946.4596713115, 3622946.4596713115, 836064.5676164567, 836064.5676164567, 17557355.919945586, 1672129.1352329135, 2972674.0181918456, 2043713.3875068938, 3158466.1443288364, 3901634.6488767983, 1114752.7568219423, 8360645.676164566, 4551907.090356264, 2508193.70284937, 836064.5676164568, 2229505.5136438846, 2508193.70284937, 3547137.533341881, 1832024.7669755574, 1378457.3943436174, 787085.5600639106], backgroundColor:["#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#1A7F5A", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#CF222B", "#1A7F5A", "#1A7F5A", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#1A7F5A", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#CF222B", "#CF222B", "#1A7F5A", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#CF222B", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A", "#1A7F5A"], borderWidth:0 }]
+  },
+  options:{
+    maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, title:{display:true,text:'GEX by Strike — NDX (spot ±5%, 주요 strike 만)'} },
+    scales:{
+      y:{ grid:{color:'#EAEEF2'}, ticks:{ callback:function(v){
+        var a=Math.abs(v); if(a>=1e9)return (v/1e9).toFixed(1)+'B';
+        if(a>=1e6)return (v/1e6).toFixed(0)+'M';
+        if(a>=1e3)return (v/1e3).toFixed(0)+'k'; return v;
+      } } },
+      x:{ grid:{display:false}, ticks:{ maxRotation:60, minRotation:45, autoSkip:true, maxTicksLimit:20 } }
+    }
+  }
+});
+</script>
+</body>
+</html>
