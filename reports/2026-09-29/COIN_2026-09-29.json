@@ -1,0 +1,102 @@
+{
+  "ticker": "COIN",
+  "date": "2026-09-29",
+  "price": 191.7899932861328,
+  "is_index": false,
+  "warnings": [],
+  "patterns": [
+    "GAMMA_SQUEEZE_SETUP"
+  ],
+  "macro_env": "NEUTRAL",
+  "scenarios": {
+    "A_bullish": 35.2,
+    "B_neutral": 37.0,
+    "C_bearish": 27.8,
+    "raw_score": -0.05
+  },
+  "l1": {
+    "scenario": "DISTRIBUTION",
+    "signal": "BEARISH",
+    "confidence": "HIGH",
+    "dp_pct": 42.77606778075771,
+    "delta_total": -5854144.330408306,
+    "divergence": "CONVERGENCE",
+    "cumulative_daily": [
+      {
+        "date": "2026-09-22",
+        "cum": -364794.274327704,
+        "day": -364794.274327704
+      },
+      {
+        "date": "2026-09-23",
+        "cum": -343445.8444297408,
+        "day": 21348.429897963204
+      },
+      {
+        "date": "2026-09-24",
+        "cum": -161444.14331773375,
+        "day": 182001.70111200705
+      },
+      {
+        "date": "2026-09-25",
+        "cum": -376076.3095228184,
+        "day": -214632.16620508468
+      },
+      {
+        "date": "2026-09-28",
+        "cum": -5854144.330408306,
+        "day": -5478068.020885487
+      }
+    ],
+    "obv_source": "total_only_v6",
+    "window_days": 5,
+    "inst_abs_volume": 15622007.539013002,
+    "lit_abs_volume": 19206792.460986998
+  },
+  "l2": {
+    "scenario": "MM_HEDGE",
+    "signal": "NEUTRAL",
+    "case": "CASE_1_MM_DELTA_HEDGE",
+    "short_pct_latest": 51.18079968198192,
+    "short_avg_14d": 56.05021882082972,
+    "short_slope": 0.3771670038089229,
+    "slope_dir": "RISING",
+    "anomaly_z": -0.8265130559514903,
+    "ctb_fee": null,
+    "ctb_delta_pct": null,
+    "shares_available": null
+  },
+  "phase": {
+    "p1_date": "2026-09-15 ~ 2026-09-28",
+    "p2_date": "2026-09-29",
+    "p3_date": "2026-10-06 ~ 2026-10-27",
+    "p3_direction": "RANGE",
+    "p3_target_hi": 191.83999633789062,
+    "p3_target_lo": 174.72999572753906,
+    "p3_bb_width": 24.210916494437907
+  },
+  "l3": {
+    "scenario": "GAMMA_SQUEEZE",
+    "signal": "BULLISH",
+    "expiry": "2026-10-02",
+    "dte": 3,
+    "max_pain": 190.0,
+    "max_pain_dist_pct": 0.9421017295435855,
+    "pc_oi": 0.6135621535424102,
+    "pc_vol": 0.44513567174056917,
+    "skew": -0.05459999999999998,
+    "net_gex": 23655407.320065282,
+    "flip_zone": 194.9839885110736
+  },
+  "l4": {
+    "scenario": "RANGE_BOUND",
+    "signal": "NEUTRAL",
+    "ma_alignment": "MIXED",
+    "sma20": 185.05450057983398,
+    "sma50": 171.13319976806642,
+    "sma200": 186.9752995300293,
+    "bb_width_pct": 24.210916494437907,
+    "immediate_resistance": 191.83999633789062,
+    "immediate_support": 174.72999572753906
+  }
+}
