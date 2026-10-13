@@ -12663,5 +12663,107 @@
       "immediate_resistance": 3.75,
       "immediate_support": 2.990000009536743
     }
+  },
+  {
+    "ticker": "KEEL",
+    "date": "2026-10-13",
+    "price": 2.950000047683716,
+    "is_index": false,
+    "warnings": [],
+    "patterns": [
+      "GAMMA_SQUEEZE_SETUP"
+    ],
+    "macro_env": "NEUTRAL",
+    "scenarios": {
+      "A_bullish": 35.2,
+      "B_neutral": 37.0,
+      "C_bearish": 27.8,
+      "raw_score": -0.05
+    },
+    "l1": {
+      "scenario": "DISTRIBUTION",
+      "signal": "BEARISH",
+      "confidence": "HIGH",
+      "dp_pct": 47.60830049502247,
+      "delta_total": -20258808.847919885,
+      "divergence": "CONVERGENCE",
+      "cumulative_daily": [
+        {
+          "date": "2026-10-06",
+          "cum": 452908.03688436886,
+          "day": 452908.03688436886
+        },
+        {
+          "date": "2026-10-07",
+          "cum": 190009.1184468182,
+          "day": -262898.91843755066
+        },
+        {
+          "date": "2026-10-08",
+          "cum": 69525.72715167013,
+          "day": -120483.39129514807
+        },
+        {
+          "date": "2026-10-09",
+          "cum": -4323208.847919886,
+          "day": -4392734.5750715565
+        },
+        {
+          "date": "2026-10-12",
+          "cum": -20258808.847919885,
+          "day": -15935600.0
+        }
+      ],
+      "obv_source": "total_only_v6",
+      "window_days": 5,
+      "inst_abs_volume": 58249058.25548901,
+      "lit_abs_volume": 73771441.744511
+    },
+    "l2": {
+      "scenario": "MM_HEDGE",
+      "signal": "NEUTRAL",
+      "case": "CASE_1_MM_DELTA_HEDGE",
+      "short_pct_latest": 50.717902531056694,
+      "short_avg_14d": 44.57013992829013,
+      "short_slope": 0.9469640873149376,
+      "slope_dir": "RISING",
+      "anomaly_z": 0.9711848383039398,
+      "ctb_fee": null,
+      "ctb_delta_pct": null,
+      "shares_available": null
+    },
+    "phase": {
+      "p1_date": "2026-09-29 ~ 2026-10-12",
+      "p2_date": "2026-10-13",
+      "p3_date": "2026-10-20 ~ 2026-11-10",
+      "p3_direction": "RANGE",
+      "p3_target_hi": 3.75,
+      "p3_target_lo": 2.9089099287851656,
+      "p3_bb_width": 37.035859637369285
+    },
+    "l3": {
+      "scenario": "GAMMA_SQUEEZE",
+      "signal": "BULLISH",
+      "expiry": "2026-10-16",
+      "dte": 3,
+      "max_pain": 3.0,
+      "max_pain_dist_pct": -1.6666650772094727,
+      "pc_oi": 0.14249509280194797,
+      "pc_vol": 0.3131002689204764,
+      "skew": 0.34940000000000004,
+      "net_gex": 48207.55426395103,
+      "flip_zone": 3.1615035045829165
+    },
+    "l4": {
+      "scenario": "RANGE_BOUND",
+      "signal": "NEUTRAL",
+      "ma_alignment": "MIXED",
+      "sma20": 3.5700000286102296,
+      "sma50": 3.5232000064849855,
+      "sma200": 3.47100000500679,
+      "bb_width_pct": 37.035859637369285,
+      "immediate_resistance": 3.75,
+      "immediate_support": null
+    }
   }
 ]
