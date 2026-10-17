@@ -9798,5 +9798,107 @@
       "immediate_resistance": 160.52999877929688,
       "immediate_support": 156.9499969482422
     }
+  },
+  {
+    "ticker": "ICE",
+    "date": "2026-10-17",
+    "price": 161.55999755859375,
+    "is_index": false,
+    "warnings": [],
+    "patterns": [
+      "GAMMA_SQUEEZE_SETUP"
+    ],
+    "macro_env": "NEUTRAL",
+    "scenarios": {
+      "A_bullish": 67.6,
+      "B_neutral": 18.5,
+      "C_bearish": 13.9,
+      "raw_score": 0.85
+    },
+    "l1": {
+      "scenario": "ACCUMULATION",
+      "signal": "BULLISH",
+      "confidence": "MEDIUM",
+      "dp_pct": 35.22680174511576,
+      "delta_total": 2762004.1771627944,
+      "divergence": "CONVERGENCE",
+      "cumulative_daily": [
+        {
+          "date": "2026-10-12",
+          "cum": 11410.957763683575,
+          "day": 11410.957763683575
+        },
+        {
+          "date": "2026-10-13",
+          "cum": 23941.330309306664,
+          "day": 12530.372545623088
+        },
+        {
+          "date": "2026-10-14",
+          "cum": 65885.931929131,
+          "day": 41944.60161982433
+        },
+        {
+          "date": "2026-10-15",
+          "cum": 111369.32624726655,
+          "day": 45483.394318135564
+        },
+        {
+          "date": "2026-10-16",
+          "cum": 2762004.1771627944,
+          "day": 2650634.850915528
+        }
+      ],
+      "obv_source": "total_only_v6",
+      "window_days": 5,
+      "inst_abs_volume": 5080740.992025,
+      "lit_abs_volume": 11659159.007975
+    },
+    "l2": {
+      "scenario": "SHORT_COVERING",
+      "signal": "BULLISH",
+      "case": "SHORT_COVERING",
+      "short_pct_latest": 22.85309352088873,
+      "short_avg_14d": 39.638109406746565,
+      "short_slope": -0.7063414722930615,
+      "slope_dir": "FALLING",
+      "anomaly_z": -1.9359919298939554,
+      "ctb_fee": null,
+      "ctb_delta_pct": null,
+      "shares_available": null
+    },
+    "phase": {
+      "p1_date": "2026-10-05 ~ 2026-10-16",
+      "p2_date": "2026-10-17",
+      "p3_date": "2026-10-23 ~ 2026-11-13",
+      "p3_direction": "UPWARD",
+      "p3_target_hi": 163.38999938964844,
+      "p3_target_lo": 149.27047638407393,
+      "p3_bb_width": 6.977623425839155
+    },
+    "l3": {
+      "scenario": "GAMMA_SQUEEZE",
+      "signal": "BULLISH",
+      "expiry": "2026-10-23",
+      "dte": 6,
+      "max_pain": 157.5,
+      "max_pain_dist_pct": 2.5777762276785716,
+      "pc_oi": 0.5978260869565217,
+      "pc_vol": 0.896,
+      "skew": -0.1502,
+      "net_gex": 969099.6913638227,
+      "flip_zone": 157.60873276582717
+    },
+    "l4": {
+      "scenario": "RANGE_BOUND",
+      "signal": "NEUTRAL",
+      "ma_alignment": "MIXED",
+      "sma20": 154.66649932861327,
+      "sma50": 156.2711996459961,
+      "sma200": 154.70860023498534,
+      "bb_width_pct": 6.977623425839155,
+      "immediate_resistance": 163.38999938964844,
+      "immediate_support": 156.9499969482422
+    }
   }
 ]
