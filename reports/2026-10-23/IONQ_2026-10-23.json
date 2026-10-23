@@ -1,0 +1,102 @@
+{
+  "ticker": "IONQ",
+  "date": "2026-10-23",
+  "price": 31.15999984741211,
+  "is_index": false,
+  "warnings": [],
+  "patterns": [
+    "GAMMA_SQUEEZE_SETUP"
+  ],
+  "macro_env": "RESTRICTED",
+  "scenarios": {
+    "A_bullish": 28.7,
+    "B_neutral": 37.0,
+    "C_bearish": 34.3,
+    "raw_score": -0.05
+  },
+  "l1": {
+    "scenario": "DISTRIBUTION",
+    "signal": "BEARISH",
+    "confidence": "MEDIUM",
+    "dp_pct": 38.97927808015991,
+    "delta_total": -11684990.914673686,
+    "divergence": "BEARISH_DIVERGENCE",
+    "cumulative_daily": [
+      {
+        "date": "2026-10-16",
+        "cum": -2628004.5772925313,
+        "day": -2628004.5772925313
+      },
+      {
+        "date": "2026-10-19",
+        "cum": -3576434.8453034796,
+        "day": -948430.2680109481
+      },
+      {
+        "date": "2026-10-20",
+        "cum": -3087522.4471220067,
+        "day": 488912.3981814727
+      },
+      {
+        "date": "2026-10-21",
+        "cum": -3393559.137303223,
+        "day": -306036.69018121605
+      },
+      {
+        "date": "2026-10-22",
+        "cum": -11684990.914673686,
+        "day": -8291431.777370463
+      }
+    ],
+    "obv_source": "total_only_v6",
+    "window_days": 5,
+    "inst_abs_volume": 43591887.216582,
+    "lit_abs_volume": 67115112.783418
+  },
+  "l2": {
+    "scenario": "MM_HEDGE",
+    "signal": "NEUTRAL",
+    "case": "CASE_1_MM_DELTA_HEDGE",
+    "short_pct_latest": 55.79419090041271,
+    "short_avg_14d": 59.25486172725658,
+    "short_slope": 0.5355464525592862,
+    "slope_dir": "RISING",
+    "anomaly_z": -0.5751101773724843,
+    "ctb_fee": null,
+    "ctb_delta_pct": null,
+    "shares_available": null
+  },
+  "phase": {
+    "p1_date": "2026-10-09 ~ 2026-10-22",
+    "p2_date": "2026-10-23",
+    "p3_date": "2026-10-30 ~ 2026-11-20",
+    "p3_direction": "RANGE",
+    "p3_target_hi": 38.560001373291016,
+    "p3_target_lo": 30.190000534057617,
+    "p3_bb_width": 57.09824153524736
+  },
+  "l3": {
+    "scenario": "GAMMA_SQUEEZE",
+    "signal": "BULLISH",
+    "expiry": "2026-10-23",
+    "dte": 0,
+    "max_pain": 33.0,
+    "max_pain_dist_pct": -5.575758038145123,
+    "pc_oi": 0.8032991060308322,
+    "pc_vol": 2.4118019300743554,
+    "skew": -0.06879999999999997,
+    "net_gex": 348018.5036135816,
+    "flip_zone": 30.934910577679428
+  },
+  "l4": {
+    "scenario": "RANGE_BOUND",
+    "signal": "NEUTRAL",
+    "ma_alignment": "FULL_BEAR",
+    "sma20": 38.30300025939941,
+    "sma50": 39.758200073242186,
+    "sma200": 42.59580009460449,
+    "bb_width_pct": 57.09824153524736,
+    "immediate_resistance": 38.560001373291016,
+    "immediate_support": 30.190000534057617
+  }
+}
