@@ -1,0 +1,102 @@
+{
+  "ticker": "KEEL",
+  "date": "2026-10-28",
+  "price": 2.25,
+  "is_index": false,
+  "warnings": [],
+  "patterns": [
+    "GAMMA_SQUEEZE_SETUP"
+  ],
+  "macro_env": "NEUTRAL",
+  "scenarios": {
+    "A_bullish": 35.2,
+    "B_neutral": 37.0,
+    "C_bearish": 27.8,
+    "raw_score": 0.0
+  },
+  "l1": {
+    "scenario": "DISTRIBUTION",
+    "signal": "BEARISH",
+    "confidence": "HIGH",
+    "dp_pct": 45.88317077702173,
+    "delta_total": -4967721.372439139,
+    "divergence": "CONVERGENCE",
+    "cumulative_daily": [
+      {
+        "date": "2026-10-21",
+        "cum": 338121.3813178967,
+        "day": 338121.3813178967
+      },
+      {
+        "date": "2026-10-22",
+        "cum": 969142.8296529097,
+        "day": 631021.448335013
+      },
+      {
+        "date": "2026-10-23",
+        "cum": 1837007.1697638542,
+        "day": 867864.3401109446
+      },
+      {
+        "date": "2026-10-26",
+        "cum": 2765160.9805020383,
+        "day": 928153.8107381843
+      },
+      {
+        "date": "2026-10-27",
+        "cum": -4967721.372439139,
+        "day": -7732882.352941177
+      }
+    ],
+    "obv_source": "total_only_v6",
+    "window_days": 5,
+    "inst_abs_volume": 51988947.880493,
+    "lit_abs_volume": 66841952.119507
+  },
+  "l2": {
+    "scenario": "SHORT_COVERING",
+    "signal": "BULLISH",
+    "case": "SHORT_COVERING",
+    "short_pct_latest": 46.301158843414925,
+    "short_avg_14d": 45.46064733787707,
+    "short_slope": -0.6624636236110236,
+    "slope_dir": "FALLING",
+    "anomaly_z": 0.12038977605952378,
+    "ctb_fee": null,
+    "ctb_delta_pct": null,
+    "shares_available": null
+  },
+  "phase": {
+    "p1_date": "2026-10-14 ~ 2026-10-27",
+    "p2_date": "2026-10-28",
+    "p3_date": "2026-11-04 ~ 2026-11-25",
+    "p3_direction": "RANGE",
+    "p3_target_hi": 3.75,
+    "p3_target_lo": 1.782417395116339,
+    "p3_bb_width": 73.2052354921365
+  },
+  "l3": {
+    "scenario": "GAMMA_SQUEEZE",
+    "signal": "BULLISH",
+    "expiry": "2026-10-30",
+    "dte": 2,
+    "max_pain": 3.0,
+    "max_pain_dist_pct": -25.0,
+    "pc_oi": 0.4228965517241379,
+    "pc_vol": 0.2650334075723831,
+    "skew": 0.33789999999999987,
+    "net_gex": 6014.237343750003,
+    "flip_zone": 2.081709426654641
+  },
+  "l4": {
+    "scenario": "DOWNTREND",
+    "signal": "BEARISH",
+    "ma_alignment": "FULL_BEAR",
+    "sma20": 2.8114999890327455,
+    "sma50": 3.2328000020980836,
+    "sma200": 3.456350003480911,
+    "bb_width_pct": 73.2052354921365,
+    "immediate_resistance": 3.75,
+    "immediate_support": null
+  }
+}
