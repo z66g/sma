@@ -1,0 +1,105 @@
+{
+  "ticker": "FCX",
+  "date": "2026-11-03",
+  "price": NaN,
+  "is_index": false,
+  "warnings": [
+    "news parse: *** YAHOO! FINANCE IS CURRENTLY DOWN! ***"
+  ],
+  "patterns": [
+    "GAMMA_SQUEEZE_SETUP",
+    "FINAL_ABSORPTION"
+  ],
+  "macro_env": "NEUTRAL",
+  "scenarios": {
+    "A_bullish": 72.2,
+    "B_neutral": 18.5,
+    "C_bearish": 9.3,
+    "raw_score": 0.85
+  },
+  "l1": {
+    "scenario": "ACCUMULATION",
+    "signal": "BULLISH",
+    "confidence": "MEDIUM",
+    "dp_pct": 43.01959064823927,
+    "delta_total": 9832281.803065758,
+    "divergence": "NEUTRAL",
+    "cumulative_daily": [
+      {
+        "date": "2026-10-27",
+        "cum": -11553.455045888451,
+        "day": -11553.455045888451
+      },
+      {
+        "date": "2026-10-28",
+        "cum": 348295.77349340444,
+        "day": 359849.2285392929
+      },
+      {
+        "date": "2026-10-29",
+        "cum": 426492.0802000268,
+        "day": 78196.30670662234
+      },
+      {
+        "date": "2026-10-30",
+        "cum": -1491222.1969342427,
+        "day": -1917714.2771342695
+      },
+      {
+        "date": "2026-11-02",
+        "cum": 9832281.803065758,
+        "day": 11323504.0
+      }
+    ],
+    "obv_source": "total_only_v6",
+    "window_days": 5,
+    "inst_abs_volume": 23431158.038723,
+    "lit_abs_volume": 38527245.961277
+  },
+  "l2": {
+    "scenario": "SHORT_COVERING",
+    "signal": "BULLISH",
+    "case": "SHORT_COVERING",
+    "short_pct_latest": 32.46956557551838,
+    "short_avg_14d": 41.602341542363895,
+    "short_slope": -0.3245564077574202,
+    "slope_dir": "FALLING",
+    "anomaly_z": -1.9426814359908895,
+    "ctb_fee": null,
+    "ctb_delta_pct": null,
+    "shares_available": null
+  },
+  "phase": {
+    "p1_date": "2026-10-20 ~ 2026-11-02",
+    "p2_date": "2026-11-03",
+    "p3_date": "2026-11-10 ~ 2026-12-02",
+    "p3_direction": "UPWARD",
+    "p3_target_hi": NaN,
+    "p3_target_lo": NaN,
+    "p3_bb_width": 0
+  },
+  "l3": {
+    "scenario": "GAMMA_SQUEEZE",
+    "signal": "BULLISH",
+    "expiry": "2026-11-06",
+    "dte": 3,
+    "max_pain": 62.0,
+    "max_pain_dist_pct": 0,
+    "pc_oi": 0.36590093323761663,
+    "pc_vol": 0.4910970706490523,
+    "skew": -1.6294,
+    "net_gex": NaN,
+    "flip_zone": null
+  },
+  "l4": {
+    "scenario": "RANGE_BOUND",
+    "signal": "NEUTRAL",
+    "ma_alignment": "MIXED",
+    "sma20": NaN,
+    "sma50": NaN,
+    "sma200": NaN,
+    "bb_width_pct": 0,
+    "immediate_resistance": null,
+    "immediate_support": null
+  }
+}
