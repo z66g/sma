@@ -240,16 +240,12 @@ jobs:
           [ -n "${SKIPPED_TICKERS:-}" ] && EXTRA="${EXTRA}${NL}❌ 유효하지 않은 티커: <b>${SKIPPED_TICKERS}</b>"
           [ -n "${FAILED_TICKERS:-}" ] && EXTRA="${EXTRA}${NL}⚠ 분석 실패: <b>${FAILED_TICKERS}</b>"
           if [ -s quality_line.txt ]; then
-            EXTRA="${EXTRA}${NL}$(head -c 600 quality_line.txt)"
+            EXTRA="${EXTRA}${NL}$(python3 -c 'import sys;print(open(sys.argv[1],encoding="utf-8").read()[:400])' quality_line.txt)"
           fi
 
           MSG="📩 ${DATE} 세션 Daily Report (미국 정규장)${NL}${NL}📈 <b>개별 종목</b>${NL}${STOCK_LINKS}${INDEX_BLOCK}${EXTRA}${NL}${NL}📋 <a href=\"${BASE}/\">Dashboard</a>"
 
-          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TG_CHAT}" \
-            --data-urlencode "parse_mode=HTML" \
-            --data-urlencode "disable_web_page_preview=true" \
-            --data-urlencode "text=${MSG}" >/dev/null || echo "WARN: Telegram notify failed"
+          printf '%s' "${MSG}" | python3 tools/telegram_send.py
 
       - name: Notify Telegram (failure)
         if: failure()
@@ -260,8 +256,4 @@ jobs:
         run: |
           NL=$'\n'
           MSG="❌ Daily Report 워크플로 실패${NL}실패 종목: ${FAILED_TICKERS:-?}${NL}<a href=\"${RUN_URL}\">Actions 로그</a>"
-          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TG_CHAT}" \
-            --data-urlencode "parse_mode=HTML" \
-            --data-urlencode "disable_web_page_preview=true" \
-            --data-urlencode "text=${MSG}" >/dev/null || echo "WARN: Telegram notify failed"
+          printf '%s' "${MSG}" | python3 tools/telegram_send.py

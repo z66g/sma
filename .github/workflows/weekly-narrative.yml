@@ -66,6 +66,10 @@ jobs:
             [ -n "${MISSING}" ] && echo "- 누락: ${MISSING}"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Install notifier dependency
+        if: env.NOTIFY == '1'
+        run: python3 -m pip install -q requests
+
       - name: Notify Telegram
         if: env.NOTIFY == '1'
         env:
@@ -82,8 +86,4 @@ jobs:
           MISS_BLOCK=""
           [ -n "${MISSING:-}" ] && MISS_BLOCK="${NL}⚠ 미생성: <b>${MISSING}</b>${NL}"
           MSG="💬 Weekly AI Narrative · 세션 ${SESSION} (Claude Opus 5.5)${NL}${NL}${LINKS}${MISS_BLOCK}${NL}📋 <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
-          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TG_CHAT}" \
-            --data-urlencode "parse_mode=HTML" \
-            --data-urlencode "disable_web_page_preview=true" \
-            --data-urlencode "text=${MSG}" >/dev/null || echo "WARN: Telegram notify failed"
+          printf '%s' "${MSG}" | python3 tools/telegram_send.py
