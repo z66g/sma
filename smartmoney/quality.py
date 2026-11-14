@@ -9,7 +9,7 @@ REQUIRED = {
            ("vwap5", 1, "VWAP 앵커"), ("ats", 1, "FINRA ATS 주간"), ("iar", 1, "기관 흡수율(IAR)")],
     "l2": [("short_pct_latest", 3, "Short%"), ("ctb_fee", 3, "CTB 수수료"), ("shares_available", 1, "가용잔고"),
            ("ctb_delta_pct", 1, "CTB Δ%"), ("short_interest", 2, "공매도 잔고(SI)")],
-    "l3": [("max_pain", 3, "Max Pain"), ("net_gex", 2, "Net GEX"), ("flip_zone", 2, "GEX 플립"),
+    "l3": [("max_pain", 3, "Max Pain"), ("net_gex", 2, "Net GEX"), ("flip_zone|flip_status", 2, "GEX 플립"),
            ("pc_oi", 1, "P/C OI"), ("skew_25d", 1, "25Δ 스큐"), ("expected_move", 1, "예상 변동폭"),
            ("call_wall", 1, "콜월")],
     "l4": [("sma200", 1, "SMA200"), ("bb_width_pct", 1, "볼린저 폭"), ("rsi14", 1, "RSI"),
@@ -27,9 +27,11 @@ def assess(layers: Dict[str, Dict], macro: Dict, news_ok: bool, sources: Dict[st
         if is_index and key not in INDEX_LAYERS:
             continue
         L = layers.get(key) or {}
-        missing = [name for f, w, name in fields if L.get(f) in (None, [], {})]
+        def has(f: str) -> bool:      # "a|b" = 둘 중 하나라도 유효하면 충족 (예: 플립 부재도 판정 결과)
+            return any(L.get(k) not in (None, [], {}) for k in f.split("|"))
+        missing = [name for f, w, name in fields if not has(f)]
         fw = sum(w for _, w, _ in fields)
-        gw = sum(w for f, w, _ in fields if L.get(f) not in (None, [], {}))
+        gw = sum(w for f, w, _ in fields if has(f))
         frac = gw / fw if fw else 0
         out["layers"][key] = {"status": "OK" if frac >= 0.85 else "PARTIAL" if frac > 0 else "MISSING",
                               "coverage": round(frac * 100), "missing": missing, "sources": sources.get(key, [])}

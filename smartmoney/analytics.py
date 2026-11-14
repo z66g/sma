@@ -580,23 +580,30 @@ def analyze_l3(chain: Dict, spot: float, session: date, opt_hist: List[Dict],
             for o in live[e][side]:
                 if o["oi"] > 0 and o.get("iv", 0) > 0:
                     opts.append((o["strike"], T, o["iv"], o["oi"], 1 if is_call else -1))
-    flip, regime, profile = None, None, []
+    flip, regime, profile, flip_status = None, None, [], None
     if opts and spot > 0:
         K = np.array([x[0] for x in opts]); T = np.array([x[1] for x in opts]); IV = np.array([x[2] for x in opts])
         OI = np.array([x[3] for x in opts]); SG = np.array([x[4] for x in opts])
-        grid = np.linspace(spot * 0.8, spot * 1.2, 161)
+        grid = np.linspace(spot * 0.5, spot * 1.5, 401)       # ±50% (저가주·넓은 행사가 간격 대응)
         vals = []
         for S in grid:
             sq = IV * np.sqrt(T)
             d1 = (np.log(S / K) + 0.5 * IV * IV * T) / sq
             gam = np.exp(-0.5 * d1 * d1) / np.sqrt(2 * np.pi) / (S * sq)
             vals.append(float((SG * OI * gam * 100 * S * S * 0.01).sum()))
-        profile = [{"s": float(s), "g": v} for s, v in zip(grid[::4], vals[::4])]
+        near = [i for i, g in enumerate(grid) if spot * 0.8 <= g <= spot * 1.2]   # 차트는 ±20% 구간
+        profile = [{"s": float(grid[i]), "g": vals[i]} for i in near[::4]]
         crosses = [float(grid[i] - vals[i] * (grid[i + 1] - grid[i]) / (vals[i + 1] - vals[i]))
                    for i in range(len(grid) - 1) if vals[i] * vals[i + 1] < 0]
         if crosses:
             flip = min(crosses, key=lambda x: abs(x - spot))
-        regime = "POSITIVE" if vals[80] > 0 else "NEGATIVE"
+        mid = int(np.argmin(np.abs(grid - spot)))
+        regime = "POSITIVE" if vals[mid] > 0 else "NEGATIVE"
+        if flip is None:
+            flip_status = "NO_FLIP_ALL_POSITIVE" if all(v > 0 for v in vals) else \
+                          "NO_FLIP_ALL_NEGATIVE" if all(v < 0 for v in vals) else "NO_FLIP_IN_RANGE"
+        else:
+            flip_status = "FOUND" if abs(flip - spot) / spot <= 0.2 else "FOUND_FAR"
 
     # 콜월/풋월: 감마 노출 기준 (원거리 잔존 OI 배제), 현재가 ±20% 밴드
     call_gex_k: Dict[float, float] = {}
@@ -752,7 +759,7 @@ def analyze_l3(chain: Dict, spot: float, session: date, opt_hist: List[Dict],
                monthly_expected_move=em_m, atm_spread=atm_spread, binary_event=binary,
                binary_basis=binary_basis,
                gex_by_strike=gex, gex_weighted=gex_w, net_gex=net_gex, net_gex_weighted=sum(gex_w.values()),
-               flip_zone=flip, gamma_regime=regime, gamma_profile=profile,
+               flip_zone=flip, flip_status=flip_status, gamma_regime=regime, gamma_profile=profile,
                call_wall=call_wall, put_wall=put_wall, top_oi_strike=top_strike,
                call_oi=tc_oi, put_oi=tp_oi, oi_total=oi_total, total_volume=total_vol,
                oi_trend_pct=oi_trend, put_oi_trend_pct=put_oi_trend, opt_vol_ratio=vol_ratio, pinning=pin,
@@ -808,19 +815,15 @@ def analyze_l4(ohlcv: List[Dict]) -> Dict[str, Any]:
     else:
         ma = "INSUFFICIENT_DATA"
 
-    # S/R: 스윙 피벗 + 볼륨 프로파일 POC (60일)
-    win = ohlcv[-90:]
-    piv_h, piv_l = [], []
-    for i in range(2, len(win) - 2):
-        hs = [w["high"] for w in win[i - 2:i + 3]]
-        ls = [w["low"] for w in win[i - 2:i + 3]]
-        if win[i]["high"] == max(hs):
-            piv_h.append(win[i]["high"])
-        if win[i]["low"] == min(ls):
-            piv_l.append(win[i]["low"])
-    lv = cluster_prices(piv_h + piv_l, 0.8)
-    res = sorted([p for p, cnt in lv if p > close * 1.002])
-    sup = sorted([p for p, cnt in lv if p < close * 0.998], reverse=True)
+    # S/R: 단계적 탐색 — 90일 스윙 피벗 → 1년 스윙 피벗 → POC·이동평균 → 52주 고/저
+    def pivots(win):
+        hs_, ls_ = [], []
+        for i in range(2, len(win) - 2):
+            if win[i]["high"] == max(w["high"] for w in win[i - 2:i + 3]):
+                hs_.append(win[i]["high"])
+            if win[i]["low"] == min(w["low"] for w in win[i - 2:i + 3]):
+                ls_.append(win[i]["low"])
+        return cluster_prices(hs_ + ls_, 0.8)
     vp = {}
     lo60, hi60 = min(c["low"] for c in ohlcv[-60:]), max(c["high"] for c in ohlcv[-60:])
     step = (hi60 - lo60) / 30 if hi60 > lo60 else 1
@@ -828,6 +831,30 @@ def analyze_l4(ohlcv: List[Dict]) -> Dict[str, Any]:
         b = int(((c["high"] + c["low"] + c["close"]) / 3 - lo60) / step)
         vp[b] = vp.get(b, 0) + c["volume"]
     poc = lo60 + (max(vp, key=vp.get) + 0.5) * step if vp else None
+    hi52 = max(c["high"] for c in ohlcv[-252:])
+    lo52 = min(c["low"] for c in ohlcv[-252:])
+    up_b, dn_b = close * 1.002, close * 0.998
+    res, sup, res_src, sup_src = [], [], [], []
+    for label, lv in (("90d 스윙", pivots(ohlcv[-90:])), ("1y 스윙", pivots(ohlcv[-252:]))):
+        r_ = sorted(p for p, _ in lv if p > up_b)
+        s_ = sorted((p for p, _ in lv if p < dn_b), reverse=True)
+        for x in r_:
+            if len(res) < 2 and all(abs(x - y) / y > 0.008 for y in res):
+                res.append(x); res_src.append(label)
+        for x in s_:
+            if len(sup) < 2 and all(abs(x - y) / y > 0.008 for y in sup):
+                sup.append(x); sup_src.append(label)
+    extra = [("거래량 POC(60d)", poc), ("SMA50", sma50), ("SMA200", sma200)]
+    for label, v in extra + [("52주 저점", lo52)]:
+        if v and v < dn_b and len(sup) < 2 and all(abs(v - y) / y > 0.008 for y in sup):
+            sup.append(v); sup_src.append(label)
+    for label, v in extra + [("52주 고점", hi52)]:
+        if v and v > up_b and len(res) < 2 and all(abs(v - y) / y > 0.008 for y in res):
+            res.append(v); res_src.append(label)
+    pairs_s = sorted(zip(sup, sup_src), key=lambda t: -t[0])
+    pairs_r = sorted(zip(res, res_src), key=lambda t: t[0])
+    sup, sup_src = [a for a, _ in pairs_s], [b for _, b in pairs_s]
+    res, res_src = [a for a, _ in pairs_r], [b for _, b in pairs_r]
 
     sl5 = slope(closes[-5:]) / close * 100
     sl20 = slope(closes[-20:]) / close * 100
@@ -857,6 +884,8 @@ def analyze_l4(ohlcv: List[Dict]) -> Dict[str, Any]:
         "bb_width_trend": width_trend, "bb_position": pos, "band_status": band, "ma_alignment": ma,
         "immediate_resistance": res[0] if res else None, "key_resistance": res[1] if len(res) > 1 else None,
         "immediate_support": sup[0] if sup else None, "key_support": sup[1] if len(sup) > 1 else None,
+        "resistance_source": res_src[:2], "support_source": sup_src[:2],
+        "below_all_swing_lows": not any(x in ("90d 스윙", "1y 스윙") for x in sup_src[:1]),
         "poc60": poc, "slope5_pct": sl5, "slope20_pct": sl20, "vol_ratio30": vratio, "vol_avg30": vol30,
         "high_52w": max(c["high"] for c in ohlcv[-252:]), "low_52w": min(c["low"] for c in ohlcv[-252:]),
         "score": s, "confidence": 0.8 if sma200 else 0.5, "scenario": scen,

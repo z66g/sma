@@ -354,7 +354,10 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
         ["주 만기 / DTE", f"{e(l3.get('expiry'))} / {e(l3.get('dte'))}"],
         ["Max Pain (주)", f"{_num(l3.get('max_pain'), 2, '$')} ({C.pc(-(l3.get('max_pain_dist_pct') or 0), 2)})"],
         ["Max Pain (월물 " + e(l3.get('monthly_expiry') or '-') + ")", _num(l3.get('monthly_max_pain'), 2, '$')],
-        ["GEX 플립 / 레짐", f"{_num(l3.get('flip_zone'), 2, '$')} / {e(l3.get('gamma_regime') or 'N/A')}"],
+        ["GEX 플립 / 레짐", (f"{_num(l3.get('flip_zone'), 2, '$')}" if l3.get('flip_zone') else
+                           {"NO_FLIP_ALL_POSITIVE": "플립 없음 (±50% 전 구간 양감마)", "NO_FLIP_ALL_NEGATIVE": "플립 없음 (±50% 전 구간 음감마)",
+                            "NO_FLIP_IN_RANGE": "플립 없음 (탐색 구간)"}.get(l3.get('flip_status') or '', 'N/A'))
+                          + f" / {e(l3.get('gamma_regime') or 'N/A')}"],
         ["콜월 / 풋월", f"{_num(l3.get('call_wall'), 2, '$')} / {_num(l3.get('put_wall'), 2, '$')}"],
         ["Net GEX (1% 이동당)", C.money_big(l3.get('net_gex'))],
         ["P/C OI · P/C Vol (보정)", f"{_num(l3.get('pc_oi'))} · {_num(l3.get('pc_vol'))} ({_num(l3.get('pc_vol_adj'))})"],
@@ -385,8 +388,10 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
               ["EMA 9 / 21", f"{_num(l4.get('ema9'), 2, '$')} / {_num(l4.get('ema21'), 2, '$')}"],
               ["BB 상단 / 하단 · 폭", f"{_num(l4.get('bb_upper'), 2, '$')} / {_num(l4.get('bb_lower'), 2, '$')} · {_num(l4.get('bb_width_pct'), 1, suffix='%')}"],
               ["RSI(14) · ATR(14)", f"{_num(l4.get('rsi14'), 1)} · {_num(l4.get('atr14'), 2, '$')}"],
-              ["지지 (즉시 / 핵심)", f"{_num(l4.get('immediate_support'), 2, '$')} / {_num(l4.get('key_support'), 2, '$')}"],
-              ["저항 (즉시 / 핵심)", f"{_num(l4.get('immediate_resistance'), 2, '$')} / {_num(l4.get('key_resistance'), 2, '$')}"],
+              ["지지 (즉시 / 핵심)", f"{_num(l4.get('immediate_support'), 2, '$')} / {_num(l4.get('key_support'), 2, '$')}"
+                                + f" <span class=\"muted\">{e(' · '.join(l4.get('support_source') or []))}</span>"],
+              ["저항 (즉시 / 핵심)", f"{_num(l4.get('immediate_resistance'), 2, '$')} / {_num(l4.get('key_resistance'), 2, '$')}"
+                                + f" <span class=\"muted\">{e(' · '.join(l4.get('resistance_source') or []))}</span>"],
               ["52주 고 / 저", f"{_num(l4.get('high_52w'), 2, '$')} / {_num(l4.get('low_52w'), 2, '$')}"]]
     s4 = sec(4, "차트 레이어 (L4 · 일봉)", [pill(scen_label(l4), sig_kind(l4.get("signal"))),
                                        pill(l4.get("ma_alignment") or "N/A", "muted"),

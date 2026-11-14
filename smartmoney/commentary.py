@@ -201,7 +201,11 @@ def l3_text(l3: Dict, l1: Dict, l4: Dict, price: float) -> Tuple[List[str], str]
                    + ("<b>양(+)감마 레짐</b>: 딜러가 변동성을 흡수(되돌림 매매) — 급등락 억제." if price > flip else
                       "<b>음(−)감마 레짐</b>: 딜러 헤지가 추세를 증폭 — 변동성 확대 구간."))
     elif reg:
-        out.append(f"Net GEX {money_big(ng)}/1% · ±20% 범위 내 플립 부재 — 전 구간 {'양(+)' if reg == 'POSITIVE' else '음(−)'}감마.")
+        fs = l3.get("flip_status") or ""
+        why = {"NO_FLIP_ALL_POSITIVE": "현재가 ±50% 전 구간 양(+)감마 — 딜러 롱감마 우위로 급락 시에도 완충 매수가 유지되는 구조",
+               "NO_FLIP_ALL_NEGATIVE": "현재가 ±50% 전 구간 음(−)감마 — 어느 방향이든 딜러 헤지가 움직임을 증폭하는 구조",
+               "NO_FLIP_IN_RANGE": "탐색 구간 내 0 교차 없음"}.get(fs, "플립 미관측")
+        out.append(f"Net GEX {money_big(ng)}/1% · 감마 플립 없음 — {why}.")
     cw, pw = l3.get("call_wall"), l3.get("put_wall")
     if cw or pw:
         out.append(f"감마 벽: 콜월 <b>{usd(cw)}</b>({pc((cw-price)/price*100) if cw else 'N/A'}) 저항 · 풋월 <b>{usd(pw)}</b>"
@@ -254,8 +258,11 @@ def l4_text(l4: Dict, l1: Dict, l3: Dict) -> Tuple[List[str], str]:
            + ("밴드 수축 하위 20% — 변동성 압축, 방향 이탈 임박." if (l4.get("bb_width_pctile") or 100) <= 20 else
               "밴드 확장 상위 20% — 추세 진행/과열 구간." if (l4.get("bb_width_pctile") or 0) >= 80 else ""),
            f"RSI(14) {n(l4.get('rsi14'),1)} · ATR(14) {usd(l4.get('atr14'))} ({n(l4.get('atr_pct'))}%) · 거래량 30일 평균 대비 {n(l4.get('vol_ratio30'))}배.",
-           f"지지 {usd(l4.get('immediate_support'))} / {usd(l4.get('key_support'))} · 저항 {usd(l4.get('immediate_resistance'))} / "
-           f"{usd(l4.get('key_resistance'))} · 60일 거래량 POC {usd(l4.get('poc60'))}."]
+           f"지지 {usd(l4.get('immediate_support'))} / {usd(l4.get('key_support'))} ({' · '.join(l4.get('support_source') or []) or '—'}) · "
+           f"저항 {usd(l4.get('immediate_resistance'))} / {usd(l4.get('key_resistance'))} ({' · '.join(l4.get('resistance_source') or []) or '—'}) · "
+           f"60일 거래량 POC {usd(l4.get('poc60'))}."
+           + (" <b>현재가가 최근 1년 스윙 저점을 모두 하회</b> — 차트상 지지 공백 구간, 이동평균·거래량 매물대·52주 저점이 대체 지지." 
+              if l4.get("below_all_swing_lows") else "")]
     if l1.get("signal") == "BULLISH" and l4.get("signal") == "BEARISH":
         xv = "차트 약세 vs 다크풀 매집 — 후행 지표인 차트가 아직 수급 변화를 반영하지 못한 축적 국면 가능성."
     elif l1.get("signal") == "BEARISH" and l4.get("signal") == "BULLISH":

@@ -45,12 +45,12 @@ def render_json(a: Dict[str, Any]) -> str:
         "l3": _pick(l3, ["scenario", "signal", "confidence", "score", "expiry", "dte", "max_pain", "max_pain_dist_pct",
                          "monthly_expiry", "monthly_max_pain", "pc_oi", "pc_vol", "pc_vol_adj", "skew", "skew_25d",
                          "atm_iv", "iv30", "term_structure", "expected_move", "expected_move_pct", "net_gex",
-                         "net_gex_weighted", "flip_zone", "gamma_regime", "call_wall", "put_wall", "oi_total",
+                         "net_gex_weighted", "flip_zone", "flip_status", "gamma_regime", "call_wall", "put_wall", "oi_total",
                          "oi_trend_pct", "binary_event", "source"]),
         "l4": _pick(l4, ["scenario", "signal", "confidence", "score", "ma_alignment", "sma20", "sma50", "sma200",
                          "ema9", "ema21", "rsi14", "atr14", "atr_pct", "bb_upper", "bb_lower", "bb_width_pct",
                          "bb_width_pctile", "bb_position", "immediate_resistance", "immediate_support",
-                         "key_resistance", "key_support", "vol_ratio30", "high_52w", "low_52w"]),
+                         "key_resistance", "key_support", "support_source", "resistance_source", "below_all_swing_lows", "vol_ratio30", "high_52w", "low_52w"]),
         "events": a["events"],
     }
     if l3.get("pinning"):
