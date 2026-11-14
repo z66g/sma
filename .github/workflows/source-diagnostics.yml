@@ -1,9 +1,12 @@
 name: Source Diagnostics
 
-# 데이터 소스 가용성 점검 (수동 실행). 소스 장애 의심 시 Actions 탭에서 Run workflow.
-# 키/토큰 값은 절대 출력하지 않고 HTTP 상태·건수만 기록한다.
+# 데이터 소스 가용성 + 엔진 스모크 테스트 (수동 실행). 소스 장애 의심 시 Actions 탭에서 Run workflow.
+# 저장소에 아무것도 커밋하지 않으며, 키/토큰 값은 출력하지 않는다 (HTTP 상태·건수만).
 on:
   workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: [".github/workflows/source-diagnostics.yml"]
 
 permissions:
   contents: read
@@ -11,14 +14,32 @@ permissions:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: pip install requests
+          cache: pip
+      - run: pip install -r requirements.txt
       - name: Probe sources
         env:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
         run: python3 tools/source_diagnostics.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Engine smoke test (no commit)
+        env:
+          POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+          SMA_STATE_DIR: /tmp/sma_state
+        run: |
+          DATE=$(python3 sma.py --print-session-date)
+          export SMA_SESSION_DATE="$DATE" SMA_OUT_DIR="/tmp/sma_out/$DATE"
+          for T in TSLA KEEL ^SPX; do python3 sma.py "$T" 2>&1 | grep -E "done|WARN|SKIP|Error" ; done
+          python3 tools/quality_summary.py "$SMA_OUT_DIR" || true
+          python3 - <<'PY'
+          import glob, json
+          for f in sorted(glob.glob("/tmp/sma_out/*/*.json")):
+              j = json.load(open(f)); l1, l2 = j.get("l1", {}), j.get("l2", {})
+              print(f.split("/")[-1], j["quality"]["grade"], j["quality"]["score"],
+                    "obv_src=", l1.get("obv_source"), "ctb=", l2.get("ctb_fee"), "avail=", l2.get("shares_available"),
+                    "borrow_src=", l2.get("borrow_source"), "si=", (l2.get("short_interest") or {}).get("source"))
+          PY
