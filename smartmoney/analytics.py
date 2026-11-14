@@ -131,7 +131,8 @@ def cluster_prices(prices: List[float], threshold_pct: float = 0.6) -> List[Tupl
 
 
 def analyze_l1(ohlcv: List[Dict], finra: List[Dict], minute: List[Dict], minute_src: str,
-               ats_weeks: List[Dict]) -> Dict[str, Any]:
+               ats_weeks: List[Dict], flow: Optional[List[Dict]] = None,
+               flow_hist: Optional[List[Dict]] = None) -> Dict[str, Any]:
     vol_by = {c["date"]: c["volume"] for c in ohlcv}
     ohlc_by = {c["date"]: c for c in ohlcv}
     series = []
@@ -248,14 +249,31 @@ def analyze_l1(ohlcv: List[Dict], finra: List[Dict], minute: List[Dict], minute_
                    "ats_trades_avg_size": (w["ats_shares"] / w["ats_trades"]) if w.get("ats_trades") else None,
                    "otc_trades_avg_size": ((w["otc_shares"] or 0) / w["otc_trades"]) if w.get("otc_trades") else None}
 
+    # ── 체결 단위 4-Way (Alpaca SIP) — 있으면 1차 근거 ──
+    fl = _flow_metrics(flow or [], flow_hist or [], ohlcv, avg_vol20, last_close)
+    if fl:
+        delta_total = fl["delta_total"]
+        strength = delta_total / avg_vol20 if avg_vol20 else 0.0
+        divergence = fl["divergence"]
+        src_used.add("alpaca_trades")
+
     # ── 점수 ──
-    s = math.tanh(strength / 0.25) * 0.65
+    if fl:
+        s = math.tanh(fl["inst_strength"] / 0.10) * 0.45 + math.tanh(strength / 0.25) * 0.20
+        if fl.get("dp_vwap_dist_pct") is not None:      # 다크풀 VWAP > 종가 = 기관이 종가 위에서 매수
+            s += clamp(fl["dp_vwap_dist_pct"] / 1.0) * 0.10
+        if (fl.get("iar") or 0) > 1.5:
+            s *= 1.15
+    else:
+        s = math.tanh(strength / 0.25) * 0.65
     s += {"BULLISH_DIVERGENCE": 0.25, "BEARISH_DIVERGENCE": -0.25}.get(divergence, 0.0)
     if vwap5:
         s += 0.10 if last_close > vwap5 else -0.10
     s = clamp(s)
     conf = 0.45
-    if any(x.endswith("_1m") or x == "minute" for x in src_used):
+    if fl:
+        conf += 0.35
+    elif any(x.endswith("_1m") or x == "minute" for x in src_used):
         conf += 0.25
     if dp_latest is not None and dp_latest > 40:
         conf += 0.15
@@ -271,16 +289,79 @@ def analyze_l1(ohlcv: List[Dict], finra: List[Dict], minute: List[Dict], minute_
     else:
         scen = "NEUTRAL"
     out.update(delta_total=delta_total, obv_strength=strength, divergence=divergence,
-               cumulative_daily=cum, obv_source=",".join(sorted(src_used)), window_days=len(dates),
+               cumulative_daily=fl["cumulative_daily"] if fl else cum,
+               obv_source=",".join(sorted(src_used)), window_days=len(fl["days"]) if fl else len(dates),
                acc20=acc20, acc20_strength=acc20 / avg_vol20 if avg_vol20 else None,
                avg_vol20=avg_vol20, vwap_session=vwap_session, vwap5=vwap5,
                vwap_dist_pct=pct(last_close, vwap5), ats=ats,
-               delta_inst=None, delta_pro=None, delta_retail=None, iar=None,
-               dp_vwap=None, dp_vwap_dist_pct=None,
+               delta_inst=fl["delta_inst"] if fl else None, delta_pro=fl["delta_pro"] if fl else None,
+               delta_retail=fl["delta_retail"] if fl else None, iar=fl["iar"] if fl else None,
+               dp_vwap=fl["dp_vwap"] if fl else None, dp_vwap_dist_pct=fl["dp_vwap_dist_pct"] if fl else None,
+               flow=fl, clv_delta_total=running,
                score=s, confidence=conf, scenario=scen,
                signal="BULLISH" if s > 0.2 else "BEARISH" if s < -0.2 else "NEUTRAL",
-               price_slope_pct=p_slope, obv_slope_pct=o_slope)
+               price_slope_pct=p_slope, obv_slope_pct=fl["inst_slope_pct"] if fl else o_slope)
     return out
+
+
+def _flow_metrics(flow: List[Dict], hist: List[Dict], ohlcv: List[Dict], avg_vol20: float,
+                  last_close: float) -> Optional[Dict[str, Any]]:
+    """체결 단위 일별 집계(최근 N세션) → 4-Way OBV · IAR · 다크풀 VWAP · 세션별 이상 탐지."""
+    if not flow:
+        return None
+    inst = sum(r["inst"] for r in flow); pro = sum(r["pro"] for r in flow); ret = sum(r["ret"] for r in flow)
+    total = inst + pro + ret                                   # Total = 기관+프로+리테일 (계산값 우선)
+    iar = abs(inst) / (abs(ret) + abs(pro)) if (abs(ret) + abs(pro)) else None
+    latest = flow[-1]
+    dvw = latest.get("dark_vwap")
+    close_by = {c["date"]: c["close"] for c in ohlcv}
+    ref_close = close_by.get(latest["date"], last_close)
+    # 누적 시리즈 (기관 기준 다이버전스)
+    cum, run_i, run_t = [], 0.0, 0.0
+    for r in flow:
+        run_i += r["inst"]; run_t += r["inst"] + r["pro"] + r["ret"]
+        cum.append({"date": r["date"], "cum": run_t, "day": r["inst"] + r["pro"] + r["ret"],
+                    "inst_cum": run_i, "inst": r["inst"], "pro": r["pro"], "ret": r["ret"]})
+    closes = [close_by.get(r["date"]) for r in flow]
+    p_sl = slope(closes) / (last_close or 1) * 100
+    i_sl = slope([c["inst_cum"] for c in cum]) / (avg_vol20 or 1) * 100
+    if p_sl < -0.15 and i_sl > 1:
+        div = "BULLISH_DIVERGENCE"
+    elif p_sl > 0.15 and i_sl < -1:
+        div = "BEARISH_DIVERGENCE"
+    elif abs(p_sl) <= 0.15 and abs(i_sl) <= 1:
+        div = "NEUTRAL"
+    elif p_sl * i_sl > 0:
+        div = "CONVERGENCE"
+    else:
+        div = "NEUTRAL"
+    # 세션별(프리/정규/애프터) 장외 거래량 이상 탐지 — 누적 이력 20일 평균 대비
+    past = [h for h in hist if h.get("date") < latest["date"]][-20:]
+    sessions = []
+    for k, label in (("pre", "프리마켓"), ("reg", "정규장"), ("ah", "애프터마켓")):
+        cur = (latest.get("sess") or {}).get(k) or {}
+        avg = mean([((h.get("sess") or {}).get(k) or {}).get("dark") for h in past]) if past else None
+        ratio = (cur.get("dark") / avg) if (avg and cur.get("dark") is not None) else None
+        sessions.append({"session": label, "volume": cur.get("vol"), "dark": cur.get("dark"),
+                         "dark_pct": cur.get("dark_pct"), "avg20_dark": avg, "ratio": ratio,
+                         "flag": "" if ratio is None else ("EXTREME" if ratio >= 3 else "HIGH" if ratio >= 2
+                                                           else "MODERATE" if ratio >= 1.5 else "")})
+    return {
+        "days": [r["date"] for r in flow], "delta_inst": inst, "delta_pro": pro, "delta_retail": ret,
+        "delta_total": total, "iar": iar,
+        "iar_class": None if iar is None else ("INSTITUTIONAL_LEAD" if iar > 1.5 else "MIXED" if iar >= 0.8 else "RETAIL_PRO_LEAD"),
+        "inst_strength": inst / avg_vol20 if avg_vol20 else 0.0,
+        "dp_vwap": dvw, "dp_vwap_dist_pct": ((dvw - ref_close) / ref_close * 100) if (dvw and ref_close) else None,
+        "divergence": div, "inst_slope_pct": i_sl, "cumulative_daily": cum, "sessions": sessions,
+        "blocks": latest.get("blocks"), "dark_blocks": latest.get("dark_blocks"),
+        "last30_block_share": [r.get("last30_block_share") for r in flow],
+        "last30_move_pct": [r.get("last30_move_pct") for r in flow],
+        "bjzz_imbalance": latest.get("bjzz_imbalance"),
+        "dark_pct_trades": latest.get("dark_pct"), "trades": latest.get("trades"),
+        "cohort_vol_share": {k: (latest.get(f"vol_{k}") or 0) / ((latest.get("vol_inst") or 0) + (latest.get("vol_pro") or 0)
+                                                               + (latest.get("vol_ret") or 0) or 1) * 100
+                             for k in ("inst", "pro", "ret")},
+    }
 
 
 # ─── L2 Short / Borrow ──────────────────────────────────────────────────────
@@ -786,7 +867,8 @@ def analyze_l4(ohlcv: List[Dict]) -> Dict[str, Any]:
 # ─── 패턴 ────────────────────────────────────────────────────────────────────
 
 
-def detect_patterns(ohlcv: List[Dict], minute: List[Dict], l1: Dict, l2: Dict, l3: Dict, l4: Dict) -> Dict[str, Any]:
+def detect_patterns(ohlcv: List[Dict], minute: List[Dict], l1: Dict, l2: Dict, l3: Dict, l4: Dict,
+                    flow: Optional[List[Dict]] = None) -> Dict[str, Any]:
     found: List[str] = []
     detail: Dict[str, Any] = {}
     vols = [c["volume"] for c in ohlcv]
@@ -829,13 +911,23 @@ def detect_patterns(ohlcv: List[Dict], minute: List[Dict], l1: Dict, l2: Dict, l
             mv = abs(last30[-1]["c"] - last30[0]["o"]) / last30[0]["o"] * 100 if last30[0]["o"] else 9
             if mv < 0.3:
                 absorbed_days += 1
-    fa["c1_close_block_concentration"] = close_heavy_days >= 2
-    fa["c2_no_price_slip"] = absorbed_days >= 1 and close_heavy_days >= 1
+    if flow:
+        # 실제 블록 체결 기준: 마지막 30분에 정규장 블록 거래량의 50% 이상이 몰린 날 (2일 연속)
+        heavy = [(r.get("last30_block_share") or 0) > 0.5 for r in flow[-3:]]
+        consec = any(heavy[i] and heavy[i + 1] for i in range(len(heavy) - 1))
+        fa["c1_close_block_concentration"] = consec
+        fa["c2_no_price_slip"] = any(h and abs(r.get("last30_move_pct") or 9) < 0.3
+                                     for h, r in zip(heavy, flow[-3:]))
+        fa["basis"] = "trade-level"
+    else:
+        fa["c1_close_block_concentration"] = close_heavy_days >= 2
+        fa["c2_no_price_slip"] = absorbed_days >= 1 and close_heavy_days >= 1
+        fa["basis"] = "minute-bar proxy"
     fa["c3_dp_over_40_2d"] = (l1.get("dp_days_over_40") or 0) >= 2
     cd = l2.get("ctb_delta_pct")
     fa["c4_ctb_stable_or_down"] = None if l2.get("ctb_fee") is None else (cd is None or cd <= 5)
     fa["c5_short_pct_falling"] = (l2.get("short_slope5") or 0) < 0
-    met = sum(1 for v in fa.values() if v)
+    met = sum(1 for k, v in fa.items() if k.startswith("c") and v is True)
     detail["final_absorption"] = {**fa, "met": met, "downtrend_context": downtrend}
     if downtrend and met >= 3:
         found.append("FINAL_ABSORPTION")

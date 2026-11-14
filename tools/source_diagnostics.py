@@ -72,6 +72,23 @@ def main() -> int:
     except Exception as e:  # noqa: BLE001
         line("iborrowdesk API", "FAIL", repr(e)[:160])
 
+    ak, asec = os.environ.get("ALPACA_API_KEY_ID", "").strip(), os.environ.get("ALPACA_API_SECRET_KEY", "").strip()
+    if ak and asec:
+        try:
+            r = requests.get("https://data.alpaca.markets/v2/stocks/trades",
+                             params={"symbols": "TSLA", "start": f"{d}T14:30:00Z", "end": f"{d}T14:31:00Z",
+                                     "limit": 1000, "feed": "sip"},
+                             headers={"APCA-API-KEY-ID": ak, "APCA-API-SECRET-KEY": asec}, timeout=20)
+            j = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+            tr = (j.get("trades") or {}).get("TSLA") or []
+            xs = sorted({t.get("x") for t in tr})
+            line("Alpaca SIP trades", str(r.status_code), f"n={len(tr)} exchanges={xs} dark(D)={sum(1 for t in tr if t.get('x') == 'D')} "
+                 f"msg={str(j.get('message', ''))[:80]}")
+        except Exception as e:  # noqa: BLE001
+            line("Alpaca SIP trades", "FAIL", repr(e)[:160])
+    else:
+        line("Alpaca SIP trades", "SKIP", "ALPACA_API_KEY_ID / ALPACA_API_SECRET_KEY not set")
+
     if not KEY:
         line("Polygon", "SKIP", "POLYGON_API_KEY not set")
         return 0

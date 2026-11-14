@@ -39,7 +39,7 @@ v2(2026-11 이전) 리포트는 파일명이 KST 실행일이라 실제 세션�
 | Layer | 1차 소스 | 폴백 / 비고 |
 |-------|---------|-----------|
 | L1 다크풀 비중 | FINRA RegSHO `CNMSshvol` (장외 체결) ÷ 총거래량 | 20일 평균 대비 배수로 이상 탐지 |
-| L1 Net OBV | 1분봉 CLV 가중 순체결 (Polygon 무료 키 → Yahoo 1m) | 일봉 CLV |
+| L1 OBV 4-Way · IAR · 다크풀 VWAP · 세션별 다크풀 | **Alpaca SIP 체결 단위** (무료 Basic 키, 최근 15분 외 전 거래소+TRF) | 키 없으면 1분봉 CLV 가중 Total 만 (Polygon 무료 → Yahoo 1m) |
 | L1 체결 주체 구성 | FINRA OTC Transparency API (ATS vs 홀세일러, 주간) | 2~4주 지연 공시 |
 | L2 Short % | FINRA RegSHO (장외 보고분) + 총거래량 환산 | |
 | L2 CTB / 가용잔고 | **IBKR shortstock FTP** (`ftp2.interactivebrokers.com`) | iborrowdesk (2026-07 이후 응답 없음) |
@@ -82,9 +82,10 @@ state/options/{T}.json  OI·Max Pain·플립 누적 (OI 추세 · 핀닝 사후�
 ## 알려진 한계
 
 - MarketChameleon 은 클라우드/자동화 접속을 차단하고 이용약관상 크롤링을 금지한다(2026-11 실측: Access Denied) — 코호트 분리 소스로 사용 불가.
-- **기관/프로/리테일 OBV 4-Way · IAR · 다크풀 전용 VWAP** 은 체결(Trade-level) 데이터가 필요합니다.
-  현재 Polygon 키는 무료 등급(분봉만)이라 `v3/trades` 가 403 → 해당 값은 **N/A 로 정직하게 표기**합니다
-  (추정치로 채우지 않음). Polygon/Massive 의 trades 포함 플랜 키를 `POLYGON_API_KEY` 에 넣으면 확장 가능.
+- **기관/프로/리테일 OBV 4-Way · IAR · 다크풀 전용 VWAP** 은 체결(Trade-level) 데이터로 계산한다 — Alpaca 무료 키
+  (`ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY` GitHub Secrets)가 있으면 자동 활성화. 키가 없으면 해당 값은 **N/A**.
+  분류(CLAUDE.md): 기관 ≥10,000주 또는 $200k · 리테일 <100주 또는 <$5k · 프로 그 외 / 방향 = tick rule /
+  다크풀 = 거래소 코드 `D`(FINRA ADF·TRF 보고). 일별 집계는 `state/flow/{T}.json` 에 누적 (첫 실행 시 5세션 백필).
 - 다크풀 세션별(Pre/Regular/AH) 분해는 유료 데이터 전용 — 일별 장외 볼륨 이상 탐지로 대체.
 - FINRA Short % 는 장외(TRF) 체결 기준이며 포지션 잔고가 아닙니다.
 - `smartmoney/events.py` 의 FOMC 일정은 Fed 공식 발표분(2026·2027) — 2028 일정 공개 시 추가 필요.

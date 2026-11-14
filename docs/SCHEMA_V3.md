@@ -31,7 +31,8 @@ narrative.py, narrative.js)는 새 키가 없을 수도 있다고 가정하고 `
 추가: `dp_avg20, dp_ratio` (당일/20일평균), `dp_class`, `dp_series:[{date,dp_pct,off_exchange_volume,market_volume}]`,
 `delta_inst, delta_pro, delta_retail, iar` (trade-level 소스 있을 때만, 없으면 null),
 `dp_vwap, dp_vwap_dist_pct` (trade-level 소스 있을 때만),
-`ats:{week_start, ats_shares, otc_non_ats_shares, ats_share_pct, ats_share_prev_pct, ats_trades_avg_size}` (FINRA OTC 주간, 2~4주 지연)
+`ats:{week_start, ats_shares, otc_non_ats_shares, ats_share_pct, ats_share_prev_pct, ats_trades_avg_size}` (FINRA OTC 주간, 2~4주 지연),
+`flow:{days, delta_inst, delta_pro, delta_retail, delta_total, iar, iar_class, dp_vwap, dp_vwap_dist_pct, sessions:[{session, volume, dark, dark_pct, avg20_dark, ratio, flag}], blocks, dark_blocks, last30_block_share, bjzz_imbalance, cohort_vol_share}` (Alpaca 체결 단위, 키 있을 때만)
 
 ## l2 (Short / Borrow)
 기존: `scenario, signal, case, short_pct_latest, short_avg_14d, short_slope, slope_dir, anomaly_z, ctb_fee, ctb_delta_pct, shares_available`
@@ -51,5 +52,6 @@ narrative.py, narrative.js)는 새 키가 없을 수도 있다고 가정하고 `
 `key_resistance, key_support, vol_ratio30, high_52w, low_52w`
 
 ## 상태 저장소 (`state/`)
+- `state/flow/{T}.json` — 일별 체결 단위 집계 (Alpaca)
 - `state/borrow/{T}.json` — 일별 대차 스냅샷 `[{date, fee, available}]` (IBKR FTP 는 히스토리가 없어 직접 누적)
 - 워크플로 커밋 단계는 `reports/` 와 함께 `state/` 도 add 해야 한다.

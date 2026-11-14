@@ -22,10 +22,14 @@ jobs:
       - name: Probe sources
         env:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+          ALPACA_API_KEY_ID: ${{ secrets.ALPACA_API_KEY_ID }}
+          ALPACA_API_SECRET_KEY: ${{ secrets.ALPACA_API_SECRET_KEY }}
         run: python3 tools/source_diagnostics.py | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Engine smoke test (no commit)
         env:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+          ALPACA_API_KEY_ID: ${{ secrets.ALPACA_API_KEY_ID }}
+          ALPACA_API_SECRET_KEY: ${{ secrets.ALPACA_API_SECRET_KEY }}
           SMA_STATE_DIR: /tmp/sma_state
         run: |
           DATE=$(python3 sma.py --print-session-date)
@@ -37,6 +41,6 @@ jobs:
           for f in sorted(glob.glob("/tmp/sma_out/*/*.json")):
               j = json.load(open(f)); l1, l2 = j.get("l1", {}), j.get("l2", {})
               print(f.split("/")[-1], j["quality"]["grade"], j["quality"]["score"],
-                    "obv_src=", l1.get("obv_source"), "ctb=", l2.get("ctb_fee"), "avail=", l2.get("shares_available"),
+                    "obv_src=", l1.get("obv_source"), "iar=", l1.get("iar"), "dp_vwap=", l1.get("dp_vwap"), "ctb=", l2.get("ctb_fee"), "avail=", l2.get("shares_available"),
                     "borrow_src=", l2.get("borrow_source"), "si=", (l2.get("short_interest") or {}).get("source"))
           PY

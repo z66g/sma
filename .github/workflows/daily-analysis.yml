@@ -90,6 +90,8 @@ jobs:
         if: steps.plan.outputs.skip != '1'
         env:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+          ALPACA_API_KEY_ID: ${{ secrets.ALPACA_API_KEY_ID }}
+          ALPACA_API_SECRET_KEY: ${{ secrets.ALPACA_API_SECRET_KEY }}
           PYTHONUNBUFFERED: "1"
         run: |
           set -uo pipefail

@@ -119,6 +119,23 @@ def _ladder(levels: List[Dict], price: float) -> str:
             f'<div class="llist">{items}</div>')
 
 
+def _flow_session_card(l1: Dict) -> str:
+    fl = l1.get("flow")
+    if not fl or not fl.get("sessions"):
+        return ""
+    rows = []
+    for x in fl["sessions"]:
+        fg = x.get("flag") or ""
+        rows.append([e(x["session"]), C.sh(x.get("volume")), C.sh(x.get("dark")), _num(x.get("dark_pct"), 1, suffix="%"),
+                     C.sh(x.get("avg20_dark")), _num(x.get("ratio"), 2, suffix="x"),
+                     pill(fg, {"EXTREME": "neg", "HIGH": "warn", "MODERATE": "info"}[fg]) if fg else "—"])
+    return (f'<div class="card"><div class="ct">다크풀 세션별 이상 탐지 — {e(fl["days"][-1])} (체결 단위 · 프리/정규/애프터, 누적 평균 대비)</div>'
+            + table(["세션", "총 거래량", "장외(다크풀)", "장외 %", "장외 평균", "배수", "플래그"], rows)
+            + f'<div class="muted" style="margin-top:6px;">블록 {fl.get("blocks") or 0}건 (장외 블록 {fl.get("dark_blocks") or 0}건) · '
+              f'체결 {C.sh(fl.get("trades"))}건 · 거래량 비중 기관 {_num(fl["cohort_vol_share"]["inst"], 1, suffix="%")} / '
+              f'프로 {_num(fl["cohort_vol_share"]["pro"], 1, suffix="%")} / 리테일 {_num(fl["cohort_vol_share"]["ret"], 1, suffix="%")}</div></div>')
+
+
 def _num(x: Optional[float], d: int = 2, prefix: str = "", suffix: str = "") -> str:
     return "N/A" if x is None else f"{prefix}{x:,.{d}f}{suffix}"
 
@@ -250,20 +267,21 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
  {kpi("Net OBV (5d)", C.ssh(l1.get('delta_total')), f"ADV 대비 {C.pc((l1.get('obv_strength') or 0) * 100)}", BULL if (l1.get('delta_total') or 0) > 0 else BEAR)}
  {kpi("20일 누적 A/D", C.ssh(l1.get('acc20')), f"ADV {_num(l1.get('acc20_strength'))}x")}
  {kpi("VWAP 앵커 (5d)", _num(l1.get('vwap5'), 2, '$'), f"종가 {C.pc(l1.get('vwap_dist_pct'), 2)}")}
- {kpi("기관 흡수율 IAR", "N/A", "체결 단위 데이터 필요", MUTED)}
+ {kpi("기관 흡수율 IAR", _num(l1.get('iar')), (e((l1.get('flow') or {}).get('iar_class') or '') or "체결 단위 데이터 필요"), TXT if l1.get('iar') is not None else MUTED)}
  {kpi("ATS 주간 비중", _num(ats.get('ats_share_pct'), 1, suffix='%'), f"{e(ats.get('week_start') or '')}주 · 평균 {_num(ats.get('ats_trades_avg_size'), 0)}주/건")}
 </div>
 <div class="g2">
   <div class="card"><div class="ct">다크풀 비중 & 장외 거래량 (20거래일)</div><div class="ch"><canvas id="cDp"></canvas></div></div>
-  <div class="card"><div class="ct">Net OBV 누적 (CLV 가중 · 5거래일)</div><div class="ch"><canvas id="cObv"></canvas></div></div>
+  <div class="card"><div class="ct">Net OBV 누적 ({'체결 단위 tick rule' if l1.get('flow') else 'CLV 가중'} · 5거래일)</div><div class="ch"><canvas id="cObv"></canvas></div></div>
 </div>
 <div class="g2">
   <div class="card"><div class="ct">OBV 4-Way Decomposition (Δ, 5거래일)</div><div class="ch sm"><canvas id="cObv4"></canvas></div>
-  <div class="muted">기관·프로·리테일 분해는 체결(Trade-level) 분류가 필요해 미표기. Total = 계산값.</div></div>
+  <div class="muted">{"체결 단위(SIP 전 체결) 분류: 기관 ≥10,000주 또는 $200k · 리테일 <100주 또는 <$5k · 프로 그 외. Total = 세 코호트 합(계산값). 다크풀 VWAP " + _num(l1.get('dp_vwap'), 2, '$') + " (" + C.pc(l1.get('dp_vwap_dist_pct'), 2) + ")" if l1.get('flow') else "기관·프로·리테일 분해는 체결(Trade-level) 분류가 필요해 미표기. Total = 계산값."}</div></div>
   <div class="card"><div class="ct">체결 주체 구성 (FINRA 주간 실측)</div><div class="ch sm"><canvas id="cCoh"></canvas></div>
   <div class="muted">ATS = 다크풀(기관 블록) · 홀세일러 = 리테일 주문 내부화(PFOF) · Lit = 거래소(프로/HFT).</div></div>
 </div>
-<div class="card"><div class="ct">세션별 장외 볼륨 이상 탐지 (20일 평균 대비 배수)</div>{table(["세션", "장외 거래량", "총 거래량", "DP %", "배수", "플래그"], dp_rows)}</div>
+{_flow_session_card(l1)}
+<div class="card"><div class="ct">일별 장외 볼륨 이상 탐지 (20일 평균 대비 배수)</div>{table(["세션", "장외 거래량", "총 거래량", "DP %", "배수", "플래그"], dp_rows)}</div>
 {interp(p1, x1)}"""
 
         # ── SECTION 2 ──
@@ -599,8 +617,12 @@ const fmt=v=>{if(v==null)return'N/A';const x=Math.abs(v),s=v<0?'-':'';return x>=
 const grid={color:G};
 const endLabels={id:'endLabels',afterDatasetsDraw(c,_,o){if(!o||!o.on)return;const ctx=c.ctx;ctx.save();ctx.font='600 11px '+F;
  c.data.datasets.forEach((ds,i)=>{c.getDatasetMeta(i).data.forEach((b,j)=>{const v=ds.data[j];if(v==null)return;const t=o.f?o.f(v):v;
- ctx.fillStyle=o.color||'#1F2328';const hz=c.options.indexAxis==='y';ctx.textAlign=hz?(v<0?'right':'left'):'center';ctx.textBaseline='middle';
- hz?ctx.fillText(t,b.x+(v<0?-4:4),b.y):ctx.fillText(t,b.x,b.y-8);});});ctx.restore();}};
+ const hz=c.options.indexAxis==='y';ctx.textBaseline='middle';
+ if(hz){const w=ctx.measureText(t).width;let x=v<0?b.x-4:b.x+4,al=v<0?'right':'left',col=o.color||'#1F2328';
+  if(v<0&&x-w<c.chartArea.left){x=b.x+4;al='left';col='#FFFFFF';}
+  if(v>=0&&x+w>c.chartArea.right){x=b.x-4;al='right';col='#FFFFFF';}
+  ctx.textAlign=al;ctx.fillStyle=col;ctx.fillText(t,x,b.y);}
+ else{ctx.textAlign='center';ctx.fillStyle=o.color||'#1F2328';ctx.fillText(t,b.x,b.y-8);}});});ctx.restore();}};
 Chart.register(endLabels);
 const mk=(id,cfg)=>{const el=document.getElementById(id);if(el)new Chart(el,cfg);};
 const vline=(v,c,label,dash,pos)=>v==null?null:{type:'line',scaleID:'x',value:v,borderColor:c,borderWidth:1.5,borderDash:dash||[],

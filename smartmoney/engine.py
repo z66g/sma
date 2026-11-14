@@ -10,6 +10,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from . import analytics as A
 from . import calendar as cal
 from . import events as EV
+from . import flow as F
 from . import history as H
 from . import quality as Q
 from . import sources as S
@@ -79,8 +80,10 @@ class SmartMoneyAnalyzer:
         mb = self._try("l1", "minute_bars", S.fetch_minute_bars, T, yft, d, 5, default=([], ""))
         data["minute"], data["minute_src"] = mb
         data["ats"] = self._try("l1", "finra_ats_weekly", S.finra_ats_weekly, T, d, default=[])
+        data["flow"] = self._fetch_flow(T, d)
         self.sources["l1"] = ["FINRA RegSHO CNMS (off-exchange)",
-                              f"1분봉 ({data['minute_src'] or '없음'})", "FINRA OTC Transparency (ATS 주간)"]
+                              f"1분봉 ({data['minute_src'] or '없음'})", "FINRA OTC Transparency (ATS 주간)"] + \
+            (["Alpaca SIP 체결 단위 (기관/프로/리테일 · 다크풀 VWAP)"] if data["flow"] else [])
         data["borrow"] = self._try("l2", "borrow", S.fetch_borrow, T)
         data["short_interest"] = self._try("l2", "short_interest", S.fetch_short_interest, T)
         data["float"] = self._try("l2", "float", S.fetch_float, yft, default={}) or {}
@@ -92,6 +95,26 @@ class SmartMoneyAnalyzer:
         data["calendar"] = self._try("news", "yahoo_calendar", S.fetch_calendar, yft, default={}) or {}
         self.sources["news"] = ["Yahoo news", "SEC EDGAR (submissions + Form 4 XML)", "Yahoo calendar"]
         return data
+
+    def _fetch_flow(self, T: str, d: date, days: int = 5) -> List[Dict[str, Any]]:
+        """체결 단위 수급(최근 5세션). 누락된 날만 Alpaca 에서 받아 state/flow 에 누적."""
+        if not F.available():
+            return []
+        want = [d]
+        while len(want) < days:
+            want.insert(0, cal.prev_trading_day(want[0]))
+        have = {r["date"]: r for r in H.read_state("flow", T)}
+        for day in want:
+            if day.isoformat() in have:
+                continue
+            row = self._try("l1", f"alpaca_trades_{day}", F.fetch_day, T, day)
+            if row:
+                have[day.isoformat()] = row
+                H.upsert_state("flow", T, row, keep=60)
+        rows = [have[x.isoformat()] for x in want if x.isoformat() in have]
+        if rows and rows[-1]["date"] != d.isoformat():
+            self.warnings.append(f"l1/flow: 세션 {d} 체결 데이터 미수집 — 체결 분해는 {rows[-1]['date']} 기준")
+        return rows
 
     # ── 분석 ──────────────────────────────────────────────────────────────
     def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -112,7 +135,8 @@ class SmartMoneyAnalyzer:
             l2 = dict(l1)
         else:
             l1 = A.analyze_l1(ohlcv, data.get("finra") or [], data.get("minute") or [],
-                              data.get("minute_src") or "", data.get("ats") or [])
+                              data.get("minute_src") or "", data.get("ats") or [],
+                              flow=data.get("flow") or [], flow_hist=H.read_state("flow", T))
             borrow = data.get("borrow")
             bhist = H.read_state("borrow", T)
             if borrow and borrow.get("fee") is not None:
@@ -133,7 +157,8 @@ class SmartMoneyAnalyzer:
                 "max_pain_by_exp": l3.get("max_pain_by_exp"), "flip": l3.get("flip_zone"),
                 "atm_iv": l3.get("atm_iv"), "net_gex": l3.get("net_gex")})
 
-        pat = A.detect_patterns(ohlcv, data.get("minute") or [], l1, l2, l3, l4) if not self.is_index \
+        pat = A.detect_patterns(ohlcv, data.get("minute") or [], l1, l2, l3, l4,
+                                flow=data.get("flow") or []) if not self.is_index \
             else {"patterns": [p for p in (["OPTION_PINNING"] if l3.get("scenario") == "PINNING" else [])], "detail": {}}
         layers = {"L1": l1, "L2": l2, "L3": l3, "L4": l4} if not self.is_index else {"L3": l3, "L4": l4}
         scen = A.scenario_probabilities(layers, macro, pat["patterns"])

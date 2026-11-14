@@ -108,7 +108,29 @@ def l1_text(l1: Dict, l2: Dict, l3: Dict) -> Tuple[List[str], str]:
         out.append(f"FINRA 주간 체결 구성({ats['week_start']}주, 2~4주 지연 공시): ATS(다크풀) <b>{pc(ats['ats_share_pct'], sign=False)}</b>"
                    f"{chg} · 홀세일러 내부화(리테일 주문) <b>{pc(ats['otc_share_pct'], sign=False)}</b> · 거래소(Lit) "
                    f"{pc(ats['lit_share_pct'], sign=False)}. ATS 평균 체결 {n(ats.get('ats_trades_avg_size'),0)}주 — 대량 주문 분할 체결 흔적.")
-    out.append("기관 흡수율(IAR)·다크풀 전용 VWAP은 체결(Trade-level) 데이터가 필요하며, 현재 데이터 등급에서는 산출하지 않는다(추정치 미표기).")
+    fl = l1.get("flow")
+    if fl:
+        iar = fl.get("iar")
+        cls = {"INSTITUTIONAL_LEAD": "기관 주도 — 방향성 의도 유력", "MIXED": "혼재 — 기관 방향성 불명확",
+               "RETAIL_PRO_LEAD": "리테일·프로 주도 — 신호 신뢰도 낮음"}.get(fl.get("iar_class"), "")
+        out.append(f"체결 단위 4-Way({len(fl['days'])}세션, SIP 전 체결 tick rule): 기관 <b>{ssh(fl['delta_inst'])}</b> · 프로 "
+                   f"{ssh(fl['delta_pro'])} · 리테일 {ssh(fl['delta_retail'])} → 전체 {ssh(fl['delta_total'])}주. "
+                   f"기관 흡수율 IAR <b>{n(iar)}</b> ({cls}).")
+        dv, dd = fl.get("dp_vwap"), fl.get("dp_vwap_dist_pct")
+        if dv:
+            out.append(f"다크풀 전용 VWAP {usd(dv)} — 종가 대비 <b>{pc(dd, 2)}</b>: "
+                       + ("기관이 종가보다 높은 가격에서 장외 매수 → 상방 압력." if (dd or 0) > 0.5 else
+                          "기관이 종가보다 낮은 가격에서 장외 처분 → 하방 압력." if (dd or 0) < -0.5 else
+                          "종가와 근접 — 장외 체결 가격 중립."))
+        sh_ = [x for x in fl.get("sessions") or [] if x.get("flag")]
+        if sh_:
+            out.append("세션 이상: " + ", ".join(f"{x['session']} 장외 {n(x['ratio'])}배({x['flag']})" for x in sh_) + ".")
+        bj = fl.get("bjzz_imbalance")
+        if bj is not None:
+            out.append(f"리테일 교차검증(BJZZ 서브페니): 리테일 순매수 불균형 {bj:+.2f} — "
+                       + ("리테일 매수 우위." if bj > 0.1 else "리테일 매도 우위." if bj < -0.1 else "균형."))
+    else:
+        out.append("기관 흡수율(IAR)·다크풀 전용 VWAP은 체결(Trade-level) 데이터가 필요하며, 현재 데이터 등급에서는 산출하지 않는다(추정치 미표기).")
     # 교차검증
     l2s, l3s = l2.get("signal"), l3.get("signal")
     s = l1.get("signal")
