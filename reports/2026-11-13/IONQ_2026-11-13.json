@@ -4,22 +4,21 @@
  "date": "2026-11-13",
  "price": 28.88,
  "is_index": false,
- "generated_at": "2026-11-14T14:03:48Z",
+ "generated_at": "2026-11-14T14:30:41Z",
  "prev_close": 30.86,
  "change_pct": -6.4161,
- "headline": "[C 하락 47%] · 공매도 비중 급등에도 대차 비용 불변 · 감마 플립 $30.15 하단 · 회랑 $25–$34",
+ "headline": "[C 하락 54%] · 공매도 비중 급등에도 대차 비용 불변 · 감마 플립 $30.15 하단 · 회랑 $25–$34",
  "quality": {
   "layers": {
    "l1": {
     "status": "OK",
-    "coverage": 90,
-    "missing": [
-     "기관 흡수율(IAR)"
-    ],
+    "coverage": 100,
+    "missing": [],
     "sources": [
      "FINRA RegSHO CNMS (off-exchange)",
      "1분봉 (polygon_1m)",
-     "FINRA OTC Transparency (ATS 주간)"
+     "FINRA OTC Transparency (ATS 주간)",
+     "Alpaca SIP 체결 단위 (기관/프로/리테일 · 다크풀 VWAP)"
     ]
    },
    "l2": {
@@ -70,7 +69,7 @@
     ]
    }
   },
-  "score": 94,
+  "score": 98,
   "grade": "A"
  },
  "warnings": [],
@@ -84,6 +83,7 @@
   "final_absorption": {
    "c1_close_block_concentration": false,
    "c2_no_price_slip": false,
+   "basis": "trade-level",
    "c3_dp_over_40_2d": true,
    "c4_ctb_stable_or_down": true,
    "c5_short_pct_falling": false,
@@ -161,13 +161,13 @@
   ]
  },
  "scenarios": {
-  "A_bullish": 18.5,
-  "B_neutral": 34.4,
-  "C_bearish": 47.1,
-  "raw_score": -0.204,
-  "dispersion": 0.342,
+  "A_bullish": 15.1,
+  "B_neutral": 30.9,
+  "C_bearish": 54.0,
+  "raw_score": -0.308,
+  "dispersion": 0.398,
   "contributions": {
-   "L1": -0.151,
+   "L1": -0.255,
    "L2": -0.06,
    "L3": 0.081,
    "L4": -0.074,
@@ -343,57 +343,72 @@
  "l1": {
   "scenario": "DISTRIBUTION",
   "signal": "BEARISH",
-  "confidence": 0.85,
-  "score": -0.5084,
+  "confidence": 0.95,
+  "score": -0.7677,
   "dp_pct": 42.2922,
   "dp_avg20": 39.4362,
   "dp_ratio": 1.0724,
   "dp_class": "ELEVATED",
-  "delta_total": -4054460.4768,
-  "obv_strength": -0.1847,
+  "delta_total": -19051673.0,
+  "obv_strength": -0.8678,
   "divergence": "CONVERGENCE",
-  "obv_source": "polygon_1m",
+  "obv_source": "alpaca_trades,polygon_1m",
   "window_days": 5,
   "acc20": 32391730.9867,
   "vwap5": 33.0282,
   "vwap_dist_pct": -12.5596,
-  "delta_inst": null,
-  "delta_pro": null,
-  "delta_retail": null,
-  "iar": null,
-  "dp_vwap": null,
-  "dp_vwap_dist_pct": null,
+  "delta_inst": -8379238.0,
+  "delta_pro": -5971258.0,
+  "delta_retail": -4701177.0,
+  "iar": 0.7851,
+  "dp_vwap": 28.8265,
+  "dp_vwap_dist_pct": -0.1851,
   "off_vol_ratio": 1.0756,
   "cumulative_daily": [
    {
     "date": "2026-11-09",
-    "cum": 1431122.4202683193,
-    "day": 1431122.4202683193,
-    "R": 0.042488099904352636
+    "cum": -4577355.0,
+    "day": -4577355.0,
+    "inst_cum": -2816783.0,
+    "inst": -2816783.0,
+    "pro": -488935.0,
+    "ret": -1271637.0
    },
    {
     "date": "2026-11-10",
-    "cum": 567417.7392623262,
-    "day": -863704.6810059932,
-    "R": -0.047877730407542944
+    "cum": -5732057.0,
+    "day": -1154702.0,
+    "inst_cum": -2100586.0,
+    "inst": 716197.0,
+    "pro": -914964.0,
+    "ret": -955935.0
    },
    {
     "date": "2026-11-11",
-    "cum": -721474.2312719373,
-    "day": -1288891.9705342634,
-    "R": -0.07615089483526415
+    "cum": -8228052.0,
+    "day": -2495995.0,
+    "inst_cum": -3394391.0,
+    "inst": -1293805.0,
+    "pro": -796350.0,
+    "ret": -405840.0
    },
    {
     "date": "2026-11-12",
-    "cum": -1021821.0678290266,
-    "day": -300346.8365570894,
-    "R": -0.014369286984838265
+    "cum": -13608696.0,
+    "day": -5380644.0,
+    "inst_cum": -6084744.0,
+    "inst": -2690353.0,
+    "pro": -1713676.0,
+    "ret": -976615.0
    },
    {
     "date": "2026-11-13",
-    "cum": -4054460.4768174402,
-    "day": -3032639.4089884134,
-    "R": -0.13901752062766623
+    "cum": -19051673.0,
+    "day": -5442977.0,
+    "inst_cum": -8379238.0,
+    "inst": -2294494.0,
+    "pro": -2057333.0,
+    "ret": -1091150.0
    }
   ],
   "dp_series": [
@@ -569,6 +584,79 @@
    "ats_share_prev_pct": 12.347631082886583,
    "ats_trades_avg_size": 72.06879156298432,
    "otc_trades_avg_size": 70.35397513146548
+  },
+  "flow": {
+   "days": [
+    "2026-11-09",
+    "2026-11-10",
+    "2026-11-11",
+    "2026-11-12",
+    "2026-11-13"
+   ],
+   "delta_inst": -8379238.0,
+   "delta_pro": -5971258.0,
+   "delta_retail": -4701177.0,
+   "delta_total": -19051673.0,
+   "iar": 0.7851289794690715,
+   "iar_class": "RETAIL_PRO_LEAD",
+   "inst_strength": -0.3816570249270208,
+   "dp_vwap": 28.826529665586513,
+   "dp_vwap_dist_pct": -0.18514368675164944,
+   "divergence": "CONVERGENCE",
+   "inst_slope_pct": -6.881869141680966,
+   "sessions": [
+    {
+     "session": "프리마켓",
+     "volume": 1217575.0,
+     "dark": 540831.0,
+     "dark_pct": 44.418701106708006,
+     "avg20_dark": 641637.5,
+     "ratio": 0.842891819758041,
+     "flag": ""
+    },
+    {
+     "session": "정규장",
+     "volume": 18446126.0,
+     "dark": 9265345.0,
+     "dark_pct": 50.229218861456324,
+     "avg20_dark": 8667334.0,
+     "ratio": 1.0689959565421154,
+     "flag": ""
+    },
+    {
+     "session": "애프터마켓",
+     "volume": 9399988.0,
+     "dark": 600715.0,
+     "dark_pct": 6.390593264587147,
+     "avg20_dark": 906884.75,
+     "ratio": 0.662393981153614,
+     "flag": ""
+    }
+   ],
+   "blocks": 91,
+   "dark_blocks": 60,
+   "last30_block_share": [
+    0.08813836168890302,
+    0.09376248958495627,
+    0.07521291275803911,
+    0.037911702342965335,
+    0.027151454806195754
+   ],
+   "last30_move_pct": [
+    -2.240354031254328,
+    0.31572904707232896,
+    -1.0321267626108561,
+    -0.06480881399870245,
+    -0.7909215955983386
+   ],
+   "bjzz_imbalance": 0.18355595957654147,
+   "dark_pct_trades": 35.807192266611445,
+   "trades": 307080,
+   "cohort_vol_share": {
+    "inst": 14.335521515709553,
+    "pro": 44.79462121160093,
+    "ret": 40.869857272689515
+   }
   }
  },
  "l2": {

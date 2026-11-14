@@ -4,22 +4,21 @@
  "date": "2026-11-13",
  "price": 102.86,
  "is_index": false,
- "generated_at": "2026-11-14T14:06:02Z",
+ "generated_at": "2026-11-14T14:35:06Z",
  "prev_close": 100.99,
  "change_pct": 1.8517,
- "headline": "[A 상승 54%] · 감마 플립 $95.67 상단 · 회랑 $90–$105",
+ "headline": "[B 중립 42%] · 차트는 강세지만 체결은 분배 · 감마 플립 $95.67 상단 · 회랑 $90–$105",
  "quality": {
   "layers": {
    "l1": {
     "status": "OK",
-    "coverage": 90,
-    "missing": [
-     "기관 흡수율(IAR)"
-    ],
+    "coverage": 100,
+    "missing": [],
     "sources": [
      "FINRA RegSHO CNMS (off-exchange)",
      "1분봉 (polygon_1m)",
-     "FINRA OTC Transparency (ATS 주간)"
+     "FINRA OTC Transparency (ATS 주간)",
+     "Alpaca SIP 체결 단위 (기관/프로/리테일 · 다크풀 VWAP)"
     ]
    },
    "l2": {
@@ -70,12 +69,11 @@
     ]
    }
   },
-  "score": 94,
+  "score": 98,
   "grade": "A"
  },
  "warnings": [],
  "patterns": [
-  "FINAL_ABSORPTION",
   "GAMMA_SQUEEZE_SETUP"
  ],
  "pattern_detail": {
@@ -85,12 +83,13 @@
    "daily_em": 1.0488514126006054
   },
   "final_absorption": {
-   "c1_close_block_concentration": true,
-   "c2_no_price_slip": true,
+   "c1_close_block_concentration": false,
+   "c2_no_price_slip": false,
+   "basis": "trade-level",
    "c3_dp_over_40_2d": false,
    "c4_ctb_stable_or_down": true,
    "c5_short_pct_falling": false,
-   "met": 3,
+   "met": 1,
    "downtrend_context": true
   }
  },
@@ -164,18 +163,18 @@
   ]
  },
  "scenarios": {
-  "A_bullish": 54.5,
-  "B_neutral": 28.3,
-  "C_bearish": 17.2,
-  "raw_score": 0.307,
-  "dispersion": 0.238,
+  "A_bullish": 30.7,
+  "B_neutral": 41.5,
+  "C_bearish": 27.8,
+  "raw_score": 0.034,
+  "dispersion": 0.5,
   "contributions": {
-   "L1": 0.106,
+   "L1": -0.167,
    "L2": 0.09,
    "L3": 0.021,
    "L4": 0.089,
    "macro": -0.05,
-   "patterns": 0.1
+   "patterns": 0.05
   }
  },
  "phase": {
@@ -185,7 +184,7 @@
   "p2_date": "2026-11-13 ~ 2026-11-20",
   "p2_end": "2026-11-20",
   "p3_date": "2026-11-23 ~ 2026-12-14",
-  "p3_direction": "UPWARD",
+  "p3_direction": "RANGE",
   "p3_target_hi": 105.0,
   "p3_target_hi2": 106.2,
   "p3_target_lo": 100.02,
@@ -338,59 +337,74 @@
   }
  ],
  "l1": {
-  "scenario": "ACCUMULATION",
-  "signal": "BULLISH",
-  "confidence": 0.7,
-  "score": 0.4335,
+  "scenario": "DISTRIBUTION",
+  "signal": "BEARISH",
+  "confidence": 0.8,
+  "score": -0.5949,
   "dp_pct": 35.0105,
   "dp_avg20": 32.244,
   "dp_ratio": 1.0858,
   "dp_class": "NORMAL",
-  "delta_total": 1442646.5579,
-  "obv_strength": 0.1417,
-  "divergence": "NEUTRAL",
-  "obv_source": "polygon_1m",
+  "delta_total": -2716601.0,
+  "obv_strength": -0.2668,
+  "divergence": "CONVERGENCE",
+  "obv_source": "alpaca_trades,polygon_1m",
   "window_days": 5,
   "acc20": -2571160.4749,
   "vwap5": 102.0242,
   "vwap_dist_pct": 0.8192,
-  "delta_inst": null,
-  "delta_pro": null,
-  "delta_retail": null,
-  "iar": null,
-  "dp_vwap": null,
-  "dp_vwap_dist_pct": null,
+  "delta_inst": -2711668.0,
+  "delta_pro": 130677.0,
+  "delta_retail": -135610.0,
+  "iar": 10.1833,
+  "dp_vwap": 102.8504,
+  "dp_vwap_dist_pct": -0.0094,
   "off_vol_ratio": 0.6759,
   "cumulative_daily": [
    {
     "date": "2026-11-09",
-    "cum": 266516.196813632,
-    "day": 266516.196813632,
-    "R": 0.04642573149853362
+    "cum": -1090906.0,
+    "day": -1090906.0,
+    "inst_cum": -1135504.0,
+    "inst": -1135504.0,
+    "pro": 57470.0,
+    "ret": -12872.0
    },
    {
     "date": "2026-11-10",
-    "cum": 479144.05963809346,
-    "day": 212627.86282446145,
-    "R": 0.042078696804825046
+    "cum": -1947807.0,
+    "day": -856901.0,
+    "inst_cum": -2218611.0,
+    "inst": -1083107.0,
+    "pro": 213660.0,
+    "ret": 12546.0
    },
    {
     "date": "2026-11-11",
-    "cum": 973230.6496198154,
-    "day": 494086.589981722,
-    "R": 0.11256871183398387
+    "cum": -2861338.0,
+    "day": -913531.0,
+    "inst_cum": -3039093.0,
+    "inst": -820482.0,
+    "pro": -96006.0,
+    "ret": 2957.0
    },
    {
     "date": "2026-11-12",
-    "cum": 794715.506054367,
-    "day": -178515.14356544838,
-    "R": -0.029252309436215446
+    "cum": -1856311.0,
+    "day": 1005027.0,
+    "inst_cum": -1912900.0,
+    "inst": 1126193.0,
+    "pro": -3195.0,
+    "ret": -117971.0
    },
    {
     "date": "2026-11-13",
-    "cum": 1442646.5578997338,
-    "day": 647931.0518453667,
-    "R": 0.1232464147921644
+    "cum": -2716601.0,
+    "day": -860290.0,
+    "inst_cum": -2711668.0,
+    "inst": -798768.0,
+    "pro": -41252.0,
+    "ret": -20270.0
    }
   ],
   "dp_series": [
@@ -566,6 +580,79 @@
    "ats_share_prev_pct": 9.52961169957145,
    "ats_trades_avg_size": 74.99674416080745,
    "otc_trades_avg_size": 527.1681136105182
+  },
+  "flow": {
+   "days": [
+    "2026-11-09",
+    "2026-11-10",
+    "2026-11-11",
+    "2026-11-12",
+    "2026-11-13"
+   ],
+   "delta_inst": -2711668.0,
+   "delta_pro": 130677.0,
+   "delta_retail": -135610.0,
+   "delta_total": -2716601.0,
+   "iar": 10.18325340703827,
+   "iar_class": "INSTITUTIONAL_LEAD",
+   "inst_strength": -0.2663571882517384,
+   "dp_vwap": 102.85036238551986,
+   "dp_vwap_dist_pct": -0.0093702360242201,
+   "divergence": "CONVERGENCE",
+   "inst_slope_pct": -2.7961273288234354,
+   "sessions": [
+    {
+     "session": "프리마켓",
+     "volume": 597.0,
+     "dark": 369.0,
+     "dark_pct": 61.80904522613066,
+     "avg20_dark": 2266.5,
+     "ratio": 0.1628060886829914,
+     "flag": ""
+    },
+    {
+     "session": "정규장",
+     "volume": 4199013.0,
+     "dark": 1841684.0,
+     "dark_pct": 43.85992613025966,
+     "avg20_dark": 1872679.5,
+     "ratio": 0.9834485826325327,
+     "flag": ""
+    },
+    {
+     "session": "애프터마켓",
+     "volume": 4422708.0,
+     "dark": 260708.0,
+     "dark_pct": 5.894759500288059,
+     "avg20_dark": 188714.25,
+     "ratio": 1.3814960979364304,
+     "flag": ""
+    }
+   ],
+   "blocks": 54,
+   "dark_blocks": 42,
+   "last30_block_share": [
+    0.06643976412588083,
+    0.12393624523955052,
+    0.04233662912230876,
+    0.04844313239228994,
+    0.18592642308821677
+   ],
+   "last30_move_pct": [
+    -0.5032907471931825,
+    0.3506345992394585,
+    0.03937007874016364,
+    -0.2371072910491947,
+    -0.019434457292776233
+   ],
+   "bjzz_imbalance": 0.18083144154370034,
+   "dark_pct_trades": 24.3874211088016,
+   "trades": 67831,
+   "cohort_vol_share": {
+    "inst": 24.572741454664467,
+    "pro": 55.31037719303444,
+    "ret": 20.116881352301093
+   }
   }
  },
  "l2": {

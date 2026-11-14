@@ -4,22 +4,21 @@
  "date": "2026-11-13",
  "price": 4.68,
  "is_index": false,
- "generated_at": "2026-11-14T14:02:42Z",
+ "generated_at": "2026-11-14T14:27:59Z",
  "prev_close": 4.735,
  "change_pct": -1.1616,
- "headline": "[B 중립 39%] · 회랑 $4–$5",
+ "headline": "[B 중립 42%] · 가격은 내리는데 순체결은 매수 우위 · 회랑 $4–$5",
  "quality": {
   "layers": {
    "l1": {
     "status": "OK",
-    "coverage": 90,
-    "missing": [
-     "기관 흡수율(IAR)"
-    ],
+    "coverage": 100,
+    "missing": [],
     "sources": [
      "FINRA RegSHO CNMS (off-exchange)",
      "1분봉 (polygon_1m)",
-     "FINRA OTC Transparency (ATS 주간)"
+     "FINRA OTC Transparency (ATS 주간)",
+     "Alpaca SIP 체결 단위 (기관/프로/리테일 · 다크풀 VWAP)"
     ]
    },
    "l2": {
@@ -74,26 +73,25 @@
     ]
    }
   },
-  "score": 87,
-  "grade": "B"
+  "score": 90,
+  "grade": "A"
  },
  "warnings": [],
- "patterns": [
-  "FINAL_ABSORPTION"
- ],
+ "patterns": [],
  "pattern_detail": {
   "theta_burn": {
    "low_vol_days": 0,
-   "flat_inst_flow": true,
+   "flat_inst_flow": false,
    "daily_em": 0.22677868380553637
   },
   "final_absorption": {
-   "c1_close_block_concentration": true,
-   "c2_no_price_slip": true,
+   "c1_close_block_concentration": false,
+   "c2_no_price_slip": false,
+   "basis": "trade-level",
    "c3_dp_over_40_2d": true,
    "c4_ctb_stable_or_down": true,
    "c5_short_pct_falling": false,
-   "met": 4,
+   "met": 2,
    "downtrend_context": true
   }
  },
@@ -167,18 +165,18 @@
   ]
  },
  "scenarios": {
-  "A_bullish": 26.0,
-  "B_neutral": 39.0,
-  "C_bearish": 35.0,
-  "raw_score": -0.087,
-  "dispersion": 0.431,
+  "A_bullish": 23.6,
+  "B_neutral": 42.2,
+  "C_bearish": 34.2,
+  "raw_score": -0.028,
+  "dispersion": 0.457,
   "contributions": {
-   "L1": -0.012,
+   "L1": 0.047,
    "L2": -0.05,
    "L3": 0.083,
    "L4": -0.108,
    "macro": -0.05,
-   "patterns": 0.05
+   "patterns": 0.0
   }
  },
  "phase": {
@@ -331,57 +329,72 @@
  "l1": {
   "scenario": "NEUTRAL",
   "signal": "NEUTRAL",
-  "confidence": 0.85,
-  "score": -0.04,
+  "confidence": 0.95,
+  "score": 0.1418,
   "dp_pct": 41.67,
   "dp_avg20": 39.1259,
   "dp_ratio": 1.065,
   "dp_class": "ELEVATED",
-  "delta_total": 158552.7582,
-  "obv_strength": 0.0231,
-  "divergence": "NEUTRAL",
-  "obv_source": "polygon_1m",
+  "delta_total": -482610.0,
+  "obv_strength": -0.0704,
+  "divergence": "BULLISH_DIVERGENCE",
+  "obv_source": "alpaca_trades,polygon_1m",
   "window_days": 5,
   "acc20": -17720570.9663,
   "vwap5": 4.9554,
   "vwap_dist_pct": -5.5583,
-  "delta_inst": null,
-  "delta_pro": null,
-  "delta_retail": null,
-  "iar": null,
-  "dp_vwap": null,
-  "dp_vwap_dist_pct": null,
+  "delta_inst": 231853.0,
+  "delta_pro": -364611.0,
+  "delta_retail": -349852.0,
+  "iar": 0.3245,
+  "dp_vwap": 4.6152,
+  "dp_vwap_dist_pct": -1.3842,
   "off_vol_ratio": 0.9312,
   "cumulative_daily": [
    {
     "date": "2026-11-09",
-    "cum": 129241.43630747909,
-    "day": 129241.43630747909,
-    "R": 0.023643744522241977
+    "cum": -481137.0,
+    "day": -481137.0,
+    "inst_cum": -469490.0,
+    "inst": -469490.0,
+    "pro": -85367.0,
+    "ret": 73720.0
    },
    {
     "date": "2026-11-10",
-    "cum": 47324.312289032474,
-    "day": -81917.12401844662,
-    "R": -0.011808724811654406
+    "cum": -568867.0,
+    "day": -87730.0,
+    "inst_cum": -328702.0,
+    "inst": 140788.0,
+    "pro": -186928.0,
+    "ret": -41590.0
    },
    {
     "date": "2026-11-11",
-    "cum": 9358.577418738889,
-    "day": -37965.734870293585,
-    "R": -0.006194441975900406
+    "cum": 59712.0,
+    "day": 628579.0,
+    "inst_cum": 250319.0,
+    "inst": 579021.0,
+    "pro": -15350.0,
+    "ret": 64908.0
    },
    {
     "date": "2026-11-12",
-    "cum": 140852.94523075141,
-    "day": 131494.36781201253,
-    "R": 0.020548884657531925
+    "cum": -1033803.0,
+    "day": -1093515.0,
+    "inst_cum": -620301.0,
+    "inst": -870620.0,
+    "pro": -65068.0,
+    "ret": -157827.0
    },
    {
     "date": "2026-11-13",
-    "cum": 158552.75818803802,
-    "day": 17699.812957286587,
-    "R": 0.0029283478578638698
+    "cum": -482610.0,
+    "day": 551193.0,
+    "inst_cum": 231853.0,
+    "inst": 852154.0,
+    "pro": -11898.0,
+    "ret": -289063.0
    }
   ],
   "dp_series": [
@@ -557,6 +570,79 @@
    "ats_share_prev_pct": 19.612463021601094,
    "ats_trades_avg_size": 92.86126885952582,
    "otc_trades_avg_size": 250.82458598850656
+  },
+  "flow": {
+   "days": [
+    "2026-11-09",
+    "2026-11-10",
+    "2026-11-11",
+    "2026-11-12",
+    "2026-11-13"
+   ],
+   "delta_inst": 231853.0,
+   "delta_pro": -364611.0,
+   "delta_retail": -349852.0,
+   "delta_total": -482610.0,
+   "iar": 0.3245136557106526,
+   "iar_class": "RETAIL_PRO_LEAD",
+   "inst_strength": 0.033816027729221494,
+   "dp_vwap": 4.615217097223872,
+   "dp_vwap_dist_pct": -1.384246442114692,
+   "divergence": "BULLISH_DIVERGENCE",
+   "inst_slope_pct": 1.6205332172358144,
+   "sessions": [
+    {
+     "session": "프리마켓",
+     "volume": 117082.0,
+     "dark": 67460.0,
+     "dark_pct": 57.61773799559283,
+     "avg20_dark": 128227.25,
+     "ratio": 0.5260972219243569,
+     "flag": ""
+    },
+    {
+     "session": "정규장",
+     "volume": 4870857.0,
+     "dark": 2507311.0,
+     "dark_pct": 51.47576699541785,
+     "avg20_dark": 2484479.5,
+     "ratio": 1.0091896511925336,
+     "flag": ""
+    },
+    {
+     "session": "애프터마켓",
+     "volume": 2101383.0,
+     "dark": 100971.0,
+     "dark_pct": 4.804978435630249,
+     "avg20_dark": 139064.25,
+     "ratio": 0.7260744583888382,
+     "flag": ""
+    }
+   ],
+   "blocks": 16,
+   "dark_blocks": 9,
+   "last30_block_share": [
+    0.0,
+    0.07795351048577011,
+    0.06490480931872983,
+    0.1421253353927977,
+    0.0
+   ],
+   "last30_move_pct": [
+    -0.18467220683286772,
+    0.0,
+    -0.3929273084479288,
+    -0.2105263157894692,
+    0.10741138560687202
+   ],
+   "bjzz_imbalance": -0.06748597861104394,
+   "dark_pct_trades": 37.74327079514797,
+   "trades": 29385,
+   "cohort_vol_share": {
+    "inst": 25.99909164898959,
+    "pro": 22.069377764443875,
+    "ret": 51.93153058656653
+   }
   }
  },
  "l2": {
