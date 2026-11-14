@@ -30,19 +30,41 @@ def main() -> int:
     d = last_weekday()
 
     # IBKR shortstock FTP (iborrowdesk 원천)
-    try:
-        ftp = ftplib.FTP("ftp3.interactivebrokers.com", timeout=20)
-        ftp.login("shortstock", "")
-        names = ftp.nlst()
-        buf = io.BytesIO()
-        ftp.retrbinary("RETR usa.txt", buf.write)
-        ftp.quit()
-        text = buf.getvalue().decode("utf-8", "replace").splitlines()
-        hdr = [l for l in text[:3]]
-        tsla = [l for l in text if l.startswith("TSLA|")][:1]
-        line("IBKR FTP usa.txt", "OK", f"files={len(names)} lines={len(text)} hdr={hdr!r} TSLA={tsla!r}")
-    except Exception as e:  # noqa: BLE001
-        line("IBKR FTP usa.txt", "FAIL", repr(e)[:200])
+    for host in ("ftp3.interactivebrokers.com", "ftp2.interactivebrokers.com"):
+        stage = "connect"
+        try:
+            ftp = ftplib.FTP(timeout=45)
+            ftp.connect(host, 21)
+            stage = "login"
+            ftp.login("shortstock", "")
+            ftp.set_pasv(True)
+            stage = "list"
+            names = ftp.nlst()
+            buf = io.BytesIO()
+            stage = "retr"
+            ftp.retrbinary("RETR usa.txt", buf.write)
+            ftp.quit()
+            text = buf.getvalue().decode("utf-8", "replace").splitlines()
+            hdr = [l for l in text[:3]]
+            tsla = [l for l in text if l.startswith("TSLA|")][:1]
+            line(f"IBKR FTP {host}", "OK", f"files={len(names)} lines={len(text)} hdr={hdr!r} TSLA={tsla!r}")
+            break
+        except Exception as e:  # noqa: BLE001
+            line(f"IBKR FTP {host}", "FAIL", f"stage={stage} {repr(e)[:160]}")
+
+    web = {
+        "shortablestocks": "https://www.shortablestocks.com/?TSLA",
+        "chartexchange borrow": "https://chartexchange.com/symbol/nasdaq-tsla/borrow-fee/",
+        "fintel": "https://fintel.io/ss/us/tsla",
+    }
+    for name, url in web.items():
+        try:
+            r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+            body = r.text
+            hit = any(k in body.lower() for k in ("fee", "borrow", "rebate"))
+            line(name, str(r.status_code), f"bytes={len(body)} has_fee_word={hit}")
+        except Exception as e:  # noqa: BLE001
+            line(name, "FAIL", repr(e)[:160])
 
     try:
         r = requests.get("https://iborrowdesk.com/api/ticker/TSLA", headers=UA, timeout=20)
