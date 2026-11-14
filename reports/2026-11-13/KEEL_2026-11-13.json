@@ -4,10 +4,10 @@
  "date": "2026-11-13",
  "price": 1.86,
  "is_index": false,
- "generated_at": "2026-11-14T14:58:01Z",
+ "generated_at": "2026-11-14T15:12:09Z",
  "prev_close": 1.95,
  "change_pct": -4.6154,
- "headline": "[A 상승 44%] · 가격은 내리는데 순체결은 매수 우위 · 회랑 $2–$2",
+ "headline": "[A 상승 46%] · 가격은 내리는데 순체결은 매수 우위 · 감마 플립 $1.18 상단 · 회랑 $2–$2",
  "quality": {
   "layers": {
    "l1": {
@@ -34,11 +34,9 @@
     ]
    },
    "l3": {
-    "status": "PARTIAL",
-    "coverage": 82,
-    "missing": [
-     "GEX 플립"
-    ],
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
     "sources": [
      "CBOE delayed quotes (OI·IV·Greeks)"
     ]
@@ -71,7 +69,7 @@
     ]
    }
   },
-  "score": 92,
+  "score": 98,
   "grade": "A"
  },
  "warnings": [],
@@ -165,15 +163,15 @@
   ]
  },
  "scenarios": {
-  "A_bullish": 44.3,
-  "B_neutral": 34.4,
-  "C_bearish": 21.3,
-  "raw_score": 0.242,
-  "dispersion": 0.575,
+  "A_bullish": 46.2,
+  "B_neutral": 33.4,
+  "C_bearish": 20.4,
+  "raw_score": 0.272,
+  "dispersion": 0.592,
   "contributions": {
    "L1": 0.22,
    "L2": 0.007,
-   "L3": 0.12,
+   "L3": 0.15,
    "L4": -0.105,
    "macro": -0.05,
    "patterns": 0.05
@@ -189,7 +187,7 @@
   "p3_direction": "UPWARD",
   "p3_target_hi": 2.0,
   "p3_target_hi2": 2.16,
-  "p3_target_lo": 1.605,
+  "p3_target_lo": 1.84,
   "p3_target_lo2": 1.5,
   "p3_bb_width": 39.4501,
   "p1_return_pct": -21.1864,
@@ -302,6 +300,12 @@
    "significance": "—"
   },
   {
+   "type": "Immediate Support",
+   "price": 1.84,
+   "dist_pct": -1.0753,
+   "significance": "HIGH"
+  },
+  {
    "type": "BB Lower",
    "price": 1.6934,
    "dist_pct": -8.957,
@@ -314,10 +318,10 @@
    "significance": "MED"
   },
   {
-   "type": "Immediate Support",
+   "type": "Key Support",
    "price": 1.605,
    "dist_pct": -13.7097,
-   "significance": "HIGH"
+   "significance": "MED"
   },
   {
    "type": "52W Low",
@@ -329,6 +333,12 @@
    "type": "Put Wall",
    "price": 1.5,
    "dist_pct": -19.3548,
+   "significance": "HIGH"
+  },
+  {
+   "type": "GEX Flip",
+   "price": 1.1813,
+   "dist_pct": -36.4898,
    "significance": "HIGH"
   }
  ],
@@ -837,7 +847,7 @@
   "scenario": "GAMMA_SQUEEZE",
   "signal": "BULLISH",
   "confidence": 1.0,
-  "score": 0.4011,
+  "score": 0.5011,
   "expiry": "2026-11-20",
   "dte": 7,
   "max_pain": 2.5,
@@ -856,7 +866,8 @@
   "expected_move_pct": 12.6344,
   "net_gex": 96362.251,
   "net_gex_weighted": 24142.5096,
-  "flip_zone": null,
+  "flip_zone": 1.1813,
+  "flip_status": "FOUND_FAR",
   "gamma_regime": "POSITIVE",
   "call_wall": 2.0,
   "put_wall": 1.5,
@@ -885,9 +896,18 @@
   "bb_width_pctile": 48.0159,
   "bb_position": 0.2002,
   "immediate_resistance": 2.06,
-  "immediate_support": 1.605,
+  "immediate_support": 1.84,
   "key_resistance": 2.16,
-  "key_support": null,
+  "key_support": 1.605,
+  "support_source": [
+   "1y 스윙",
+   "90d 스윙"
+  ],
+  "resistance_source": [
+   "90d 스윙",
+   "90d 스윙"
+  ],
+  "below_all_swing_lows": false,
   "vol_ratio30": 0.6343,
   "high_52w": 7.37,
   "low_52w": 1.605
