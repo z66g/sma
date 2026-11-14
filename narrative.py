@@ -4,99 +4,133 @@
 Server-side Claude narrative generator.
 
 CLI:
-  python3 narrative.py TICKER [--mode weekly|daily|adhoc] [--days 30]
+  python3 narrative.py TICKER [--mode weekly|daily|adhoc] [--days 30] [--force]
 
-reads  : reports/data/{TICKER}.json       (시계열 DB, build_index.py 가 관리)
-writes : reports/tickers/{TICKER}/narratives/{YYYY-MM-DD}-{MODE}.html
-env    : ANTHROPIC_API_KEY  (필수)
+reads  : reports/YYYY-MM-DD/{TICKER}_*.json  (build_index.scan_ticker — 세션 날짜로 정규화,
+         레거시 v2 행은 legacy_session_for 로 매핑, 세션당 1행)
+writes : reports/tickers/{TICKER}/narratives/{SESSION_DATE}-{MODE}.html
+env    : ANTHROPIC_API_KEY        (필수)
+         SMA_CLAUDE_MODEL         (기본 claude-opus-5-5)
+         SMA_CLAUDE_EFFORT        (기본 high — low|medium|high|xhigh|max)
+         SMA_WEB_SEARCH_MAX_USES  (기본 5)
 
-같은 내용을 브라우저 narrative.js 가 on-demand 로 생성함. 본 스크립트는
-GitHub Actions 스케줄에서 돌아 weekly 자동 생성 또는 수동 dispatch 용.
+exit   : 0 = 생성 또는 skip, 1 = 생성 실패, 2 = 설정 오류(API 키 없음)
+
+브라우저 narrative.js 가 같은 프롬프트로 on-demand 생성한다 (SYSTEM_PROMPT 동기화 유지).
 """
 from __future__ import annotations
 
 import argparse
+import html
 import json
+import math
 import os
+import random
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Dict, List
-
-import requests
+from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "reports" / "data"
 TICKERS_DIR = ROOT / "reports" / "tickers"
 
-ANTH_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-if not ANTH_KEY:
-    print("[FATAL] ANTHROPIC_API_KEY env var missing", file=sys.stderr)
-    sys.exit(2)
+API = "https://api.anthropic.com/v1/messages"
+ANTHROPIC_VERSION = "2023-06-01"
+MODEL = os.environ.get("SMA_CLAUDE_MODEL", "").strip() or "claude-opus-5-5"
+EFFORT = os.environ.get("SMA_CLAUDE_EFFORT", "").strip() or "high"
+WEB_SEARCH_MAX_USES = int(os.environ.get("SMA_WEB_SEARCH_MAX_USES", "5") or 5)
+MAX_TOKENS = 16000          # 비스트리밍 요청 — SDK/HTTP 타임아웃 안쪽
+MAX_CONTINUATIONS = 6       # pause_turn 재개 상한
+MAX_RETRIES = 6
+RETRY_STATUS = {408, 409, 429, 500, 502, 503, 504, 529}
+HTTP_TIMEOUT = 600
 
-API  = "https://api.anthropic.com/v1/messages"
-MODEL = os.environ.get("SMA_CLAUDE_MODEL", "claude-sonnet-4-5")
-MAX_TURNS = 5
+# 모델 기능 (claude-api 스킬 기준, 2026-11)
+_MODERN = ("claude-fable-", "claude-mythos-", "claude-opus-5", "claude-opus-4-8", "claude-opus-4-7",
+           "claude-opus-4-6", "claude-sonnet-5", "claude-sonnet-4-6", "claude-haiku-5")
+FALLBACK_MODELS = {"claude-fable-5-2", "claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"}
+FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
-# ── 시스템 프롬프트 (narrative.js 와 동일한 버전) ──
+# $/1M tokens: (input, output, cache_read). cache write(5m) = 1.25 × input. web search = $10 / 1,000.
+PRICING = {
+    "claude-opus-5-5":   (4.00, 20.00, 0.20),
+    "claude-opus-5":     (5.00, 25.00, None),
+    "claude-opus-4-8":   (5.00, 25.00, None),
+    "claude-opus-4-7":   (5.00, 25.00, None),
+    "claude-opus-4-6":   (5.00, 25.00, None),
+    "claude-fable-5-2":  (8.00, 40.00, 0.20),
+    "claude-fable-5-1":  (10.00, 50.00, None),
+    "claude-fable-5":    (10.00, 50.00, None),
+    "claude-sonnet-5-5": (2.00, 10.00, 0.10),
+    "claude-sonnet-5":   (2.00, 10.00, None),
+    "claude-sonnet-4-6": (3.00, 15.00, None),
+    "claude-haiku-5-5":  (0.10, 0.50, None),
+    "claude-haiku-4-5":  (1.00, 5.00, None),
+}
+WEB_SEARCH_PER_REQ = 10.0 / 1000
+
+
+def is_modern(model: str) -> bool:
+    return model.startswith(_MODERN)
+
+
+# ── 시스템 프롬프트 (narrative.js 의 SYSTEM_PROMPT_CORE 와 동일 텍스트 유지) ──
+# 주의: JS 템플릿 리터럴로 복사되므로 백틱·달러-중괄호·백슬래시를 쓰지 말 것.
 SYSTEM_PROMPT = r"""You are a Smart Money forensic analyst following the CLAUDE.md framework.
 
 CORE STANCE:
 - Zero bullish/bearish bias. Data and capital flows ONLY.
 - Architect perspective — interpret unusual signals as intentional market design first.
-- Never fabricate values not in the JSON/CSV input.
-- Never exceed the MAX_CONFIDENCE cap.
+- Never fabricate values not in the JSON/CSV input. A field that is absent or null is UNAVAILABLE — say "N/A" / "데이터 없음", never treat it as 0.
+- Never exceed the MAX_CONFIDENCE cap given in the user message.
 - Prefer "insufficient data" to speculation.
+- DATA DATE: every number refers to the US regular-session date given as DATA_DATE (ET). Cite it explicitly ("데이터 기준 YYYY-MM-DD 세션").
 
 LAYERS:
-- L1 Dark Pool: **1-way Total OBV** design. `delta_total` = 5-day sum of per-bar CLV-weighted signed volume across all minute bars (full market net flow direction). Previous institutional/professional/retail cohort split was removed because bar-level classification produced sign inversions vs Market Chameleon's per-print ground truth (the fields `delta_institutional`, `delta_professional`, `delta_retail`, `iar` are all null in the JSON now). Interpret L1 via three dimensions only:
-  · `delta_total` sign & magnitude → net buying vs selling pressure (all participants combined)
-  · `dp_pct` (FINRA CNMS off-exchange %) → institutional/block activity level (>45% = heavy, 30-45% normal, <30% retail-lit)
-  · `divergence` (BULLISH_DIVERGENCE / BEARISH_DIVERGENCE / CONVERGENCE / NEUTRAL) → price slope vs OBV slope relation, the strongest Architect signal
-  Combine: high dp_pct + positive Total OBV + BULLISH_DIVERGENCE = strong accumulation. Never quantify institutional-only vs retail-only flow.
-- L2 Short Volume: FINRA Reg SHO short volume != short interest. 40-55% is structurally normal. Judge only by slope + CTB + anomaly_z. NEVER read "short% > 50" as bearish.
-- L3 Options: Max Pain, P/C, Net GEX, Flip Zone, IV Skew. Pinning meaningful only DTE <= 5. Positive Net GEX = long gamma (pin regime). Flip crossing = vol regime change.
-- L4 Chart: MA alignment, BB width, immediate/key S&R.
+- L1 Dark Pool: delta_total = 5-session sum of CLV-weighted signed volume (all participants combined, net flow direction). dp_pct = FINRA off-exchange share of volume (>45% heavy, 30-45% normal, <30% lit/retail-dominant); dp_ratio = today vs 20-day average. divergence (BULLISH_DIVERGENCE / BEARISH_DIVERGENCE / CONVERGENCE / NEUTRAL) = price slope vs OBV slope, the strongest Architect signal. Cohort fields delta_inst / delta_pro / delta_retail / iar and dp_vwap exist ONLY when a trade-level source was available. If they are absent, do NOT discuss institutional vs professional vs retail split or IAR at all.
+- L2 Short Volume: FINRA Reg SHO short volume is NOT short interest. 40-55% is structurally normal. Judge only by slope + CTB fee direction (ctb_delta_pct) + anomaly_z + case. NEVER read "short% > 50" as bearish. short_interest (settlement-date based, 2-week lag) gives days_to_cover and pct_float — cite its settlement_date when used. Report CTB as direction / rate of change, not as a standalone absolute signal.
+- L3 Options: Max Pain, P/C (OI and volume), Net GEX, Flip Zone, call_wall / put_wall, expected_move_pct (ATM straddle), IV skew, term_structure. Pinning meaningful only when DTE <= 5. Positive Net GEX = long gamma (pin regime). Flip crossing = vol regime change.
+- L4 Chart: MA alignment, BB width / position, RSI, ATR, immediate/key S&R.
+- quality: data-quality grade/score and per-layer missing fields. Lower confidence when grade is C or worse, and name the missing layers in the limitations section.
 
 WEIGHTS: L1=0.35, L2=0.20, L3=0.30, L4=0.15.
 
 PATTERNS:
-- FINAL_ABSORPTION: DP% > 40, short slope < 0, CTB delta in [-5,+5]%, inst OBV > 0 (3+ of 5)
-- THETA_BURN: 3+ days low vol + tight range + near-zero inst OBV
-- LOW_CTB_PARADOX: CTB < 1% + shares_available down > 5% = quiet institutional shorting
+- FINAL_ABSORPTION: DP% > 40, short slope < 0, CTB delta in [-5,+5]%, net OBV > 0 (3+ of 5)
+- THETA_BURN: 3+ sessions low volume + tight range + near-zero OBV change
+- LOW_CTB_PARADOX: CTB < 1% + shares_available down > 5% = quiet shorting
 - GAMMA_SQUEEZE_SETUP: P/C OI < 0.7 + P/C Vol < 0.7 + rising call OI
 - SHORT_SQUEEZE_RISK: CTB rising > 5% + short slope rising + HTB
 
-ARCHITECT PHASES (N_days >= 7 only): Phase 1 past / Phase 2 present / Phase 3 future (trading days only).
+ARCHITECT PHASES (N_days >= 7 only): Phase 1 past / Phase 2 present / Phase 3 future.
+- Past/present dates must come from the CSV session dates. Future dates must be chosen ONLY from the UPCOMING_TRADING_DAYS list in the user message (US market holidays and weekends are already excluded). Never invent a date.
 
 ====================================================================
 OUTPUT: FILL THIS EXACT HTML TEMPLATE. NO MARKDOWN. INLINE STYLES ONLY.
 ====================================================================
 
 CRITICAL: Copy the template below verbatim. Replace ONLY text inside {{...}} or the content between tags.
-DO NOT omit any section. DO NOT change the class names, style attributes, or structure.
+{{TICKER}}, {{DATE}} and {{MAX_CONFIDENCE}} take the TICKER, DATA_DATE and MAX_CONFIDENCE values from the user message.
+DO NOT omit any section. DO NOT change the style attributes or structure.
 The 2x2 CARD GRID and the PROBABILITY BAR are MANDATORY visual elements — not optional.
 
 ==== TEMPLATE START (copy this entire block, fill content) ====
 
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1F2328;">
 
-<!-- title -->
 <div style="margin-bottom:16px;">
-  <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;color:#1F2328;">{{TICKER}} Smart Money Forensic · {{DATE}}</h1>
-  <div style="font-size:11px;color:#656D76;">{{price_and_patterns_oneliner}}</div>
+  <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;color:#1F2328;">{{TICKER}} Smart Money Forensic · 데이터 기준 {{DATE}}</h1>
+  <div style="font-size:11px;color:#656D76;">{{price_quality_and_patterns_oneliner}}</div>
 </div>
 
-<!-- 1. KEY FINDING -->
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
   <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ 핵심 발견</span>
   <span style="background:{{kf_badge_bg}};color:{{kf_badge_fg}};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{{KF_BADGE_TEXT}}</span>
 </div>
 <p style="font-size:13px;line-height:1.7;color:#1F2328;margin:0;">{{핵심 1-2문장, 패러독스/충돌 우선}}</p>
 
-<!-- 2. 4-LAYER SYNTHESIS (2x2 GRID) -->
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
   <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ 4-LAYER SYNTHESIS</span>
 </div>
@@ -104,29 +138,28 @@ The 2x2 CARD GRID and the PROBABILITY BAR are MANDATORY visual elements — not 
   <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
     <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L1 DARK POOL</div>
     <div style="font-size:15px;font-weight:600;color:{{l1_color}};margin-bottom:6px;">{{l1_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L1 설명: Total OBV(5d) 방향+규모, 다크풀 % 수준, Divergence(BULL_DIV/BEAR_DIV/CONV/NEU) 조합으로 서술. 기관/리테일 분리 언급 금지 — 데이터에 없음}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L1: Total OBV(5d) 방향+규모, dp_pct 수준, dp_ratio, Divergence. 코호트 필드가 없으면 기관/리테일 분리 언급 금지}}</div>
   </div>
   <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
     <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L2 SHORT · CTB</div>
     <div style="font-size:15px;font-weight:600;color:{{l2_color}};margin-bottom:6px;">{{l2_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L2 설명: slope + CTB 조합. 절대 %를 bearish로 해석 금지}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L2: short% slope + CTB 방향(Δ%) + short interest/DTC. 절대 %를 bearish로 해석 금지}}</div>
   </div>
   <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
     <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L3 OPTIONS</div>
     <div style="font-size:15px;font-weight:600;color:{{l3_color}};margin-bottom:6px;">{{l3_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L3 설명: Max Pain 거리, Net GEX 부호, Flip Zone 위치 regime}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L3: Max Pain 거리, Net GEX 부호, Flip Zone regime, Call/Put Wall, Expected Move}}</div>
   </div>
   <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
     <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L4 CHART</div>
     <div style="font-size:15px;font-weight:600;color:{{l4_color}};margin-bottom:6px;">{{l4_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L4 설명: MA 배열, BB 폭, S/R 거리}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L4: MA 배열, BB 폭/위치, RSI, S/R 거리}}</div>
   </div>
 </div>
 
-<!-- 3. ARCHITECT PHASE (skip structure if N_days < 7; replace with amber notice) -->
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
   <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ ARCHITECT PHASE TIMELINE</span>
-  <span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{{N_days}}일 관찰</span>
+  <span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{{N_days}}개 세션 관찰</span>
 </div>
 <table style="border-collapse:collapse;width:100%;font-size:12px;margin-top:4px;">
   <thead>
@@ -139,11 +172,10 @@ The 2x2 CARD GRID and the PROBABILITY BAR are MANDATORY visual elements — not 
   <tbody>
     <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 1 Setup</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p1_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p1_desc}}</td></tr>
     <tr style="background:#F6F8FA;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 2 Transition</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p2_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p2_desc}}</td></tr>
-    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 3 Resolution</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p3_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p3_desc_with_targets}}</td></tr>
+    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 3 Resolution</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p3_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p3_desc: 조건부 시나리오 + 입력 데이터에 있는 관찰 레벨(구간)만}}</td></tr>
   </tbody>
 </table>
 
-<!-- 4. PROBABILITY MATRIX (MANDATORY HORIZONTAL BARS) -->
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
   <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ PROBABILITY MATRIX</span>
   <span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Raw Score {{raw_score}}</span>
@@ -167,7 +199,6 @@ The 2x2 CARD GRID and the PROBABILITY BAR are MANDATORY visual elements — not 
 </div>
 <div style="font-size:11px;color:#656D76;margin-top:6px;">Macro: {{macro_env}} · Patterns: {{patterns_or_none}}</div>
 
-<!-- 5. DECISIVE TRIGGERS -->
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
   <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ DECISIVE TRIGGERS</span>
 </div>
@@ -181,229 +212,561 @@ The 2x2 CARD GRID and the PROBABILITY BAR are MANDATORY visual elements — not 
     </tr>
   </thead>
   <tbody>
-    <!-- 3~5 rows with direction pills: bullish=#DAFBE1/#1A7F5A, bearish=#FFEBE9/#CF222B, warn=#FFF8C5/#9A6700 -->
-    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{trigger1_name}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{pill}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;font-family:monospace;">{{threshold1}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{implication1}}</td></tr>
+    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{trigger_name}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{direction_pill}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;font-family:monospace;">{{threshold}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{implication}}</td></tr>
   </tbody>
 </table>
 
-<!-- 6. CONFIDENCE & LIMITATIONS -->
 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
   <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ CONFIDENCE & LIMITATIONS</span>
   <span style="background:{{conf_bg}};color:{{conf_fg}};padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">{{MAX_CONFIDENCE}}</span>
 </div>
-<p style="font-size:12px;line-height:1.7;color:#1F2328;margin:0;">{{N_days일 시계열 · 누락 지표 · PARTIAL 섹션 등 data gap 명시}}</p>
+<p style="font-size:12px;line-height:1.7;color:#1F2328;margin:0;">{{데이터 기준 세션 날짜 · N_days개 세션 · 데이터 품질 등급 · 누락 레이어/지표 · 웹 검색 출처와 날짜}}</p>
 
 </div>
 
 ==== TEMPLATE END ====
 
+TRIGGER ROWS: 3-5 rows, alternating row background #FFFFFF / #F6F8FA. Direction pills:
+- bullish: <span style="background:#DAFBE1;color:#1A7F5A;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">BULLISH</span>
+- bearish: <span style="background:#FFEBE9;color:#CF222B;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">BEARISH</span>
+- caution: <span style="background:#FFF8C5;color:#9A6700;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">WATCH</span>
+
+ARCHITECT PHASE when N_days < 7: replace the table with
+<p style="font-size:12px;color:#9A6700;background:#FFF8C5;padding:8px 12px;border-radius:4px;">시계열 N개 세션으로 Phase 1(과거 setup)을 구조적으로 해석하기엔 부족합니다. 최소 7개 세션 필요.</p>
+
 COLOR MAPPING:
-- signal=BULLISH -> #1A7F5A
-- signal=BEARISH -> #CF222B
-- signal=NEUTRAL -> #9A6700
-- confidence HIGH       -> #DAFBE1/#1A7F5A
-- confidence MEDIUM     -> #FFF8C5/#9A6700
-- confidence MEDIUM_LOW -> #FFF8C5/#9A6700
-- confidence LOW        -> #FFEBE9/#CF222B
+- signal=BULLISH -> #1A7F5A, signal=BEARISH -> #CF222B, signal=NEUTRAL -> #9A6700
+- confidence HIGH -> #DAFBE1/#1A7F5A, MEDIUM or MEDIUM_LOW -> #FFF8C5/#9A6700, LOW -> #FFEBE9/#CF222B
 
 PROHIBITIONS:
-- Markdown syntax 금지 (# ## - ** fenced code).
-- <script>, <style>, <iframe>, event handlers, javascript:/data: URI 금지.
-- 주가 예측 금지, 확률만 제시.
+- Markdown syntax 금지 (# ## - ** fenced code). 순수 HTML만.
+- script, style, iframe, img, svg 태그·이벤트 핸들러·javascript:/data: URI 금지 (렌더 전에 모두 제거됨).
+- 점(point) 가격 예측·단일 목표가 금지. 가격은 입력 데이터에 있는 레벨(max_pain, flip_zone, call_wall, put_wall, S/R, levels, expected_move)만 "관찰 레벨/구간"으로 인용. 확률은 입력의 scenarios 값만 사용.
 - 시나리오 확률 80% 초과 금지.
-- 주말/휴장일 날짜 금지.
-- 원본 JSON/CSV에 없는 숫자 언급 금지.
-- 템플릿의 <div>/<table>/<tr> 구조를 생략·축약 금지. 2x2 카드와 Probability Bar 필수.
+- 주말/미국 휴장일 날짜 금지 — 미래 날짜는 UPCOMING_TRADING_DAYS 목록에서만.
+- 원본 JSON/CSV에 없는 숫자 언급 금지 (웹 검색으로 얻은 사실은 출처·날짜와 함께만).
+- 템플릿의 div/table/tr 구조를 생략·축약 금지. 2x2 카드와 Probability Bar 필수.
 
-응답 시작은 반드시 <div style="font-family:... 로, 끝은 </div> 로 마무리.
+응답은 반드시 템플릿의 첫 div 로 시작하고 마지막 닫는 div 로 끝낸다. 앞뒤 설명 문장 금지.
 """
 
-# ── Utility ──
-def classify_window(n_days: int):
-    if n_days <= 1:
-        return ("LOW", "SNAPSHOT", "⚠ 첫 분석 — 시계열 없음. Phase 1/2/3 미구성. 오늘 스냅샷의 구조적 해석만.")
-    if n_days <= 6:
-        return ("MEDIUM_LOW", "EARLY",
-                f"📊 초기 관찰 — {n_days}일 시계열. Phase 1은 유보. Final Absorption 조건부.")
-    if n_days <= 14:
-        return ("MEDIUM", "SHORT", f"📊 단기 트렌드 — {n_days}일. Phase 1 setup 가능.")
-    return ("HIGH", "STANDARD", f"📊 표준 심화 — {n_days}일. 전체 프레임워크 적용.")
+
+# ───────────────────────── HTML sanitizer (allowlist, html.parser 기반) ─────────────────────────
+ALLOWED_TAGS = {
+    "p", "h1", "h2", "h3", "h4", "ul", "ol", "li", "b", "strong", "em", "i",
+    "table", "thead", "tbody", "tr", "th", "td", "span", "div", "br", "hr", "a",
+    "code", "blockquote", "small", "sup", "sub",
+}
+VOID_TAGS = {"br", "hr"}
+# 내용까지 통째로 버리는 태그
+DROP_CONTENT_TAGS = {
+    "script", "style", "iframe", "object", "embed", "svg", "math", "noscript", "template",
+    "textarea", "title", "head", "select", "option", "frameset", "frame", "noembed",
+    "noframes", "xmp", "plaintext", "applet", "canvas", "video", "audio", "picture", "form",
+}
+_STYLE_BAD = re.compile(
+    r"url\s*\(|expression|javascript|vbscript|@import|behavior|-moz-binding|image-set|"
+    r"position\s*:\s*(fixed|sticky)|[\\<>]|/\*",
+    re.I,
+)
+_CTRL_WS = re.compile("[\x00-\x20\x7f-\x9f\u200b-\u200f\u2028\u2029\ufeff]+")
+
+
+def _fully_unescape(v: str) -> str:
+    prev = None
+    while prev != v:
+        prev, v = v, html.unescape(v)
+    return v
+
+
+def _safe_href(v: str) -> Optional[str]:
+    probe = _CTRL_WS.sub("", _fully_unescape(v)).lower()
+    if probe.startswith("http://") or probe.startswith("https://"):
+        return v.strip()
+    return None
+
+
+def _safe_style(v: str) -> Optional[str]:
+    probe = _fully_unescape(v)
+    if _STYLE_BAD.search(probe) or _STYLE_BAD.search(_CTRL_WS.sub("", probe)):
+        return None
+    return probe.strip()
+
+
+class _Sanitizer(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.out: List[str] = []
+        self.stack: List[str] = []         # 열린 허용 태그
+        self.drop_tag: Optional[str] = None
+        self.drop_depth = 0
+
+    # 속성 필터
+    def _attrs(self, tag: str, attrs) -> str:
+        parts = []
+        seen = set()
+        for name, value in attrs:
+            name = (name or "").lower()
+            if name in seen or value is None:
+                continue
+            seen.add(name)
+            if name == "class":
+                v = re.sub(r"[^\w\- ]", "", value)[:200]
+            elif name == "style":
+                v = _safe_style(value)
+            elif name == "href" and tag == "a":
+                v = _safe_href(value)
+            elif name in ("colspan", "rowspan") and tag in ("td", "th"):
+                v = value.strip() if value.strip().isdigit() and 0 < int(value.strip()) <= 50 else None
+            else:
+                v = None       # on*, src, id, srcset, formaction … 전부 제거
+            if v:
+                parts.append(f' {name}="{html.escape(v, quote=True)}"')
+        if tag == "a" and any(p.startswith(" href=") for p in parts):
+            parts.append(' rel="noopener noreferrer nofollow" target="_blank"')
+        return "".join(parts)
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+        if self.drop_tag:
+            if tag == self.drop_tag:
+                self.drop_depth += 1
+            return
+        if tag in DROP_CONTENT_TAGS:
+            self.drop_tag, self.drop_depth = tag, 1
+            return
+        if tag not in ALLOWED_TAGS:
+            return      # 태그만 버리고 내용(텍스트)은 유지
+        self.out.append(f"<{tag}{self._attrs(tag, attrs)}>")
+        if tag not in VOID_TAGS:
+            self.stack.append(tag)
+
+    def handle_startendtag(self, tag, attrs):
+        tag = tag.lower()
+        if self.drop_tag or tag in DROP_CONTENT_TAGS or tag not in ALLOWED_TAGS:
+            return
+        if tag in VOID_TAGS:
+            self.out.append(f"<{tag}{self._attrs(tag, attrs)}>")
+        else:
+            self.out.append(f"<{tag}{self._attrs(tag, attrs)}></{tag}>")
+
+    def handle_endtag(self, tag):
+        tag = tag.lower()
+        if self.drop_tag:
+            if tag == self.drop_tag:
+                self.drop_depth -= 1
+                if self.drop_depth <= 0:
+                    self.drop_tag = None
+            return
+        if tag not in self.stack:
+            return
+        while self.stack:
+            t = self.stack.pop()
+            self.out.append(f"</{t}>")
+            if t == tag:
+                break
+
+    def handle_data(self, data):
+        if not self.drop_tag:
+            self.out.append(html.escape(data, quote=False))
+
+    # 주석·선언·PI 는 모두 버림
+    def handle_comment(self, data): pass
+    def handle_decl(self, decl): pass
+    def handle_pi(self, data): pass
+    def unknown_decl(self, data): pass
+
+    def result(self) -> str:
+        while self.stack:
+            self.out.append(f"</{self.stack.pop()}>")
+        return "".join(self.out)
+
+
+def sanitize_html(raw: str) -> str:
+    """allowlist 기반 sanitizer. 허용 태그/속성 외 전부 제거."""
+    s = (raw or "").strip()
+    s = re.sub(r"^```(?:html)?\s*", "", s, flags=re.I)
+    s = re.sub(r"\s*```$", "", s)
+    p = _Sanitizer()
+    p.feed(s)
+    p.close()
+    return p.result().strip()
+
+
+def extract_html_block(text: str) -> str:
+    """모델 응답에서 첫 <div ... 부터 마지막 </div> 까지만 (웹 검색 전후 잡담 제거)."""
+    start = text.find("<div")
+    end = text.rfind("</div>")
+    if start == -1 or end == -1 or end < start:
+        return text
+    return text[start:end + len("</div>")]
+
+
+# ───────────────────────── data → prompt ─────────────────────────
+def _prune(o: Any) -> Any:
+    """None/NaN/빈 컨테이너 제거 — 모델에 '없는 값'을 0 처럼 보여주지 않기 위해."""
+    if isinstance(o, float):
+        return o if math.isfinite(o) else None
+    if isinstance(o, dict):
+        out = {k: _prune(v) for k, v in o.items()}
+        return {k: v for k, v in out.items() if v is not None and v != [] and v != {} and v != ""}
+    if isinstance(o, list):
+        return [x for x in (_prune(v) for v in o) if x is not None]
+    return o
+
+
+def _pick(d: dict, keys) -> dict:
+    d = d or {}
+    return {k: d.get(k) for k in keys if k in d}
+
+
+L1_KEYS = ("scenario", "signal", "confidence", "dp_pct", "dp_avg20", "dp_ratio", "dp_class", "delta_total",
+           "divergence", "obv_source", "window_days", "delta_inst", "delta_pro", "delta_retail", "iar",
+           "dp_vwap", "dp_vwap_dist_pct", "ats")
+L2_KEYS = ("scenario", "signal", "case", "short_pct_latest", "short_avg_14d", "short_slope", "slope_dir",
+           "anomaly_z", "short_shares", "ctb_fee", "ctb_delta_pct", "shares_available", "avail_delta_pct",
+           "borrow_source", "short_interest")
+L3_KEYS = ("scenario", "signal", "expiry", "dte", "max_pain", "max_pain_dist_pct", "pc_oi", "pc_vol",
+           "pc_vol_adj", "skew", "skew_25d", "net_gex", "flip_zone", "call_wall", "put_wall", "atm_iv", "iv30",
+           "term_structure", "expected_move", "expected_move_pct", "oi_total", "binary_event",
+           "monthly_expiry", "monthly_max_pain")
+L4_KEYS = ("scenario", "signal", "ma_alignment", "sma20", "sma50", "sma200", "ema9", "ema21", "rsi14", "atr14",
+           "atr_pct", "bb_width_pct", "bb_upper", "bb_lower", "bb_position", "bb_width_pctile",
+           "immediate_resistance", "immediate_support", "key_resistance", "key_support", "vol_ratio30",
+           "high_52w", "low_52w")
+
+
+def snapshot(row: dict) -> dict:
+    q = row.get("quality") or {}
+    layers = {}
+    for name, layer in (q.get("layers") or {}).items():
+        if isinstance(layer, dict):
+            layers[name] = _pick(layer, ("status", "missing"))
+    l1 = _pick(row.get("l1"), L1_KEYS)
+    cum = (row.get("l1") or {}).get("cumulative_daily") or []
+    if cum:
+        l1["cumulative_daily"] = cum[-5:]
+    snap = {
+        "ticker": row.get("ticker"),
+        "data_date": row.get("date"),
+        "schema": row.get("schema"),
+        "price": row.get("price"),
+        "prev_close": row.get("prev_close"),
+        "change_pct": row.get("change_pct"),
+        "headline": row.get("headline"),
+        "macro_env": row.get("macro_env"),
+        "patterns": row.get("patterns"),
+        "scenarios": row.get("scenarios"),
+        # 레거시 v2 phase 는 KST 실행일 기준이라 주말 날짜가 섞여 있음 → v3 만 전달
+        "phase": row.get("phase") if (row.get("schema") or 2) >= 3 else None,
+        "levels": (row.get("levels") or [])[:12],
+        "quality": {"grade": q.get("grade"), "score": q.get("score"), "layers": layers},
+        "warnings": (row.get("warnings") or [])[:10],
+        "l1": l1,
+        "l2": _pick(row.get("l2"), L2_KEYS),
+        "l3": _pick(row.get("l3"), L3_KEYS),
+        "l4": _pick(row.get("l4"), L4_KEYS),
+    }
+    return _prune(snap)
+
+
+def _f(v, n=2) -> str:
+    if isinstance(v, bool) or v is None:
+        return ""
+    if isinstance(v, (int, float)):
+        return f"{v:.{n}f}" if math.isfinite(v) else ""
+    return str(v).replace(",", ";")
+
+
+CSV_COLS = ["date", "price", "scen_A", "scen_B", "scen_C", "raw_score", "macro",
+            "dp_pct", "dp_ratio", "delta_total", "divergence",
+            "short_pct", "short_shares", "short_slope", "ctb_fee", "ctb_delta_pct", "si_days_to_cover",
+            "max_pain", "max_pain_dist_pct", "pc_oi", "pc_vol", "net_gex_m", "flip_zone",
+            "call_wall", "put_wall", "exp_move_pct", "ma_align", "bb_width", "rsi14", "quality", "patterns"]
+
 
 def to_csv(series: List[Dict]) -> str:
+    """빈 칸 = 데이터 없음 (0 아님). net_gex 는 백만(M) 단위."""
     if not series:
         return ""
-    cols = ["date","price","scen_A","scen_C","raw_score","macro",
-            "dp_pct","total_obv_5d","divergence",
-            "short_pct","short_slope","slope_dir","ctb_fee",
-            "max_pain","max_pain_dist","pc_oi","net_gex_bn","flip_zone",
-            "ma_align","bb_width","patterns"]
-    out = [",".join(cols)]
-    def f(v, n=2):
-        if v is None: return ""
-        if isinstance(v, (int,float)): return f"{v:.{n}f}"
-        return str(v)
-    def i(v):
-        return "" if v is None else f"{round(v):d}"
+    out = [",".join(CSV_COLS)]
     for s in series:
-        l1 = s.get("l1") or {}; l2 = s.get("l2") or {}
-        l3 = s.get("l3") or {}; l4 = s.get("l4") or {}
+        l1, l2, l3, l4 = (s.get(k) or {} for k in ("l1", "l2", "l3", "l4"))
         sc = s.get("scenarios") or {}
-        net_gex = l3.get("net_gex")
+        si = l2.get("short_interest") or {}
+        q = s.get("quality") or {}
+        ng = l3.get("net_gex")
+        ng_m = _f(ng / 1e6, 1) if isinstance(ng, (int, float)) and not isinstance(ng, bool) and math.isfinite(ng) else ""
+        dt = l1.get("delta_total")
         row = [
-            s.get("date",""),
-            f(s.get("price"), 2),
-            f(sc.get("A_bullish"), 0), f(sc.get("C_bearish"), 0), f(sc.get("raw_score"), 2),
-            s.get("macro_env","") or "",
-            f(l1.get("dp_pct"), 1),
-            i(l1.get("delta_total")),
-            l1.get("divergence","") or "",
-            f(l2.get("short_pct_latest"), 1), f(l2.get("short_slope"), 2),
-            l2.get("slope_dir","") or "",
-            f(l2.get("ctb_fee"), 2),
-            f(l3.get("max_pain"), 2), f(l3.get("max_pain_dist_pct"), 1),
-            f(l3.get("pc_oi"), 2),
-            "" if net_gex is None else f"{net_gex/1e9:.2f}",
-            f(l3.get("flip_zone"), 2),
-            l4.get("ma_alignment","") or "", f(l4.get("bb_width_pct"), 1),
-            "|".join(s.get("patterns") or [])
+            s.get("date", ""), _f(s.get("price")),
+            _f(sc.get("A_bullish"), 0), _f(sc.get("B_neutral"), 0), _f(sc.get("C_bearish"), 0),
+            _f(sc.get("raw_score")), _f(s.get("macro_env")),
+            _f(l1.get("dp_pct"), 1), _f(l1.get("dp_ratio")), _f(dt, 0), _f(l1.get("divergence")),
+            _f(l2.get("short_pct_latest"), 1), _f(l2.get("short_shares"), 0), _f(l2.get("short_slope")),
+            _f(l2.get("ctb_fee")), _f(l2.get("ctb_delta_pct"), 1), _f(si.get("days_to_cover"), 1),
+            _f(l3.get("max_pain")), _f(l3.get("max_pain_dist_pct"), 1), _f(l3.get("pc_oi")), _f(l3.get("pc_vol")),
+            ng_m, _f(l3.get("flip_zone")), _f(l3.get("call_wall")), _f(l3.get("put_wall")),
+            _f(l3.get("expected_move_pct"), 1), _f(l4.get("ma_alignment")), _f(l4.get("bb_width_pct"), 1),
+            _f(l4.get("rsi14"), 1),
+            (str(q.get("grade") or "") + (f"{q['score']:.0f}" if isinstance(q.get("score"), (int, float)) else "")),
+            "|".join(map(str, s.get("patterns") or [])),
         ]
         out.append(",".join(row))
     return "\n".join(out)
 
-def call_claude_multi(system: str, user_text: str) -> Dict[str, Any]:
-    messages = [{"role":"user","content":[{"type":"text","text": user_text}]}]
-    for turn in range(MAX_TURNS):
-        res = requests.post(
-            API,
-            headers={
-                "Content-Type":"application/json",
-                "x-api-key": ANTH_KEY,
-                "anthropic-version": "2023-06-01",
-            },
-            json={
-                "model": MODEL,
-                "max_tokens": 8192,
-                "temperature": 0,
-                "system": system,
-                "tools": [{"type":"web_search_20250305","name":"web_search"}],
-                "messages": messages,
-            },
-            timeout=180,
-        )
-        if res.status_code != 200:
-            raise RuntimeError(f"Claude HTTP {res.status_code}: {res.text[:500]}")
-        data = res.json()
-        if data.get("stop_reason") == "tool_use":
-            messages.append({"role":"assistant","content": data["content"]})
-            tool_results = [{"type":"tool_result","tool_use_id": b["id"],"content":""}
-                            for b in data["content"] if b["type"] == "tool_use"]
-            messages.append({"role":"user","content": tool_results})
+
+def classify_window(n_days: int):
+    if n_days <= 1:
+        return ("LOW", "⚠ 첫 분석 — 시계열 없음. Phase 1/2/3 미구성. 오늘 스냅샷의 구조적 해석만.")
+    if n_days <= 6:
+        return ("MEDIUM_LOW", f"📊 초기 관찰 — {n_days}개 세션. Phase 1은 유보. Final Absorption 조건부.")
+    if n_days <= 14:
+        return ("MEDIUM", f"📊 단기 트렌드 — {n_days}개 세션. Phase 1 setup 가능.")
+    return ("HIGH", f"📊 표준 심화 — {n_days}개 세션. 전체 프레임워크 적용.")
+
+
+def upcoming_trading_days(session_date: str, n: int = 15) -> List[str]:
+    from smartmoney.calendar import next_trading_day, parse_date
+    d = parse_date(session_date)
+    return [next_trading_day(d, k).isoformat() for k in range(1, n + 1)]
+
+
+def build_user_text(ticker: str, mode: str, series: List[dict]) -> Tuple[str, str]:
+    today = series[-1]
+    n_days = len(series)
+    cap, note = classify_window(n_days)
+    data_date = today["date"]
+    snap = snapshot(today)
+    l1 = snap.get("l1") or {}
+    has_cohort = any(k in l1 for k in ("delta_inst", "delta_pro", "delta_retail", "iar"))
+    mode_hint = {
+        "weekly": f"이번 주(데이터 기준 {data_date} 포함 최근 5개 세션) 흐름 중심으로 서술하되, 전체 {n_days}개 세션 컨텍스트 참고.",
+        "daily": "최신 세션 스냅샷 중심, 최근 5개 세션 변화 맥락 언급.",
+        "adhoc": "사용자 온디맨드 요청. 최근 흐름 기반 표준 분석.",
+    }[mode]
+    parts = [
+        f"TICKER: {ticker}",
+        f"DATA_DATE: {data_date} (미국 정규장 세션, ET)",
+        f"MAX_CONFIDENCE: {cap}",
+        f"N_days: {n_days}",
+        f"UPCOMING_TRADING_DAYS: {', '.join(upcoming_trading_days(data_date))}",
+        f"COHORT_SPLIT_AVAILABLE: {'yes' if has_cohort else 'no — 기관/프로/리테일 분리·IAR 언급 금지'}",
+        "",
+        note,
+        mode_hint,
+        "",
+        f"## 최신 세션({data_date}) 스냅샷 (JSON, 없는 필드 = 데이터 없음)",
+        "```json",
+        json.dumps(snap, ensure_ascii=False, indent=1),
+        "```",
+    ]
+    if n_days > 1:
+        parts += ["", f"## 시계열 ({n_days}개 세션, CSV — 빈 칸 = 데이터 없음, net_gex_m = 백만 단위)",
+                  "```csv", to_csv(series), "```"]
+    parts += ["", (f"요청: Smart Money 분석 프레임워크에 따라 {ticker} 내러티브 리포트를 지정된 HTML 템플릿으로 생성. "
+                   f"필요 시 web_search 로 {data_date} 이전 1주의 뉴스·이벤트·SEC 공시를 확인하고 출처·날짜를 명시. "
+                   f"신뢰도 상한은 {cap}.")]
+    return "\n".join(parts), cap
+
+
+# ───────────────────────── Claude API ─────────────────────────
+def build_payload(model: str, messages: list) -> Tuple[dict, dict]:
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": os.environ.get("ANTHROPIC_API_KEY", "").strip(),
+        "anthropic-version": ANTHROPIC_VERSION,
+    }
+    modern = is_modern(model)
+    payload: Dict[str, Any] = {
+        "model": model,
+        "max_tokens": MAX_TOKENS,
+        # 정적 시스템 프롬프트 → 종목 간·pause_turn 재개 간 캐시 재사용
+        "system": [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
+        "tools": [{
+            "type": "web_search_20260209" if modern else "web_search_20250305",
+            "name": "web_search",
+            "max_uses": WEB_SEARCH_MAX_USES,
+        }],
+        "messages": messages,
+    }
+    # temperature/top_p/top_k 는 보내지 않음 (Opus 4.7+ 계열에서 400).
+    # thinking 생략 = Opus 5.5 에선 adaptive. 깊이는 effort 로 조절.
+    if modern:
+        payload["output_config"] = {"effort": EFFORT}
+    if model in FALLBACK_MODELS:
+        headers["anthropic-beta"] = FALLBACK_BETA
+        payload["fallbacks"] = "default"
+    return headers, payload
+
+
+def post_with_retry(headers: dict, payload: dict) -> dict:
+    import requests
+
+    last = ""
+    for attempt in range(MAX_RETRIES):
+        try:
+            res = requests.post(API, headers=headers, json=payload, timeout=HTTP_TIMEOUT)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            last = f"network: {e}"
+            res = None
+        if res is not None:
+            if res.status_code == 200:
+                return res.json()
+            body = res.text[:500]
+            overloaded = "overloaded" in body
+            if res.status_code not in RETRY_STATUS and not overloaded:
+                raise RuntimeError(f"Claude HTTP {res.status_code}: {body}")
+            last = f"HTTP {res.status_code}: {body}"
+            retry_after = res.headers.get("retry-after")
+        else:
+            retry_after = None
+        if attempt == MAX_RETRIES - 1:
+            break
+        try:
+            delay = float(retry_after) if retry_after else 0.0
+        except ValueError:
+            delay = 0.0
+        delay = min(max(delay, 2 * (2 ** attempt) + random.uniform(0, 1.5)), 90)
+        print(f"[narr] retry {attempt + 1}/{MAX_RETRIES - 1} in {delay:.0f}s ({last[:120]})", file=sys.stderr)
+        time.sleep(delay)
+    raise RuntimeError(f"Claude request failed after {MAX_RETRIES} attempts: {last}")
+
+
+def response_cost(data: dict, requested_model: str) -> float:
+    u = data.get("usage") or {}
+    model = data.get("model") or requested_model
+    price = PRICING.get(model) or PRICING.get(requested_model) or PRICING["claude-opus-5-5"]
+    inp, outp, cread = price
+    cread = cread if cread is not None else inp * 0.1
+    cost = (
+        (u.get("input_tokens") or 0) * inp
+        + (u.get("cache_creation_input_tokens") or 0) * inp * 1.25
+        + (u.get("cache_read_input_tokens") or 0) * cread
+        + (u.get("output_tokens") or 0) * outp
+    ) / 1e6
+    searches = ((u.get("server_tool_use") or {}).get("web_search_requests") or 0)
+    return cost + searches * WEB_SEARCH_PER_REQ
+
+
+def call_claude(user_text: str, model: str = MODEL) -> Dict[str, Any]:
+    """web_search 서버 툴 + pause_turn 재개. 모든 턴의 토큰/비용 합산."""
+    messages: List[dict] = [{"role": "user", "content": [{"type": "text", "text": user_text}]}]
+    texts: List[str] = []
+    totals = {"input_tokens": 0, "output_tokens": 0, "cache_creation_input_tokens": 0,
+              "cache_read_input_tokens": 0, "web_search_requests": 0, "cost": 0.0, "turns": 0}
+    served_model = model
+    for _ in range(MAX_CONTINUATIONS + 1):
+        headers, payload = build_payload(model, messages)
+        data = post_with_retry(headers, payload)
+        totals["turns"] += 1
+        u = data.get("usage") or {}
+        for k in ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"):
+            totals[k] += u.get(k) or 0
+        totals["web_search_requests"] += ((u.get("server_tool_use") or {}).get("web_search_requests") or 0)
+        totals["cost"] += response_cost(data, model)
+        served_model = data.get("model") or served_model
+        content = data.get("content") or []
+        texts.extend(b.get("text", "") for b in content if b.get("type") == "text")
+        stop = data.get("stop_reason")
+        if stop == "pause_turn":
+            # 서버측 샘플링 루프 일시정지 → assistant 내용을 그대로 덧붙여 재요청 (추가 user 메시지 없음)
+            messages = messages + [{"role": "assistant", "content": content}]
             continue
-        text = "".join(b.get("text","") for b in data.get("content", []) if b.get("type") == "text")
-        return {"text": text, "usage": data.get("usage", {})}
-    raise RuntimeError("MAX_TURNS exceeded")
+        if stop == "refusal":
+            det = data.get("stop_details") or {}
+            raise RuntimeError(f"model refusal (category={det.get('category')}): {det.get('explanation')}")
+        if stop == "max_tokens":
+            raise RuntimeError("max_tokens reached — output truncated")
+        if stop not in ("end_turn", "stop_sequence", None):
+            raise RuntimeError(f"unexpected stop_reason: {stop}")
+        return {"text": "".join(texts), "usage": totals, "model": served_model}
+    raise RuntimeError(f"pause_turn continuation limit ({MAX_CONTINUATIONS}) exceeded")
 
-def sanitize_html(raw: str) -> str:
-    s = re.sub(r"^```html\s*", "", raw.strip())
-    s = re.sub(r"\s*```$", "", s)
-    s = re.sub(r"<\!DOCTYPE[^>]*>", "", s, flags=re.I)
-    s = re.sub(r"<html[^>]*>|</html>|<body[^>]*>|</body>|<head[^>]*>.*?</head>", "", s, flags=re.I|re.S)
-    # strip scripts / styles / event handlers
-    s = re.sub(r"<(script|style|iframe|object|embed|form|input|button|textarea)[^>]*>.*?</\1>", "", s, flags=re.I|re.S)
-    s = re.sub(r"<(script|style|iframe|object|embed|link|meta|base)[^>]*/?>", "", s, flags=re.I)
-    s = re.sub(r'\s+on\w+="[^"]*"', "", s)
-    s = re.sub(r"\s+on\w+='[^']*'", "", s)
-    s = re.sub(r'(href|src)\s*=\s*"(?:javascript|data):[^"]*"', "", s, flags=re.I)
-    s = re.sub(r"(href|src)\s*=\s*'(?:javascript|data):[^']*'", "", s, flags=re.I)
-    return s.strip()
 
-# ── Main ──
+# ───────────────────────── Main ─────────────────────────
+def existing_covers(out_dir: Path, mode: str, date_str: str) -> Optional[Path]:
+    """같은 모드의 narrative 가 이 세션 날짜 이후 날짜로 이미 있으면 그 경로 (레거시 실행일 명명 포함)."""
+    if not out_dir.exists():
+        return None
+    for p in sorted(out_dir.glob(f"*-{mode}*.html"), reverse=True):
+        m = re.match(r"(\d{4}-\d{2}-\d{2})-" + re.escape(mode) + r"(?:-[\w\-]+)?\.html$", p.name)
+        if m and m.group(1) >= date_str:
+            return p
+    return None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("ticker")
-    ap.add_argument("--mode", default="weekly", choices=["weekly","daily","adhoc"],
+    ap.add_argument("--mode", default="weekly", choices=["weekly", "daily", "adhoc"],
                     help="파일명 접미어 + 프롬프트 맥락")
-    ap.add_argument("--days", type=int, default=30, help="시계열 최대 일수")
+    ap.add_argument("--days", type=int, default=30, help="시계열 최대 세션 수 (기본 30)")
     ap.add_argument("--force", action="store_true",
-                    help="동일 경로 narrative 파일이 이미 있어도 덮어쓰기 (재호출 = 토큰 재지출)")
+                    help="동일 세션 narrative 가 이미 있어도 덮어쓰기 (재호출 = 토큰 재지출)")
     args = ap.parse_args()
 
+    if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
+        print("[FATAL] ANTHROPIC_API_KEY env var missing", file=sys.stderr)
+        sys.exit(2)
+
     ticker = args.ticker.upper()
-    data_path = DATA_DIR / f"{ticker}.json"
-    if not data_path.exists():
-        print(f"[skip] {ticker}: {data_path} 없음 (먼저 sma.py 실행 필요)", file=sys.stderr)
-        sys.exit(0)
+    if not re.fullmatch(r"[A-Z0-9.\-]{1,10}", ticker):
+        print(f"[FATAL] invalid ticker: {ticker!r}", file=sys.stderr)
+        sys.exit(2)
 
-    series = json.loads(data_path.read_text(encoding="utf-8"))
-    # 최근 N일만
-    series = series[-args.days:]
+    from build_index import scan_ticker
+    series = scan_ticker(ticker)[-max(1, args.days):]
     if not series:
-        print(f"[skip] {ticker}: 시계열 비어있음", file=sys.stderr)
+        print(f"[skip] {ticker}: 리포트 JSON 없음 (먼저 sma.py 실행 필요)", file=sys.stderr)
         sys.exit(0)
-    today = series[-1]
-    n_days = len(series)
-    cap, tier, note = classify_window(n_days)
 
-    # ── 이미 생성된 narrative 가 있으면 API 호출 전에 skip (토큰 절약) ──
-    date_str = today["date"]
+    date_str = series[-1]["date"]
     out_dir = TICKERS_DIR / ticker / "narratives"
-    filename = f"{date_str}-{args.mode}.html"
-    out_path = out_dir / filename
-    if out_path.exists() and not args.force:
-        print(f"[narr] {ticker} skip: {out_path} already exists (use --force to overwrite)",
-              file=sys.stderr)
-        sys.exit(0)
+    out_path = out_dir / f"{date_str}-{args.mode}.html"
+    if not args.force:
+        covered = out_path if out_path.exists() else (existing_covers(out_dir, args.mode, date_str)
+                                                     if args.mode != "adhoc" else None)
+        if covered:
+            print(f"[narr] {ticker} skip: {covered.name} already covers session {date_str} (use --force)",
+                  file=sys.stderr)
+            sys.exit(0)
 
-    mode_hint = {
-        "weekly": f"이번 주({today['date']} 포함 최근 5거래일) 흐름 중심으로 서술하되, 전체 {n_days}일 컨텍스트 참고.",
-        "daily":  "오늘 단일 스냅샷 중심, 최근 5일 변화 맥락 언급.",
-        "adhoc":  "사용자 온디맨드 요청. 최근 흐름 기반 표준 분석.",
-    }[args.mode]
-
-    user_text = (
-        f"{note}\n\n{mode_hint}\n\n"
-        f"## 오늘({today['date']}) 스냅샷 (full JSON)\n"
-        f"```json\n{json.dumps(today, ensure_ascii=False, indent=2)}\n```\n\n"
-    )
-    if n_days > 1:
-        user_text += f"## 시계열 ({n_days}일, CSV)\n```csv\n{to_csv(series)}\n```\n\n"
-    user_text += (f"요청: CLAUDE.md Smart Money 분석 프레임워크에 따라 {ticker} 내러티브 리포트를 "
-                  f"위 지정된 HTML 템플릿으로 생성. 필요 시 web_search로 최근 1주 뉴스·이벤트·SEC 공시 확인. "
-                  f"신뢰도 상한은 {cap}.")
-
-    print(f"[narr] {ticker} · mode={args.mode} · days={n_days} · cap={cap}", file=sys.stderr)
+    user_text, cap = build_user_text(ticker, args.mode, series)
+    print(f"[narr] {ticker} · mode={args.mode} · sessions={len(series)} · data={date_str} · cap={cap} · model={MODEL}",
+          file=sys.stderr)
     t0 = time.time()
     try:
-        result = call_claude_multi(SYSTEM_PROMPT, user_text)
-    except Exception as e:
+        result = call_claude(user_text)
+    except Exception as e:  # noqa: BLE001
         print(f"[narr] {ticker} FAILED: {e}", file=sys.stderr)
         sys.exit(1)
 
-    html_body = sanitize_html(result["text"])
-    usage = result.get("usage", {})
-    in_tok = usage.get("input_tokens", 0) or 0
-    out_tok = usage.get("output_tokens", 0) or 0
-    cost = (in_tok * 3 + out_tok * 15) / 1e6
+    html_body = sanitize_html(extract_html_block(result["text"]))
+    if "<div" not in html_body:
+        print(f"[narr] {ticker} FAILED: response contained no HTML body", file=sys.stderr)
+        sys.exit(1)
+    u = result["usage"]
+    tok_in = u["input_tokens"] + u["cache_creation_input_tokens"] + u["cache_read_input_tokens"]
+    meta = (f"Generated by {result['model']} ({args.mode}) · 데이터 기준 {date_str} 미국 정규장 세션 · "
+            f"{u['turns']} turn(s) · in {tok_in} (cache read {u['cache_read_input_tokens']}) / out {u['output_tokens']} tokens · "
+            f"web search {u['web_search_requests']} · ~${u['cost']:.4f}")
 
     out_dir.mkdir(parents=True, exist_ok=True)
-
+    t = html.escape(ticker)
     page = (
         f"<!DOCTYPE html><html lang=\"ko\"><head><meta charset=\"UTF-8\">"
         f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-        f"<title>{ticker} AI Narrative · {date_str} ({args.mode})</title></head>"
-        f"<body style=\"background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;"
-        f"-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;"
-        f"-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;\">"
+        f"<title>{t} AI Narrative · {html.escape(date_str)} ({html.escape(args.mode)})</title></head>"
+        f"<body style=\"background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;\">"
         f"<div style=\"max-width:1000px;margin:0 auto;\">"
         f"<div style=\"font-size:11px;color:#656D76;margin-bottom:12px;\">"
-        f"<a href=\"../../../tickers/{ticker}/\" style=\"color:#0969DA;text-decoration:none;\">← {ticker} page</a> · "
-        f"Generated by {MODEL} ({args.mode}) · {date_str} · "
-        f"in {in_tok} out {out_tok} tokens ~${cost:.4f}"
-        f"</div>{html_body}</div></body></html>"
+        f"<a href=\"../../../tickers/{t}/\" style=\"color:#0969DA;text-decoration:none;\">← {t} page</a> · "
+        f"{html.escape(meta)}</div>{html_body}</div></body></html>"
     )
     out_path.write_text(page, encoding="utf-8")
-    dt = time.time() - t0
-    print(f"[narr] {ticker} OK ({dt:.1f}s) → {out_path}  [{in_tok}+{out_tok} ~${cost:.3f}]")
+    print(f"[narr] {ticker} OK ({time.time() - t0:.1f}s) → {out_path}  [{meta}]")
+
 
 if __name__ == "__main__":
     main()

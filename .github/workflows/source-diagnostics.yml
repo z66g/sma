@@ -1,12 +1,9 @@
 name: Source Diagnostics
 
-# 데이터 소스 가용성 점검 (수동 실행 + 개발 브랜치 push 시).
+# 데이터 소스 가용성 점검 (수동 실행). 소스 장애 의심 시 Actions 탭에서 Run workflow.
 # 키/토큰 값은 절대 출력하지 않고 HTTP 상태·건수만 기록한다.
 on:
   workflow_dispatch:
-  push:
-    branches: ["claude/**"]
-    paths: [".github/workflows/source-diagnostics.yml", "tools/source_diagnostics.py"]
 
 permissions:
   contents: read

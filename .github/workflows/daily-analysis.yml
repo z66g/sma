@@ -2,21 +2,25 @@ name: Daily Smart Money Analysis
 
 on:
   # 네이티브 GitHub cron 비활성화 (지연 실행 문제).
-  # 트리거는 cron-job.org → workflow_dispatch 로 일원화.
-  # schedule:
-  #   - cron: "0 2 * * 2-6"
+  # 트리거는 cron-job.org / cron-worker → workflow_dispatch 로 일원화.
   workflow_dispatch:
     inputs:
       ticker:
         description: "단일 종목만 즉시 분석 (빈 값이면 tickers.txt 전체)"
         required: false
         default: ""
+      force:
+        description: "이미 완료된 세션이어도 다시 분석 (기본: 완료 세션이면 skip)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
+# daily / weekly 가 같은 그룹 → 저장소 쓰기가 절대 겹치지 않음
 concurrency:
-  group: sma-daily
+  group: sma-repo-write
   cancel-in-progress: false
 
 jobs:
@@ -25,10 +29,10 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -38,29 +42,66 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # 입력값은 env 로만 전달 (run 스크립트에 ${{ }} 직접 삽입 금지 — shell injection 방지)
+      - name: Resolve session date & tickers
+        id: plan
+        env:
+          INPUT_TICKER: ${{ github.event.inputs.ticker }}
+          INPUT_FORCE: ${{ github.event.inputs.force }}
+        run: |
+          set -euo pipefail
+          DATE="$(python3 sma.py --print-session-date 2>/dev/null | tail -n1 | tr -d '[:space:]' || true)"
+          if ! [[ "${DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "::warning::sma.py --print-session-date unavailable; falling back to smartmoney.calendar"
+            DATE="$(python3 -c 'from smartmoney.calendar import last_completed_session as s; print(s())')"
+          fi
+          [[ "${DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "::error::invalid session date '${DATE}'"; exit 1; }
+
+          SINGLE="$(printf '%s' "${INPUT_TICKER:-}" | tr '[:lower:]' '[:upper:]' | tr -d '[:space:]')"
+          if [ -n "${SINGLE}" ]; then
+            if ! [[ "${SINGLE}" =~ ^[A-Z^.-]{1,10}$ ]]; then
+              echo "::error::invalid ticker input"
+              exit 1
+            fi
+            TICKERS="${SINGLE}"
+          else
+            TICKERS="$(grep -v '^#' tickers.txt | tr -d '\r\t ' | grep -E '^[A-Z^.-]{1,10}$' | xargs || true)"
+          fi
+          [ -n "${TICKERS}" ] || { echo "::error::no tickers to analyze"; exit 1; }
+
+          # 단일 종목 dispatch 는 사용자의 명시적 요청 → 항상 실행
+          SKIP=0
+          if [ "${INPUT_FORCE:-false}" != "true" ] && [ -z "${SINGLE}" ]; then
+            if python3 tools/session_files.py complete "${DATE}" ${TICKERS}; then
+              SKIP=1
+              echo "::notice::Session ${DATE} already analyzed for all watchlist tickers — skipping (use force=true to rerun)"
+              echo "### ⏭ 세션 ${DATE} 이미 완료 — 분석 생략 (force=true 로 재실행)" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+          {
+            echo "DATE=${DATE}"
+            echo "SINGLE=${SINGLE}"
+            echo "TICKERS=${TICKERS}"
+          } >> "$GITHUB_ENV"
+          echo "skip=${SKIP}" >> "$GITHUB_OUTPUT"
+          echo "Session ${DATE} · tickers: ${TICKERS} · skip=${SKIP}"
+
       - name: Run analysis per ticker
+        if: steps.plan.outputs.skip != '1'
         env:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
           PYTHONUNBUFFERED: "1"
         run: |
-          set -e
-          DATE=$(date -u +%Y-%m-%d)
+          set -uo pipefail
           OUT_DIR="reports/${DATE}"
           mkdir -p "${OUT_DIR}"
           export SMA_OUT_DIR="${OUT_DIR}"
+          export SMA_SESSION_DATE="${DATE}"
 
-          SINGLE="${{ github.event.inputs.ticker }}"
-          if [ -n "${SINGLE}" ]; then
-            TICKERS="$(echo ${SINGLE} | tr 'a-z' 'A-Z' | xargs)"
-            echo "Single-ticker dispatch: ${TICKERS}"
-          else
-            TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
-            echo "Watchlist tickers: ${TICKERS}"
-          fi
+          # 같은 이름의 레거시 v2 파일(=직전 세션 데이터)이 덮어써지지 않게 _v2/ 로 보존
+          python3 tools/session_files.py preserve-legacy "${DATE}"
 
-          SKIPPED_FILE="${OUT_DIR}/.skipped.txt"
-          : > "${SKIPPED_FILE}"
-
+          OK=""; SKIPPED=""; FAILED=""
           FIRST=1
           for T in ${TICKERS}; do
             if [ $FIRST -eq 0 ]; then
@@ -68,136 +109,159 @@ jobs:
               sleep 15
             fi
             FIRST=0
-            echo "=== Analyzing ${T} ==="
-            set +e
+            echo "=== Analyzing ${T} (session ${DATE}) ==="
             python3 sma.py "${T}"
             RC=$?
-            set -e
-            if [ $RC -eq 2 ]; then
+            if [ $RC -eq 0 ]; then
+              OK="${OK} ${T}"
+            elif [ $RC -eq 2 ]; then
               echo "SKIP: ${T} (invalid/delisted ticker)"
-              echo "${T}" >> "${SKIPPED_FILE}"
-            elif [ $RC -ne 0 ]; then
-              echo "WARN: ${T} failed (exit ${RC}), continuing"
+              SKIPPED="${SKIPPED} ${T}"
+            else
+              echo "::warning::${T} failed (exit ${RC})"
+              FAILED="${FAILED} ${T}"
             fi
           done
 
-          # Index (지수) 루프 — indexes.txt 에서 읽음, 단일 dispatch 일 때는 생략
-          INDEXES_FILE="indexes.txt"
-          if [ -z "${SINGLE}" ] && [ -f "${INDEXES_FILE}" ]; then
-            INDEXES=$(grep -v '^#' "${INDEXES_FILE}" | grep -v '^\s*$' | tr -d '\r' | xargs)
-            echo "Index symbols: ${INDEXES}"
+          # 지수 루프 — indexes.txt, 단일 dispatch 일 때는 생략
+          if [ -z "${SINGLE}" ] && [ -f indexes.txt ]; then
+            INDEXES="$(grep -v '^#' indexes.txt | tr -d '\r\t ' | grep -E '^[A-Z^.-]{1,10}$' | xargs || true)"
             for IDX in ${INDEXES}; do
               echo "sleeping 15s (Polygon rate limit)..."
               sleep 15
               echo "=== Analyzing INDEX ${IDX} ==="
-              set +e
-              python3 sma.py "${IDX}"
-              RC=$?
-              set -e
-              if [ $RC -ne 0 ]; then
-                echo "WARN: ${IDX} failed (exit ${RC}), continuing"
-              fi
+              python3 sma.py "${IDX}" || echo "::warning::index ${IDX} failed (exit $?)"
             done
           fi
 
-          # Expose skipped list to later steps
-          if [ -s "${SKIPPED_FILE}" ]; then
-            SKIPPED_JOINED=$(tr '\n' ' ' < "${SKIPPED_FILE}" | xargs)
-            echo "SKIPPED_TICKERS=${SKIPPED_JOINED}" >> "$GITHUB_ENV"
+          # 실제로 HTML 이 만들어진 종목만 '생성됨'으로 집계
+          PRODUCED=""
+          for T in ${OK}; do
+            [ -f "${OUT_DIR}/${T}_3Layer_Forensic_${DATE}.html" ] && PRODUCED="${PRODUCED} ${T}"
+          done
+          PRODUCED="$(echo ${PRODUCED} | xargs)"
+          {
+            echo "PRODUCED_TICKERS=${PRODUCED}"
+            echo "SKIPPED_TICKERS=$(echo ${SKIPPED} | xargs)"
+            echo "FAILED_TICKERS=$(echo ${FAILED} | xargs)"
+          } >> "$GITHUB_ENV"
+
+          python3 tools/quality_summary.py "${OUT_DIR}" --tickers "${TICKERS}" --telegram-out quality_line.txt || true
+          {
+            echo ""
+            echo "- 생성: ${PRODUCED:-없음}"
+            [ -n "$(echo ${SKIPPED} | xargs)" ] && echo "- 무효 티커(skip): $(echo ${SKIPPED} | xargs)"
+            [ -n "$(echo ${FAILED} | xargs)" ] && echo "- 실패: $(echo ${FAILED} | xargs)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          python3 build_index.py || { echo "::error::build_index.py failed"; exit 1; }
+
+          if [ -z "${PRODUCED}" ]; then
+            echo "::error::No ticker reports were produced for session ${DATE}"
+            exit 1
           fi
 
-          python3 build_index.py
-
-      # 분석 결과를 artifact 로 업로드 (push 실패 시 수동 복구용, 7일 보관).
+      # 안전망 artifact (push 실패 시 수동 복구용) — 이번 세션 산출물만
       - name: Upload reports as artifact (safety net)
-        if: always()
-        uses: actions/upload-artifact@v4
+        if: always() && steps.plan.outputs.skip != '1'
+        uses: actions/upload-artifact@v5
         with:
           name: reports-${{ github.run_id }}
           path: |
-            reports/*/*.html
+            reports/${{ env.DATE }}/**
             reports/data/*.json
-            reports/index.html
-            reports/tickers/*/index.html
+            state/**
           retention-days: 7
           if-no-files-found: ignore
 
       - name: Commit reports
+        if: steps.plan.outputs.skip != '1'
         run: |
+          set -uo pipefail
           git config user.name  "sma-bot"
           git config user.email "sma-bot@users.noreply.github.com"
-          git add reports/
+          mkdir -p state
+          git add reports/ state/
           if git diff --staged --quiet; then
             echo "No new reports to commit"
             exit 0
           fi
-          DATE=$(date -u +%Y-%m-%d)
-          git commit -m "reports: ${DATE} daily analysis [skip ci]"
-          # weekly 워크플로우나 로컬 커밋과 경쟁할 수 있어 rebase-and-retry
+          git commit -q -m "reports: ${DATE} session analysis [skip ci]"
+          # 다른 커밋(대시보드 PAT 커밋 등)과 경쟁 시: 원격 위로 rebase 하되 생성물 충돌은
+          # 우리 쪽 버전을 택하고(-X theirs = 재적용되는 우리 커밋), 이후 인덱스를 재생성해 amend.
           for i in 1 2 3 4 5; do
-            if git pull --rebase --autostash origin main && git push; then
-              echo "push success on attempt $i"
-              exit 0
+            git fetch -q origin main
+            if git rebase -q -X theirs origin/main; then
+              python3 build_index.py >/dev/null
+              git add reports/ state/
+              git diff --staged --quiet || git commit -q --amend --no-edit
+              if git push -q origin HEAD:main; then
+                echo "push success on attempt $i"
+                exit 0
+              fi
+            else
+              git rebase --abort || true
             fi
             echo "push attempt $i failed, sleeping 10s…"
             sleep 10
           done
-          echo "push failed after 5 attempts"
+          echo "::error::push failed after 5 attempts"
           exit 1
 
       - name: Notify Telegram
-        if: success()
+        if: success() && steps.plan.outputs.skip != '1'
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT:  ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          DATE=$(date -u +%Y-%m-%d)
-          SINGLE="${{ github.event.inputs.ticker }}"
-          if [ -n "${SINGLE}" ]; then
-            TICKERS="$(echo ${SINGLE} | tr 'a-z' 'A-Z')"
-          else
-            TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
-          fi
-
-          SKIPPED="${SKIPPED_TICKERS:-}"
+          set -uo pipefail
+          BASE="https://analyzer.zbbg.kr/reports"
           NL=$'\n'
 
-          # 개별 종목 링크
           STOCK_LINKS=""
-          for T in ${TICKERS}; do
-            if echo " ${SKIPPED} " | grep -q " ${T} "; then
-              continue
-            fi
-            STOCK_LINKS="${STOCK_LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html\">${T}</a>"$'\n'
+          for T in ${PRODUCED_TICKERS:-}; do
+            F="reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html"
+            [ -f "${F}" ] || continue
+            STOCK_LINKS="${STOCK_LINKS}• <a href=\"${BASE}/${DATE}/${T}_3Layer_Forensic_${DATE}.html\">${T}</a>${NL}"
           done
 
-          # 지수 링크 (단일 dispatch 일 때는 생략)
-          INDEX_LINKS=""
           INDEX_BLOCK=""
-          if [ -z "${SINGLE}" ] && [ -f "indexes.txt" ]; then
-            INDEXES=$(grep -v '^#' indexes.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
-            for IDX in ${INDEXES}; do
-              TAG="${IDX#^}"   # strip caret for filename
-              INDEX_LINKS="${INDEX_LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/${DATE}/${TAG}_Index_${DATE}.html\">${TAG}</a>"$'\n'
+          if [ -z "${SINGLE}" ] && [ -f indexes.txt ]; then
+            INDEX_LINKS=""
+            for IDX in $(grep -v '^#' indexes.txt | tr -d '\r\t ' | grep -E '^[A-Z^.-]{1,10}$' | xargs); do
+              TAG="${IDX#^}"
+              [ -f "reports/${DATE}/${TAG}_Index_${DATE}.html" ] || continue
+              INDEX_LINKS="${INDEX_LINKS}• <a href=\"${BASE}/${DATE}/${TAG}_Index_${DATE}.html\">${TAG}</a>${NL}"
             done
-            if [ -n "${INDEX_LINKS}" ]; then
-              INDEX_BLOCK="${NL}📊 <b>지수 옵션 (L3 GEX)</b>${NL}${INDEX_LINKS}"
-            fi
+            [ -n "${INDEX_LINKS}" ] && INDEX_BLOCK="${NL}📊 <b>지수 옵션 (L3 GEX)</b>${NL}${INDEX_LINKS}"
           fi
 
-          SKIP_BLOCK=""
-          if [ -n "${SKIPPED}" ]; then
-            SKIP_LIST=""
-            for T in ${SKIPPED}; do
-              SKIP_LIST="${SKIP_LIST}${T} "
-            done
-            SKIP_BLOCK="${NL}❌ 유효하지 않은 티커: <b>${SKIP_LIST% }</b>${NL}"
+          EXTRA=""
+          [ -n "${SKIPPED_TICKERS:-}" ] && EXTRA="${EXTRA}${NL}❌ 유효하지 않은 티커: <b>${SKIPPED_TICKERS}</b>"
+          [ -n "${FAILED_TICKERS:-}" ] && EXTRA="${EXTRA}${NL}⚠ 분석 실패: <b>${FAILED_TICKERS}</b>"
+          if [ -s quality_line.txt ]; then
+            EXTRA="${EXTRA}${NL}$(head -c 600 quality_line.txt)"
           fi
 
-          MSG="📩 ${DATE} Daily Report${NL}${NL}📈 <b>개별 종목</b>${NL}${STOCK_LINKS}${INDEX_BLOCK}${SKIP_BLOCK}${NL}📋 <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
+          MSG="📩 ${DATE} 세션 Daily Report (미국 정규장)${NL}${NL}📈 <b>개별 종목</b>${NL}${STOCK_LINKS}${INDEX_BLOCK}${EXTRA}${NL}${NL}📋 <a href=\"${BASE}/\">Dashboard</a>"
 
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TG_CHAT}" \
             --data-urlencode "parse_mode=HTML" \
             --data-urlencode "disable_web_page_preview=true" \
-            --data-urlencode "text=${MSG}" || echo "WARN: Telegram notify failed"
+            --data-urlencode "text=${MSG}" >/dev/null || echo "WARN: Telegram notify failed"
+
+      - name: Notify Telegram (failure)
+        if: failure()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          NL=$'\n'
+          MSG="❌ Daily Report 워크플로 실패${NL}실패 종목: ${FAILED_TICKERS:-?}${NL}<a href=\"${RUN_URL}\">Actions 로그</a>"
+          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TG_CHAT}" \
+            --data-urlencode "parse_mode=HTML" \
+            --data-urlencode "disable_web_page_preview=true" \
+            --data-urlencode "text=${MSG}" >/dev/null || echo "WARN: Telegram notify failed"

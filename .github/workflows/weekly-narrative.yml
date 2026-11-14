@@ -2,9 +2,7 @@ name: Weekly AI Narrative
 
 on:
   # 네이티브 GitHub cron 비활성화 (지연 실행 문제).
-  # 트리거는 cron-job.org → workflow_dispatch 로 일원화.
-  # schedule:
-  #   - cron: "30 2 * * 6"
+  # 트리거는 cron-job.org / cron-worker → workflow_dispatch 로 일원화.
   workflow_dispatch:
     inputs:
       ticker:
@@ -12,27 +10,33 @@ on:
         required: false
         default: ""
       mode:
-        description: "weekly / adhoc"
+        description: "weekly / daily / adhoc"
         required: false
         default: "weekly"
+      force:
+        description: "같은 세션 narrative 가 이미 있어도 재생성 (토큰 재지출)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
+# daily / weekly 가 같은 그룹 → 저장소 쓰기가 절대 겹치지 않음
 concurrency:
-  group: sma-narrative
+  group: sma-repo-write
   cancel-in-progress: false
 
 jobs:
   narrate:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -42,70 +46,111 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # 입력값은 env 로만 전달 (run 스크립트에 ${{ }} 직접 삽입 금지 — shell injection 방지)
       - name: Generate narrative per ticker
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMA_CLAUDE_MODEL: ${{ vars.SMA_CLAUDE_MODEL }}
+          INPUT_TICKER: ${{ github.event.inputs.ticker }}
+          INPUT_MODE: ${{ github.event.inputs.mode }}
+          INPUT_FORCE: ${{ github.event.inputs.force }}
           PYTHONUNBUFFERED: "1"
         run: |
-          set -e
+          set -uo pipefail
           if [ -z "${ANTHROPIC_API_KEY}" ]; then
             echo "::error::ANTHROPIC_API_KEY secret is not set"
             exit 1
           fi
 
-          MODE="${{ github.event.inputs.mode }}"
-          [ -z "${MODE}" ] && MODE="weekly"
-          SINGLE="${{ github.event.inputs.ticker }}"
+          MODE="${INPUT_MODE:-weekly}"
+          case "${MODE}" in weekly|daily|adhoc) ;; *) echo "::error::invalid mode"; exit 1 ;; esac
+          FORCE_FLAG=""
+          [ "${INPUT_FORCE:-false}" = "true" ] && FORCE_FLAG="--force"
 
+          SINGLE="$(printf '%s' "${INPUT_TICKER:-}" | tr '[:lower:]' '[:upper:]' | tr -d '[:space:]')"
           if [ -n "${SINGLE}" ]; then
+            if ! [[ "${SINGLE}" =~ ^[A-Z^.-]{1,10}$ ]]; then
+              echo "::error::invalid ticker input"
+              exit 1
+            fi
             TICKERS="${SINGLE}"
           else
-            TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
+            TICKERS="$(grep -v '^#' tickers.txt | tr -d '\r\t ' | grep -E '^[A-Z^.-]{1,10}$' | xargs || true)"
           fi
-          echo "Narrating: ${TICKERS}  mode=${MODE}"
+          [ -n "${TICKERS}" ] || { echo "::error::no tickers"; exit 1; }
+          echo "Narrating: ${TICKERS}  mode=${MODE} ${FORCE_FLAG}"
 
+          OK=""; FAILED=""; TOTAL=0
           for T in ${TICKERS}; do
+            TOTAL=$((TOTAL + 1))
             echo "=== Narrating ${T} ==="
-            python3 narrative.py "${T}" --mode "${MODE}" --days 30 || echo "WARN: ${T} narrative failed"
+            if python3 narrative.py "${T}" --mode "${MODE}" --days 30 ${FORCE_FLAG}; then
+              OK="${OK} ${T}"
+            else
+              echo "::warning::${T} narrative failed"
+              FAILED="${FAILED} ${T}"
+            fi
           done
+          OK="$(echo ${OK} | xargs)"; FAILED="$(echo ${FAILED} | xargs)"
+          {
+            echo "MODE=${MODE}"
+            echo "OK_TICKERS=${OK}"
+            echo "FAILED_TICKERS=${FAILED}"
+          } >> "$GITHUB_ENV"
+          {
+            echo "### AI narrative (${MODE})"
+            echo "- 성공/skip: ${OK:-없음}"
+            echo "- 실패: ${FAILED:-없음}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          python3 build_index.py
+          python3 build_index.py || { echo "::error::build_index.py failed"; exit 1; }
 
-      # Narrative 파일을 artifact 로 업로드 (push 실패 시 수동 복구용, 7일 보관).
-      # if: always() — 뒤에 Commit 단계가 실패해도 여기까진 반드시 실행.
+          NFAIL=$(echo ${FAILED} | wc -w)
+          if [ "${NFAIL}" -gt 0 ] && [ "${NFAIL}" -eq "${TOTAL}" ]; then
+            echo "::error::All ${TOTAL} narrative(s) failed"
+            exit 1
+          fi
+
       - name: Upload narratives as artifact (safety net)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: narratives-${{ github.run_id }}
           path: |
             reports/tickers/*/narratives/*.html
-            reports/index.html
-            reports/tickers/*/index.html
           retention-days: 7
           if-no-files-found: ignore
 
       - name: Commit narratives
         run: |
+          set -uo pipefail
           git config user.name  "sma-bot"
           git config user.email "sma-bot@users.noreply.github.com"
-          git add reports/
+          mkdir -p state
+          git add reports/ state/
           if git diff --staged --quiet; then
             echo "No new narratives to commit"
             exit 0
           fi
-          DATE=$(date -u +%Y-%m-%d)
-          git commit -m "narratives: ${DATE} weekly [skip ci]"
-          # daily 워크플로우와 동시 실행될 수 있어 push 경쟁 발생 → rebase-and-retry
+          git commit -q -m "narratives: $(date -u +%Y-%m-%d) ${MODE} [skip ci]"
+          # 경쟁 커밋 시: 생성물 충돌은 우리 쪽 버전을 택해 rebase 후 인덱스 재생성 → amend
           for i in 1 2 3 4 5; do
-            if git pull --rebase --autostash origin main && git push; then
-              echo "push success on attempt $i"
-              exit 0
+            git fetch -q origin main
+            if git rebase -q -X theirs origin/main; then
+              python3 build_index.py >/dev/null
+              git add reports/ state/
+              git diff --staged --quiet || git commit -q --amend --no-edit
+              if git push -q origin HEAD:main; then
+                echo "push success on attempt $i"
+                exit 0
+              fi
+            else
+              git rebase --abort || true
             fi
             echo "push attempt $i failed, sleeping 10s…"
             sleep 10
           done
-          echo "push failed after 5 attempts"
+          echo "::error::push failed after 5 attempts"
           exit 1
 
       - name: Notify Telegram
@@ -114,27 +159,33 @@ jobs:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT:  ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          DATE=$(date -u +%Y-%m-%d)
-          MODE="${{ github.event.inputs.mode }}"
-          [ -z "${MODE}" ] && MODE="weekly"
-          SINGLE="${{ github.event.inputs.ticker }}"
-
-          if [ -n "${SINGLE}" ]; then
-            TICKERS="${SINGLE}"
-          else
-            TICKERS=$(grep -v '^#' tickers.txt | grep -v '^\s*$' | tr -d '\r' | xargs)
-          fi
-
-          LINKS=""
-          for T in ${TICKERS}; do
-            LINKS="${LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/tickers/${T}/\">${T}</a>"$'\n'
-          done
-
+          set -uo pipefail
           NL=$'\n'
-          MSG="💬 Weekly AI Narrative(${DATE})${NL}${NL}${LINKS}${NL}📋 <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
+          LINKS=""
+          for T in ${OK_TICKERS:-}; do
+            LINKS="${LINKS}• <a href=\"https://analyzer.zbbg.kr/reports/tickers/${T}/\">${T}</a>${NL}"
+          done
+          FAIL_BLOCK=""
+          [ -n "${FAILED_TICKERS:-}" ] && FAIL_BLOCK="${NL}⚠ 생성 실패: <b>${FAILED_TICKERS}</b>${NL}"
+          MSG="💬 AI Narrative (${MODE}, $(date -u +%Y-%m-%d))${NL}${NL}${LINKS}${FAIL_BLOCK}${NL}📋 <a href=\"https://analyzer.zbbg.kr/reports/\">Dashboard</a>"
 
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TG_CHAT}" \
             --data-urlencode "parse_mode=HTML" \
             --data-urlencode "disable_web_page_preview=true" \
-            --data-urlencode "text=${MSG}" || echo "WARN: Telegram notify failed"
+            --data-urlencode "text=${MSG}" >/dev/null || echo "WARN: Telegram notify failed"
+
+      - name: Notify Telegram (failure)
+        if: failure()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          NL=$'\n'
+          MSG="❌ AI Narrative 워크플로 실패${NL}실패 종목: ${FAILED_TICKERS:-?}${NL}<a href=\"${RUN_URL}\">Actions 로그</a>"
+          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TG_CHAT}" \
+            --data-urlencode "parse_mode=HTML" \
+            --data-urlencode "disable_web_page_preview=true" \
+            --data-urlencode "text=${MSG}" >/dev/null || echo "WARN: Telegram notify failed"
