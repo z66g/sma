@@ -442,6 +442,11 @@ def snapshot(row: dict) -> dict:
         if isinstance(layer, dict):
             layers[name] = _pick(layer, ("status", "missing"))
     l1 = _pick(row.get("l1"), L1_KEYS)
+    fl = (row.get("l1") or {}).get("flow")
+    if isinstance(fl, dict):        # 체결 단위(Alpaca SIP) 세부 — 세션별 다크풀·블록·종가 집중·리테일 교차검증
+        l1["trade_flow"] = _pick(fl, ("days", "iar_class", "sessions", "blocks", "dark_blocks",
+                                      "last30_block_share", "last30_move_pct", "bjzz_imbalance",
+                                      "cohort_vol_share", "dark_pct_trades", "trades"))
     cum = (row.get("l1") or {}).get("cumulative_daily") or []
     if cum:
         l1["cumulative_daily"] = cum[-5:]
@@ -455,6 +460,7 @@ def snapshot(row: dict) -> dict:
         "headline": row.get("headline"),
         "macro_env": row.get("macro_env"),
         "patterns": row.get("patterns"),
+        "pattern_evidence": row.get("pattern_detail"),
         "scenarios": row.get("scenarios"),
         # 레거시 v2 phase 는 KST 실행일 기준이라 주말 날짜가 섞여 있음 → v3 만 전달
         "phase": row.get("phase") if (row.get("schema") or 2) >= 3 else None,
@@ -478,7 +484,8 @@ def _f(v, n=2) -> str:
 
 
 CSV_COLS = ["date", "price", "scen_A", "scen_B", "scen_C", "raw_score", "macro",
-            "dp_pct", "dp_ratio", "delta_total", "divergence",
+            "dp_pct", "dp_ratio", "delta_total", "obv_inst", "obv_pro", "obv_retail", "iar", "dp_vwap_dist_pct",
+            "divergence",
             "short_pct", "short_shares", "short_slope", "ctb_fee", "ctb_delta_pct", "si_days_to_cover",
             "max_pain", "max_pain_dist_pct", "pc_oi", "pc_vol", "net_gex_m", "flip_zone",
             "call_wall", "put_wall", "exp_move_pct", "ma_align", "bb_width", "rsi14", "quality", "patterns"]
@@ -501,7 +508,9 @@ def to_csv(series: List[Dict]) -> str:
             s.get("date", ""), _f(s.get("price")),
             _f(sc.get("A_bullish"), 0), _f(sc.get("B_neutral"), 0), _f(sc.get("C_bearish"), 0),
             _f(sc.get("raw_score")), _f(s.get("macro_env")),
-            _f(l1.get("dp_pct"), 1), _f(l1.get("dp_ratio")), _f(dt, 0), _f(l1.get("divergence")),
+            _f(l1.get("dp_pct"), 1), _f(l1.get("dp_ratio")), _f(dt, 0),
+            _f(l1.get("delta_inst"), 0), _f(l1.get("delta_pro"), 0), _f(l1.get("delta_retail"), 0),
+            _f(l1.get("iar")), _f(l1.get("dp_vwap_dist_pct")), _f(l1.get("divergence")),
             _f(l2.get("short_pct_latest"), 1), _f(l2.get("short_shares"), 0), _f(l2.get("short_slope")),
             _f(l2.get("ctb_fee")), _f(l2.get("ctb_delta_pct"), 1), _f(si.get("days_to_cover"), 1),
             _f(l3.get("max_pain")), _f(l3.get("max_pain_dist_pct"), 1), _f(l3.get("pc_oi")), _f(l3.get("pc_vol")),
@@ -551,6 +560,10 @@ def build_user_text(ticker: str, mode: str, series: List[dict]) -> Tuple[str, st
         f"N_days: {n_days}",
         f"UPCOMING_TRADING_DAYS: {', '.join(upcoming_trading_days(data_date))}",
         f"COHORT_SPLIT_AVAILABLE: {'yes' if has_cohort else 'no — 기관/프로/리테일 분리·IAR 언급 금지'}",
+        ("TRADE_FLOW: yes — l1.trade_flow 는 SIP 전 체결(Alpaca) 기반 실측. 세션별(프리/정규/애프터) 다크풀 배수, "
+         "블록·장외 블록 수, 마지막 30분 블록 집중도(Final Absorption ①②), BJZZ 리테일 불균형, 코호트 거래량 비중을 "
+         "다크풀 섹션의 1차 근거로 사용하고, pattern_evidence 의 조건별 충족 여부를 그대로 인용할 것."
+         if "trade_flow" in l1 else "TRADE_FLOW: no — 체결 단위 세부(세션별 다크풀·블록) 언급 금지"),
         "",
         note,
         mode_hint,
