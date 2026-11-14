@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch origin main)",
+      "Bash(git checkout main)",
+      "Bash(git reset --hard origin/main)",
+      "Bash(pip install -q -r requirements.txt)",
+      "Bash(python3 sma.py --print-session-date)",
+      "Bash(python3 narrative.py *)",
+      "Bash(python3 build_index.py)",
+      "Bash(git add reports/tickers reports/index.html reports/app.js reports/data)",
+      "Bash(git commit -m *)",
+      "Bash(git commit --amend --no-edit)",
+      "Bash(git pull --rebase -X theirs origin main)",
+      "Bash(git push origin HEAD:main)"
+    ]
+  }
+}
