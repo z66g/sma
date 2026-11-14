@@ -85,7 +85,8 @@ function routeByTime(scheduledTime) {
     if (!isTradingDay(session)) return { wf: null, reason: `session ${ymd(session)} is not an NYSE trading day` };
     return { wf: WORKFLOWS.daily, session: ymd(session) };
   }
-  if (minute === 30 && dow === 6) return { wf: WORKFLOWS.weekly };
+  // 주간 AI 내러티브는 Claude Code 예약 작업이 생성 (API 미사용) — 여기서는 dispatch 하지 않는다.
+  // weekly-narrative.yml 은 narrative 푸시 시 알림만 보내는 워크플로로 바뀌었다.
   return { wf: null, reason: "no route for this minute/day" };
 }
 

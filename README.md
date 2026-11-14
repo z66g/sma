@@ -68,14 +68,26 @@ state/options/{T}.json  OI·Max Pain·플립 누적 (OI 추세 · 핀닝 사후�
 확률 엔진: 레이어별 `score∈[-1,1] × confidence × weight(L1 .35 · L2 .20 · L3 .30 · L4 .15)` →
 연속 확률 매핑 + 레이어 분산(불일치)만큼 중립 가중 + 거시(±5~10%p)·패턴 보정 → 80% 상한.
 
+## 주간 AI 내러티브 (API 미사용)
+
+`narrative.py` 는 기본적으로 Anthropic API 를 호출하지 않는다.
+1. `python3 narrative.py T --prepare WORK_DIR` — 규칙+데이터 프롬프트 패키지 생성
+2. 예약된 Claude Code 세션(Claude Opus 5.5)이 패키지를 읽고, 웹 검색으로 뉴스·공시를 확인해 `WORK_DIR/T_body.html` 작성
+3. `python3 narrative.py T --publish WORK_DIR/T_body.html` — 허용목록 정화 후 게시
+4. `python3 build_index.py` → main 푸시 → `weekly-narrative.yml` 이 텔레그램 알림
+
+`--api` 플래그를 줄 때만 API 를 직접 호출한다(과금, `ANTHROPIC_API_KEY` 필요). 예약 작업은 claude.ai 의 예약 작업 목록에서 확인·수정할 수 있다.
+게시된 내러티브 전체 재정화: `python3 narrative.py --resanitize-all`.
+
 ## 알려진 한계
 
+- MarketChameleon 은 클라우드/자동화 접속을 차단하고 이용약관상 크롤링을 금지한다(2026-11 실측: Access Denied) — 코호트 분리 소스로 사용 불가.
 - **기관/프로/리테일 OBV 4-Way · IAR · 다크풀 전용 VWAP** 은 체결(Trade-level) 데이터가 필요합니다.
   현재 Polygon 키는 무료 등급(분봉만)이라 `v3/trades` 가 403 → 해당 값은 **N/A 로 정직하게 표기**합니다
   (추정치로 채우지 않음). Polygon/Massive 의 trades 포함 플랜 키를 `POLYGON_API_KEY` 에 넣으면 확장 가능.
 - 다크풀 세션별(Pre/Regular/AH) 분해는 유료 데이터 전용 — 일별 장외 볼륨 이상 탐지로 대체.
 - FINRA Short % 는 장외(TRF) 체결 기준이며 포지션 잔고가 아닙니다.
-- `smartmoney/events.py` 의 FOMC 일정은 공식 발표분만 기재 — 다음 해 일정 공개 시 추가 필요.
+- `smartmoney/events.py` 의 FOMC 일정은 Fed 공식 발표분(2026·2027) — 2028 일정 공개 시 추가 필요.
 
 ## GitHub Actions 자동화
 
@@ -86,7 +98,8 @@ Cloudflare Worker)가 `workflow_dispatch` API 를 호출한다.
 | 워크플로 | 트리거 시각 | 동작 |
 |---|---|---|
 | **daily-analysis.yml** | 화~토 02:00 UTC (= KST 11:00) | 직전 미국 정규장 세션 분석 → `reports/{SESSION_DATE}/` 커밋 → 텔레그램 |
-| **weekly-narrative.yml** | 토 02:30 UTC (= KST 11:30) | 종목별 AI 내러티브(`narrative.py`, 기본 `claude-opus-5-5`) → `reports/tickers/{T}/narratives/{SESSION_DATE}-weekly.html` |
+| **주간 AI 내러티브** | 토 KST 12:23 (Claude Code 예약 작업) | 클라우드 세션의 **Claude Opus 5.5**가 종목별 내러티브 작성 → `reports/tickers/{T}/narratives/{SESSION_DATE}-weekly.html` → main 푸시 (**Anthropic API 과금 없음**, 구독 사용량으로 처리) |
+| **weekly-narrative.yml** | narrative 푸시 시 자동 | 텔레그램 알림만 (API 호출 없음) |
 
 두 워크플로는 같은 concurrency 그룹(`sma-repo-write`)을 써서 저장소 쓰기가 겹치지 않는다.
 Actions 탭 → Run workflow 로 수동 실행 가능 (`ticker`, `force` 입력; weekly 는 `mode` 도).
@@ -119,7 +132,7 @@ Actions 탭 → Run workflow 로 수동 실행 가능 (`ticker`, `force` 입력;
 
 1. **Secrets** (Settings → Secrets and variables → Actions)
    - `POLYGON_API_KEY` — Polygon.io
-   - `ANTHROPIC_API_KEY` — 주간 AI 내러티브 (없으면 weekly 실패)
+   - `ANTHROPIC_API_KEY` — 더 이상 필요 없음 (주간 내러티브는 예약 작업이 API 없이 생성). 등록돼 있다면 삭제해도 된다
    - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — 알림 (선택)
    - (선택) Variables 에 `SMA_CLAUDE_MODEL` 로 내러티브 모델 override
 2. **Workflow permissions**: Settings → Actions → General → **Read and write permissions**
