@@ -1,269 +1,271 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KBR 3-Layer Forensic 2026-11-13</title>
+<meta name="description" content="[B 중립 37%] · 음감마 레짐 · 감마 플립 $40.55 하단 · 회랑 $35–$40">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#000000">
-<title>KBR Smart Money Forensic · 2026-11-13</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 <style>
-  body { background:#FFFFFF; color:#1F2328; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:13px; margin:0; padding:24px;
-         -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
-         -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
-  .wrap { max-width:1200px; margin:0 auto; }
-  .hdr  { border-bottom:1px solid #D0D7DE; padding-bottom:12px; margin-bottom:16px; }
-  .hdr h1 { font-size:20px; margin:0 0 4px 0; }
-  .hdr .sub { font-size:12px; color:#656D76; }
-  @media print { body{padding:12px;font-size:11px} canvas{max-height:220px} }
-
-  /* Hover tooltip (pure CSS) — positioning only, styling via inline */
-  .tt { position:relative; display:inline-block; cursor:help; }
-  .tt-i { color:#0969DA; margin-left:3px; font-weight:600; font-size:11px; }
-  /* 섹션 헤더 오른쪽 배지는 오른쪽 끝 기준 정렬 — 뷰포트 바깥 잘림 방지 */
-  .tt-right .tt-body { left:auto !important; right:0 !important; transform:none !important; }
-  .tt-right .tt-body::after { left:auto !important; right:14px !important; margin-left:0 !important; }
-  /* 왼쪽 가장자리 ⓘ는 왼쪽 끝 기준 정렬 */
-  .tt-left .tt-body { left:0 !important; right:auto !important; transform:none !important; }
-  .tt-left .tt-body::after { left:14px !important; right:auto !important; margin-left:0 !important; }
-  .tt .tt-body {
-    visibility:hidden; opacity:0; transition:opacity 0.12s;
-    position:absolute; left:50%; transform:translateX(-50%);
-    bottom:calc(100% + 8px); z-index:20;
-    background:#1F2328; color:#FFFFFF;
-    padding:8px 10px; border-radius:6px;
-    font-size:11px; line-height:1.5; text-align:left;
-    white-space:normal; width:max-content; max-width:480px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.15);
-    font-weight:400;
-  }
-  .tt .tt-body::after {
-    content:''; position:absolute; top:100%; left:50%;
-    margin-left:-5px; border:5px solid transparent; border-top-color:#1F2328;
-  }
-  .tt:hover .tt-body { visibility:visible; opacity:1; }
-  .tt table { border-collapse:collapse; margin-top:4px; }
-  .tt th, .tt td { padding:2px 6px; border:0.5px solid #555; text-align:left; color:#fff; }
-
-  /* ── Responsive ──────────────────────────────────────────────
-     Tablet portrait / 창 900px 이하 → 2-column 섹션을 수직 스택 */
-  @media (max-width: 1024px) {
-    .sma-grid { grid-template-columns: 1fr !important; }
-    .hdr h1 { font-size:18px; }
-  }
-  /* 모바일 / 700px 이하 → 본문 여백 줄이고, 모든 그리드 1열, 폰트 축소 */
-  @media (max-width: 700px) {
-    body { padding:14px !important; font-size:12.5px; }
-    .wrap { max-width:100% !important; }
-    .sma-grid { grid-template-columns: 1fr !important; }
-    canvas { max-width:100%; }
-    h1 { font-size:17px !important; }
-    h2 { font-size:13px !important; }
-  }
-  /* 모든 표는 좁은 화면에서 가로 스크롤로 살리기 */
-  .tbl-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
-  .tbl-scroll table { min-width:100%; }
-
-  /* 툴팁이 모바일에서 뷰포트 밖으로 넘치지 않게 */
-  @media (max-width: 700px) {
-    .tt .tt-body { max-width:88vw; font-size:10px; }
-  }
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:#1F2328;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:13px;line-height:1.55}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 16px 40px}
+a{color:#0969DA;text-decoration:none} a:hover{text-decoration:underline}
+.top{display:flex;gap:14px;font-size:12px;margin-bottom:10px} .top a{color:#656D76}
+.hdr{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:1px solid #D0D7DE;padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap}
+.hdr h1{font-size:24px;margin:0} .nm{font-size:14px;color:#656D76;font-weight:500}
+.sub{font-size:12px;color:#656D76;margin-top:4px}
+.px{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px} .pv{font-size:26px;font-weight:700}
+.pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif}
+.exec{background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:8px;padding:14px 16px;margin-bottom:12px}
+.eh{font-size:10px;letter-spacing:.12em;color:#656D76;font-weight:700}
+.hl{font-size:15px;font-weight:700;margin:6px 0 10px}
+.pm{display:flex;height:22px;border-radius:5px;overflow:hidden;font-size:11px;font-weight:700;color:#FFFFFF}
+.pm div{display:flex;align-items:center;justify-content:center;opacity:.9;min-width:34px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.tile{background:#FFFFFF;border:0.5px solid #D0D7DE;border-radius:6px;padding:8px 10px}
+.tl{font-size:11px;color:#656D76;font-weight:600} .tv{font-size:14px;font-weight:700;margin:2px 0 6px}
+.bar{position:relative;height:8px;background:#EAEEF2;border-radius:4px} .bar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#656D76}
+.ts{font-size:10px;color:#656D76;margin-top:4px}
+.ladder{position:relative;height:112px;margin:14px 60px 4px}
+.lline{position:absolute;left:0;right:0;top:57px;height:2px;background:#D0D7DE}
+.llist{display:none}
+.lm{position:absolute;top:0;bottom:0} .ld{position:absolute;top:53px;width:10px;height:10px;margin-left:-5px;border-radius:50%}
+.lt{position:absolute;transform:translateX(-50%);font-size:10px;line-height:1.25;white-space:nowrap;background:#F6F8FA;padding:0 2px}
+details.dq{background:#FFFFFF;border:0.5px solid #D0D7DE;border-radius:6px;padding:8px 12px;margin-bottom:6px}
+details.dq summary{cursor:pointer;font-weight:600;font-size:12px;color:#656D76}
+.wl{font-size:11px;color:#9A6700;margin:8px 0 0 18px;padding:0}
+.sec{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:0.5px solid #9A6700;margin:26px 0 12px;padding-bottom:5px}
+.sec-t{color:#9A6700;font-weight:700;font-size:14px} .sec-b{display:flex;gap:6px;flex-wrap:wrap}
+.card{background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;margin-bottom:12px;min-width:0}
+.ct{font-weight:600;font-size:12px;color:#656D76;margin-bottom:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px} .g2.w{grid-template-columns:1.55fr 1fr}
+.g3{display:grid;grid-template-columns:1fr 1.25fr 1.1fr;gap:12px;align-items:start}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:8px 10px;min-width:0}
+.kl{font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:.04em} .kv{font-size:17px;font-weight:700;margin:2px 0}
+.ks{font-size:10.5px;color:#656D76}
+.ch{position:relative;height:230px;background:#FFFFFF;border-radius:4px} .ch.sm{height:170px} .ch.lg{height:330px}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:12px;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif}
+th{background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;font-weight:600;white-space:nowrap}
+td{padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;vertical-align:top}
+tbody tr:nth-child(odd){background:#FFFFFF} tbody tr:nth-child(even){background:#F6F8FA}
+.muted{color:#656D76;font-size:11px}
+.alert{padding:8px 12px;border-radius:4px;font-size:12px;margin:0 0 12px}
+.interp{background:#FFFFFF;border:0.5px solid #D0D7DE;border-left:3px solid #0969DA;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:8px}
+.ih{font-size:11px;font-weight:700;color:#0969DA;letter-spacing:.06em;margin-bottom:4px}
+.interp ul{margin:0;padding-left:18px} .interp li{margin:3px 0}
+.xv{margin-top:8px;padding-top:8px;border-top:0.5px dashed #D0D7DE;font-size:12px}
+.three{font-size:11px;line-height:1.8;background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:10px 12px;margin-bottom:12px}
+.risk{margin:0;padding-left:18px;font-size:12px} .risk li{margin:3px 0}
+.concl{border-top:2px solid #9A6700;padding-top:6px}
+.cc{font-weight:700;font-size:13.5px;line-height:1.85;margin:10px 0} .cc u{text-decoration-color:#9A6700;text-underline-offset:3px}
+.foot{margin-top:30px;font-size:10.5px;color:#656D76;text-align:center;line-height:1.6}
+@media (max-width:1024px){.kpis{grid-template-columns:repeat(3,1fr)} .g3,.g2,.g2.w{grid-template-columns:1fr}}
+@media (max-width:640px){.wrap{padding:14px 16px 30px} .tiles{grid-template-columns:1fr 1fr} .kpis{grid-template-columns:1fr 1fr}
+ .hdr h1{font-size:20px} .pv{font-size:22px} .ladder{display:none} .llist{display:flex;flex-direction:column;gap:2px;font-size:11.5px;margin-top:10px;
+ border-top:0.5px solid #D0D7DE;padding-top:8px}}
+@media print{.wrap{max-width:100%} details.dq{display:none} .ch{height:200px} .card{break-inside:avoid}}
 </style>
 </head>
-<body>
-<div class="wrap">
-<div style="margin-bottom:16px;font-size:12px;">
-  <a href="../tickers/KBR/" style="color:#656D76;text-decoration:none;">← KBR 종목 페이지</a>
-</div>
+<body><div class="wrap">
+
+<div class="top"><a href="../tickers/KBR/">← KBR 종목 페이지</a><a href="../">대시보드</a></div>
 <div class="hdr">
-  <h1>Smart Money Analyzer — KBR</h1>
-  <div class="sub">Analysis Date: 2026-11-13 · Current Price: $nan · Expiry: 2026-11-20 · Patterns: none</div>
+  <div><h1>KBR <span class="nm">KBR, Inc.</span></h1>
+  <div class="sub">세션 <b>2026-11-13</b> (미 정규장 마감 기준) · 생성 2026-11-14T13:55:13Z · 주 만기 2026-11-20</div></div>
+  <div class="px"><div class="pv">$35.59</div><div style="color:#1A7F5A;font-weight:600;">+0.76%</div>
+  <span class="pill" style="background:#DAFBE1;color:#1A7F5A;" title="레이어별 커버리지 가중 점수">데이터 품질 A · 94</span></div>
+</div>
+<div class="exec">
+  <div class="eh">EXECUTIVE SUMMARY</div>
+  <div class="hl">[B 중립 37%] · 음감마 레짐 · 감마 플립 $40.55 하단 · 회랑 $35–$40</div>
+  <div class="pm"><div style="width:36.7%;background:#1A7F5A;">A 37%</div><div style="width:37.2%;background:#9A6700;">B 37%</div><div style="width:26.1%;background:#CF222B;">C 26%</div></div>
+  <div class="tiles"><div class="tile"><div class="tl">L1 · Dark Pool <span style="color:#656D76;">w0.35</span></div><div class="tv" style="color:#9A6700;">중립</div><div class="bar"><div class="mid"></div><div style="position:absolute;left:43.5%;width:6.5%;top:0;bottom:0;background:#9A6700;opacity:.85;border-radius:3px;"></div></div><div class="ts">score -0.13 · conf 70%</div></div><div class="tile"><div class="tl">L2 · Short/CTB <span style="color:#656D76;">w0.20</span></div><div class="tv" style="color:#1A7F5A;">숏커버링</div><div class="bar"><div class="mid"></div><div style="position:absolute;left:50.0%;width:19.8%;top:0;bottom:0;background:#1A7F5A;opacity:.85;border-radius:3px;"></div></div><div class="ts">score +0.40 · conf 100%</div></div><div class="tile"><div class="tl">L3 · Options <span style="color:#656D76;">w0.30</span></div><div class="tv" style="color:#1A7F5A;">변동성 확장</div><div class="bar"><div class="mid"></div><div style="position:absolute;left:50.0%;width:18.0%;top:0;bottom:0;background:#1A7F5A;opacity:.85;border-radius:3px;"></div></div><div class="ts">score +0.36 · conf 100%</div></div><div class="tile"><div class="tl">L4 · Chart <span style="color:#656D76;">w0.15</span></div><div class="tv" style="color:#CF222B;">박스권 · 하방 우위</div><div class="bar"><div class="mid"></div><div style="position:absolute;left:31.4%;width:18.6%;top:0;bottom:0;background:#CF222B;opacity:.85;border-radius:3px;"></div></div><div class="ts">score -0.37 · conf 80%</div></div></div>
+  <div class="ladder"><div class="lline"></div><div class="lm" style="left:0.00%;"><div class="lt" style="top:0px;color:#656D76;">Expected Move ↓ <b>$33.44</b></div><div class="ld" style="background:#656D76;"></div></div><div class="lm" style="left:21.93%;"><div class="lt" style="top:0px;color:#CF222B;">Put Wall <b>$35.00</b></div><div class="ld" style="background:#CF222B;"></div></div><div class="lm" style="left:30.22%;"><div class="lt" style="top:62px;color:#0969DA;">현재가 <b>$35.59</b></div><div class="ld" style="background:#0969DA;width:12px;height:12px;margin-left:-6px;top:52px;"></div></div><div class="lm" style="left:57.07%;"><div class="lt" style="top:0px;color:#9A6700;">Max Pain <b>$37.50</b></div><div class="ld" style="background:#9A6700;"></div></div><div class="lm" style="left:60.44%;"><div class="lt" style="top:62px;color:#656D76;">Expected Move ↑ <b>$37.74</b></div><div class="ld" style="background:#656D76;"></div></div><div class="lm" style="left:92.21%;"><div class="lt" style="top:0px;color:#1A7F5A;">Call Wall <b>$40.00</b></div><div class="ld" style="background:#1A7F5A;"></div></div><div class="lm" style="left:100.00%;"><div class="lt" style="top:62px;color:#9A6700;">GEX Flip <b>$40.55</b></div><div class="ld" style="background:#9A6700;"></div></div></div><div class="llist"><span style="color:#9A6700;"><b>GEX Flip</b> $40.55</span><span style="color:#1A7F5A;"><b>Call Wall</b> $40.00</span><span style="color:#656D76;"><b>Expected Move ↑</b> $37.74</span><span style="color:#9A6700;"><b>Max Pain</b> $37.50</span><span style="color:#0969DA;"><b>현재가</b> $35.59</span><span style="color:#CF222B;"><b>Put Wall</b> $35.00</span><span style="color:#656D76;"><b>Expected Move ↓</b> $33.44</span></div>
+</div>
+<details class="dq" ><summary>데이터 품질 · 출처 · 수집 경고 (0건) — 등급 A (94/100)</summary>
+<div class="tw"><table class=""><thead><tr><th>Layer</th><th>상태</th><th>커버리지</th><th>누락 필드</th><th>출처</th></tr></thead><tbody><tr><td><b>L1</b></td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">OK</span></td><td>90%</td><td>기관 흡수율(IAR)</td><td>FINRA RegSHO CNMS (off-exchange) · 1분봉 (polygon_1m) · FINRA OTC Transparency (ATS 주간)</td></tr><tr><td><b>L2</b></td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">OK</span></td><td>90%</td><td>CTB Δ%</td><td>FINRA RegSHO (short volume) · 대차: ibkr_ftp · SI: polygon</td></tr><tr><td><b>L3</b></td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">OK</span></td><td>100%</td><td>—</td><td>CBOE delayed quotes (OI·IV·Greeks)</td></tr><tr><td><b>L4</b></td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">OK</span></td><td>100%</td><td>—</td><td>Yahoo Finance (일봉)</td></tr><tr><td><b>MACRO</b></td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">OK</span></td><td>100%</td><td>—</td><td>FRED (DFF·RRP·SOFR·IORB·WALCL·TGA·HY OAS·10Y) · Yahoo (DXY·WTI·VIX)</td></tr><tr><td><b>NEWS</b></td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">OK</span></td><td>100%</td><td>—</td><td>Yahoo news · SEC EDGAR (submissions + Form 4 XML) · Yahoo calendar</td></tr></tbody></table></div>
+<div class="muted" style="margin-top:6px;">수집 경고 없음</div>
+</details>
+<div class="sec" id="s0"><span class="sec-t">▶ SECTION 0 [뉴스·이벤트·공시·거시 컨텍스트]</span><span class="sec-b"><span class="pill" style="background:#FFEBE9;color:#CF222B;">거시 제한</span><span class="pill" style="background:#DDF4FF;color:#0969DA;">이벤트 4건</span><span class="pill" style="background:#DDF4FF;color:#0969DA;">공시 10건</span></span></div>
+<div class="g3">
+  <div class="card"><div class="ct">향후 1개월 이벤트</div><div class="tw"><table class=""><thead><tr><th>날짜</th><th>이벤트</th><th>중요도</th></tr></thead><tbody><tr><td>2026-11-20 <span class="muted">(D-7)</span></td><td>월간 옵션 만기 (OPEX)</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">MED</span></td></tr><tr><td>2026-11-26 <span class="muted">(D-13)</span></td><td>미국 증시 휴장</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">MED</span></td></tr><tr><td>2026-11-27 <span class="muted">(D-14)</span></td><td>조기 폐장 (13:00 ET)</td><td><span class="pill" style="background:#DDF4FF;color:#0969DA;">LOW</span></td></tr><tr><td>2026-12-09 <span class="muted">(D-26)</span></td><td>FOMC 금리 결정</td><td><span class="pill" style="background:#FFEBE9;color:#CF222B;">HIGH</span></td></tr></tbody></table></div></div>
+  <div class="card"><div class="ct">최근 1주일 뉴스</div><div class="tw"><table class=""><thead><tr><th>날짜</th><th>헤드라인</th><th>출처</th></tr></thead><tbody><tr><td>2026-11-06</td><td><a href="https://www.trefis.com/stock/j/articles/622627/should-jacobs-stocks-new-high-stop-you-from-buying/2026-11-05" target="_blank" rel="noopener">Should Jacobs Stock&#x27;s New High Stop You From Buying?</a></td><td>Trefis</td></tr></tbody></table></div></div>
+  <div class="card"><div class="ct">최근 공시 (8-K · Form 4 · 희석)</div><div class="tw"><table class=""><thead><tr><th>날짜</th><th>Form</th><th>내용</th><th>플래그</th></tr></thead><tbody><tr><td>2026-11-12</td><td><a href="https://www.sec.gov/Archives/edgar/data/1357615/000135761526000207/kbr-20261112.htm" target="_blank" rel="noopener">8-K</a></td><td>중요 사건 (8-K) <span class="muted">Item 7.01,9.01</span></td><td><span class="pill" style="background:#DDF4FF;color:#0969DA;">MATERIAL</span></td></tr><tr><td>2026-11-12</td><td><a href="https://www.sec.gov/Archives/edgar/data/1357615/000135761526000205/kbr-20261111.htm" target="_blank" rel="noopener">8-K</a></td><td>중요 사건 (8-K) <span class="muted">Item 7.01,9.01</span></td><td><span class="pill" style="background:#DDF4FF;color:#0969DA;">MATERIAL</span></td></tr><tr><td>2026-11-09</td><td><a href="https://www.sec.gov/Archives/edgar/data/1357615/000135761526000201/kbr-20261105.htm" target="_blank" rel="noopener">8-K</a></td><td>중요 사건 (8-K) <span class="muted">Item 5.02,7.01,9.01</span></td><td><span class="pill" style="background:#DDF4FF;color:#0969DA;">MATERIAL</span></td></tr></tbody></table></div><div class="muted" style="margin-top:6px;">30일 공시 10건 · Form 4 4건 분석: 내부자 매수 <b style="color:#1A7F5A;">$0</b> / 매도 <b style="color:#CF222B;">$0</b></div></div>
+</div>
+<div class="card" style="margin-top:12px;"><div class="ct">거시 유동성 (Financial Plumbing) — 종합 <b style="color:#CF222B;">제한</b> (점수 -2)</div>
+<div class="tw"><table class=""><thead><tr><th>지표</th><th>값</th><th>변화</th><th>평가</th></tr></thead><tbody><tr><td>Net Liquidity (Fed BS−TGA−RRP)</td><td>$5,844B</td><td>-26.9B</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">중립</span></td></tr><tr><td>SOFR − IORB</td><td>0.00bp</td><td>—</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">중립</span></td></tr><tr><td>Fed Funds (eff.)</td><td>3.88%</td><td>+0.25pp</td><td><span class="pill" style="background:#FFEBE9;color:#CF222B;">제한</span></td></tr><tr><td>RRP</td><td>$0.33B</td><td>-0.9B</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">—</span></td></tr><tr><td>DXY (20d)</td><td>103.41</td><td>+1.54%</td><td><span class="pill" style="background:#FFEBE9;color:#CF222B;">제한</span></td></tr><tr><td>VIX</td><td>19.30</td><td>—</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">중립</span></td></tr><tr><td>HY OAS (20d)</td><td>3.20%</td><td>-5bp</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">중립</span></td></tr><tr><td>WTI</td><td>$88.56</td><td>-12.67%</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">중립</span></td></tr><tr><td>UST 10Y</td><td>5.10%</td><td>-9bp</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">—</span></td></tr></tbody></table></div>
+<div class="muted" style="margin-top:6px;">우호 시 상방 +5~10%p, 제한 시 하방 +5~10%p 확률 보정. 관세·지정학 등 정성 요인은 주간 AI 내러티브에서 다룬다.</div></div><div class="sec" id="s1"><span class="sec-t">▶ SECTION 1 [다크풀 레이어 (L1)]</span><span class="sec-b"><span class="pill" style="background:#FFF8C5;color:#9A6700;">중립</span><span class="pill" style="background:#DDF4FF;color:#0969DA;">DP 36.3%</span><span class="pill" style="background:#EAEEF2;color:#656D76;">CONVERGENCE</span></span></div>
+<div class="kpis">
+ <div class="kpi"><div class="kl">다크풀 비중</div><div class="kv" style="color:#1F2328;">36.3%</div><div class="ks">20일 평균 34.8% · 1.04x</div></div>
+ <div class="kpi"><div class="kl">Net OBV (5d)</div><div class="kv" style="color:#CF222B;">-22.2K</div><div class="ks">ADV 대비 -1.1%</div></div>
+ <div class="kpi"><div class="kl">20일 누적 A/D</div><div class="kv" style="color:#1F2328;">+6.31M</div><div class="ks">ADV 3.17x</div></div>
+ <div class="kpi"><div class="kl">VWAP 앵커 (5d)</div><div class="kv" style="color:#1F2328;">$36.81</div><div class="ks">종가 -3.30%</div></div>
+ <div class="kpi"><div class="kl">기관 흡수율 IAR</div><div class="kv" style="color:#656D76;">N/A</div><div class="ks">체결 단위 데이터 필요</div></div>
+ <div class="kpi"><div class="kl">ATS 주간 비중</div><div class="kv" style="color:#1F2328;">29.5%</div><div class="ks">2026-10-19주 · 평균 49주/건</div></div>
+</div>
+<div class="g2">
+  <div class="card"><div class="ct">다크풀 비중 & 장외 거래량 (20거래일)</div><div class="ch"><canvas id="cDp"></canvas></div></div>
+  <div class="card"><div class="ct">Net OBV 누적 (CLV 가중 · 5거래일)</div><div class="ch"><canvas id="cObv"></canvas></div></div>
+</div>
+<div class="g2">
+  <div class="card"><div class="ct">OBV 4-Way Decomposition (Δ, 5거래일)</div><div class="ch sm"><canvas id="cObv4"></canvas></div>
+  <div class="muted">기관·프로·리테일 분해는 체결(Trade-level) 분류가 필요해 미표기. Total = 계산값.</div></div>
+  <div class="card"><div class="ct">체결 주체 구성 (FINRA 주간 실측)</div><div class="ch sm"><canvas id="cCoh"></canvas></div>
+  <div class="muted">ATS = 다크풀(기관 블록) · 홀세일러 = 리테일 주문 내부화(PFOF) · Lit = 거래소(프로/HFT).</div></div>
+</div>
+<div class="card"><div class="ct">세션별 장외 볼륨 이상 탐지 (20일 평균 대비 배수)</div><div class="tw"><table class=""><thead><tr><th>세션</th><th>장외 거래량</th><th>총 거래량</th><th>DP %</th><th>배수</th><th>플래그</th></tr></thead><tbody><tr><td>2026-11-13</td><td>754.2K</td><td>2.08M</td><td>36.3%</td><td>1.05x</td><td>—</td></tr><tr><td>2026-11-12</td><td>885.1K</td><td>2.45M</td><td>36.1%</td><td>1.23x</td><td>—</td></tr><tr><td>2026-11-11</td><td>1.35M</td><td>3.35M</td><td>40.3%</td><td>1.88x</td><td><span class="pill" style="background:#DDF4FF;color:#0969DA;">MODERATE</span></td></tr><tr><td>2026-11-10</td><td>286.8K</td><td>1.18M</td><td>24.2%</td><td>0.40x</td><td>—</td></tr><tr><td>2026-11-09</td><td>381.0K</td><td>1.30M</td><td>29.2%</td><td>0.53x</td><td>—</td></tr><tr><td>2026-11-06</td><td>316.5K</td><td>1.76M</td><td>18.0%</td><td>0.44x</td><td>—</td></tr><tr><td>2026-11-05</td><td>568.3K</td><td>1.36M</td><td>41.9%</td><td>0.79x</td><td>—</td></tr><tr><td>2026-11-04</td><td>751.9K</td><td>2.12M</td><td>35.4%</td><td>1.04x</td><td>—</td></tr><tr><td>2026-11-03</td><td>913.4K</td><td>2.17M</td><td>42.1%</td><td>1.27x</td><td>—</td></tr><tr><td>2026-11-02</td><td>726.5K</td><td>2.00M</td><td>36.4%</td><td>1.01x</td><td>—</td></tr></tbody></table></div></div>
+<div class="interp"><div class="ih">해석</div><ul><li>다크풀(Off-exchange) 비중 <b>36.3%</b>로 정상 기관 범위(30–40%). 20일 평균 34.8% 대비 <b>1.04배</b>, 평균 수준. 장외 거래량은 20일 평균의 1.05배.</li><li>5거래일 CLV 가중 순체결(Net OBV) <b>-22.2K주</b>, ADV 대비 <b>-1.1%</b> — 방향성 미약(노이즈 범위).</li><li>가격과 순체결이 같은 방향 — 현 추세를 수급이 확인(Convergence).</li><li>VWAP 앵커: 5일 VWAP $36.81, 종가는 그 대비 <b>-3.30%</b> — 최근 매수자 평균단가 아래(손실 구간) — 매물 압력 잠재.</li><li>FINRA 주간 체결 구성(2026-10-19주, 2~4주 지연 공시): ATS(다크풀) <b>29.5%</b>, 전주 대비 -0.6pp · 홀세일러 내부화(리테일 주문) <b>9.8%</b> · 거래소(Lit) 60.7%. ATS 평균 체결 49주 — 대량 주문 분할 체결 흔적.</li><li>기관 흡수율(IAR)·다크풀 전용 VWAP은 체결(Trade-level) 데이터가 필요하며, 현재 데이터 등급에서는 산출하지 않는다(추정치 미표기).</li></ul><div class="xv"><b>교차검증</b> · L1 중립 — 교차검증상 방향 기여 없음. L2/L3 신호가 상대적 우선권을 가진다.</div></div><div class="sec" id="s2"><span class="sec-t">▶ SECTION 2 [공매도 레이어 (L2)]</span><span class="sec-b"><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">숏커버링</span><span class="pill" style="background:#DDF4FF;color:#0969DA;">z -2.10 · FALLING</span><span class="pill" style="background:#DDF4FF;color:#0969DA;">CTB 0.41%</span></span></div>
+<div class="kpis">
+ <div class="kpi"><div class="kl">Short % (장외)</div><div class="kv" style="color:#1F2328;">33.6%</div><div class="ks">14일 평균 58.5% · z -2.10</div></div>
+ <div class="kpi"><div class="kl">Short 기울기</div><div class="kv" style="color:#1F2328;">-2.50pp/일</div><div class="ks">FALLING</div></div>
+ <div class="kpi"><div class="kl">추정 총 공매도</div><div class="kv" style="color:#1F2328;">698.6K</div><div class="ks">장외 실측 253.4K</div></div>
+ <div class="kpi"><div class="kl">CTB 수수료</div><div class="kv" style="color:#1F2328;">0.41%</div><div class="ks">Δ N/A · ETB</div></div>
+ <div class="kpi"><div class="kl">가용 잔고</div><div class="kv" style="color:#1F2328;">1.70M</div><div class="ks">Δ N/A</div></div>
+ <div class="kpi"><div class="kl">SI / Float</div><div class="kv" style="color:#1F2328;">8.02%</div><div class="ks">DTC 4.98일 · Δ +0.1%</div></div>
+</div>
+<div class="g2">
+  <div class="card"><div class="ct">Short % 추세 (20거래일) · CTB</div><div class="ch"><canvas id="cShort"></canvas></div></div>
+  <div class="card"><div class="ct">Short Volume 히스토리 (14일)</div><div class="tw"><table class=""><thead><tr><th>세션</th><th>Short %</th><th>Δ</th><th>Short Vol</th><th>Total(장외)</th><th>추정 총숏</th><th>CTB</th></tr></thead><tbody><tr><td>2026-11-13</td><td>33.6%</td><td><span style="color:#1A7F5A;font-weight:600;">-0.1pp</span></td><td>253.4K</td><td>754.2K</td><td>698.6K</td><td>0.41%</td></tr><tr><td>2026-11-12</td><td>33.7%</td><td><span style="color:#1A7F5A;font-weight:600;">-2.8pp</span></td><td>298.2K</td><td>885.1K</td><td>826.3K</td><td>—</td></tr><tr><td>2026-11-11</td><td>36.5%</td><td><span style="color:#1A7F5A;font-weight:600;">-26.6pp</span></td><td>494.1K</td><td>1.35M</td><td>1.22M</td><td>—</td></tr><tr><td>2026-11-10</td><td>63.1%</td><td><span style="color:#CF222B;font-weight:600;">3.8pp</span></td><td>181.1K</td><td>286.8K</td><td>747.7K</td><td>—</td></tr><tr><td>2026-11-09</td><td>59.4%</td><td><span style="color:#1A7F5A;font-weight:600;">-0.8pp</span></td><td>226.2K</td><td>381.0K</td><td>773.8K</td><td>—</td></tr><tr><td>2026-11-06</td><td>60.1%</td><td><span style="color:#CF222B;font-weight:600;">7.1pp</span></td><td>190.3K</td><td>316.5K</td><td>1.06M</td><td>—</td></tr><tr><td>2026-11-05</td><td>53.0%</td><td><span style="color:#1A7F5A;font-weight:600;">-1.7pp</span></td><td>301.3K</td><td>568.3K</td><td>718.7K</td><td>—</td></tr><tr><td>2026-11-04</td><td>54.7%</td><td><span style="color:#1A7F5A;font-weight:600;">-13.4pp</span></td><td>411.3K</td><td>751.9K</td><td>1.16M</td><td>—</td></tr><tr><td>2026-11-03</td><td>68.1%</td><td><span style="color:#CF222B;font-weight:600;">7.1pp</span></td><td>622.1K</td><td>913.4K</td><td>1.48M</td><td>—</td></tr><tr><td>2026-11-02</td><td>61.0%</td><td><span style="color:#CF222B;font-weight:600;">4.4pp</span></td><td>442.8K</td><td>726.5K</td><td>1.22M</td><td>—</td></tr><tr><td>2026-10-30</td><td>56.6%</td><td><span style="color:#1A7F5A;font-weight:600;">-5.0pp</span></td><td>428.5K</td><td>757.6K</td><td>1.26M</td><td>—</td></tr><tr><td>2026-10-29</td><td>61.5%</td><td><span style="color:#CF222B;font-weight:600;">1.8pp</span></td><td>932.6K</td><td>1.52M</td><td>2.35M</td><td>—</td></tr><tr><td>2026-10-28</td><td>59.8%</td><td><span style="color:#1A7F5A;font-weight:600;">-22.9pp</span></td><td>557.6K</td><td>932.8K</td><td>1.67M</td><td>—</td></tr><tr><td>2026-10-27</td><td>82.7%</td><td><span style="color:#CF222B;font-weight:600;">13.8pp</span></td><td>563.2K</td><td>681.0K</td><td>1.54M</td><td>—</td></tr></tbody></table></div></div>
 </div>
 
-
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 0 · News · Events · Filings · Macro</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
-</div>
-
-<div class="sma-grid" style="display:grid;grid-template-columns:1.2fr 0.9fr 1.6fr;gap:12px;align-items:start;">
-
-  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Upcoming Events (30d)</div>
-    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Event</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Signal</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-20 <span style="color:#656D76;font-size:10px;">(D-7)</span></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Monthly Options Expiry</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><span style="background:#FFEBE9;color:#CF222B;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">HIGH</span></td></tr></tbody></table></div>
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin:14px 0 6px;">Macro Environment</div>
-    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Indicator</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Δ</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Fed Funds</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3.88%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Δ +0.25pp</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">DXY 20d</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">103.12</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+0.5%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">RRP</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0B</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Oil (WTI)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">88.11</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Liquidity</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NEUTRAL</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr></tbody></table></div>
-  </div>
-
-  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">SEC Filings</div>
-    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Form / Title</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-12</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">8-K  - Current report</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-12</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">8-K  - Current report</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-09</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">8-K  - Current report</td></tr></tbody></table></div>
-  </div>
-
-  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;min-width:0;overflow:hidden;">
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Recent News (7d)</div>
-    <div style="overflow-wrap:anywhere;word-break:break-word;">
-      <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Headline</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Publisher</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-06</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://www.trefis.com/stock/j/articles/622627/should-jacobs-stocks-new-high-stop-you-from-buying/2026-11-05" target="_blank" style="color:#0969DA;text-decoration:none;">Should Jacobs Stock&#x27;s New High Stop You From Buying?</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Trefis</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-03</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://finance.yahoo.com/markets/stocks/articles/makes-kbr-kbr-investment-bet-155400916.html" target="_blank" style="color:#0969DA;text-decoration:none;">What Makes KBR (KBR) an Investment Bet?</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Insider Monkey</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-31</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://finance.yahoo.com/markets/stocks/articles/kbr-q3-deep-dive-sustainable-173929843.html" target="_blank" style="color:#0969DA;text-decoration:none;">KBR Q3 deep dive: Sustainable Tech outpaces Mission Tech as backlog surges, NASA headwinds persist</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">StockStory</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-30</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://finance.yahoo.com/markets/stocks/articles/earnings-beat-impact-kbr-kbr-161625080.html" target="_blank" style="color:#0969DA;text-decoration:none;">How Earnings Beat Will Impact KBR (KBR) Investors</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Simply Wall St.</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-30</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://www.marketbeat.com/instant-alerts/transcript-kbr-q3-earnings-call-highlights-2026-10-30/?utm_source=yahoofinance&amp;utm_medium=yahoofinance" target="_blank" style="color:#0969DA;text-decoration:none;">KBR Q3 Earnings Call Highlights</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MarketBeat</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-30</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;"><a href="https://app.moby.co/home/research/tools/earningsCalendar/earnings-kbr-inc-q3-2026-earnings-call-summary?utm_source=yahoo_finance&amp;utm_medium=rss" target="_blank" style="color:#0969DA;text-decoration:none;">KBR, Inc. Q3 2026 Earnings Call Summary</a></td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Moby</td></tr></tbody></table></div>
-    </div>
-  </div>
-
-</div>
-
-
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 1 · Dark Pool Layer (L1)</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span class="tt tt-right" style="background:#DAFBE1;color:#1A7F5A;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">ACCUMULATION<span class="tt-body"><b>L1 Dark Pool 시나리오</b><br>기관 OBV 방향·다크풀 %·Divergence 조합.<table><tr><th>시나리오</th><th>조건</th><th>색</th></tr><tr><td>ACCUMULATION</td><td>Inst Δ &gt; 0 or BULLISH_DIV × DP%&gt;35</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>DISTRIBUTION</td><td>Inst Δ &lt; 0 or BEARISH_DIV × DP%&gt;35</td><td><span style="display:inline-block;background:#FFEBE9;color:#CF222B;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BEAR</span></td></tr><tr><td>NEUTRAL</td><td>명확한 방향 없음</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr><tr><td>AMBIGUOUS</td><td>상충 신호</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr></table></span></span><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Conf MEDIUM</span></div>
-</div>
-
-<div class="sma-grid" style="display:grid;grid-template-columns:1.4fr 0.9fr;gap:12px;align-items:stretch;">
-  <div style="display:flex;flex-direction:column;">
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Net Signed Volume (5일 누적, CLV-weighted)</div>
-    <div style="display:flex;align-items:center;gap:16px;padding:10px 12px;background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;margin-bottom:8px;">
-      <div style="flex:0 0 auto;">
-        <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.04em;">Total OBV Δ (5d)</div>
-        <div style="font-size:20px;font-weight:700;color:#1A7F5A;">+2M</div>
-      </div>
-      <div style="flex:0 0 auto;border-left:0.5px solid #D0D7DE;padding-left:16px;">
-        <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.04em;">Divergence</div>
-        <div style="font-size:13px;font-weight:600;color:#656D76;">NEUTRAL</div>
-      </div>
-    </div>
-    <div style="position:relative;flex:1;min-height:160px;"><canvas id="obvCum"></canvas></div>
-    <div style="font-size:11px;color:#1F2328;margin-top:6px;text-align:center;">
-      <span class="tt tt-i">ⓘ Divergence 해석<span class="tt-body"><b>가격 slope vs Total OBV 누적 slope</b> (5일 회귀).<table><tr><th>상태</th><th>해석</th></tr><tr><td>BULLISH_DIV</td><td>가격↓ + OBV↑ = 공포 속 축적</td></tr><tr><td>BEARISH_DIV</td><td>가격↑ + OBV↓ = 강세 속 분배</td></tr><tr><td>CONVERGENCE</td><td>같은 방향 — 추세 확인</td></tr><tr><td>NEUTRAL</td><td>의미있는 기울기 없음</td></tr></table></span></span>
-    </div>
-  </div>
-  <div>
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Off-Exchange Volume (10d, FINRA CNMS ÷ market total)</div>
-    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Off-Exch Vol</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Market Vol</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">DP %</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-12</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">885,100</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">36.1%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-11</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">3M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">40.3%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-10</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">286,778</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">24.2%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-09</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">381,021</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">29.2%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-06</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">316,528</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">18.0%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-05</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">568,301</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">41.9%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-04</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">751,870</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">35.4%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-03</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">913,419</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">42.1%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-02</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">726,496</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">36.4%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-30</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">757,628</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">34.0%</td></tr></tbody></table></div>
-    <p style="font-size:11px;color:#656D76;margin-top:6px;">
-      OBV Total: 1-way CLV-weighted signed volume (5일, sign src: barCLV=4d, dayclv=1d, 1m src: polygon)
-    </p>
-  </div>
-</div>
-<div style="margin-top:10px;padding:8px 10px;background:#FFF8C5;border-left:3px solid #9A6700;border-radius:4px;font-size:11px;line-height:1.5;">
-  <b style="color:#9A6700;">⚠ OBV 산출 방식</b><br>
-  <b>1-way Total OBV</b> — 분봉별 CLV (close location value, [-1..+1]) 를 거래량으로 가중해 시장 전체 네트 매수/매도 플로 방향만 산출합니다.
-  기관/프로/리테일 코호트 분리는 분봉 레벨로는 부호까지 틀려지는 구조적 한계가 확인되어 제거했습니다. 코호트별 상세는 Market Chameleon 등 per-print 분류 소스를 참조하세요.
-  <br><a href="https://marketchameleon.com/Overview/KBR/Stock-Price-Action/Dark-Pool-Volume" target="_blank" rel="noopener" style="color:#0969DA;text-decoration:none;font-weight:600;">🔗 Market Chameleon — KBR Dark Pool Volume (Retail/Pro/Inst 분리 확인)</a>
-</div>
-
-
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 2 · Short Volume Layer (L2)</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span class="tt tt-right" style="background:#DAFBE1;color:#1A7F5A;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">SHORT_COVERING<span class="tt-body"><b>L2 Short Volume 시나리오</b><br>Short% slope + CTB 방향 + anomaly_z.<table><tr><th>시나리오</th><th>조건</th><th>색</th></tr><tr><td>SHORT_SQUEEZE_RISK</td><td>HTB(&gt;15%) × slope RISING</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>SHORT_COVERING</td><td>slope FALLING × CTB 하락/ETB</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>DIRECTIONAL_SHORT</td><td>CTB↑ + slope RISING (CASE ②)</td><td><span style="display:inline-block;background:#FFEBE9;color:#CF222B;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BEAR</span></td></tr><tr><td>MM_HEDGE</td><td>slope RISING + CTB 변동 없음 (CASE ①)</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr><tr><td>NEUTRAL</td><td>기타</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr></table></span></span><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Case SHORT_COVERING</span></div>
-</div>
-
-<div class="sma-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
-  <div>
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">Short % (FINRA consolidated, 14d)</div>
-    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Date</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Short Vol</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Total Vol</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Short %</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-12</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">298,174</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">885,100</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">33.7%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-11</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">494,073</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">36.5%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-10</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">181,072</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">286,778</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">63.1%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-09</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">226,218</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">381,021</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">59.4%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-06</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">190,345</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">316,528</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">60.1%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-05</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">301,319</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">568,301</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">53.0%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-04</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">411,278</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">751,870</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">54.7%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-03</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">622,076</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">913,419</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">68.1%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-02</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">442,835</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">726,496</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">61.0%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-30</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">428,497</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">757,628</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">56.6%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-29</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">932,566</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2M</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">61.5%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-28</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">557,598</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">932,762</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">59.8%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-27</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">563,228</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">681,003</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">82.7%</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-26</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">489,932</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">711,197</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">68.9%</td></tr></tbody></table></div>
-    <div style="font-size:11px;color:#1F2328;margin-top:6px;">
-      14d Avg Short%: <b>56.8%</b> · Slope: <b>-2.132</b>
-    </div>
-  </div>
-  <div>
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">CTB / Borrow (iborrowdesk)</div>
-    <div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Metric</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Δ %</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">CTB Fee</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">N/A</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Class</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">ETB</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Shares Available</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">N/A</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td></tr></tbody></table></div>
+<div class="interp"><div class="ih">해석</div><ul><li>공매도 비중 <b>33.6%</b> (FINRA TRF 보고분 기준, 14일 평균 58.5%, z=-2.10, 기울기 일 -2.50pp → FALLING). 대형 유동주는 MM 헤지 구조상 40–55%가 기본값이므로 절대값이 아닌 자체 기준선 대비 이탈로 판독한다.</li><li>실물 재계산: 장외 공매도 253.4K주, 총거래량 환산 추정 698.6K주.</li><li>대차: 수수료 <b>0.41%</b>(ETB) · 전일 대비 <b>N/A</b> · 가용잔고 1.70M (Δ 산출불가). 출처 ibkr_ftp.</li><li>공매도 잔고(SI, 2026-10-30 결제 기준) 9.98M주 · 직전 대비 +0.1% · 유통주식 대비 8.02% · Days-to-Cover 4.98일.</li><li>케이스 판별: <b>숏커버링</b> — 근거: Short% 기울기 하락.</li></ul><div class="xv"><b>교차검증</b> · L1 중립 / L2 숏커버링 — 독립적 신호, 가중 반영.</div></div><div class="sec" id="s3"><span class="sec-t">▶ SECTION 3 [옵션 레이어 (L3)]</span><span class="sec-b"><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">변동성 확장</span><span class="pill" style="background:#DDF4FF;color:#0969DA;">음감마</span><span class="pill" style="background:#FFEBE9;color:#CF222B;">이진 이벤트</span></span></div>
+<div class="g2 w">
+  <div class="card"><div class="ct">Gamma Exposure (GEX) Distribution — 60일 내 만기 합산 · 거리 가중 · ±30% 밖 행사가는 양끝 합산</div><div class="ch lg"><canvas id="cGex"></canvas></div>
+  <div class="muted">콜 GEX=양(+, 위) · 풋 GEX=음(−, 아래). 가중치: ±2.5%=1.0 · ±5%=0.9 · ±10%=0.65 · ±15%=0.35 · ±20%=0.18 · 원거리=0.07</div></div>
+  <div class="card"><div class="tw"><table class=""><thead><tr><th>지표</th><th>값</th></tr></thead><tbody><tr><td>주 만기 / DTE</td><td>2026-11-20 / 7</td></tr><tr style="background:#FFEBE9;"><td>Max Pain (주)</td><td>$37.50 (+5.09%)</td></tr><tr><td>Max Pain (월물 2026-11-20)</td><td>$37.50</td></tr><tr style="background:#FFF8C5;"><td>GEX 플립 / 레짐</td><td>$40.55 / NEGATIVE</td></tr><tr><td>콜월 / 풋월</td><td>$40.00 / $35.00</td></tr><tr><td>Net GEX (1% 이동당)</td><td>-$97K</td></tr><tr><td>P/C OI · P/C Vol (보정)</td><td>1.52 · 0.00 (0.00)</td></tr><tr><td>ATM IV · IV30(CBOE)</td><td>29.4% · 32.0%</td></tr><tr><td>25Δ 스큐 · 기간구조</td><td>8.8 vol · BACKWARDATION</td></tr><tr><td>예상 변동폭 (주/월)</td><td>±$2.15 (6.0%) / ±$2.15</td></tr><tr><td>OI 합계 (60D) · 5일 Δ</td><td>2.5K · N/A</td></tr></tbody></table></div>
   </div>
 </div>
-
-
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 3 · Options Layer (L3)</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span class="tt tt-right" style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">HEDGING<span class="tt-body"><b>L3 Options 시나리오</b><br>Max Pain 거리·Net GEX 부호·P/C·IV Skew.<table><tr><th>시나리오</th><th>조건</th><th>색</th></tr><tr><td>PINNING</td><td>DTE≤5 × |spot−MP|/MP&lt;0.5%</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr><tr><td>GAMMA_SQUEEZE</td><td>P/C&lt;0.7 × call-heavy skew</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>VOLATILITY_EXPANSION</td><td>Net GEX &lt; 0 (MM short gamma)</td><td><span style="display:inline-block;background:#EAEEF2;color:#656D76;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">VAR</span></td></tr><tr><td>HEDGING</td><td>기본/중립 헤지 구간</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr></table></span></span><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">DTE 7</span></div>
+<div class="g2">
+  <div class="card"><div class="ct">감마 프로파일 (가상 현재가별 총 GEX)</div><div class="ch"><canvas id="cProf"></canvas></div></div>
+  <div class="card"><div class="ct">OI 분포 — 주 만기 2026-11-20 (콜 위 · 풋 아래)</div><div class="ch"><canvas id="cOi"></canvas></div></div>
 </div>
-
-<div class="sma-grid" style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;align-items:start;">
-  <div>
-    <div style="font-weight:600;font-size:12px;color:#656D76;margin-bottom:6px;">GEX by Strike</div>
-    <div style="position:relative;height:300px;"><canvas id="gexChart"></canvas></div>
-  </div>
-  <div><div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Metric</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Expiry</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-20</td></tr><tr style="background:#DDF4FF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Spot</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$nan</td></tr><tr style="background:#FFEBE9;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Max Pain</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$37.50</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Max Pain Dist</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+0.0%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">P/C OI</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">1.60</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">P/C Vol</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">N/A</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">IV Skew (put−call)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+211.73pp</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Net GEX</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">N/A</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">GEX Flip Zone</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">N/A</td></tr></tbody></table></div></div>
+<div class="interp"><div class="ih">해석</div><ul><li>주 만기 2026-11-20 (DTE 7) Max Pain <b>$37.50</b> — 현재가 대비 +5.09% (만기 여유: 방향성 참고치). 월물 2026-11-20 Max Pain $37.50.</li><li>Net GEX -$97K/1% · 감마 플립 <b>$40.55</b>, 현재가는 플립 아래(-12.24%) → <b>음(−)감마 레짐</b>: 딜러 헤지가 추세를 증폭 — 변동성 확대 구간.</li><li>감마 벽: 콜월 <b>$40.00</b>(+12.4%) 저항 · 풋월 <b>$35.00</b>(-1.7%) 지지. 두 벽 사이가 딜러 헤지가 만드는 가격 회랑.</li><li>P/C OI 1.52 · P/C 거래량 0.00 — 거래량이 OI 대비 콜 쏠림: 신규 콜 매수 가속.</li><li>25Δ 스큐 +8.8vol pt (풋−콜) · ATM IV 29.4% · CBOE IV30 32.0% · 기간구조 BACKWARDATION. 하방 보호 수요 과열.</li><li>ATM 스트래들 기준 주 만기 예상 변동폭 <b>±$2.15 (±6.04%)</b> → $33.44 ~ $37.74.</li><li><b>이진 이벤트 프라이싱 감지</b>: 기간구조 꺾임: 단기 53% vs 차월 36% — 시장이 불연속 갭을 가격에 반영 중.</li></ul><div class="xv"><b>교차검증</b> · L1 중립 / L3 변동성 확장 — 옵션 구조는 가격 회랑을 규정할 뿐 독립적 방향성은 제한적.</div></div><div class="sec" id="s4"><span class="sec-t">▶ SECTION 4 [차트 레이어 (L4 · 일봉)]</span><span class="sec-b"><span class="pill" style="background:#FFEBE9;color:#CF222B;">박스권 · 하방 우위</span><span class="pill" style="background:#EAEEF2;color:#656D76;">MIXED</span><span class="pill" style="background:#DDF4FF;color:#0969DA;">BB NEUTRAL</span></span></div>
+<div class="g2 w">
+  <div class="card"><div class="ct">가격 · 이동평균 · 볼린저밴드 (최근 120거래일)</div><div class="ch lg"><canvas id="cPx"></canvas></div></div>
+  <div class="card"><div class="tw"><table class=""><thead><tr><th>지표</th><th>값</th></tr></thead><tbody><tr><td>SMA 20 / 50 / 200</td><td>$38.31 / $36.68 / $36.84</td></tr><tr><td>EMA 9 / 21</td><td>$37.21 / $37.54</td></tr><tr><td>BB 상단 / 하단 · 폭</td><td>$41.34 / $35.27 · 15.8%</td></tr><tr><td>RSI(14) · ATR(14)</td><td>40.6 · $1.58</td></tr><tr><td>지지 (즉시 / 핵심)</td><td>$34.79 / $34.01</td></tr><tr><td>저항 (즉시 / 핵심)</td><td>$36.24 / $37.60</td></tr><tr><td>52주 고 / 저</td><td>$45.37 / $29.94</td></tr></tbody></table></div></div>
 </div>
-
-
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 4 · Chart / Technical Layer (L4)</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span class="tt tt-right" style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">RANGE_BOUND<span class="tt-body"><b>L4 Chart 시나리오</b><br>MA 배열 × short/med slope × BB width.<table><tr><th>시나리오</th><th>조건</th><th>색</th></tr><tr><td>UPTREND</td><td>FULL_BULL/RECOVERING × +slope</td><td><span style="display:inline-block;background:#DAFBE1;color:#1A7F5A;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BULL</span></td></tr><tr><td>DOWNTREND</td><td>FULL_BEAR × −slope</td><td><span style="display:inline-block;background:#FFEBE9;color:#CF222B;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">BEAR</span></td></tr><tr><td>BREAKOUT_PENDING</td><td>BB 수축 × 단기 +slope</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr><tr><td>RANGE_BOUND</td><td>명확한 방향 없음</td><td><span style="display:inline-block;background:#FFF8C5;color:#9A6700;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">NEU</span></td></tr></table></span></span><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">MIXED</span></div>
+<div class="interp"><div class="ih">해석</div><ul><li>이동평균 배열 <b>MIXED</b> — 종가 $35.59 / SMA20 $38.31 / SMA50 $36.68 / SMA200 $36.84. EMA9 $37.21 < EMA21 $37.54.</li><li>볼린저 폭 15.84% (1년 백분위 73) · NEUTRAL · 밴드 내 위치 5% (LOWER_ZONE). </li><li>RSI(14) 40.6 · ATR(14) $1.58 (4.44%) · 거래량 30일 평균 대비 1.14배.</li><li>지지 $34.79 / $34.01 · 저항 $36.24 / $37.60 · 60일 거래량 POC $35.27.</li></ul><div class="xv"><b>교차검증</b> · 차트 박스권는 L1 중립·L3 변동성 확장와 부분 상충 — 차트 가중치(15%)는 최저.</div></div><div class="sec" id="s5"><span class="sec-t">▶ SECTION 5 [3-Layer 통합 시나리오]</span><span class="sec-b"><span class="pill" style="background:#DDF4FF;color:#0969DA;">Score +0.111</span><span class="pill" style="background:#FFEBE9;color:#CF222B;">거시 제한</span><span class="pill" style="background:#FFF8C5;color:#9A6700;">최종 흡수, 이진 이벤트 프라이싱</span></span></div>
+<div class="card"><div class="ct">레이어 신호 매트릭스 (가중 점수 = score × confidence × weight)</div>
+<div class="tw"><table class=""><thead><tr><th>Layer</th><th>시나리오</th><th>Bull</th><th>Neut</th><th>Bear</th><th>Score</th><th>Conf</th><th>Weight</th><th>기여</th></tr></thead><tbody><tr><td><b>L1</b> Dark Pool</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">중립</span></td><td></td><td>●</td><td></td><td>-0.13</td><td>70%</td><td>0.35</td><td><span style="color:#CF222B;font-weight:600;">-0.032</span></td></tr><tr><td><b>L2</b> Short/CTB</td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">숏커버링</span></td><td>●</td><td></td><td></td><td>+0.40</td><td>100%</td><td>0.20</td><td><span style="color:#1A7F5A;font-weight:600;">+0.079</span></td></tr><tr><td><b>L3</b> Options</td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">변동성 확장</span></td><td>●</td><td></td><td></td><td>+0.36</td><td>100%</td><td>0.30</td><td><span style="color:#1A7F5A;font-weight:600;">+0.108</span></td></tr><tr><td><b>L4</b> Chart</td><td><span class="pill" style="background:#FFEBE9;color:#CF222B;">박스권 · 하방 우위</span></td><td></td><td></td><td>●</td><td>-0.37</td><td>80%</td><td>0.15</td><td><span style="color:#CF222B;font-weight:600;">-0.045</span></td></tr></tbody></table></div></div>
+<div class="card"><div class="ct">설계자 각본 — Phase 구조 (거래일 기준)</div><div class="tw"><table class=""><thead><tr><th>Phase</th><th>기간</th><th>내용</th><th>상태</th></tr></thead><tbody><tr><td><b>Phase 1</b> · Setup</td><td>2026-11-06 ~ 2026-11-12</td><td>레짐 시작 이후 -4.3% · L1 중립 전개</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">COMPLETE</span></td></tr><tr><td><b>Phase 2</b> · Transition</td><td>2026-11-13 ~ 2026-11-20</td><td>중립 × 변동성 확장 · 주 만기 2026-11-20</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">IN PROGRESS</span></td></tr><tr><td><b>Phase 3</b> · Resolution</td><td>2026-11-23 ~ 2026-12-14</td><td>RANGE · 상단 $36.24 / $40.00 · 하단 $35.00 / $33.44 · 촉매: 2026-11-20 월간 옵션 만기 (OPEX), 2026-11-26 미국 증시 휴장, 2026-11-27 조기 폐장 (13:00 ET), 2026-12-09 FOMC 금리 결정</td><td><span class="pill" style="background:#DDF4FF;color:#0969DA;">PENDING</span></td></tr></tbody></table></div></div>
+<div class="g2">
+  <div class="card"><div class="ct">시나리오 확률 매트릭스</div><div class="ch sm"><canvas id="cProb"></canvas></div>
+  <div class="muted">Raw Score +0.111 · 분산 0.33 · 거시 보정 -5.0%p · 패턴 보정 +5.0%p · 상한 80%</div></div>
+  <div class="card"><div class="ct">점수 기여도 분해</div><div class="ch sm"><canvas id="cContrib"></canvas></div></div>
 </div>
-<div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Metric</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Value</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Current</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$nan</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">SMA 20 / 50 / 200</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$nan / $nan / $nan</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BB Upper / Lower</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$nan / $nan</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BB Width %</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0.00%</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BB Position</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0.00</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Immediate R / S</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-  /  -</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Key R / S</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-  /  -</td></tr></tbody></table></div>
-
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 5 · 3-Layer Integrated Scenario</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Score +0.55</span><span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Macro NEUTRAL</span></div>
+<div class="card"><div class="ct">핵심 가격 레벨 지도</div><div class="tw"><table class=""><thead><tr><th>레벨</th><th>가격</th><th>거리</th><th>중요도</th></tr></thead><tbody><tr><td>52W High</td><td>$45.37</td><td><span style="color:#1A7F5A;font-weight:600;">+27.5%</span></td><td>LOW</td></tr><tr><td>BB Upper</td><td>$41.34</td><td><span style="color:#1A7F5A;font-weight:600;">+16.2%</span></td><td>LOW</td></tr><tr style="background:#FFF8C5;"><td>GEX Flip</td><td>$40.55</td><td><span style="color:#1A7F5A;font-weight:600;">+13.9%</span></td><td>HIGH</td></tr><tr style="background:#DAFBE1;"><td>Call Wall</td><td>$40.00</td><td><span style="color:#1A7F5A;font-weight:600;">+12.4%</span></td><td>HIGH</td></tr><tr><td>Expected Move ↑</td><td>$37.74</td><td><span style="color:#1A7F5A;font-weight:600;">+6.0%</span></td><td>MED</td></tr><tr><td>Key Resistance</td><td>$37.60</td><td><span style="color:#1A7F5A;font-weight:600;">+5.6%</span></td><td>MED</td></tr><tr style="background:#FFF8C5;"><td>Max Pain</td><td>$37.50</td><td><span style="color:#1A7F5A;font-weight:600;">+5.4%</span></td><td>MED</td></tr><tr><td>Monthly Max Pain</td><td>$37.50</td><td><span style="color:#1A7F5A;font-weight:600;">+5.4%</span></td><td>MED</td></tr><tr><td>SMA 200</td><td>$36.84</td><td><span style="color:#1A7F5A;font-weight:600;">+3.5%</span></td><td>MED</td></tr><tr><td>SMA 50</td><td>$36.68</td><td><span style="color:#1A7F5A;font-weight:600;">+3.1%</span></td><td>MED</td></tr><tr><td>Immediate Resistance</td><td>$36.24</td><td><span style="color:#1A7F5A;font-weight:600;">+1.8%</span></td><td>HIGH</td></tr><tr style="background:#DDF4FF;"><td>Current Price</td><td>$35.59</td><td>0%</td><td>—</td></tr><tr><td>Volume POC (60d)</td><td>$35.27</td><td><span style="color:#CF222B;font-weight:600;">-0.9%</span></td><td>MED</td></tr><tr><td>BB Lower</td><td>$35.27</td><td><span style="color:#CF222B;font-weight:600;">-0.9%</span></td><td>LOW</td></tr><tr style="background:#DAFBE1;"><td>Put Wall</td><td>$35.00</td><td><span style="color:#CF222B;font-weight:600;">-1.7%</span></td><td>HIGH</td></tr><tr><td>Immediate Support</td><td>$34.79</td><td><span style="color:#CF222B;font-weight:600;">-2.3%</span></td><td>HIGH</td></tr><tr><td>Key Support</td><td>$34.01</td><td><span style="color:#CF222B;font-weight:600;">-4.5%</span></td><td>MED</td></tr><tr><td>Expected Move ↓</td><td>$33.44</td><td><span style="color:#CF222B;font-weight:600;">-6.0%</span></td><td>MED</td></tr><tr><td>52W Low</td><td>$29.94</td><td><span style="color:#CF222B;font-weight:600;">-15.9%</span></td><td>LOW</td></tr></tbody></table></div></div><div class="sec" id="s6"><span class="sec-t">▶ SECTION 6 [요약 및 대응 포인트]</span><span class="sec-b"><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">Bull 트리거 1</span><span class="pill" style="background:#FFEBE9;color:#CF222B;">Bear 트리거 0</span></span></div>
+<div class="three">
+  <div><b style="color:#CF222B;">①</b> <b>[DARK POOL]</b> 다크풀 36.3%(20일 평균 대비 1.04배) · Net OBV -22.2K주 · CONVERGENCE → 중립.</div>
+  <div><b style="color:#CF222B;">②</b> <b>[SHORT/CTB]</b> Short% 33.6% (z -2.1, FALLING) · CTB 0.41% (Δ N/A) → 숏커버링.</div>
+  <div><b style="color:#CF222B;">③</b> <b>[OPTIONS]</b> Max Pain $37.50(DTE 7) · 플립 $40.55 (음감마) · 콜월 $40.00 / 풋월 $35.00 → 변동성 확장.</div>
 </div>
+<div class="card"><div class="ct">트리거 체크리스트</div><div class="tw"><table class=""><thead><tr><th>트리거</th><th>유형</th><th>상태</th><th>함의</th></tr></thead><tbody><tr><td>거래량 &gt; 30일 평균 150%</td><td>BREAKOUT</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>이동 개시 신호 (현재 1.14배)</td></tr><tr><td>BB 폭 1년 하위 20% (압축)</td><td>SETUP</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>변동성 폭발 전조 (백분위 73)</td></tr><tr><td>종가 &gt; GEX 플립 $40.55</td><td>STABILIZER</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>양감마: 변동성 억제 / 이탈 시 증폭</td></tr><tr><td>종가 &gt; 콜월 $40.00</td><td>BULLISH</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>감마 스퀴즈 연료 점화</td></tr><tr><td>종가 &lt; 풋월 $35.00</td><td>BEARISH</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>딜러 숏감마 가속 하락</td></tr><tr><td>종가 &lt; Max Pain $37.50</td><td>INFO</td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">MET</span></td><td>충족 시 만기 견인 상방 중력 (현재 상방 중력)</td></tr><tr><td>Net OBV (5d) &gt; 0</td><td>BULLISH</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>순매수 체결 우위</td></tr><tr><td>다크풀 비중 2일+ 40% 초과</td><td>ABSORPTION</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>장외 흡수 지속 (최근 5일 중 1일)</td></tr><tr><td>Short% 기울기 하락</td><td>BULLISH</td><td><span class="pill" style="background:#DAFBE1;color:#1A7F5A;">MET</span></td><td>숏 커버링 진행</td></tr><tr><td>CTB 수수료 &gt; 5%</td><td>SQUEEZE</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>대차 압박 — 스퀴즈 셋업</td></tr><tr><td>CTB 전일 대비 +5%↑</td><td>BEARISH</td><td><span class="pill" style="background:#FFF8C5;color:#9A6700;">N/A</span></td><td>공매도 수요 증가</td></tr><tr><td>종가 &gt; SMA50 $36.68</td><td>BULLISH</td><td><span class="pill" style="background:#EAEEF2;color:#656D76;">NOT MET</span></td><td>중기 추세 지지</td></tr></tbody></table></div></div>
+<div class="card"><div class="ct">리스크 요인</div><ul class="risk"><li>[이진 이벤트] 옵션시장이 불연속 갭을 프라이싱 — 방향 무관 갭 리스크, 사이즈 축소.</li><li>[거시 역풍] 유동성 제한 환경 — 상방 시나리오는 모델 대비 포지션 축소 필요.</li></ul></div><div class="sec" id="s7"><span class="sec-t">▶ SECTION 7 [핵심 결론 요약]</span><span class="sec-b"><span class="pill" style="background:#DDF4FF;color:#0969DA;">[B] 우세</span></span></div><div class="concl"><p class="cc">KBR의 가장 중요한 발견은 <u>음감마 레짐 — 딜러 헤지가 방향을 증폭하는 구간</u>이다. 4개 레이어 가중 점수는 +0.111(분산 0.33)로, 확률은 [A] 36.7% / [B] 37.2% / [C] 26.1%에 수렴한다. 점수를 가장 크게 움직인 레이어는 L3(+0.108)이며, 거시 유동성은 제한 환경으로 -5.0%p 보정되었다. 이 조합에서 설계자의 의도는 <u>가격 고정·시간가치 소멸을 통한 포지션 정리</u> 단계로 해석된다.</p><p class="cc">구조적으로 보면, 장외 비중 36.3%와 순체결 -22.2K주는 중립 흐름을, 공매도 측은 숏커버링 성격을 보인다. 옵션 측에서는 감마 플립 $40.55을 기준으로 현재가가 음감마(변동성 증폭) 구간에 있고, 콜월 $40.00과 풋월 $35.00이 딜러 헤지가 만드는 가격 회랑을 규정한다. 차트는 박스권(MIXED)로 후행 확인 역할에 그친다. 이 해석이 틀리는 경우는 순체결 부호가 반전되거나, 대차 비용이 급등해 공매도 성격이 방향성으로 전환될 때이다.</p><p class="cc">결정적 트리거는 다음 중 먼저 발생하는 것이다: 종가 기준 감마 플립 $40.55 상향 회복(양감마 진입·안정화); 콜월 $40.00 돌파(딜러 숏콜 헤지 매수 유발); 풋월 $35.00 붕괴(딜러 숏풋 헤지 매도 유발); 거래량 30일 평균 150% 이상 동반 볼린저 확장(이동 개시); CTB 0.41%에서 전일 대비 +5% 이상 상승 지속(공매도 공격 전환). 일정상 2026-11-20 월간 옵션 만기 (OPEX)이 Phase 2→3 전환의 시간적 기준점이다. Phase 3(2026-11-23 ~ 2026-12-14)의 기준 방향은 RANGE이며, 1차 목표 상단 $36.24 / 하단 $35.00이다. 위 트리거가 현 가설과 반대로 발동하면 시나리오 전체를 재산정한다.</p></div>
 
-<div style="font-weight:600;font-size:12px;color:#656D76;margin:8px 0 4px;">Architect Phase Table</div>
-<div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Phase</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Dates</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Description</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Status</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Phase 1 — Setup (완료)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-10-30 ~ 2026-11-12</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">축적/분배 완료 구간</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">COMPLETE</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Phase 2 — Transition (현재)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-13</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">ACCUMULATION × HEDGING</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">IN PROGRESS</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Phase 3 — Resolution (미래)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">2026-11-20 ~ 2026-12-14</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">UPWARD · 타겟 $nan / $nan (BB폭 0.0%)</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">PENDING</td></tr></tbody></table></div>
-<div style="font-weight:600;font-size:12px;color:#656D76;margin:12px 0 4px;">Probability Bar</div>
-<div style="position:relative;height:105px;"><canvas id="probChart"></canvas></div>
-<div style="font-size:11px;color:#656D76;margin-top:6px;">
-  Raw Score: <b>+0.55</b><span class="tt tt-i tt-left">ⓘ<span class="tt-body"><b>가중 signal 합산 (−1.00 ~ +1.00)</b><br>raw_score = Σ(layer_signal × weight) where BULLISH=+1, NEUTRAL=0, BEARISH=−1.<table><tr><th>Layer</th><th>Weight</th><th>근거</th></tr><tr><td>L1 Dark Pool</td><td>0.35</td><td>기관 의도 직접</td></tr><tr><td>L3 Options</td><td>0.30</td><td>MM 행동 예측력</td></tr><tr><td>L2 Short/CTB</td><td>0.20</td><td>구조적·해석 복잡</td></tr><tr><td>L4 Chart</td><td>0.15</td><td>후행 지표</td></tr></table><br><b>Score → 시나리오 매핑</b><table><tr><th>Score</th><th>A Bull</th><th>B Neut</th><th>C Bear</th></tr><tr><td>&gt; +0.50</td><td>65%</td><td>20%</td><td>15%</td></tr><tr><td>+0.20~+0.50</td><td>50%</td><td>30%</td><td>20%</td></tr><tr><td>−0.20~+0.20</td><td>30%</td><td>40%</td><td>30%</td></tr><tr><td>−0.50~−0.20</td><td>20%</td><td>30%</td><td>50%</td></tr><tr><td>&lt; −0.50</td><td>15%</td><td>20%</td><td>65%</td></tr></table>추가로 Macro (±7pp)·Pattern bonus (FINAL_ABSORPTION +5, GAMMA_SQUEEZE +8 등) 적용 후 80% 상한으로 정규화.</span></span> | Macro: <b>NEUTRAL</b> | Patterns: <b>none</b>
+<div class="foot">데이터: FINRA RegSHO · FINRA OTC Transparency · CBOE delayed options · IBKR stock-loan · Nasdaq short interest · Yahoo Finance · SEC EDGAR · FRED.
+FINRA Short%는 TRF 보고(장외) 체결 기준이며 포지션 잔고가 아니다. 본 리포트는 구조적 자금 흐름 분석 자료이며 투자 권유가 아니다. Smart Money Analyzer v3 · 4.8s</div>
 </div>
-<div style="font-weight:600;font-size:12px;color:#656D76;margin:12px 0 4px;">Key Price Level Map</div>
-<div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Level Type</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Price</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Distance</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Significance</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Current Price</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$nan</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">0%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">—</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Max Pain</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">$37.50</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">+nan%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MED</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">GEX Flip</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">N/A</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">LOW</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Imm Resistance</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">HIGH</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Key Resistance</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MED</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Imm Support</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">HIGH</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Key Support</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">-</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MED</td></tr></tbody></table></div>
-
-
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 6 · Summary &amp; Action Points</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">3-Line Summary</span></div>
-</div>
-
-<div class="summary-row" style="font-size:11px;line-height:1.7;color:#1F2328;margin-bottom:10px;">
-  <div><b style="color:#CF222B;">①</b> [DARK POOL] 다크풀/OBV 부분 데이터. NEUTRAL. 시나리오: ACCUMULATION.</div>
-  <div><b style="color:#CF222B;">②</b> [SHORT/CTB] Short% 33.7 (14d avg 56.8). SHORT_COVERING → SHORT_COVERING.</div>
-  <div><b style="color:#CF222B;">③</b> [OPTIONS] Max Pain $37.50 (+0.0%), Net GEX N/A, Flip N/A. 시나리오: HEDGING.</div>
-</div>
-
-<div style="background:#DAFBE1;border:0.5px solid #D0D7DE;border-radius:6px;padding:10px 14px;margin:4px 0 12px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;">
-    <div style="font-size:12px;color:#656D76;font-weight:600;">Positioning Strength</div>
-    <div style="font-size:13px;color:#1A7F5A;font-weight:700;">Strong Long (net +3)</div>
-  </div>
-  <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
-    <span style="color:#CF222B;min-width:80px;text-align:right;">Bear 0/1 MET</span>
-    <div style="flex:1;display:flex;height:10px;background:#EAEEF2;border-radius:5px;overflow:hidden;">
-      <div style="width:0%;background:#CF222B;"></div>
-      <div style="flex:1;"></div>
-      <div style="width:100%;background:#1A7F5A;"></div>
-    </div>
-    <span style="color:#1A7F5A;min-width:80px;">Bull 3/6 MET</span>
-  </div>
-</div>
-
-<div style="font-weight:600;font-size:12px;color:#656D76;margin:8px 0 4px;">Trigger Checklist</div>
-<div class="tbl-scroll"><table style="border-collapse:collapse;width:100%;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;font-size:12px;"><thead><tr><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Trigger</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Type</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Status</th><th style="background:#EAEEF2;color:#656D76;padding:4px 6px;border:0.5px solid #D0D7DE;text-align:left;">Implication</th></tr></thead><tbody><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Volume spike &gt; 150%</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">WATCHING</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Breakout start</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Price &lt; Max Pain</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BEARISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Downward gravity</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Close &gt; SMA50</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Trend support</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Total OBV (5d) &gt; 0</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Net accumulation 우위</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Short% slope FALLING</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Short covering 진행</td></tr><tr style="background:#F6F8FA;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BB Width ≤ 52w low × 1.2</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">Theta Burn 임박 (cur 0.0% / 52w low 4.4%)</td></tr><tr style="background:#FFFFFF;"><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">DP% &gt; 40 for 2d</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">BULLISH</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">NOT MET</td><td style="padding:4px 6px;border:0.5px solid #D0D7DE;color:#1F2328;">조건 미충족 (40%, 36%)</td></tr></tbody></table></div>
-<div style="font-weight:600;font-size:12px;color:#656D76;margin:12px 0 4px;">Risk Factors</div>
-<ul style="font-size:12px;color:#1F2328;margin-left:18px;">
-  <li>[CATALYST_RISK]: 미공개 공시 발생 시 가정 붕괴 가능. Section 0 확인 필수.</li><li>[LIQUIDITY_SHOCK]: 시장 전체 유동성 급변 시 구조적 포지션 재조정.</li>
-</ul>
-
-
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ SECTION 7 · Core Conclusions</span>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
-</div>
-<div style="margin-top:4px;"><div style="background:#F6F8FA;border-left:3px solid #0969DA;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:12px;">  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">    <span style="font-size:13px;font-weight:700;color:#0969DA;">핵심 단일 발견</span>    <span style="font-size:10px;color:#656D76;letter-spacing:0.08em;text-transform:uppercase;">Key Finding</span>  </div>  <div style="font-size:13px;line-height:1.8;color:#1F2328;">KBR의 4개 레이어 가중합 점수는 <b>+0.55</b> · 시나리오 확률은 [A] 65.0% / [B] 20.0% / [C] 15.0%로 수렴하며, 최우선은 <b style="color:#1A7F5A;">시나리오 [A] (65.0%)</b>이다. L1은 ACCUMULATION (BULLISH), L2는 SHORT_COVERING (SHORT_COVERING), L3은 HEDGING (Max Pain $37.50, Net GEX N/A)의 구조적 배치를 보여준다. 패턴 탐지 결과: <b>정형 패턴 없음</b>. 이 조합에서 Architect의 의도는 <b>축적(accumulation)</b>의 단계에 가깝다고 해석된다.</div></div><div style="background:#F6F8FA;border-left:3px solid #9A6700;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:12px;">  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">    <span style="font-size:13px;font-weight:700;color:#9A6700;">구조적 메커니즘</span>    <span style="font-size:10px;color:#656D76;letter-spacing:0.08em;text-transform:uppercase;">Structural Mechanism</span>  </div>  <div style="font-size:13px;line-height:1.8;color:#1F2328;">Total OBV(5영업일 누적) <b>2M</b>, 다크풀 비중 <b>36%</b>, Divergence <b>NEUTRAL</b>로 기록되며, L2에서 Short% 기울기 <b>-2.132</b> · CTB <b>N/A</b> 조합은 L3 GEX 플립 <b>N/A</b> 및 Max Pain 거리 <b>+0.0%</b>와 <b>부분 상충적으로</b> 맞물린다. 매크로는 <b>NEUTRAL</b>로 분류되어 확률을 <b>05~10%p</b> 조정했다. 해석이 틀릴 위험은 CTB와 Total OBV의 동시 역전, 또는 다가오는 이벤트(어닝/FOMC)의 가이던스 변질이다.</div></div><div style="background:#F6F8FA;border-left:3px solid #1A7F5A;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:12px;">  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">    <span style="font-size:13px;font-weight:700;color:#1A7F5A;">결정적 트리거</span>    <span style="font-size:10px;color:#656D76;letter-spacing:0.08em;text-transform:uppercase;">Decisive Trigger</span>  </div>  <div style="font-size:13px;line-height:1.8;color:#1F2328;">본 분석의 방향성·레짐을 판가름할 단일 촉매는 다음 중 어느 것이든 먼저 발동될 때다: <b>다크풀 비중이 36%에서 2거래일 연속 45% 이상 유지 (기관 활동 지속); Total OBV가 음전환 (누적 5영업일 합산 &lt; 0, 축적 흐름 이탈)</b>. 위 촉매 중 하나라도 현 가설과 반대 방향으로 발동되면 본 분석의 방향성 가정은 재설정되어야 한다.</div></div></div>
-<div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
-  Generated by sma.py · Data: Yahoo Finance, FINRA, FRED, SEC EDGAR, iborrowdesk (free tier only)
-</div>
-</div>
+<script id="sma-data" type="application/json">{"price":35.59000015258789,"dp":{"labels":["10-19","10-20","10-21","10-22","10-23","10-26","10-27","10-28","10-29","10-30","11-02","11-03","11-04","11-05","11-06","11-09","11-10","11-11","11-12","11-13"],"dp":[29.099770008068955,37.585981315286624,39.495237369603046,38.53336587713759,32.93182804310408,36.0355172235002,36.54039178644632,33.31768659337048,39.670152954716784,34.04918100844906,36.35572382975529,42.106633205227496,35.40041947822402,41.92556710136481,18.00092748629436,29.235078299010205,24.217038288295896,40.34487281045381,36.08380980060337,36.275328048725356],"off":[317362.091708,495683.921586,476589.029339,1171722.589592,447708.202246,711196.967923,681003.281724,932761.953868,1515558.523482,757628.326619,726496.42929,913419.194121,751869.509298,568301.062059,316528.308919,381020.775471,286778.16741,1353086.344317,885099.770599,754164.070133],"avg":34.78574644625855},"obv":{"labels":["11-09","11-10","11-11","11-12","11-13"],"cum":[102426.67442056462,7032.424005051333,-308578.1843580479,-272513.7638491238,-22235.976387406903],"day":[102426.67442056462,-95394.25041551329,-315610.6083630992,36064.42050892413,250277.78746171689]},"obv4":{"inst":null,"pro":null,"ret":null,"total":-22235.976387406903},"coh":{"week_start":"2026-10-19","ats_shares":2368617.0,"otc_non_ats_shares":785155.926517,"week_volume":8016400.0,"ats_share_pct":29.547140861234467,"otc_share_pct":9.794370621688039,"lit_share_pct":60.658488517077494,"ats_share_prev_pct":30.162538179841043,"ats_trades_avg_size":48.968720281166014,"otc_trades_avg_size":48.56834878863046},"short":{"labels":["10-19","10-20","10-21","10-22","10-23","10-26","10-27","10-28","10-29","10-30","11-02","11-03","11-04","11-05","11-06","11-09","11-10","11-11","11-12","11-13"],"sp":[59.88309847946762,45.09225300224322,55.61731621637001,42.18421640007057,61.38865363426687,68.88830368664395,82.70557016100656,59.77922781667279,61.53281531289385,56.55768603019574,60.95491529473585,68.10407114103123,54.70069665732274,53.02110141151163,60.13536421183411,59.37151986748233,63.140169949592185,36.51450228413872,33.688184671340245,33.60429954430291],"avg":58.50672346402871,"ctb":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,0.4095]},"gex":{"labels":["<25","25","27.5","30","32.5","35","37.5","40","42.5","45",">46"],"vals":[-5.000726741680042,-6.383906478740479,-19.86104237830371,-2194.741448058985,-4945.11455637268,-41673.22950657803,-47108.63188046231,5006.8003193716195,3452.1658273769,169.97150999646527,94.06508865688576],"flip":7.221760715996697,"spot":5.236000061035156,"mp":6.0,"flipv":40.55440178999174,"mpv":37.5},"prof":[{"s":28.472000122070312,"g":-29410.076610491396},{"s":28.82790012359619,"g":-32160.82006818521},{"s":29.18380012512207,"g":-35188.91368437661},{"s":29.53970012664795,"g":-38538.026462396905},{"s":29.89560012817383,"g":-42247.564453325765},{"s":30.251500129699707,"g":-46346.064045632134},{"s":30.607400131225585,"g":-50843.45075907976},{"s":30.963300132751463,"g":-55722.919100709296},{"s":31.319200134277345,"g":-60933.52652960656},{"s":31.675100135803223,"g":-66384.81646550416},{"s":32.0310001373291,"g":-71944.79814826157},{"s":32.38690013885498,"g":-77442.35244950117},{"s":32.74280014038086,"g":-82674.59878957292},{"s":33.09870014190674,"g":-87419.01844736654},{"s":33.454600143432614,"g":-91449.31841556981},{"s":33.810500144958496,"g":-94553.30775583236},{"s":34.16640014648438,"g":-96550.60706482564},{"s":34.52230014801025,"g":-97307.93058762189},{"s":34.878200149536134,"g":-96749.99631215258},{"s":35.23410015106201,"g":-94864.7689490157},{"s":35.59000015258789,"g":-91702.58921598778},{"s":35.94590015411377,"g":-87369.61992616682},{"s":36.30180015563965,"g":-82016.78166344936},{"s":36.65770015716553,"g":-75825.83844047008},{"s":37.0136001586914,"g":-68994.4715298539},{"s":37.369500160217285,"g":-61722.05992815249},{"s":37.72540016174317,"g":-54197.53491640191},{"s":38.08130016326904,"g":-46590.19091133587},{"s":38.43720016479492,"g":-39043.817577030364},{"s":38.7931001663208,"g":-31674.055587078863},{"s":39.14900016784668,"g":-24568.52850154564},{"s":39.50490016937256,"g":-17789.091531473037},{"s":39.860800170898436,"g":-11375.461299845236},{"s":40.21670017242432,"g":-5349.525336796649},{"s":40.57260017395019,"g":280.2584883214231},{"s":40.928500175476074,"g":5514.810388546633},{"s":41.284400177001956,"g":10361.00182190799},{"s":41.64030017852783,"g":14828.98387313169},{"s":41.99620018005371,"g":18930.283542313267},{"s":42.35210018157959,"g":22676.597196771043},{"s":42.70800018310547,"g":26079.160668846984}],"oi":{"labels":["27.5","30","32.5","35","37.5","40","42.5"],"c":[0.0,0.0,0.0,20.0,52.0,81.0,73.0],"p":[-1.0,-162.0,-40.0,-71.0,-55.0,-35.0,-0.0],"spot":3.2360000610351562},"px":{"labels":["05-27","05-28","05-29","06-01","06-02","06-03","06-04","06-05","06-08","06-09","06-10","06-11","06-12","06-15","06-16","06-17","06-18","06-22","06-23","06-24","06-25","06-26","06-29","06-30","07-01","07-02","07-06","07-07","07-08","07-09","07-10","07-13","07-14","07-15","07-16","07-17","07-20","07-21","07-22","07-23","07-24","07-27","07-28","07-29","07-30","07-31","08-03","08-04","08-05","08-06","08-07","08-10","08-11","08-12","08-13","08-14","08-17","08-18","08-19","08-20","08-21","08-24","08-25","08-26","08-27","08-28","08-31","09-01","09-02","09-03","09-04","09-08","09-09","09-10","09-11","09-14","09-15","09-16","09-17","09-18","09-21","09-22","09-23","09-24","09-25","09-28","09-29","09-30","10-01","10-02","10-05","10-06","10-07","10-08","10-09","10-12","10-13","10-14","10-15","10-16","10-19","10-20","10-21","10-22","10-23","10-26","10-27","10-28","10-29","10-30","11-02","11-03","11-04","11-05","11-06","11-09","11-10","11-11","11-12","11-13"],"c":[33.0099983215332,34.439998626708984,34.95000076293945,35.650001525878906,35.720001220703125,35.72999954223633,36.130001068115234,35.560001373291016,35.209999084472656,35.31999969482422,34.220001220703125,35.36000061035156,35.84000015258789,34.81999969482422,35.029998779296875,33.91999816894531,32.81999969482422,32.11000061035156,33.20000076293945,33.189998626708984,32.25,33.369998931884766,33.709999084472656,34.529998779296875,34.66999816894531,36.40999984741211,37.43000030517578,36.66999816894531,36.27000045776367,35.81999969482422,35.470001220703125,35.75,35.5099983215332,35.97999954223633,36.18000030517578,35.06999969482422,34.56999969482422,34.38999938964844,35.619998931884766,36.349998474121094,36.93000030517578,36.81999969482422,37.400001525878906,35.93000030517578,34.369998931884766,36.61000061035156,37.09000015258789,37.83000183105469,36.33000183105469,37.56999969482422,38.040000915527344,38.290000915527344,37.560001373291016,38.099998474121094,38.15999984741211,38.369998931884766,37.54999923706055,37.619998931884766,37.970001220703125,37.900001525878906,38.58000183105469,37.689998626708984,37.689998626708984,37.93000030517578,38.189998626708984,38.029998779296875,37.5,36.959999084472656,36.93000030517578,37.290000915527344,36.81999969482422,37.040000915527344,36.13999938964844,36.45000076293945,36.59000015258789,36.79999923706055,37.31999969482422,36.599998474121094,36.70000076293945,35.540000915527344,35.7400016784668,35.0099983215332,35.34000015258789,34.810001373291016,34.540000915527344,34.84000015258789,35.130001068115234,35.15999984741211,35.04999923706055,34.2400016784668,34.52000045776367,34.61000061035156,33.88999938964844,35.18000030517578,35.34000015258789,35.189998626708984,35.40999984741211,35.22999954223633,36.439998626708984,36.380001068115234,36.7599983215332,36.84000015258789,37.310001373291016,39.529998779296875,39.22999954223633,40.02000045776367,40.22999954223633,40.13999938964844,38.31999969482422,38.70000076293945,39.689998626708984,39.7599983215332,39.63999938964844,38.040000915527344,37.16999816894531,38.650001525878906,38.900001525878906,36.290000915527344,35.31999969482422,35.59000015258789],"s20":[33.57800035476684,33.499000263214114,33.372000217437744,33.28200025558472,33.134500408172606,33.09200029373169,33.143000316619876,33.261000347137454,33.39450025558472,33.53700017929077,33.644000148773195,33.88700017929077,34.135000228881836,34.37300024032593,34.51250009536743,34.61599998474121,34.640499877929685,34.640999984741214,34.62800006866455,34.61149997711182,34.573500061035155,34.52000007629395,34.4579999923706,34.4019998550415,34.34949970245361,34.383499717712404,34.44849967956543,34.50399951934814,34.556999588012694,34.58199958801269,34.64449958801269,34.66399955749512,34.64749946594238,34.705499458312985,34.762999534606934,34.82049961090088,34.90799961090088,35.021999549865725,35.142999458312985,35.30099945068359,35.534999465942384,35.707499504089355,35.89199962615967,35.96199970245361,35.94699974060059,35.95699977874756,35.93999977111817,35.99799995422363,36.001000022888185,36.088500022888184,36.217000007629395,36.344000053405765,36.44650020599365,36.55250015258789,36.651500129699706,36.81650009155273,36.965500068664554,37.12700004577637,37.244500160217285,37.32200031280517,37.40450038909912,37.44800033569336,37.462500190734865,37.562500190734866,37.75350017547608,37.82450008392334,37.84500007629394,37.801499938964845,37.831499862670896,37.81749992370605,37.7564998626709,37.6939998626709,37.62299976348877,37.54049987792969,37.46199989318848,37.38349990844726,37.37199993133545,37.32099990844726,37.257499885559085,37.13949985504151,36.99749984741211,36.86349983215332,36.74599990844727,36.589999961853025,36.40750007629394,36.248000144958496,36.129500198364255,36.03950023651123,35.945500183105466,35.79300022125244,35.67800025939941,35.55650024414062,35.444000244140625,35.38050022125244,35.31800022125244,35.23750019073486,35.14200019836426,35.07350025177002,35.060500144958496,35.10250015258789,35.15349998474121,35.24500007629395,35.3435001373291,35.57950000762939,35.81399993896484,36.07299995422363,36.327999877929685,36.57699985504151,36.740499877929686,36.96349983215332,37.22199974060059,37.479499626159665,37.76699962615967,37.90999965667724,38.001499557495116,38.174499702453616,38.34899978637695,38.4019998550415,38.34599990844727,38.3064998626709],"s50":[null,null,null,null,null,null,null,null,null,35.206800117492676,35.17500011444092,35.14500011444092,35.1114001083374,35.04680011749267,34.994800071716305,34.91820003509522,34.80860004425049,34.70080005645752,34.6314001083374,34.55740009307861,34.47520008087158,34.40860004425049,34.34900005340576,34.311200065612795,34.27540004730225,34.26940006256103,34.29800006866455,34.32680004119873,34.347600059509276,34.358200035095216,34.347600059509276,34.342200050354,34.30259998321533,34.27319995880127,34.22340000152588,34.19319995880127,34.182399940490725,34.2061999130249,34.267799873352054,34.34539981842041,34.44239978790283,34.568799781799314,34.69919982910156,34.81659984588623,34.85919979095459,34.954399795532225,35.04959976196289,35.16419982910156,35.2215998840332,35.302599868774415,35.403199920654295,35.48019996643066,35.5323999786377,35.58139991760254,35.630199890136716,35.68299987792969,35.71139984130859,35.75259979248047,35.80779983520508,35.85939987182617,35.946599884033205,35.993199844360355,36.03019981384277,36.09239982604981,36.15559982299805,36.23779983520508,36.331399841308595,36.428399810791014,36.502999801635745,36.58499984741211,36.676399841308594,36.74979988098144,36.79839988708496,36.83679992675781,36.875199966430664,36.882999954223635,36.8807999420166,36.87939994812012,36.88799995422363,36.88239997863769,36.88779998779297,36.87299995422363,36.869599990844726,36.84620002746582,36.81340003967285,36.808800048828125,36.820000076293944,36.835400085449216,36.82400009155273,36.78180015563965,36.73360015869141,36.68940017700195,36.61920013427734,36.60420013427734,36.6236001586914,36.59520011901856,36.56160011291504,36.50960006713867,36.51180000305176,36.488000030517576,36.4623999786377,36.4333999633789,36.42839996337891,36.456999969482425,36.478399963378905,36.51139999389648,36.565,36.61540000915527,36.622399978637695,36.63839996337891,36.660599899291995,36.70199989318848,36.740999908447264,36.7431999206543,36.722799911499024,36.73519996643066,36.763199996948245,36.749800033569336,36.7176000213623,36.68360000610352],"s200":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"bbu":[38.39934309948705,38.20817398136932,37.77055260339222,37.40834287610002,36.64482005746991,36.45178393874536,36.651442537523394,36.9244959183131,37.136914192785184,37.34423107448616,37.401384925797615,37.421647040438145,37.48196050481714,37.15657450320741,37.129146361451774,36.95189799935429,36.888606737523574,36.88684933049391,36.90385296784442,36.92374010488454,37.01133790466025,37.01353628523924,36.96730009139073,36.85167455983507,36.72790677326641,36.85739793677654,37.15948698876042,37.34601555842764,37.48784996341179,37.546790296366204,37.62876830256984,37.671719068192964,37.63276912625225,37.746476106230304,37.8691361262106,37.904584410282574,37.856406656836626,37.692023019540876,37.68820006995561,37.731373298126144,37.62227094731255,37.612880526207945,37.70009992557682,37.65873368248051,37.69372407538738,37.71645597586109,37.64801674052348,37.87195510522439,37.876878510630114,38.08201322102061,38.360177293797676,38.65582651420311,38.782979720981935,38.985087108881714,39.174858040216144,39.33619334598667,39.280300603595045,39.13024879442313,39.153871828099625,39.205503651347016,39.3554336372477,39.383599776107324,39.400787080740606,39.37659946021294,38.84224724560504,38.78313363185044,38.7562954792942,38.79119212614816,38.66500548934925,38.67710180302877,38.71207893538103,38.66521345286274,38.807265002545215,38.80736175242009,38.75977642316468,38.64140747827411,38.62781222084121,38.61466023723099,38.542145938650734,38.589333750273866,38.41103164958893,38.48225543156186,38.446804119865966,38.39683080893438,38.26758420060862,38.07092714049559,37.919298382922015,37.83421973410574,37.74074345520237,37.6233231541025,37.524711435906774,37.347703372549105,37.353223755483214,37.23536873126228,37.08793305154809,36.87174431851228,36.473489313756524,36.226969486798346,36.144095108136,36.31466943990186,36.54171064832956,36.81292156579668,37.15198287641441,38.12827541006014,38.76788092485232,39.50890475546975,40.17814554971575,40.725377969531216,40.89301423210995,41.03313004114105,41.29474114216916,41.51010469585799,41.54480344371055,41.496975889165405,41.410524420297,41.33755799758762,41.25759314927814,41.1132619388396,41.25602625617802,41.3409831750066],"bbl":[28.75665761004664,28.789826545058908,28.973447831483274,29.15565763506942,29.624180758875305,29.732216648718012,29.634558095716358,29.59750477596181,29.652086318384253,29.729769284095383,29.886615371748775,30.352353318143404,30.788039952946537,31.589425977444446,31.89585382928308,32.28010197012813,32.392393018335795,32.39515063898852,32.352147169484674,32.2992598493391,32.13566221741006,32.02646386734865,31.948699893350476,31.952325150247937,31.971092631640815,31.909601498648268,31.737512370370442,31.661983480268646,31.626149212613598,31.617208879659177,31.66023087345555,31.656280046797267,31.662229805632514,31.664522810395667,31.65686294300327,31.73641481151919,31.959592564965135,32.351976080190575,32.59779884667036,32.87062560324104,33.44772798457222,33.802118481970766,34.08389932674251,34.26526572242671,34.2002754058138,34.19754358163403,34.23198280171285,34.12404480322287,34.125121535146256,34.09498682475576,34.07382272146111,34.032173592608416,34.11002069100537,34.119913196294064,34.12814221918327,34.296806837118794,34.65069953373406,35.12375129712961,35.335128492334945,35.43849697426333,35.45356714095054,35.51240089527939,35.52421330072912,35.748400921256795,36.66475310534712,36.86586653599624,36.93370467329368,36.81180775178153,36.99799423599254,36.957898044383334,36.80092078996077,36.72278627247906,36.43873452443233,36.27363800343929,36.16422336321227,36.125592338620415,36.1161876418297,36.02733957966353,35.972853832467436,35.68966595980915,35.58396804523529,35.244744232744786,35.04519569702857,34.78316911477167,34.54741595197927,34.4250731494214,34.339702013806495,34.244780738916724,34.15025691100856,33.96267728840238,33.83128908289205,33.76529711573214,33.534776732798036,33.5256317112426,33.54806739095679,33.60325606295745,33.81051108297199,33.920031016741696,33.97690518178099,33.890330865273924,33.765289321152856,33.67707858679122,33.535017398243795,33.03072460519864,32.86011895307736,32.637095152977516,32.47785420614362,32.4286217405518,32.587985523749424,32.893869623165585,33.149258339032016,33.44889455646134,33.989195808608784,34.32302342418908,34.59247469469323,35.01144140731961,35.440406423475764,35.690737771243406,35.43597356071652,35.272016550335195],"v":[1437400.0,2334900.0,3977800.0,2129000.0,3528700.0,2247300.0,1581500.0,1251400.0,1200100.0,1242500.0,1202200.0,1477200.0,1044300.0,1506600.0,1268500.0,1434000.0,4001200.0,1574400.0,1616100.0,1338000.0,1338200.0,2413000.0,3975500.0,2486400.0,2395000.0,2030300.0,2454100.0,2094500.0,1188800.0,1341700.0,1031900.0,1291200.0,1581900.0,1608000.0,1190600.0,1291500.0,1470400.0,1391900.0,1310800.0,1723000.0,1800700.0,1296300.0,1810000.0,2797000.0,3960000.0,3842700.0,1645200.0,1171700.0,1364000.0,1768900.0,1096200.0,1103800.0,1261600.0,1157800.0,880100.0,1310800.0,1246900.0,979700.0,1698600.0,1151300.0,1163800.0,942000.0,1009500.0,687400.0,1244000.0,1121400.0,1253200.0,963600.0,1005400.0,820300.0,1036100.0,1904400.0,1050700.0,752800.0,1347900.0,746400.0,1416600.0,1390000.0,1093000.0,2786900.0,1299000.0,2038500.0,1374900.0,1175400.0,1402900.0,1967800.0,2241600.0,1783400.0,1653200.0,1897800.0,1596400.0,1734600.0,1470100.0,2081000.0,1176800.0,907100.0,1115100.0,1095500.0,1769400.0,1366200.0,1090600.0,1318800.0,1206700.0,3040800.0,1359500.0,1973600.0,1863700.0,2799600.0,3820400.0,2225100.0,1998300.0,2169300.0,2123900.0,1355500.0,1758400.0,1303300.0,1184200.0,3353800.0,2452900.0,2079000.0]},"prob":[36.7,37.2,26.1],"contrib":{"L1":-0.032,"L2":0.079,"L3":0.108,"L4":-0.045,"macro":-0.05,"patterns":0.05},"hist_n":143}</script>
+<script>
+(function(){
+const D=JSON.parse(document.getElementById('sma-data').textContent);
+const F='-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+Chart.defaults.font.family=F;Chart.defaults.font.size=11;Chart.defaults.color='#1F2328';
+Chart.defaults.plugins.legend.labels.font={family:F,size:11};
+Chart.defaults.maintainAspectRatio=false;
+const G='#EAEEF2',BU='#1A7F5A',BE='#CF222B',WA='#9A6700',IN='#0969DA';
+const a=(h,o)=>{const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${o})`;};
+const fmt=v=>{if(v==null)return'N/A';const x=Math.abs(v),s=v<0?'-':'';return x>=1e9?s+(x/1e9).toFixed(2)+'B':x>=1e6?s+(x/1e6).toFixed(2)+'M':x>=1e3?s+(x/1e3).toFixed(1)+'K':s+x.toFixed(0);};
+const grid={color:G};
+const endLabels={id:'endLabels',afterDatasetsDraw(c,_,o){if(!o||!o.on)return;const ctx=c.ctx;ctx.save();ctx.font='600 11px '+F;
+ c.data.datasets.forEach((ds,i)=>{c.getDatasetMeta(i).data.forEach((b,j)=>{const v=ds.data[j];if(v==null)return;const t=o.f?o.f(v):v;
+ ctx.fillStyle=o.color||'#1F2328';const hz=c.options.indexAxis==='y';ctx.textAlign=hz?(v<0?'right':'left'):'center';ctx.textBaseline='middle';
+ hz?ctx.fillText(t,b.x+(v<0?-4:4),b.y):ctx.fillText(t,b.x,b.y-8);});});ctx.restore();}};
+Chart.register(endLabels);
+const mk=(id,cfg)=>{const el=document.getElementById(id);if(el)new Chart(el,cfg);};
+const vline=(v,c,label,dash,pos)=>v==null?null:{type:'line',scaleID:'x',value:v,borderColor:c,borderWidth:1.5,borderDash:dash||[],
+ label:{display:true,content:label,position:pos||'start',backgroundColor:a(c,.9),color:'#fff',font:{family:F,size:10,weight:'600'},padding:3}};
+const anns=arr=>Object.fromEntries(arr.filter(Boolean).map((x,i)=>['a'+i,x]));
+// L1
+if(D.dp.labels.length){mk('cDp',{data:{labels:D.dp.labels,datasets:[
+ {type:'bar',label:'DP %',data:D.dp.dp,backgroundColor:a(IN,.85),yAxisID:'y'},
+ {type:'line',label:'장외 거래량',data:D.dp.off,borderColor:WA,backgroundColor:WA,pointRadius:2,borderWidth:1.5,yAxisID:'y1'}]},
+ options:{plugins:{annotation:{annotations:anns([D.dp.avg==null?null:{type:'line',scaleID:'y',value:D.dp.avg,borderColor:MUTED(),borderDash:[4,4],borderWidth:1,label:{display:true,content:'20일 평균 '+D.dp.avg.toFixed(1)+'%',position:'end',font:{size:10},backgroundColor:'rgba(101,109,118,.85)'}}])}},
+ scales:{y:{grid,title:{display:true,text:'DP %'},suggestedMin:20},y1:{position:'right',grid:{display:false},ticks:{callback:fmt}},x:{grid:{display:false}}}}});}
+function MUTED(){return '#656D76';}
+if(D.obv.labels.length){const end=D.obv.cum[D.obv.cum.length-1]||0,c=end>=0?BU:BE;
+ mk('cObv',{data:{labels:D.obv.labels,datasets:[
+ {type:'bar',label:'일별 순체결',data:D.obv.day,backgroundColor:D.obv.day.map(v=>a(v>=0?BU:BE,.85))},
+ {type:'line',label:'누적',data:D.obv.cum,borderColor:c,backgroundColor:a(c,.12),fill:true,tension:.25,pointRadius:3}]},
+ options:{scales:{y:{grid,ticks:{callback:fmt}},x:{grid:{display:false}}}}});}
+{const o=D.obv4,labels=['기관','프로','리테일','전체(Total)'],vals=[o.inst,o.pro,o.ret,o.total];
+ mk('cObv4',{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:[a(BU,.85),a(WA,.85),a(BE,.85),a('#A32D2D',.85)]}]},
+ options:{indexAxis:'y',plugins:{legend:{display:false},endLabels:{on:true,f:v=>(v>=0?'+':'')+fmt(v)}},
+ scales:{x:{grid,ticks:{callback:fmt},suggestedMin:-Math.abs(o.total||1)*1.4,suggestedMax:Math.abs(o.total||1)*1.4},y:{grid:{display:false}}}}});}
+if(D.coh){const c=D.coh;mk('cCoh',{type:'bar',data:{labels:[c.week_start+'주'],datasets:[
+ {label:'ATS(다크풀)',data:[c.ats_share_pct],backgroundColor:a(BU,.85)},{label:'홀세일러(리테일)',data:[c.otc_share_pct],backgroundColor:a(BE,.85)},
+ {label:'거래소(Lit)',data:[c.lit_share_pct],backgroundColor:a(WA,.85)}]},
+ options:{indexAxis:'y',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:t=>t.dataset.label+': '+t.raw.toFixed(1)+'%'}}},
+ scales:{x:{stacked:true,max:100,grid,ticks:{callback:v=>v+'%'}},y:{stacked:true,grid:{display:false}}}}});}
+// L2
+if(D.short.labels.length){const hasC=D.short.ctb.some(v=>v!=null);const ds=[{type:'line',label:'Short %',data:D.short.sp,borderColor:BE,backgroundColor:a(BE,.1),fill:true,tension:.2,pointRadius:2,yAxisID:'y'}];
+ if(hasC)ds.push({type:'line',label:'CTB %',data:D.short.ctb,borderColor:IN,pointRadius:2,borderWidth:1.5,spanGaps:true,yAxisID:'y1'});
+ mk('cShort',{data:{labels:D.short.labels,datasets:ds},options:{plugins:{annotation:{annotations:anns([D.short.avg==null?null:{type:'line',scaleID:'y',value:D.short.avg,borderColor:WA,borderDash:[4,4],borderWidth:1,label:{display:true,content:'14일 평균 '+D.short.avg.toFixed(1)+'%',position:'end',font:{size:10},backgroundColor:a(WA,.9)}}])}},
+ scales:{y:{grid,title:{display:true,text:'Short %'}},y1:{display:hasC,position:'right',grid:{display:false},title:{display:hasC,text:'CTB %'}},x:{grid:{display:false}}}}});}
+// L3 GEX
+if(D.gex.labels.length){const g=D.gex;mk('cGex',{type:'bar',data:{labels:g.labels,datasets:[{label:'GEX (weighted)',data:g.vals,
+ backgroundColor:g.vals.map(v=>a(v>=0?BU:BE,.85)),borderWidth:0,barPercentage:1,categoryPercentage:.9}]},
+ options:{plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>'Strike $'+t[0].label,label:t=>'GEX '+fmt(t.raw)+' $/1%'}},
+ annotation:{annotations:anns([vline(g.flip,WA,'Flip $'+(g.flipv||0).toFixed(2),[],'start'),vline(g.spot,IN,'Spot $'+D.price.toFixed(2),[6,4],'end'),vline(g.mp,WA,'Max Pain $'+(g.mpv||0).toFixed(2),[2,3],'center')])}},
+ scales:{y:{grid,ticks:{callback:fmt}},x:{grid:{display:false},ticks:{autoSkip:true,maxRotation:0,autoSkipPadding:6}}}}});}
+if(D.prof.length){mk('cProf',{type:'line',data:{labels:D.prof.map(p=>p.s.toFixed(0)),datasets:[{label:'총 GEX',data:D.prof.map(p=>p.g),
+ borderColor:WA,borderWidth:2,pointRadius:0,fill:{target:'origin',above:a(BU,.15),below:a(BE,.15)}}]},
+ options:{plugins:{legend:{display:false},annotation:{annotations:anns([{type:'line',scaleID:'y',value:0,borderColor:'#656D76',borderWidth:1},
+ vline(D.prof.reduce((b,p,i)=>Math.abs(p.s-D.price)<Math.abs(D.prof[b].s-D.price)?i:b,0),IN,'Spot',[6,4],'end')])}},
+ scales:{y:{grid,ticks:{callback:fmt}},x:{grid:{display:false},ticks:{maxTicksLimit:9}}}}});}
+if(D.oi.labels.length){mk('cOi',{type:'bar',data:{labels:D.oi.labels,datasets:[{label:'Call OI',data:D.oi.c,backgroundColor:a(BU,.85)},{label:'Put OI',data:D.oi.p,backgroundColor:a(BE,.85)}]},
+ options:{plugins:{tooltip:{callbacks:{label:t=>t.dataset.label+': '+fmt(Math.abs(t.raw))}},annotation:{annotations:anns([vline(D.oi.spot,IN,'Spot',[6,4],'end')])}},
+ scales:{x:{stacked:true,grid:{display:false},ticks:{maxRotation:0,autoSkipPadding:6}},y:{stacked:true,grid,ticks:{callback:v=>fmt(Math.abs(v))}}}}});}
+// L4
+if(D.px.labels.length){const p=D.px;mk('cPx',{data:{labels:p.labels,datasets:[
+ {type:'line',label:'BB 상단',data:p.bbu,borderColor:a(IN,.35),borderWidth:1,pointRadius:0,fill:'+1',backgroundColor:a(IN,.06)},
+ {type:'line',label:'BB 하단',data:p.bbl,borderColor:a(IN,.35),borderWidth:1,pointRadius:0},
+ {type:'line',label:'종가',data:p.c,borderColor:'#1F2328',borderWidth:1.8,pointRadius:0},
+ {type:'line',label:'SMA20',data:p.s20,borderColor:WA,borderWidth:1.2,pointRadius:0},
+ {type:'line',label:'SMA50',data:p.s50,borderColor:IN,borderWidth:1.2,pointRadius:0},
+ {type:'line',label:'SMA200',data:p.s200,borderColor:BE,borderWidth:1.2,pointRadius:0},
+ {type:'bar',label:'거래량',data:p.v,backgroundColor:a('#656D76',.25),yAxisID:'yv'}]},
+ options:{interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10}}},
+ scales:{y:{grid},yv:{position:'right',grid:{display:false},ticks:{callback:fmt},max:Math.max(...p.v)*4},x:{grid:{display:false},ticks:{maxTicksLimit:10,maxRotation:0}}}}});}
+// S5
+mk('cProb',{type:'bar',data:{labels:['[A] 상승','[B] 중립','[C] 하락'],datasets:[{data:D.prob,backgroundColor:[a(BU,.85),a(WA,.85),a(BE,.85)],barThickness:18}]},
+ options:{indexAxis:'y',plugins:{legend:{display:false},endLabels:{on:true,f:v=>v.toFixed(1)+'%'}},scales:{x:{min:0,max:80,grid,ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}}}});
+{const k=['L1','L2','L3','L4','macro','patterns'],lb=['L1 다크풀','L2 공매도','L3 옵션','L4 차트','거시','패턴'],v=k.map(x=>D.contrib[x]||0);
+ mk('cContrib',{type:'bar',data:{labels:lb,datasets:[{data:v,backgroundColor:v.map(x=>a(x>=0?BU:BE,.85))}]},
+ options:{indexAxis:'y',plugins:{legend:{display:false},endLabels:{on:true,f:x=>(x>=0?'+':'')+x.toFixed(3)}},scales:{x:{grid,suggestedMin:-.15,suggestedMax:.15},y:{grid:{display:false}}}}});}
+})();
+</script>
 <div id="md-archive" style="display:none;"><pre id="md-archive-text">---
 ticker: KBR
 date: 2026-11-13
-generated_by: Smart Money Analyzer (sma.py)
+schema: 3
+quality: A (94)
 ---
 
 # Smart Money Analysis: KBR
-**Analysis Date**: 2026-11-13  
-**Current Price**: $nan  
-**Options Expiry**: 2026-11-20  
-**Analyst**: Smart Money Analyzer v2.0
+**Analysis Date (US session)**: 2026-11-13  
+**Current Price**: $35.59 (+0.76%)  
+**Options Expiry**: 2026-11-20 (DTE 7) · Monthly 2026-11-20  
+**Data Quality**: A (94/100)  
+**Analyst**: Smart Money Analyzer v3.0
+
+&gt; [B 중립 37%] · 음감마 레짐 · 감마 플립 $40.55 하단 · 회랑 $35–$40
 
 ---
 
@@ -271,116 +273,207 @@ generated_by: Smart Money Analyzer (sma.py)
 
 | Metric | Value |
 |--------|-------|
-| Total OBV Δ (5d)   | 2M |
-| Divergence         | NEUTRAL |
-| Dark Pool %        | 36.1% |
-| Short %            | 33.7% |
-| CTB Fee            | N/A |
-| Available Shares   | N/A |
-| Max Pain           | $37.50 |
-| GEX Flip Zone      | N/A |
-| Net GEX            | N/A |
-| Scenario [A] Bull  | 65.0% |
-| Scenario [B] Neut  | 20.0% |
-| Scenario [C] Bear  | 15.0% |
+| Institutional OBV Δ | N/A (체결 단위 데이터 필요) |
+| Professional OBV Δ | N/A |
+| Retail OBV Δ | N/A |
+| Total OBV Δ (5d, CLV) | -22.2K (-1.1% ADV) |
+| Divergence | CONVERGENCE |
+| Dark Pool % | 36.3% (20d avg 34.8%) |
+| Institutional Absorption Ratio | N/A |
+| VWAP Anchor (5d) | $36.81 (-3.30%) |
+| ATS share (FINRA weekly) | 29.5% |
+| Short % (off-exchange) | 33.6% (z -2.10) |
+| Short Case | 숏커버링 |
+| CTB Fee | 0.41% (Δ N/A) |
+| Available Shares | 1.70M (Δ N/A) |
+| Short Interest / Float | 8.02% · DTC 4.98 |
+| Max Pain | $37.50 (+5.09%) |
+| GEX Flip Zone | $40.55 (NEGATIVE) |
+| Call / Put Wall | $40.00 / $35.00 |
+| Net GEX (per 1%) | -$97K |
+| P/C OI · Vol | 1.52 · 0.0 |
+| Expected Move (wk) | ±$2.15 |
+| Scenario [A] Bullish | 36.7% |
+| Scenario [B] Neutral | 37.2% |
+| Scenario [C] Bearish | 26.1% |
+| Raw Score · Macro | +0.111 · RESTRICTED |
+| Patterns | 최종 흡수, 이진 이벤트 프라이싱 |
 
 ---
 
 ## Architect Phase Structure
-- **Phase 1 (Completed)**: 2026-10-30 ~ 2026-11-12 — 주기/분배 이미 전개
-- **Phase 2 (Current)**:   2026-11-13 — ACCUMULATION × HEDGING
-- **Phase 3 (Target)**:    2026-11-20 ~ 2026-12-14 — UPWARD 방향 · 타겟 $nan / $nan (BB폭 0.0%)
+- **Phase 1 (Completed)**: 2026-11-06 ~ 2026-11-12 — 레짐 시작 이후 -4.3%, L1 중립
+- **Phase 2 (Current)**: 2026-11-13 ~ 2026-11-20 — 중립 × 변동성 확장
+- **Phase 3 (Target)**: 2026-11-23 ~ 2026-12-14 — RANGE | Target: $35.00–$36.24 (확장 $33.44–$40.00)
+
+---
+
+## 3-Line Summary
+① 다크풀 36.3%(20일 평균 대비 1.04배) · Net OBV -22.2K주 · CONVERGENCE → 중립.
+② Short% 33.6% (z -2.1, FALLING) · CTB 0.41% (Δ N/A) → 숏커버링.
+③ Max Pain $37.50(DTE 7) · 플립 $40.55 (음감마) · 콜월 $40.00 / 풋월 $35.00 → 변동성 확장.
 
 ---
 
 ## Core Conclusion
-- L1 (Dark Pool): **ACCUMULATION** · signal=BULLISH · conf=MEDIUM
-- L2 (Short/CTB): **SHORT_COVERING** · SHORT_COVERING · conf=LOW
-- L3 (Options):   **HEDGING** · DTE=7 · net_gex=N/A
-- L4 (Chart):     **RANGE_BOUND** · MA=MIXED
-- Macro: **NEUTRAL** · Raw Score: **+0.55** · Patterns: **none**
+
+**KBR의 가장 중요한 발견은 음감마 레짐 — 딜러 헤지가 방향을 증폭하는 구간이다. 4개 레이어 가중 점수는 +0.111(분산 0.33)로, 확률은 [A] 36.7% / [B] 37.2% / [C] 26.1%에 수렴한다. 점수를 가장 크게 움직인 레이어는 L3(+0.108)이며, 거시 유동성은 제한 환경으로 -5.0%p 보정되었다. 이 조합에서 설계자의 의도는 가격 고정·시간가치 소멸을 통한 포지션 정리 단계로 해석된다.**
+
+**구조적으로 보면, 장외 비중 36.3%와 순체결 -22.2K주는 중립 흐름을, 공매도 측은 숏커버링 성격을 보인다. 옵션 측에서는 감마 플립 $40.55을 기준으로 현재가가 음감마(변동성 증폭) 구간에 있고, 콜월 $40.00과 풋월 $35.00이 딜러 헤지가 만드는 가격 회랑을 규정한다. 차트는 박스권(MIXED)로 후행 확인 역할에 그친다. 이 해석이 틀리는 경우는 순체결 부호가 반전되거나, 대차 비용이 급등해 공매도 성격이 방향성으로 전환될 때이다.**
+
+**결정적 트리거는 다음 중 먼저 발생하는 것이다: 종가 기준 감마 플립 $40.55 상향 회복(양감마 진입·안정화); 콜월 $40.00 돌파(딜러 숏콜 헤지 매수 유발); 풋월 $35.00 붕괴(딜러 숏풋 헤지 매도 유발); 거래량 30일 평균 150% 이상 동반 볼린저 확장(이동 개시); CTB 0.41%에서 전일 대비 +5% 이상 상승 지속(공매도 공격 전환). 일정상 2026-11-20 월간 옵션 만기 (OPEX)이 Phase 2→3 전환의 시간적 기준점이다. Phase 3(2026-11-23 ~ 2026-12-14)의 기준 방향은 RANGE이며, 1차 목표 상단 $36.24 / 하단 $35.00이다. 위 트리거가 현 가설과 반대로 발동하면 시나리오 전체를 재산정한다.**
 
 ---
 
 ## Cumulative History
 
-| 날짜 | 종가 | 전체OBV(5d) | Divergence | DP% | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
-|------|------|-------------|------------|-----|--------|-----|---------|---------|---------|
-| 2026-11-13 | $nan | 2M | NEUTRAL | 36.1% | 33.7% | N/A | N/A | N/A | $37.50 |
+| 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |
+|------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|
+| 2026-04-22 | $36.00 | N/A | N/A | N/A | +269.0K | 55.0% | 0.40% | 2.80M | $38.14 | $37.50 |
+| 2026-04-23 | $35.23 | N/A | N/A | N/A | -173.4K | 49.0% | 0.40% | 2.60M | $38.16 | $37.50 |
+| 2026-04-24 | $35.23 | N/A | N/A | N/A | +691.1K | 58.9% | 0.40% | 2.80M | $38.16 | $37.50 |
+| 2026-04-27 | $35.29 | N/A | N/A | N/A | -534.6K | 43.2% | 0.40% | 2.90M | $38.16 | $37.50 |
+| 2026-04-28 | $36.00 | N/A | N/A | N/A | +869.5K | 61.3% | 0.40% | 2.90M | $38.16 | $37.50 |
+| 2026-04-29 | $36.02 | N/A | N/A | N/A | +207.4K | 50.3% | 0.40% | 2.50M | $35.23 | $37.50 |
+| 2026-04-30 | $37.49 | N/A | N/A | N/A | +1.61M | 43.9% | 0.40% | 2.60M | $35.17 | $37.50 |
+| 2026-05-01 | $37.45 | N/A | N/A | N/A | -413.9K | 57.6% | 0.40% | 2.60M | $35.17 | $37.50 |
+| 2026-05-04 | $38.67 | N/A | N/A | N/A | +1.30M | 57.1% | 0.39% | 2.40M | $35.17 | $37.50 |
+| 2026-05-05 | $36.58 | N/A | N/A | N/A | -1.03M | 55.2% | 0.39% | 2.90M | $35.98 | $37.50 |
+| 2026-05-06 | $35.11 | N/A | N/A | N/A | -1.92M | 42.3% | 0.39% | 2.60M | $36.04 | $37.50 |
+| 2026-05-07 | $33.20 | N/A | N/A | N/A | -2.51M | 50.5% | 0.39% | 3.10M | $36.07 | $37.50 |
+| 2026-05-08 | $32.54 | N/A | N/A | N/A | +550.4K | 48.3% | 0.39% | 2.90M | $36.07 | $37.50 |
+| 2026-05-11 | $32.47 | N/A | N/A | N/A | -721.0K | 61.0% | 0.39% | 3.50M | $35.99 | $37.50 |
+| 2026-05-12 | $32.08 | N/A | N/A | N/A | -1.97M | 68.0% | 0.35% | 3.00M | $35.92 | $37.50 |
+| 2026-05-13 | $30.50 | N/A | N/A | N/A | -2.51M | 59.4% | 0.28% | 3.80M | $35.87 | $37.50 |
+| 2026-05-14 | $30.88 | N/A | N/A | N/A | -1.03M | 41.2% | 0.28% | 2.70M | $36.02 | $37.50 |
+| 2026-05-15 | $30.06 | N/A | N/A | N/A | -1.72M | 59.5% | 0.28% | 2.60M | $34.92 | $37.50 |
+| 2026-05-18 | $32.24 | N/A | N/A | N/A | +1.70M | 47.6% | 0.27% | 2.70M | $34.31 | $37.50 |
+| 2026-05-19 | $31.85 | N/A | N/A | N/A | -1.70M | 45.0% | 0.32% | 2.30M | $34.31 | $37.50 |
+| 2026-05-20 | $32.33 | N/A | N/A | N/A | +1.26M | 62.7% | 0.31% | 3.60M | $32.08 | $35.00 |
+| 2026-05-21 | $32.10 | N/A | N/A | N/A | +964.7K | 63.4% | 0.40% | 3.40M | $32.08 | $35.00 |
+| 2026-05-22 | $33.46 | N/A | N/A | N/A | +448.3K | 57.1% | 0.39% | 3.40M | $31.97 | $35.00 |
+| 2026-05-26 | $33.52 | N/A | N/A | N/A | +100.1K | 58.8% | 0.34% | 3.20M | $31.94 | $35.00 |
+| 2026-05-27 | $33.01 | N/A | N/A | N/A | -1.34M | 38.5% | 0.36% | 2.80M | $31.94 | $35.00 |
+| 2026-05-28 | $34.44 | N/A | N/A | N/A | +1.84M | 23.2% | 0.45% | 2.50M | $32.15 | $35.00 |
+| 2026-05-29 | $34.95 | N/A | N/A | N/A | -23.4K | 41.4% | 0.38% | 2.60M | $32.16 | $35.00 |
+| 2026-06-01 | $35.65 | N/A | N/A | N/A | -680.3K | 54.1% | 0.38% | 2.60M | $32.17 | $35.00 |
+| 2026-06-02 | $35.72 | N/A | N/A | N/A | +600.5K | 55.5% | 0.38% | 2.40M | $32.26 | $35.00 |
+| 2026-06-03 | $35.73 | N/A | N/A | N/A | +1.86M | 78.0% | 0.38% | 2.40M | $32.26 | $35.00 |
+| 2026-06-04 | $36.13 | N/A | N/A | N/A | +191.5K | 69.4% | 0.38% | 2.40M | $32.26 | $35.00 |
+| 2026-06-05 | $35.56 | N/A | N/A | N/A | -255.2K | 73.3% | 0.38% | 2.40M | $32.26 | $35.00 |
+| 2026-06-08 | $35.21 | N/A | N/A | N/A | -237.1K | 72.7% | 0.38% | 2.70M | $32.15 | $35.00 |
+| 2026-06-09 | $35.32 | N/A | N/A | N/A | -618.2K | 69.5% | 0.38% | 2.30M | $32.15 | $35.00 |
+| 2026-06-10 | $34.22 | N/A | N/A | N/A | -763.0K | 70.8% | 0.38% | 2.30M | $32.15 | $35.00 |
+| 2026-06-11 | $35.36 | N/A | N/A | N/A | +880.4K | 61.7% | 0.40% | 2.40M | $32.15 | $35.00 |
+| 2026-06-12 | $35.84 | N/A | N/A | N/A | +340.2K | 72.2% | 0.40% | 2.60M | $32.09 | $35.00 |
+| 2026-06-15 | $34.82 | N/A | N/A | N/A | -1.18M | 68.4% | 0.40% | 1.60M | $32.89 | $35.00 |
+| 2026-06-16 | $35.03 | N/A | N/A | N/A | -37.5K | 70.7% | 0.41% | 2.30M | $32.79 | $35.00 |
+| 2026-06-17 | $33.92 | N/A | N/A | N/A | -1.24M | 58.2% | 0.41% | 2.60M | $32.79 | $35.00 |
+| 2026-06-18 | $32.82 | N/A | N/A | N/A | -515.8K | 79.3% | 0.41% | 2.50M | $37.38 | $35.00 |
+| 2026-06-22 | $32.11 | N/A | N/A | N/A | -597.1K | 63.6% | 0.40% | 1.80M | $37.17 | $35.00 |
+| 2026-06-23 | $33.20 | N/A | N/A | N/A | +1.05M | 67.3% | 0.40% | 1.60M | $37.16 | $35.00 |
+| 2026-06-24 | $33.19 | N/A | N/A | N/A | -1.13M | 80.3% | 0.38% | 1.10M | $36.96 | $35.00 |
+| 2026-06-25 | $32.25 | N/A | N/A | N/A | -1.03M | 76.1% | 0.35% | 1.00M | $36.96 | $35.00 |
+| 2026-06-26 | $33.37 | N/A | N/A | N/A | +911.1K | 68.4% | 0.34% | 1.00M | $36.84 | $35.00 |
+| 2026-06-29 | $33.71 | N/A | N/A | N/A | +465.5K | 74.5% | 0.34% | 1.20M | $36.81 | $35.00 |
+| 2026-06-30 | $34.53 | N/A | N/A | N/A | +739.8K | 64.5% | 0.34% | 950.0K | $36.84 | $35.00 |
+| 2026-07-01 | $34.67 | N/A | N/A | N/A | -1.34M | 75.6% | 0.36% | 1.40M | $36.83 | $35.00 |
+| 2026-07-02 | $36.41 | N/A | N/A | N/A | -606.4K | 72.2% | 0.34% | 1.20M | $36.83 | $35.00 |
+| 2026-07-06 | $37.43 | N/A | N/A | N/A | +447.3K | 72.7% | 0.36% | 1.50M | $36.29 | $35.00 |
+| 2026-07-07 | $36.67 | N/A | N/A | N/A | -1.97M | 54.8% | 0.34% | 1.20M | $36.33 | $35.00 |
+| 2026-07-08 | $36.27 | N/A | N/A | N/A | -159.0K | 51.1% | 0.35% | 1.30M | $36.42 | $35.00 |
+| 2026-07-09 | $35.82 | N/A | N/A | N/A | -209.2K | 63.9% | 0.38% | 1.30M | $36.42 | $35.00 |
+| 2026-07-10 | $35.47 | N/A | N/A | N/A | -746.5K | 49.0% | 0.38% | 1.30M | $36.42 | $35.00 |
+| 2026-07-13 | $35.75 | N/A | N/A | N/A | -59.1K | 49.6% | 0.27% | 1.50M | $36.81 | $35.00 |
+| 2026-07-14 | $35.51 | N/A | N/A | N/A | +737.4K | 64.5% | 0.27% | 1.70M | $36.81 | $35.00 |
+| 2026-07-15 | $35.98 | N/A | N/A | N/A | -235.5K | 69.5% | 0.25% | 1.60M | $36.81 | $35.00 |
+| 2026-07-16 | $36.18 | N/A | N/A | N/A | +366.9K | 59.4% | 0.25% | 1.50M | $36.81 | $35.00 |
+| 2026-07-17 | $35.07 | N/A | N/A | N/A | -722.6K | 59.2% | 0.27% | 1.60M | $36.30 | $37.50 |
+| 2026-07-20 | $34.57 | N/A | N/A | N/A | -965.3K | 55.9% | 0.27% | 1.40M | $33.81 | $37.50 |
+| 2026-07-21 | $34.39 | N/A | N/A | N/A | -179.6K | 65.4% | 0.35% | 1.00M | $33.84 | $37.50 |
+| 2026-07-22 | $35.62 | N/A | N/A | N/A | +894.3K | 64.8% | N/A | N/A | $36.30 | $37.50 |
+| 2026-07-23 | $36.35 | N/A | N/A | N/A | +763.7K | 55.9% | N/A | N/A | $36.30 | $37.50 |
+| 2026-07-24 | $36.93 | N/A | N/A | N/A | -638.8K | 49.0% | N/A | N/A | $34.00 | $37.50 |
+| 2026-07-27 | $36.82 | N/A | N/A | N/A | -407.0K | 56.9% | N/A | N/A | $34.08 | $37.50 |
+| 2026-07-28 | $37.40 | N/A | N/A | N/A | +973.7K | 64.8% | N/A | N/A | $34.05 | $37.50 |
+| 2026-07-29 | $35.93 | N/A | N/A | N/A | -1.24M | 48.5% | N/A | N/A | $34.05 | $37.50 |
+| 2026-07-30 | $34.37 | N/A | N/A | N/A | +1.60M | 63.2% | N/A | N/A | $34.30 | $37.50 |
+| 2026-07-31 | $36.61 | N/A | N/A | N/A | +2.33M | 73.7% | N/A | N/A | $34.30 | $37.50 |
+| 2026-08-03 | $37.09 | N/A | N/A | N/A | -36.7K | 70.1% | N/A | N/A | $33.79 | $35.00 |
+| 2026-08-04 | $37.83 | N/A | N/A | N/A | +510.5K | 80.0% | N/A | N/A | $33.79 | $35.00 |
+| 2026-08-05 | $36.33 | N/A | N/A | N/A | -669.7K | 77.7% | N/A | N/A | $33.79 | $35.00 |
+| 2026-08-06 | $37.57 | N/A | N/A | N/A | +914.5K | 86.3% | N/A | N/A | $37.52 | $37.50 |
+| 2026-08-07 | $38.04 | N/A | N/A | N/A | +1.22M | 60.7% | N/A | N/A | $37.54 | $37.50 |
+| 2026-08-10 | $38.29 | N/A | N/A | N/A | +841.5K | 69.8% | N/A | N/A | $37.53 | $37.50 |
+| 2026-08-11 | $37.56 | N/A | N/A | N/A | -54.8K | 57.4% | N/A | N/A | $37.55 | $37.50 |
+| 2026-08-12 | $38.10 | N/A | N/A | N/A | +1.20M | 69.7% | N/A | N/A | $37.55 | $37.50 |
+| 2026-08-13 | $38.16 | N/A | N/A | N/A | +300.5K | 66.7% | N/A | N/A | $37.60 | $37.50 |
+| 2026-08-14 | $38.37 | N/A | N/A | N/A | +436.2K | 66.3% | N/A | N/A | $37.60 | $37.50 |
+| 2026-08-17 | $37.55 | N/A | N/A | N/A | -628.1K | 59.8% | N/A | N/A | $37.67 | $37.50 |
+| 2026-08-18 | $37.62 | N/A | N/A | N/A | -513.8K | 69.5% | N/A | N/A | $37.67 | $37.50 |
+| 2026-08-19 | $37.97 | N/A | N/A | N/A | -15.7K | 58.8% | N/A | N/A | $37.76 | $37.50 |
+| 2026-08-20 | $37.90 | N/A | N/A | N/A | -359.5K | 67.8% | N/A | N/A | $37.81 | $37.50 |
+| 2026-08-21 | $38.58 | N/A | N/A | N/A | +86.9K | 60.2% | N/A | N/A | $39.93 | $37.50 |
+| 2026-08-24 | $37.69 | N/A | N/A | N/A | -1.02M | 60.6% | N/A | N/A | $35.45 | $37.50 |
+| 2026-08-25 | $37.69 | N/A | N/A | N/A | -343.9K | 58.0% | N/A | N/A | $35.45 | $37.50 |
+| 2026-08-26 | $37.93 | N/A | N/A | N/A | -585.5K | 72.1% | N/A | N/A | $39.94 | $37.50 |
+| 2026-08-27 | $38.19 | N/A | N/A | N/A | +397.0K | 68.0% | N/A | N/A | $39.94 | $37.50 |
+| 2026-08-28 | $38.03 | N/A | N/A | N/A | -160.3K | 48.3% | N/A | N/A | $39.94 | $37.50 |
+| 2026-08-31 | $37.50 | N/A | N/A | N/A | -1.21M | 41.9% | N/A | N/A | N/A | $37.50 |
+| 2026-09-01 | $36.96 | N/A | N/A | N/A | -757.6K | 50.6% | N/A | N/A | N/A | $37.50 |
+| 2026-09-02 | $36.93 | N/A | N/A | N/A | +345.0K | 58.0% | N/A | N/A | N/A | $37.50 |
+| 2026-09-03 | $37.29 | N/A | N/A | N/A | +733.1K | 67.9% | N/A | N/A | N/A | $37.50 |
+| 2026-09-04 | $36.82 | N/A | N/A | N/A | -22.6K | 78.4% | N/A | N/A | $35.49 | $37.50 |
+| 2026-09-08 | $37.04 | N/A | N/A | N/A | +1.59M | 65.7% | N/A | N/A | $35.49 | $37.50 |
+| 2026-09-09 | $36.14 | N/A | N/A | N/A | -952.5K | 72.0% | N/A | N/A | $35.49 | $37.50 |
+| 2026-09-10 | $36.45 | N/A | N/A | N/A | +143.6K | 66.7% | N/A | N/A | $35.70 | $37.50 |
+| 2026-09-11 | $36.59 | N/A | N/A | N/A | +819.6K | 60.0% | N/A | N/A | $35.59 | $37.50 |
+| 2026-09-14 | $36.80 | N/A | N/A | N/A | -143.1K | 65.8% | N/A | N/A | $35.20 | $37.50 |
+| 2026-09-15 | $37.32 | N/A | N/A | N/A | +1.55M | 71.2% | N/A | N/A | N/A | $37.50 |
+| 2026-09-16 | $36.60 | N/A | N/A | N/A | +87.9K | 68.1% | N/A | N/A | $35.09 | $37.50 |
+| 2026-09-17 | $36.70 | N/A | N/A | N/A | +1.52M | 69.1% | N/A | N/A | N/A | $37.50 |
+| 2026-09-18 | $35.54 | N/A | N/A | N/A | -2.43M | 63.0% | N/A | N/A | $32.59 | $35.00 |
+| 2026-09-21 | $35.74 | N/A | N/A | N/A | +253.4K | 65.1% | N/A | N/A | $32.59 | $35.00 |
+| 2026-09-22 | $35.01 | N/A | N/A | N/A | +1.62M | 66.4% | N/A | N/A | N/A | $35.00 |
+| 2026-09-23 | $35.34 | N/A | N/A | N/A | -238.2K | 65.6% | N/A | N/A | $32.59 | $35.00 |
+| 2026-09-24 | $34.81 | N/A | N/A | N/A | -1.18M | 76.2% | N/A | N/A | $32.61 | $35.00 |
+| 2026-09-25 | $34.54 | N/A | N/A | N/A | +965.7K | 70.1% | N/A | N/A | $32.62 | $35.00 |
+| 2026-09-28 | $34.84 | N/A | N/A | N/A | +57.6K | 48.0% | N/A | N/A | $32.61 | $35.00 |
+| 2026-09-29 | $35.13 | N/A | N/A | N/A | +1.55M | 68.9% | N/A | N/A | $32.60 | $35.00 |
+| 2026-09-30 | $35.16 | N/A | N/A | N/A | +1.11M | 60.4% | N/A | N/A | $32.61 | $35.00 |
+| 2026-10-01 | $35.05 | N/A | N/A | N/A | -916.1K | 61.5% | N/A | N/A | $32.60 | $35.00 |
+| 2026-10-02 | $34.24 | N/A | N/A | N/A | -1.08M | 65.3% | N/A | N/A | $32.63 | $35.00 |
+| 2026-10-05 | $34.52 | N/A | N/A | N/A | +468.9K | 52.9% | N/A | N/A | $32.62 | $35.00 |
+| 2026-10-06 | $34.61 | N/A | N/A | N/A | -1.25M | 50.6% | N/A | N/A | $32.61 | $35.00 |
+| 2026-10-07 | $33.89 | N/A | N/A | N/A | -441.6K | 59.8% | N/A | N/A | $32.64 | $35.00 |
+| 2026-10-08 | $35.18 | N/A | N/A | N/A | +1.70M | 52.5% | N/A | N/A | $32.58 | $35.00 |
+| 2026-10-09 | $35.34 | N/A | N/A | N/A | -465.1K | 65.7% | N/A | N/A | $32.56 | $35.00 |
+| 2026-10-12 | $35.19 | N/A | N/A | N/A | -963.4K | 58.8% | N/A | N/A | $32.53 | $35.00 |
+| 2026-10-13 | $35.41 | N/A | N/A | N/A | +326.8K | 57.2% | N/A | N/A | $32.55 | $35.00 |
+| 2026-10-14 | $35.23 | N/A | N/A | N/A | -302.9K | 68.3% | N/A | N/A | $32.55 | $35.00 |
+| 2026-10-15 | $36.44 | N/A | N/A | N/A | +1.19M | 35.5% | N/A | N/A | $32.53 | $35.00 |
+| 2026-10-16 | $36.38 | N/A | N/A | N/A | -343.0K | 52.7% | N/A | N/A | $35.36 | $35.00 |
+| 2026-10-19 | $36.76 | N/A | N/A | N/A | +858.4K | 59.9% | N/A | N/A | $35.35 | $35.00 |
+| 2026-10-20 | $36.84 | N/A | N/A | N/A | -128.5K | 45.1% | N/A | N/A | $35.52 | $35.00 |
+| 2026-10-21 | $37.31 | N/A | N/A | N/A | +1.11M | 55.6% | N/A | N/A | $35.37 | $35.00 |
+| 2026-10-22 | $39.53 | N/A | N/A | N/A | +2.37M | 42.2% | N/A | N/A | $35.28 | $35.00 |
+| 2026-10-23 | $39.23 | N/A | N/A | N/A | +179.1K | 61.4% | N/A | N/A | $35.50 | $35.00 |
+| 2026-10-26 | $40.02 | N/A | N/A | N/A | +751.2K | 68.9% | N/A | N/A | $35.80 | $35.00 |
+| 2026-10-27 | $40.23 | N/A | N/A | N/A | +1.07M | 82.7% | N/A | N/A | $35.98 | $35.00 |
+| 2026-10-28 | $40.14 | N/A | N/A | N/A | +276.1K | 59.8% | N/A | N/A | $35.89 | $35.00 |
+| 2026-10-29 | $38.32 | N/A | N/A | N/A | -1.70M | 61.5% | N/A | N/A | $38.16 | $40.00 |
+| 2026-10-30 | $38.70 | N/A | N/A | N/A | +419.0K | 56.6% | N/A | N/A | $36.00 | $37.50 |
+| 2026-11-02 | $39.69 | N/A | N/A | N/A | +2.42M | 61.0% | N/A | N/A | N/A | $37.50 |
+| 2026-11-03 | $39.76 | N/A | N/A | N/A | +2.43M | 68.1% | N/A | N/A | N/A | $37.50 |
+| 2026-11-04 | $39.64 | N/A | N/A | N/A | +1.76M | 54.7% | N/A | N/A | N/A | $37.50 |
+| 2026-11-05 | $38.04 | N/A | N/A | N/A | +1.54M | 53.0% | N/A | N/A | N/A | $37.50 |
+| 2026-11-06 | $37.17 | N/A | N/A | N/A | +822.8K | 60.1% | N/A | N/A | $36.61 | $37.50 |
+| 2026-11-09 | $38.65 | N/A | N/A | N/A | +1.43M | 59.4% | N/A | N/A | N/A | $37.50 |
+| 2026-11-10 | $38.90 | N/A | N/A | N/A | +628.2K | 63.1% | N/A | N/A | $36.43 | $37.50 |
+| 2026-11-11 | $36.29 | N/A | N/A | N/A | +3.53M | 36.5% | N/A | N/A | N/A | $37.50 |
+| 2026-11-12 | $35.32 | N/A | N/A | N/A | +2.16M | 33.7% | N/A | N/A | N/A | $37.50 |
+| 2026-11-13 | $35.59 | N/A | N/A | N/A | -22.2K | 33.6% | 0.41% | 1.70M | $40.55 | $37.50 |
+
+&gt; v2(2026-11 이전) 행은 실행일 기준 파일명을 실제 세션 날짜로 보정해 표기. 기관/프로/리테일 OBV 는 체결 단위 데이터 확보 전까지 N/A.
 </pre></div>
-<script>
-Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
-Chart.defaults.color = "#1F2328";
-
-new Chart(document.getElementById('obvCum'), {
-  type:'line',
-  data:{
-    labels:["2026-11-06", "2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12"],
-    datasets:[{
-      label:'Cumulative OBV',
-      data:[10430.032987890174, 107051.1666165319, 14273.655839128915, -288519.93911048875, 2164401.0608895114],
-      borderColor:'#1A7F5A',
-      backgroundColor:'rgba(26,127,90,0.10)',
-      borderWidth:2,
-      tension:0.2,
-      fill:true,
-      pointRadius:3,
-      pointBackgroundColor:'#1A7F5A'
-    }]
-  },
-  options:{
-    maintainAspectRatio:false,
-    plugins:{
-      legend:{display:false},
-      title:{display:true,text:'Total OBV 누적 시리즈 (5영업일)'}
-    },
-    scales:{
-      y:{grid:{color:'#EAEEF2'},ticks:{callback:function(v){return (v/1000).toFixed(0)+'k';}}},
-      x:{grid:{display:false}}
-    }
-  }
-});
-
-new Chart(document.getElementById('gexChart'), {
-  type:'bar',
-  data:{
-    labels:["20", "22", "25", "28", "30", "32", "35", "38", "40", "42", "45", "48", "50", "55"],
-    datasets:[{
-      label:'GEX',
-      data:[NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN],
-      backgroundColor:["#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B", "#CF222B"],
-      borderWidth:0
-    }]
-  },
-  options:{
-    maintainAspectRatio:false,
-    plugins:{legend:{display:false},title:{display:true,text:'Gamma Exposure (GEX) by Strike'}},
-    scales:{y:{grid:{color:'#EAEEF2'}},x:{grid:{display:false}}}
-  }
-});
-
-new Chart(document.getElementById('probChart'), {
-  type:'bar',
-  data:{
-    labels:['[A] Bullish','[B] Neutral','[C] Bearish'],
-    datasets:[{
-      label:'Probability %',
-      data:[65.0,20.0,15.0],
-      backgroundColor:['#1A7F5A','#9A6700','#CF222B'],
-      borderWidth:0,
-      barThickness:8,
-      maxBarThickness:8,
-      categoryPercentage:0.45,
-      barPercentage:0.45
-    }]
-  },
-  options:{
-    indexAxis:'y',
-    maintainAspectRatio:false,
-    plugins:{legend:{display:false},title:{display:false}},
-    scales:{x:{max:80,grid:{color:'#EAEEF2'}},y:{grid:{display:false}}}
-  }
-});
-</script>
-</body>
-</html>
+</body></html>
