@@ -87,7 +87,10 @@ def _layer_tile(code: str, name: str, L: Dict, weight: float) -> str:
             f'<div class="tv" style="color:{color};">{e(scen_label(L))}</div>'
             f'<div class="bar"><div class="mid"></div><div style="position:absolute;left:{left:.1f}%;width:{width:.1f}%;'
             f'top:0;bottom:0;background:{color};opacity:.85;border-radius:3px;"></div></div>'
-            f'<div class="ts">score {s:+.2f} · conf {conf:.0%}</div></div>')
+            f'<div class="ts">score {s:+.2f} · conf {conf:.0%}</div>'
+            + (f'<div class="ts">기관 {C.ssh(L.get("delta_inst"))} · 프로 {C.ssh(L.get("delta_pro"))} · 리테일 '
+               f'{C.ssh(L.get("delta_retail"))} · IAR {_num(L.get("iar"))}</div>' if L.get("delta_inst") is not None else "")
+            + '</div>')
 
 
 def _ladder(levels: List[Dict], price: float) -> str:
@@ -117,6 +120,36 @@ def _ladder(levels: List[Dict], price: float) -> str:
                     f'${p["price"]:,.2f}</span>' for p in reversed(pts))
     return (f'<div class="ladder"><div class="lline"></div>{"".join(marks)}</div>'
             f'<div class="llist">{items}</div>')
+
+
+def _l1_kpis(l1: Dict, ats: Dict) -> str:
+    def sc(v):
+        return BULL if (v or 0) > 0 else BEAR if (v or 0) < 0 else MUTED
+    adv = l1.get("avg_vol20") or 0
+    def rel(v):
+        return f"ADV 대비 {C.pc(v / adv * 100)}" if (v is not None and adv) else "체결 단위 데이터 필요"
+    fl = l1.get("flow")
+    share = (fl or {}).get("cohort_vol_share") or {}
+    if fl:
+        row1 = (kpi("기관 OBV (5d)", C.ssh(l1.get("delta_inst")), f"{rel(l1.get('delta_inst'))} · 거래량 {_num(share.get('inst'), 1, suffix='%')}", sc(l1.get("delta_inst")))
+                + kpi("프로 OBV (5d)", C.ssh(l1.get("delta_pro")), f"{rel(l1.get('delta_pro'))} · 거래량 {_num(share.get('pro'), 1, suffix='%')}", sc(l1.get("delta_pro")))
+                + kpi("리테일 OBV (5d)", C.ssh(l1.get("delta_retail")), f"{rel(l1.get('delta_retail'))} · 거래량 {_num(share.get('ret'), 1, suffix='%')}", sc(l1.get("delta_retail")))
+                + kpi("Net OBV (합계)", C.ssh(l1.get("delta_total")), rel(l1.get("delta_total")), sc(l1.get("delta_total")))
+                + kpi("기관 흡수율 IAR", _num(l1.get("iar")), e(fl.get("iar_class") or ""))
+                + kpi("다크풀 VWAP", _num(l1.get("dp_vwap"), 2, "$"), f"종가 대비 {C.pc(l1.get('dp_vwap_dist_pct'), 2)}"))
+    else:
+        row1 = (kpi("Net OBV (5d)", C.ssh(l1.get("delta_total")), rel(l1.get("delta_total")), sc(l1.get("delta_total")))
+                + kpi("기관 OBV", "N/A", "체결 단위 데이터 필요", MUTED) + kpi("프로 OBV", "N/A", "체결 단위 데이터 필요", MUTED)
+                + kpi("리테일 OBV", "N/A", "체결 단위 데이터 필요", MUTED) + kpi("기관 흡수율 IAR", "N/A", "체결 단위 데이터 필요", MUTED)
+                + kpi("다크풀 VWAP", "N/A", "체결 단위 데이터 필요", MUTED))
+    row2 = (kpi("다크풀 비중", _num(l1.get("dp_pct"), 1, suffix="%"), f"20일 평균 {_num(l1.get('dp_avg20'), 1, suffix='%')} · {_num(l1.get('dp_ratio'))}x")
+            + kpi("VWAP 앵커 (5d)", _num(l1.get("vwap5"), 2, "$"), f"종가 {C.pc(l1.get('vwap_dist_pct'), 2)}")
+            + kpi("20일 누적 A/D", C.ssh(l1.get("acc20")), f"ADV {_num(l1.get('acc20_strength'))}x")
+            + kpi("블록 체결", (f"{fl.get('blocks'):,}" if fl and fl.get("blocks") is not None else "N/A"),
+                  f"장외 블록 {fl.get('dark_blocks'):,}" if fl and fl.get("dark_blocks") is not None else "체결 단위 데이터 필요")
+            + kpi("ATS 주간 비중", _num(ats.get("ats_share_pct"), 1, suffix="%"), f"{e(ats.get('week_start') or '')}주 · 평균 {_num(ats.get('ats_trades_avg_size'), 0)}주/건")
+            + kpi("리테일 교차검증", _num((fl or {}).get("bjzz_imbalance")), "BJZZ 서브페니 매수−매도 불균형" if fl else "체결 단위 데이터 필요"))
+    return f'<div class="kpis">{row1}</div><div class="kpis">{row2}</div>'
 
 
 def _flow_session_card(l1: Dict) -> str:
@@ -262,17 +295,10 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
         s1 = sec(1, "다크풀 레이어 (L1)", [pill(scen_label(l1), sig_kind(l1.get("signal"))),
                                        pill(f"DP {C.pc(l1.get('dp_pct'), sign=False)}", "info"),
                                        pill(l1.get("divergence") or "N/A", {"BULLISH_DIVERGENCE": "pos", "BEARISH_DIVERGENCE": "neg"}.get(l1.get("divergence"), "muted"))]) + f"""
-<div class="kpis">
- {kpi("다크풀 비중", _num(l1.get('dp_pct'), 1, suffix='%'), f"20일 평균 {_num(l1.get('dp_avg20'), 1, suffix='%')} · {_num(l1.get('dp_ratio'))}x")}
- {kpi("Net OBV (5d)", C.ssh(l1.get('delta_total')), f"ADV 대비 {C.pc((l1.get('obv_strength') or 0) * 100)}", BULL if (l1.get('delta_total') or 0) > 0 else BEAR)}
- {kpi("20일 누적 A/D", C.ssh(l1.get('acc20')), f"ADV {_num(l1.get('acc20_strength'))}x")}
- {kpi("VWAP 앵커 (5d)", _num(l1.get('vwap5'), 2, '$'), f"종가 {C.pc(l1.get('vwap_dist_pct'), 2)}")}
- {kpi("기관 흡수율 IAR", _num(l1.get('iar')), (e((l1.get('flow') or {}).get('iar_class') or '') or "체결 단위 데이터 필요"), TXT if l1.get('iar') is not None else MUTED)}
- {kpi("ATS 주간 비중", _num(ats.get('ats_share_pct'), 1, suffix='%'), f"{e(ats.get('week_start') or '')}주 · 평균 {_num(ats.get('ats_trades_avg_size'), 0)}주/건")}
-</div>
+{_l1_kpis(l1, ats)}
 <div class="g2">
   <div class="card"><div class="ct">다크풀 비중 & 장외 거래량 (20거래일)</div><div class="ch"><canvas id="cDp"></canvas></div></div>
-  <div class="card"><div class="ct">Net OBV 누적 ({'체결 단위 tick rule' if l1.get('flow') else 'CLV 가중'} · 5거래일)</div><div class="ch"><canvas id="cObv"></canvas></div></div>
+  <div class="card"><div class="ct">{'구성원별 일별 OBV (기관·프로·리테일) + 누적 — 체결 단위 tick rule' if l1.get('flow') else 'Net OBV 누적 (CLV 가중)'} · 5거래일</div><div class="ch"><canvas id="cObv"></canvas></div></div>
 </div>
 <div class="g2">
   <div class="card"><div class="ct">OBV 4-Way Decomposition (Δ, 5거래일)</div><div class="ch sm"><canvas id="cObv4"></canvas></div>
@@ -510,7 +536,11 @@ def _chart_payload(a: Dict) -> str:
         "dp": {"labels": [r["date"][5:] for r in l1.get("dp_series") or []],
                "dp": [r.get("dp_pct") for r in l1.get("dp_series") or []],
                "off": [r.get("off_exchange_volume") for r in l1.get("dp_series") or []], "avg": l1.get("dp_avg20")},
-        "obv": {"labels": [c["date"][5:] for c in l1.get("cumulative_daily") or []],
+        "obv": {"inst": [c.get("inst") for c in l1.get("cumulative_daily") or []],
+                "pro": [c.get("pro") for c in l1.get("cumulative_daily") or []],
+                "ret": [c.get("ret") for c in l1.get("cumulative_daily") or []],
+                "inst_cum": [c.get("inst_cum") for c in l1.get("cumulative_daily") or []],
+                "labels": [c["date"][5:] for c in l1.get("cumulative_daily") or []],
                 "cum": [c["cum"] for c in l1.get("cumulative_daily") or []],
                 "day": [c["day"] for c in l1.get("cumulative_daily") or []]},
         "obv4": {"inst": l1.get("delta_inst"), "pro": l1.get("delta_pro"), "ret": l1.get("delta_retail"),
@@ -636,10 +666,18 @@ if(D.dp.labels.length){mk('cDp',{data:{labels:D.dp.labels,datasets:[
  scales:{y:{grid,title:{display:true,text:'DP %'},suggestedMin:20},y1:{position:'right',grid:{display:false},ticks:{callback:fmt}},x:{grid:{display:false}}}}});}
 function MUTED(){return '#656D76';}
 if(D.obv.labels.length){const end=D.obv.cum[D.obv.cum.length-1]||0,c=end>=0?BU:BE;
- mk('cObv',{data:{labels:D.obv.labels,datasets:[
- {type:'bar',label:'일별 순체결',data:D.obv.day,backgroundColor:D.obv.day.map(v=>a(v>=0?BU:BE,.85))},
- {type:'line',label:'누적',data:D.obv.cum,borderColor:c,backgroundColor:a(c,.12),fill:true,tension:.25,pointRadius:3}]},
- options:{scales:{y:{grid,ticks:{callback:fmt}},x:{grid:{display:false}}}}});}
+ const coh=D.obv.inst.some(v=>v!=null);
+ const ds=coh?[
+  {type:'bar',label:'기관',data:D.obv.inst,backgroundColor:a(BU,.85),stack:'d'},
+  {type:'bar',label:'프로',data:D.obv.pro,backgroundColor:a(WA,.85),stack:'d'},
+  {type:'bar',label:'리테일',data:D.obv.ret,backgroundColor:a(BE,.85),stack:'d'},
+  {type:'line',label:'기관 누적',stack:'l1',data:D.obv.inst_cum,borderColor:BU,borderWidth:2.5,pointRadius:3,tension:.25},
+  {type:'line',label:'Net 누적',stack:'l2',data:D.obv.cum,borderColor:'#A32D2D',borderDash:[5,4],borderWidth:2,pointRadius:3,tension:.25}]
+ :[{type:'bar',label:'일별 순체결',data:D.obv.day,backgroundColor:D.obv.day.map(v=>a(v>=0?BU:BE,.85))},
+  {type:'line',label:'누적',data:D.obv.cum,borderColor:c,backgroundColor:a(c,.12),fill:true,tension:.25,pointRadius:3}];
+ mk('cObv',{data:{labels:D.obv.labels,datasets:ds},
+ options:{interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10}},tooltip:{callbacks:{label:t=>t.dataset.label+': '+fmt(t.raw)}}},
+ scales:{y:{grid,stacked:coh,ticks:{callback:fmt}},x:{grid:{display:false},stacked:coh}}}});}
 {const o=D.obv4,labels=['기관','프로','리테일','전체(Total)'],vals=[o.inst,o.pro,o.ret,o.total];
  mk('cObv4',{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:[a(BU,.85),a(WA,.85),a(BE,.85),a('#A32D2D',.85)]}]},
  options:{indexAxis:'y',plugins:{legend:{display:false},endLabels:{on:true,f:v=>(v>=0?'+':'')+fmt(v)}},

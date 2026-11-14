@@ -336,10 +336,14 @@ def _overview_cards(latest: dict) -> str:
     ratio = _num(l1.get("dp_ratio"))
     ratio_str = f" · 20d 대비 {ratio:.2f}×" if ratio is not None else ""
     obv_str = fmt_compact(l1.get("delta_total"))
+    if l1.get("delta_inst") is not None:
+        obv_str = (f"기관 {fmt_compact(l1.get('delta_inst'))} · 프로 {fmt_compact(l1.get('delta_pro'))} · "
+                   f"리테일 {fmt_compact(l1.get('delta_retail'))} · IAR {_num(l1.get('iar')) or 0:.2f}")
     div = l1.get("divergence") or "N/A"
     tt2 = ("<b>FINRA 오프거래소 거래량 ÷ 총거래량</b><br>"
            "다크풀·ATS·내부화 비중. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br>"
-           "<b>Total OBV (5d)</b>: CLV 가중 signed volume 누적 — 전체 시장 방향.<br>"
+           "<b>구성원별 OBV (5d)</b>: SIP 전 체결 tick rule — 기관 ≥10,000주/$200k · 리테일 <100주/$5k · 프로 그 외. "
+           "체결 데이터 없던 과거 세션은 Total(CLV) 만 표시.<br>"
            "<b>Divergence</b>: 가격 slope vs OBV 누적 slope (5일 회귀).")
 
     # Block 3: Short % · CTB
@@ -461,7 +465,10 @@ def render_ticker_page(ticker: str, series: list) -> str:
             {"label": "CTB %", "data": col("l2", "ctb_fee"), "borderColor": COLOR["warn"], "yAxisID": "y1"},
         ], True),
         "obvChart": ([
-            {"label": "Total OBV (5d)", "data": col("l1", "delta_total"), "borderColor": COLOR["bull"], "yAxisID": "y"},
+            {"label": "기관 OBV (5d)", "data": col("l1", "delta_inst"), "borderColor": COLOR["bull"], "yAxisID": "y"},
+            {"label": "프로 OBV (5d)", "data": col("l1", "delta_pro"), "borderColor": COLOR["warn"], "yAxisID": "y"},
+            {"label": "리테일 OBV (5d)", "data": col("l1", "delta_retail"), "borderColor": COLOR["bear"], "yAxisID": "y"},
+            {"label": "Total OBV (5d)", "data": col("l1", "delta_total"), "borderColor": "#A32D2D", "borderDash": [5, 4], "yAxisID": "y"},
             {"label": "Dark Pool %", "data": col("l1", "dp_pct"), "borderColor": COLOR["info"], "yAxisID": "y1"},
         ], True),
     }
@@ -549,7 +556,7 @@ def render_ticker_page(ticker: str, series: list) -> str:
   <h2>시계열 추이</h2>
   <div class="chart-grid">
     <div class="card" style="grid-column:1/-1;"><div class="card-label">Price · Max Pain · GEX Flip · Walls</div><canvas id="priceChart"></canvas></div>
-    <div class="card"><div class="card-label">Total OBV (5d, 좌) vs Dark Pool % (우)</div><canvas id="obvChart"></canvas></div>
+    <div class="card"><div class="card-label">구성원별 OBV (기관·프로·리테일·Total, 5d, 좌) vs Dark Pool % (우)</div><canvas id="obvChart"></canvas></div>
     <div class="card"><div class="card-label">Short % (좌) · CTB Fee % (우)</div><canvas id="shortChart"></canvas></div>
     <div class="card" style="grid-column:1/-1;"><div class="card-label">Scenario Probabilities (%)</div><canvas id="probChart"></canvas></div>
   </div>
