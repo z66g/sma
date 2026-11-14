@@ -82,7 +82,8 @@ def l1_text(l1: Dict, l2: Dict, l3: Dict) -> Tuple[List[str], str]:
         out.append(f"다크풀(Off-exchange) 비중 <b>{pc(dp, sign=False)}</b>로 {lvl}. 20일 평균 {pc(avg, sign=False)} 대비 "
                    f"<b>{n(ratio)}배</b>, {rel}. 장외 거래량은 20일 평균의 {n(l1.get('off_vol_ratio'))}배.")
     st = l1.get("obv_strength")
-    out.append(f"5거래일 CLV 가중 순체결(Net OBV) <b>{ssh(l1.get('delta_total'))}주</b>, ADV 대비 <b>{pc((st or 0)*100)}</b> — "
+    basis = "체결 단위(SIP tick rule) 순체결" if l1.get("flow") else "CLV 가중 순체결"
+    out.append(f"5거래일 {basis}(Net OBV) <b>{ssh(l1.get('delta_total'))}주</b>, ADV 대비 <b>{pc((st or 0)*100)}</b> — "
                + ("유의미한 순매수 축적." if (st or 0) > 0.08 else "유의미한 순매도 누적." if (st or 0) < -0.08
                   else "방향성 미약(노이즈 범위)."))
     div = l1.get("divergence")

@@ -30,14 +30,19 @@ def sec(n: int, name: str, badges: Sequence[str] = ()) -> str:
             f'<span class="sec-b">{"".join(badges)}</span></div>')
 
 
-def table(headers: List[str], rows: List[List[str]], hl: Optional[Dict[int, str]] = None, cls: str = "") -> str:
+def table(headers: List[str], rows: List[List[str]], hl: Optional[Dict[int, str]] = None, cls: str = "",
+          mode: str = "") -> str:
+    """mode: "card" = 모바일에서 행별 카드로 전환 · "ts" = 시계열(모바일 가로 스크롤 · 줄바꿈 금지 · 첫 열 고정)."""
     hl = hl or {}
     th = "".join(f"<th>{e(h)}</th>" for h in headers)
     body = []
     for i, r in enumerate(rows):
         st = f' style="background:{hl[i]};"' if i in hl else ""
-        body.append(f"<tr{st}>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>")
-    return f'<div class="tw"><table class="{cls}"><thead><tr>{th}</tr></thead><tbody>{"".join(body)}</tbody></table></div>'
+        tds = "".join(f'<td data-label="{e(headers[j]) if j < len(headers) else ""}">{c}</td>' for j, c in enumerate(r))
+        body.append(f"<tr{st}>{tds}</tr>")
+    klass = " ".join(x for x in (cls, {"card": "rt", "ts": "tsr"}.get(mode, "")) if x)
+    wrap = "tw tsw" if mode == "ts" else "tw"
+    return f'<div class="{wrap}"><table class="{klass}"><thead><tr>{th}</tr></thead><tbody>{"".join(body)}</tbody></table></div>'
 
 
 def kpi(label: str, value: str, sub: str = "", color: str = TXT) -> str:
@@ -163,7 +168,7 @@ def _flow_session_card(l1: Dict) -> str:
                      C.sh(x.get("avg20_dark")), _num(x.get("ratio"), 2, suffix="x"),
                      pill(fg, {"EXTREME": "neg", "HIGH": "warn", "MODERATE": "info"}[fg]) if fg else "—"])
     return (f'<div class="card"><div class="ct">다크풀 세션별 이상 탐지 — {e(fl["days"][-1])} (체결 단위 · 프리/정규/애프터, 누적 평균 대비)</div>'
-            + table(["세션", "총 거래량", "장외(다크풀)", "장외 %", "장외 평균", "배수", "플래그"], rows)
+            + table(["세션", "총 거래량", "장외(다크풀)", "장외 %", "장외 평균", "배수", "플래그"], rows, mode="card")
             + f'<div class="muted" style="margin-top:6px;">블록 {fl.get("blocks") or 0}건 (장외 블록 {fl.get("dark_blocks") or 0}건) · '
               f'체결 {C.sh(fl.get("trades"))}건 · 거래량 비중 기관 {_num(fl["cohort_vol_share"]["inst"], 1, suffix="%")} / '
               f'프로 {_num(fl["cohort_vol_share"]["pro"], 1, suffix="%")} / 리테일 {_num(fl["cohort_vol_share"]["ret"], 1, suffix="%")}</div></div>')
@@ -198,7 +203,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
     tiles = "".join(_layer_tile(k, n_, L, w) for k, n_, L, w in (
         ("L1", "Dark Pool", l1, 0.35), ("L2", "Short/CTB", l2, 0.20), ("L3", "Options", l3, 0.30), ("L4", "Chart", l4, 0.15)))
     summary = f"""
-<div class="exec">
+<div class="exec" id="sum">
   <div class="eh">EXECUTIVE SUMMARY</div>
   <div class="hl">{e(a.get('headline'))}</div>
   {prob_mini}
@@ -215,7 +220,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
     warn_li = "".join(f"<li>{e(w)}</li>" for w in m.get("warnings") or [])
     quality = f"""
 <details class="dq" {'open' if q['grade'] in ('D', 'F') else ''}><summary>데이터 품질 · 출처 · 수집 경고 ({len(m.get('warnings') or [])}건) — 등급 {q['grade']} ({q['score']}/100)</summary>
-{table(["Layer", "상태", "커버리지", "누락 필드", "출처"], qrows)}
+{table(["Layer", "상태", "커버리지", "누락 필드", "출처"], qrows, mode="card")}
 {f'<ul class="wl">{warn_li}</ul>' if warn_li else '<div class="muted" style="margin-top:6px;">수집 경고 없음</div>'}
 </details>"""
 
@@ -270,9 +275,9 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
         pill(f"거시 {C.KO_ENV.get(env)}", {"FAVORABLE": "pos", "RESTRICTED": "neg"}.get(env, "warn")),
         pill(f"이벤트 {len(a['events'])}건", "info"), pill(f"공시 {len(fl)}건", "info")]) + f"""
 <div class="g3">
-  <div class="card"><div class="ct">향후 1개월 이벤트</div>{table(["날짜", "이벤트", "중요도"], ev_rows)}</div>
-  <div class="card"><div class="ct">최근 1주일 뉴스</div>{table(["날짜", "헤드라인", "출처"], nw_rows)}</div>
-  <div class="card"><div class="ct">최근 공시 (8-K · Form 4 · 희석)</div>{table(["날짜", "Form", "내용", "플래그"], fi_rows)}{fi_note}</div>
+  <div class="card"><div class="ct">향후 1개월 이벤트</div>{table(["날짜", "이벤트", "중요도"], ev_rows, mode="card")}</div>
+  <div class="card"><div class="ct">최근 1주일 뉴스</div>{table(["날짜", "헤드라인", "출처"], nw_rows, mode="card")}</div>
+  <div class="card"><div class="ct">최근 공시 (8-K · Form 4 · 희석)</div>{table(["날짜", "Form", "내용", "플래그"], fi_rows, mode="card")}{fi_note}</div>
 </div>
 <div class="card" style="margin-top:12px;"><div class="ct">거시 유동성 (Financial Plumbing) — 종합 <b style="color:{ {'FAVORABLE': BULL, 'RESTRICTED': BEAR}.get(env, WARN) };">{C.KO_ENV.get(env)}</b> (점수 {mac['score']:+d})</div>
 {table(["지표", "값", "변화", "평가"], mrows)}
@@ -307,7 +312,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
   <div class="muted">ATS = 다크풀(기관 블록) · 홀세일러 = 리테일 주문 내부화(PFOF) · Lit = 거래소(프로/HFT).</div></div>
 </div>
 {_flow_session_card(l1)}
-<div class="card"><div class="ct">일별 장외 볼륨 이상 탐지 (20일 평균 대비 배수)</div>{table(["세션", "장외 거래량", "총 거래량", "DP %", "배수", "플래그"], dp_rows)}</div>
+<div class="card"><div class="ct">일별 장외 볼륨 이상 탐지 (20일 평균 대비 배수)</div>{table(["세션", "장외 거래량", "총 거래량", "DP %", "배수", "플래그"], dp_rows, mode="ts")}</div>
 {interp(p1, x1)}"""
 
         # ── SECTION 2 ──
@@ -338,7 +343,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
 </div>
 <div class="g2">
   <div class="card"><div class="ct">Short % 추세 (20거래일) · CTB</div><div class="ch"><canvas id="cShort"></canvas></div></div>
-  <div class="card"><div class="ct">Short Volume 히스토리 (14일)</div>{table(["세션", "Short %", "Δ", "Short Vol", "Total(장외)", "추정 총숏", "CTB"], srows)}</div>
+  <div class="card"><div class="ct">Short Volume 히스토리 (14일)</div>{table(["세션", "Short %", "Δ", "Short Vol", "Total(장외)", "추정 총숏", "CTB"], srows, mode="ts")}</div>
 </div>
 {alert('CTB 수수료가 1% 미만인데 가용잔고가 감소 중 — 기술적 반등 신호만으로 진입 시 무한 핀 리스크.', 'neg', '저CTB 역설 경고') if l2.get('low_ctb_paradox') else ''}
 {interp(p2, x2)}"""
@@ -423,8 +428,8 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
                                       pill(f"거시 {C.KO_ENV.get(s.get('macro'))}", {"FAVORABLE": "pos", "RESTRICTED": "neg"}.get(s.get("macro"), "warn")),
                                       pill(", ".join(C.KO_PAT.get(p, p) for p in a["patterns"]) or "정형 패턴 없음", "warn" if a["patterns"] else "muted")]) + f"""
 <div class="card"><div class="ct">레이어 신호 매트릭스 (가중 점수 = score × confidence × weight)</div>
-{table(["Layer", "시나리오", "Bull", "Neut", "Bear", "Score", "Conf", "Weight", "기여"], mrows5)}</div>
-<div class="card"><div class="ct">설계자 각본 — Phase 구조 (거래일 기준)</div>{table(["Phase", "기간", "내용", "상태"], phase_rows)}</div>
+{table(["Layer", "시나리오", "Bull", "Neut", "Bear", "Score", "Conf", "Weight", "기여"], mrows5, mode="card")}</div>
+<div class="card"><div class="ct">설계자 각본 — Phase 구조 (거래일 기준)</div>{table(["Phase", "기간", "내용", "상태"], phase_rows, mode="card")}</div>
 <div class="g2">
   <div class="card"><div class="ct">시나리오 확률 매트릭스</div><div class="ch sm"><canvas id="cProb"></canvas></div>
   <div class="muted">Raw Score {s['raw_score']:+.3f} · 분산 {s.get('dispersion', 0):.2f} · 거시 보정 {contrib.get('macro', 0) * 100:+.1f}%p · 패턴 보정 {contrib.get('patterns', 0) * 100:+.1f}%p · 상한 80%</div></div>
@@ -446,7 +451,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
   <div><b style="color:{BEAR};">②</b> <b>[SHORT/CTB]</b> {e(lines[1])}</div>
   <div><b style="color:{BEAR};">③</b> <b>[OPTIONS]</b> {e(lines[2])}</div>
 </div>
-<div class="card"><div class="ct">트리거 체크리스트</div>{table(["트리거", "유형", "상태", "함의"], trows)}</div>
+<div class="card"><div class="ct">트리거 체크리스트</div>{table(["트리거", "유형", "상태", "함의"], trows, mode="card")}</div>
 <div class="card"><div class="ct">리스크 요인</div><ul class="risk">{rlis}</ul></div>"""
 
     # ── SECTION 7 ──
@@ -474,11 +479,12 @@ FINRA Short%는 TRF 보고(장외) 체결 기준이며 포지션 잔고가 아�
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 <style>{CSS}</style>
 </head>
-<body><div class="wrap">
-{header}{summary}{quality}
+<body id="top"><div class="wrap">
+{header}{NAV}{summary}{quality}
 {s0}{s1}{s2}{s3}{s4}{s5}{s6}{s7}
 {footer}
 </div>
+<a href="#top" class="totop" aria-label="맨 위로">↑</a>
 <script id="sma-data" type="application/json">{charts}</script>
 <script>{JS}</script>
 {md_block}
@@ -571,6 +577,10 @@ def _chart_payload(a: Dict) -> str:
     return json.dumps(data, separators=(",", ":"), default=lambda o: None).replace("</", "<\\/")
 
 
+NAV = ('<nav class="snav">' + "".join(f'<a href="#{h}">{t}</a>' for h, t in (
+    ("sum", "요약"), ("s0", "0 이벤트·거시"), ("s1", "1 다크풀"), ("s2", "2 공매도"), ("s3", "3 옵션"),
+    ("s4", "4 차트"), ("s5", "5 시나리오"), ("s6", "6 대응"), ("s7", "7 결론"))) + "</nav>")
+
 CSS = f"""
 *{{box-sizing:border-box}}
 body{{margin:0;background:#FFFFFF;color:{TXT};font-family:{FONT};font-size:13px;line-height:1.55}}
@@ -627,10 +637,47 @@ tbody tr:nth-child(odd){{background:#FFFFFF}} tbody tr:nth-child(even){{backgrou
 .concl{{border-top:2px solid {WARN};padding-top:6px}}
 .cc{{font-weight:700;font-size:13.5px;line-height:1.85;margin:10px 0}} .cc u{{text-decoration-color:{WARN};text-underline-offset:3px}}
 .foot{{margin-top:30px;font-size:10.5px;color:{MUTED};text-align:center;line-height:1.6}}
+html{{scroll-behavior:smooth}} .sec,.exec{{scroll-margin-top:52px}}
+.snav{{position:sticky;top:0;z-index:30;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+ background:rgba(255,255,255,.96);backdrop-filter:blur(6px);padding:8px 0;margin-bottom:10px;border-bottom:0.5px solid {BORDER};scrollbar-width:none}}
+.snav::-webkit-scrollbar{{display:none}}
+.snav a{{flex:0 0 auto;font-size:12px;font-weight:600;color:{MUTED};background:{CARD};border:0.5px solid {BORDER};border-radius:14px;padding:4px 11px;white-space:nowrap}}
+.snav a:hover{{color:{WARN};border-color:{WARN};text-decoration:none}}
+.totop{{display:none;position:fixed;right:14px;bottom:18px;z-index:40;width:40px;height:40px;border-radius:20px;background:{TXT};color:#FFFFFF;
+ align-items:center;justify-content:center;font-size:18px;opacity:.82;box-shadow:0 2px 8px rgba(0,0,0,.2)}}
+.totop:hover{{text-decoration:none;opacity:1}}
 @media (max-width:1024px){{.kpis{{grid-template-columns:repeat(3,1fr)}} .g3,.g2,.g2.w{{grid-template-columns:1fr}}}}
-@media (max-width:640px){{.wrap{{padding:14px 16px 30px}} .tiles{{grid-template-columns:1fr 1fr}} .kpis{{grid-template-columns:1fr 1fr}}
- .hdr h1{{font-size:20px}} .pv{{font-size:22px}} .ladder{{display:none}} .llist{{display:flex;flex-direction:column;gap:2px;font-size:11.5px;margin-top:10px;
- border-top:0.5px solid {BORDER};padding-top:8px}}}}
+@media (max-width:640px){{
+ body{{font-size:13px}} .wrap{{padding:6px 16px 72px}}
+ .hdr{{flex-direction:column;align-items:flex-start;gap:6px}} .px{{flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}}
+ .hdr h1{{font-size:20px}} .pv{{font-size:22px}} .sub{{font-size:11px}}
+ .tiles{{grid-template-columns:1fr 1fr;gap:8px}} .tile{{padding:7px 8px}} .tv{{font-size:13px}}
+ .kpis{{grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}} .kpi{{padding:7px 8px}} .kv{{font-size:15px}} .ks{{font-size:10px}}
+ .card{{padding:10px 10px;margin-bottom:10px}} .ct{{font-size:12px;margin-bottom:6px}}
+ .ch{{height:210px}} .ch.sm{{height:165px}} .ch.lg{{height:260px}}
+ .sec{{flex-direction:column;align-items:flex-start;gap:6px;margin:22px 0 10px}} .sec-t{{font-size:15px}}
+ .interp{{padding:9px 11px}} .interp li{{margin:5px 0;line-height:1.6}}
+ .hl{{font-size:14px;line-height:1.45}}
+ .ladder{{display:none}} .llist{{display:flex;flex-direction:column;gap:2px;font-size:11.5px;margin-top:10px;border-top:0.5px solid {BORDER};padding-top:8px}}
+ .totop{{display:flex}}
+ .cc{{font-size:13.5px;line-height:1.8}}
+ /* 카드형 표: 행 = 카드, 열 머리글 = 라벨 */
+ table.rt thead{{display:none}}
+ table.rt,table.rt tbody,table.rt tr,table.rt td{{display:block;width:100%}}
+ table.rt tr{{background:#FFFFFF !important;border:0.5px solid {BORDER};border-radius:6px;padding:3px 10px;margin-bottom:6px}}
+ table.rt td{{border:none;padding:3px 0;display:flex;align-items:flex-start;gap:10px;text-align:left;line-height:1.45}}
+ table.rt td::before{{content:attr(data-label);flex:0 0 30%;max-width:96px;text-align:left;color:{MUTED};font-size:11px;font-weight:600;padding-top:1px}}
+ table.rt td:first-child{{display:block;text-align:left;font-weight:700;border-bottom:0.5px solid {PANEL};padding:5px 0 6px;margin-bottom:2px}}
+ table.rt td:first-child::before{{display:none}}
+ table.rt td:empty{{display:none}}
+ table.rt tr[style]{{border-left:3px solid {WARN}}}
+ /* 시계열 표: 줄바꿈 금지 + 첫 열 고정 + 가로 스크롤 */
+ .tsw{{position:relative;margin:0 -10px;padding:0 10px}}
+ table.tsr th,table.tsr td{{white-space:nowrap;font-size:11.5px;padding:4px 7px}}
+ table.tsr th:first-child,table.tsr td:first-child{{position:sticky;left:0;z-index:1;background:inherit;box-shadow:1px 0 0 {BORDER}}}
+ table.tsr tbody tr:nth-child(odd) td:first-child{{background:#FFFFFF}} table.tsr tbody tr:nth-child(even) td:first-child{{background:{CARD}}}
+ table.tsr th:first-child{{background:{PANEL}}}
+}}
 @media print{{.wrap{{max-width:100%}} details.dq{{display:none}} .ch{{height:200px}} .card{{break-inside:avoid}}}}
 """
 
