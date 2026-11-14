@@ -1,0 +1,140 @@
+"""JSON(v3, 레거시 키 유지) 및 Markdown 아카이브 렌더러."""
+from __future__ import annotations
+
+import json
+from typing import Any, Dict, List, Optional
+
+from . import commentary as C
+
+
+def _r(x, d=4):
+    return round(x, d) if isinstance(x, float) else x
+
+
+def _pick(L: Dict, keys: List[str]) -> Dict[str, Any]:
+    return {k: _r(L.get(k)) for k in keys}
+
+
+def render_json(a: Dict[str, Any]) -> str:
+    m, l1, l2, l3, l4, s = a["meta"], a["l1"], a["l2"], a["l3"], a["l4"], a["scenarios"]
+    out = {
+        "schema": 3,
+        "ticker": m["ticker"], "date": m["date"], "price": _r(m["price"]), "is_index": m["is_index"],
+        "generated_at": m["generated_at"], "prev_close": _r(l4.get("prev_close")), "change_pct": _r(l4.get("change_pct")),
+        "headline": a.get("headline"),
+        "quality": a["quality"],
+        "warnings": m.get("warnings") or [],
+        "patterns": a["patterns"], "pattern_detail": a.get("pattern_detail"),
+        "macro_env": a["macro"]["env"],
+        "macro": {"score": a["macro"]["score"], "rows": [{k: _r(v) for k, v in r.items()} for r in a["macro"]["rows"]]},
+        "scenarios": {k: s[k] for k in ("A_bullish", "B_neutral", "C_bearish", "raw_score", "dispersion", "contributions")},
+        "phase": {k: _r(v) for k, v in a["phase"].items()},
+        "levels": [{k: _r(v) for k, v in lv.items()} for lv in a["levels"]],
+        "l1": {**_pick(l1, ["scenario", "signal", "confidence", "score", "dp_pct", "dp_avg20", "dp_ratio", "dp_class",
+                            "delta_total", "obv_strength", "divergence", "obv_source", "window_days", "acc20",
+                            "vwap5", "vwap_dist_pct", "delta_inst", "delta_pro", "delta_retail", "iar",
+                            "dp_vwap", "dp_vwap_dist_pct", "off_vol_ratio"]),
+               "cumulative_daily": l1.get("cumulative_daily"), "dp_series": l1.get("dp_series"), "ats": l1.get("ats")},
+        "l2": {**_pick(l2, ["scenario", "signal", "confidence", "score", "case", "short_pct_latest", "short_avg_14d",
+                            "short_slope", "slope_dir", "anomaly_z", "short_shares", "est_short_total", "ctb_fee",
+                            "ctb_delta_pct", "shares_available", "available_capped", "avail_delta_pct",
+                            "borrow_source", "htb_class", "low_ctb_paradox"]),
+               "short_series": l2.get("short_series"), "borrow_series": l2.get("borrow_series"),
+               "short_interest": l2.get("short_interest")},
+        "l3": _pick(l3, ["scenario", "signal", "confidence", "score", "expiry", "dte", "max_pain", "max_pain_dist_pct",
+                         "monthly_expiry", "monthly_max_pain", "pc_oi", "pc_vol", "pc_vol_adj", "skew", "skew_25d",
+                         "atm_iv", "iv30", "term_structure", "expected_move", "expected_move_pct", "net_gex",
+                         "net_gex_weighted", "flip_zone", "gamma_regime", "call_wall", "put_wall", "oi_total",
+                         "oi_trend_pct", "binary_event", "source"]),
+        "l4": _pick(l4, ["scenario", "signal", "confidence", "score", "ma_alignment", "sma20", "sma50", "sma200",
+                         "ema9", "ema21", "rsi14", "atr14", "atr_pct", "bb_upper", "bb_lower", "bb_width_pct",
+                         "bb_width_pctile", "bb_position", "immediate_resistance", "immediate_support",
+                         "key_resistance", "key_support", "vol_ratio30", "high_52w", "low_52w"]),
+        "events": a["events"],
+    }
+    if l3.get("pinning"):
+        out["l3"]["pinning"] = l3["pinning"]
+    return json.dumps(out, ensure_ascii=False, indent=1, default=str)
+
+
+def _m(x: Optional[float]) -> str:
+    return "N/A" if x is None else C.ssh(x)
+
+
+def _p(x: Optional[float], d: int = 1) -> str:
+    return "N/A" if x is None else f"{x:.{d}f}%"
+
+
+def _d(x: Optional[float]) -> str:
+    return "N/A" if x is None else f"${x:,.2f}"
+
+
+def _hist_row(h: Dict[str, Any]) -> str:
+    l1, l2, l3 = h.get("l1") or {}, h.get("l2") or {}, h.get("l3") or {}
+    avail = l2.get("shares_available")
+    av = "10M+" if l2.get("available_capped") else (C.sh(avail) if avail else "N/A")
+    return (f"| {h['_session']} | {_d(h.get('price'))} | {_m(l1.get('delta_inst'))} | {_m(l1.get('delta_pro'))} | "
+            f"{_m(l1.get('delta_retail'))} | {_m(l1.get('delta_total'))} | {_p(l2.get('short_pct_latest'))} | "
+            f"{_p(l2.get('ctb_fee'), 2)} | {av} | {_d(l3.get('flip_zone'))} | {_d(l3.get('max_pain'))} |")
+
+
+def render_markdown(a: Dict[str, Any]) -> str:
+    m, l1, l2, l3, l4, s, ph, q = (a["meta"], a["l1"], a["l2"], a["l3"], a["l4"], a["scenarios"], a["phase"], a["quality"])
+    T = m["ticker"]
+    si = l2.get("short_interest") or {}
+    lines = [
+        "---", f"ticker: {T}", f"date: {m['date']}", "schema: 3", f"quality: {q['grade']} ({q['score']})", "---", "",
+        f"# Smart Money Analysis: {T}",
+        f"**Analysis Date (US session)**: {m['date']}  ",
+        f"**Current Price**: ${m['price']:.2f} ({C.pc(l4.get('change_pct'), 2)})  ",
+        f"**Options Expiry**: {l3.get('expiry', 'N/A')} (DTE {l3.get('dte', 'N/A')}) · Monthly {l3.get('monthly_expiry', 'N/A')}  ",
+        f"**Data Quality**: {q['grade']} ({q['score']}/100)  ",
+        f"**Analyst**: Smart Money Analyzer v3.0", "",
+        f"> {a.get('headline')}", "", "---", "", "## Key Metrics Summary", "",
+        "| Metric | Value |", "|--------|-------|",
+        f"| Institutional OBV Δ | {_m(l1.get('delta_inst'))} (체결 단위 데이터 필요) |",
+        f"| Professional OBV Δ | {_m(l1.get('delta_pro'))} |",
+        f"| Retail OBV Δ | {_m(l1.get('delta_retail'))} |",
+        f"| Total OBV Δ (5d, CLV) | {_m(l1.get('delta_total'))} ({C.pc((l1.get('obv_strength') or 0) * 100)} ADV) |",
+        f"| Divergence | {l1.get('divergence', 'N/A')} |",
+        f"| Dark Pool % | {_p(l1.get('dp_pct'))} (20d avg {_p(l1.get('dp_avg20'))}) |",
+        f"| Institutional Absorption Ratio | {'N/A' if l1.get('iar') is None else round(l1['iar'], 2)} |",
+        f"| VWAP Anchor (5d) | {_d(l1.get('vwap5'))} ({C.pc(l1.get('vwap_dist_pct'), 2)}) |",
+        f"| ATS share (FINRA weekly) | {_p((l1.get('ats') or {}).get('ats_share_pct'))} |",
+        f"| Short % (off-exchange) | {_p(l2.get('short_pct_latest'))} (z {(l2.get('anomaly_z') or 0):+.2f}) |",
+        f"| Short Case | {C.KO_CASE.get(l2.get('case'), l2.get('case'))} |",
+        f"| CTB Fee | {_p(l2.get('ctb_fee'), 2)} (Δ {C.pc(l2.get('ctb_delta_pct'))}) |",
+        f"| Available Shares | {'10M+' if l2.get('available_capped') else C.sh(l2.get('shares_available'))} (Δ {C.pc(l2.get('avail_delta_pct'))}) |",
+        f"| Short Interest / Float | {_p(si.get('pct_float'), 2)} · DTC {si.get('days_to_cover') or 'N/A'} |",
+        f"| Max Pain | {_d(l3.get('max_pain'))} ({C.pc(-(l3.get('max_pain_dist_pct') or 0), 2)}) |",
+        f"| GEX Flip Zone | {_d(l3.get('flip_zone'))} ({l3.get('gamma_regime') or 'N/A'}) |",
+        f"| Call / Put Wall | {_d(l3.get('call_wall'))} / {_d(l3.get('put_wall'))} |",
+        f"| Net GEX (per 1%) | {C.money_big(l3.get('net_gex'))} |",
+        f"| P/C OI · Vol | {l3.get('pc_oi') and round(l3['pc_oi'], 2)} · {l3.get('pc_vol') and round(l3['pc_vol'], 2)} |",
+        f"| Expected Move (wk) | ±{_d(l3.get('expected_move'))} |",
+        f"| Scenario [A] Bullish | {s['A_bullish']}% |", f"| Scenario [B] Neutral | {s['B_neutral']}% |",
+        f"| Scenario [C] Bearish | {s['C_bearish']}% |",
+        f"| Raw Score · Macro | {s['raw_score']:+.3f} · {s.get('macro')} |",
+        f"| Patterns | {', '.join(C.KO_PAT.get(p, p) for p in a['patterns']) or 'none'} |", "",
+        "---", "", "## Architect Phase Structure",
+        f"- **Phase 1 (Completed)**: {ph['p1_date']} — 레짐 시작 이후 {C.pc(ph.get('p1_return_pct'))}, L1 {C.ko(l1.get('scenario'))}",
+        f"- **Phase 2 (Current)**: {ph['p2_date']} — {C.ko(l1.get('scenario'))} × {C.ko(l3.get('scenario'))}",
+        f"- **Phase 3 (Target)**: {ph['p3_date']} — {ph['p3_direction']} | Target: {_d(ph.get('p3_target_lo'))}–{_d(ph.get('p3_target_hi'))} "
+        f"(확장 {_d(ph.get('p3_target_lo2'))}–{_d(ph.get('p3_target_hi2'))})", "",
+        "---", "", "## 3-Line Summary",
+    ]
+    for i, t in enumerate(C.three_lines(a), 1):
+        lines.append(f"{'①②③'[i-1]} {t}")
+    lines += ["", "---", "", "## Core Conclusion"]
+    for p in C.conclusions(a):
+        lines += ["", "**" + p.replace("<u>", "").replace("</u>", "") + "**"]
+    lines += ["", "---", "", "## Cumulative History", "",
+              "| 날짜 | 종가 | 기관OBV | 프로OBV | 리테일OBV | 전체OBV | Short% | CTB | 가용잔고 | GEX플립 | MaxPain |",
+              "|------|------|---------|---------|-----------|---------|--------|-----|---------|---------|---------|"]
+    cur = {"_session": m["date"], "price": m["price"], "l1": l1, "l2": l2, "l3": l3}
+    for h in (a.get("history") or []) + [cur]:
+        lines.append(_hist_row(h))
+    lines += ["", "> v2(2026-11 이전) 행은 실행일 기준 파일명을 실제 세션 날짜로 보정해 표기. 기관/프로/리테일 OBV 는 체결 단위 데이터 확보 전까지 N/A."]
+    if m.get("warnings"):
+        lines += ["", "## Data Warnings"] + [f"- {w}" for w in m["warnings"]]
+    return "\n".join(lines) + "\n"
