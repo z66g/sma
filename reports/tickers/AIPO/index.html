@@ -70,7 +70,7 @@
 <div class="wrap">
   <div class="nav"><a href="../../">← 전체 대시보드</a></div>
   <h1>AIPO</h1>
-  <div class="meta">최신 세션 2026-06-09 (미국 정규장) · $30.93 · 1개 세션 · <span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:10px;font-size:11px;">레거시 v2</span> · <span title="l3 cboe: CBOE HTTP 403 — falling back to yfinance; l3: yfinance: no expiries" style="color:#9A6700;">경고 2건</span> · <span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">바닥권 물량 흡수</span></div>
+  <div class="meta">최신 세션 2026-06-09 (미국 정규장) · $30.93 · 0개 세션 · <span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:10px;font-size:11px;">레거시 v2</span> · <span title="l3 cboe: CBOE HTTP 403 — falling back to yfinance; l3: yfinance: no expiries" style="color:#9A6700;">경고 2건</span> · <span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">바닥권 물량 흡수</span></div>
   
 
   <h2>Overview (latest)</h2>
@@ -111,9 +111,11 @@
   <div class="t-scroll">
   <table>
     <thead><tr><th>Session</th><th>Price</th><th>Top Scenario</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>Quality</th><th>Link</th></tr></thead>
-    <tbody><tr><td>2026-06-09</td><td>$30.93</td><td style="color:#1A7F5A;font-weight:600;">Bull 55%</td><td>매집</td><td>숏커버링</td><td>—</td><td>v2</td><td><a href="../../2026-06-10/AIPO_3Layer_Forensic_2026-06-10.html">리포트</a></td></tr></tbody>
+    <tbody><tr><td colspan="8">아직 리포트 없음</td></tr></tbody>
   </table>
   </div>
+
+  <details style="margin-top:18px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:#656D76;">이전 버전(v2) 리포트 아카이브 · 1개 세션 — 방법론이 달라 시계열·분석에서 제외 (원본 보존)</summary><div class="t-scroll" style="margin-top:8px;"><table><thead><tr><th>Session</th><th>Price</th><th>Link</th></tr></thead><tbody><tr><td>2026-06-09</td><td>$30.93</td><td><a href="../../2026-06-10/AIPO_3Layer_Forensic_2026-06-10.html">리포트</a></td></tr></tbody></table></div></details>
 
   <h2>주간 AI 분석 리포트 히스토리</h2>
   <p style="font-size:12px;color:#656D76;">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>
@@ -136,8 +138,8 @@
 Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
 Chart.defaults.color = "#1F2328";
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
-const DATES = ["2026-06-09"];
-const DATASETS = {"priceChart":[[{"label":"Price","data":[30.93000030517578],"borderColor":"#0969DA","borderWidth":2.5},{"label":"Max Pain","data":[null],"borderColor":"#9A6700","borderDash":[4,3]},{"label":"GEX Flip","data":[null],"borderColor":"#1A7F5A","borderDash":[2,2]}],false],"probChart":[[{"label":"Bullish","data":[55.0],"borderColor":"#1A7F5A"},{"label":"Bearish","data":[15.0],"borderColor":"#CF222B"}],false],"shortChart":[[{"label":"Short %","data":[29.273145552119917],"borderColor":"#CF222B","yAxisID":"y"},{"label":"CTB %","data":[1.1815],"borderColor":"#9A6700","yAxisID":"y1"}],true],"obvChart":[[{"label":"기관 OBV (5d)","data":[null],"borderColor":"#1A7F5A","yAxisID":"y"},{"label":"프로 OBV (5d)","data":[null],"borderColor":"#9A6700","yAxisID":"y"},{"label":"리테일 OBV (5d)","data":[null],"borderColor":"#CF222B","yAxisID":"y"},{"label":"Total OBV (5d)","data":[8073.780823309338],"borderColor":"#A32D2D","borderDash":[5,4],"yAxisID":"y"},{"label":"Dark Pool %","data":[74.92321408308075],"borderColor":"#0969DA","yAxisID":"y1"}],true]};
+const DATES = [];
+const DATASETS = {"priceChart":[[{"label":"Price","data":[],"borderColor":"#0969DA","borderWidth":2.5},{"label":"Max Pain","data":[],"borderColor":"#9A6700","borderDash":[4,3]},{"label":"GEX Flip","data":[],"borderColor":"#1A7F5A","borderDash":[2,2]}],false],"probChart":[[{"label":"Bullish","data":[],"borderColor":"#1A7F5A"},{"label":"Bearish","data":[],"borderColor":"#CF222B"}],false],"shortChart":[[{"label":"Short %","data":[],"borderColor":"#CF222B","yAxisID":"y"},{"label":"CTB %","data":[],"borderColor":"#9A6700","yAxisID":"y1"}],true],"obvChart":[[{"label":"기관 OBV (5d)","data":[],"borderColor":"#1A7F5A","yAxisID":"y"},{"label":"프로 OBV (5d)","data":[],"borderColor":"#9A6700","yAxisID":"y"},{"label":"리테일 OBV (5d)","data":[],"borderColor":"#CF222B","yAxisID":"y"},{"label":"Total OBV (5d)","data":[],"borderColor":"#A32D2D","borderDash":[5,4],"yAxisID":"y"},{"label":"Dark Pool %","data":[],"borderColor":"#0969DA","yAxisID":"y1"}],true]};
 function lineChart(id, datasets, dual) {
   const scales = { y:{ grid:{color:"#EAEEF2"} }, x:{ grid:{display:false} } };
   if (dual) scales.y1 = { position:'right', grid:{drawOnChartArea:false} };
