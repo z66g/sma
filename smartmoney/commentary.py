@@ -625,7 +625,7 @@ def one_liner(a: Dict) -> str:
         g_c, g_x, g_t = "방향성 공매도가 늘고 있어", "방향성 공매도가 늘고 있지만", "bear"
     else:
         g_c, g_x, g_t = _gamma_clause(a)
-    fits = {"bear": code == "C", "range": code == "B", "calm": code in ("A", "B"), "vol": code != "A", "gap": True}.get(g_t, True)
+    fits = {"bear": code in ("B", "C"), "range": code == "B", "calm": code in ("A", "B"), "vol": code != "A", "gap": True}.get(g_t, True)
     g = g_c if fits else g_x
     if a["meta"].get("is_index"):
         mv = f"5일간 {pc(r5)} 움직였고" if r5 is not None else "최근 흐름은 뚜렷하지 않고"
@@ -657,6 +657,8 @@ def one_liner(a: Dict) -> str:
                 f"5일간 순체결은 {x}주 매도 우위였")
     contra = (side > 0 and code == "C") or (side < 0 and code == "A") or (side != 0 and code == "B")
     conn = "지만" if contra else "고"
+    if conn == "지만" and g and g == g_x:      # '~지만, ~지만' 중복 방지
+        conn = "고"
     return f"{stem}{conn}, {g} {verdict}" if g else f"{stem}{conn}, {verdict}"
 
 
