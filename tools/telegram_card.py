@@ -29,6 +29,8 @@ FONT = ('-apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "
 BULL, BEAR, WARN, INFO, MUTED, TXT = "#1A7F5A", "#CF222B", "#9A6700", "#0969DA", "#656D76", "#1F2328"
 SC = {"A": ("상승", BULL, "#DAFBE1"), "B": ("중립", WARN, "#FFF8C5"), "C": ("하락", BEAR, "#FFEBE9")}
 ST_COL = {"ACCUMULATION": BULL, "MARKUP": BULL, "DISTRIBUTION": WARN, "MARKDOWN": BEAR, "NEUTRAL": MUTED}
+# 국면 = 지금까지의 자금 흐름 어휘 (향후 전망의 상승/중립/하락과 겹치지 않게)
+ST_KO = {"ACCUMULATION": "매집", "MARKUP": "매수 주도", "DISTRIBUTION": "분산", "MARKDOWN": "매도 주도", "NEUTRAL": "관망"}
 
 
 def E(x) -> str:
@@ -74,7 +76,7 @@ def row(d: dict, i: int) -> str:
     chg = d.get("change_pct")
     cc = BULL if (chg or 0) > 0 else BEAR if (chg or 0) < 0 else MUTED
     rg = ((d.get("phase") or {}).get("regime") or {}).get("current") or {}
-    reg = (f'<span style="color:{ST_COL.get(rg.get("state"), MUTED)};font-weight:700;">{E(rg.get("state_ko"))}</span>'
+    reg = (f'<span style="color:{ST_COL.get(rg.get("state"), MUTED)};font-weight:700;">{E(ST_KO.get(rg.get("state"), rg.get("state_ko")))}</span>'
            f'<span class="mu"> {E(rg.get("days"))}일</span>' + (' <span style="color:#CF222B;">⚠</span>' if rg.get("contradicted") else "")
            ) if rg else '<span class="mu">—</span>'
     price = d.get("price")
@@ -90,7 +92,7 @@ def build_html(date: str, stocks: list[dict], idx: list[dict]) -> tuple[str, int
     stocks = sorted_stocks(stocks)
     cnt = {k: sum(1 for d in stocks if top(d)[0] == k) for k in "ABC"}
     macro = {"FAVORABLE": "우호", "NEUTRAL": "중립", "RESTRICTED": "제한"}.get((stocks or idx or [{}])[0].get("macro_env"), "—")
-    head = ("<tr><th>종목</th><th style='text-align:right;'>등락</th><th>우세 시나리오</th><th>수급 국면</th>"
+    head = ("<tr><th>종목</th><th style='text-align:right;'>등락</th><th>향후 전망</th><th>현재 수급 국면</th>"
             "<th>핵심 (주체 · 구조)</th></tr>")
     body = "".join(row(d, i) for i, d in enumerate(stocks))
     ib = ""
@@ -113,10 +115,10 @@ td.sec{{height:{SEC_H}px;font-size:11.5px;font-weight:700;color:{MUTED};backgrou
 col.c1{{width:128px}} col.c2{{width:72px}} col.c3{{width:116px}} col.c4{{width:150px}}
 </style></head><body>
 <div class="hd"><div class="t1">스마트머니 데일리 <span>· {E(date)} 세션</span></div>
-<div class="t2">미국 정규장 마감 기준 · {len(stocks)}종목 · 우세 시나리오 <b style="color:{BULL}">상승 {cnt['A']}</b> · <b style="color:{WARN}">중립 {cnt['B']}</b> · <b style="color:{BEAR}">하락 {cnt['C']}</b> · 거시 유동성 {E(macro)}</div></div>
+<div class="t2">미국 정규장 마감 기준 · {len(stocks)}종목 · 향후 전망 <b style="color:{BULL}">상승 {cnt['A']}</b> · <b style="color:{WARN}">중립 {cnt['B']}</b> · <b style="color:{BEAR}">하락 {cnt['C']}</b> · 거시 유동성 {E(macro)}</div></div>
 <table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col></colgroup>
 <thead>{head}</thead><tbody>{body}{ib}</tbody></table>
-<div class="ft"><span>⚠ = 국면 판정과 누적 리포트·체결 근거가 엇갈림 · 국면 옆 숫자 = 지속 거래일</span><span>analyzer.zbbg.kr</span></div>
+<div class="ft"><span>향후 전망 = 다음 구간 시나리오 확률 · 수급 국면 = 지금까지의 자금 흐름(숫자는 지속 거래일) · ⚠ = 국면과 누적 근거가 엇갈림</span><span>analyzer.zbbg.kr</span></div>
 </body></html>"""
     return doc, h
 

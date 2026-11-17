@@ -6,9 +6,9 @@
      - 수급 z  = 10일 CLV 순체결(÷ADV) ÷ 최근 120일 같은 값의 표준편차
    임계 ±0.5 로 5개 국면에 배정한다 (상호 배타):
      매집(ACCUMULATION)  수급 유입 · 가격 상승 아님      ← 가격과 수급의 강세 괴리
-     상승 진행(MARKUP)    가격 상승 · 수급 유출 아님
+     매수 주도(MARKUP)    가격 상승 · 수급 유출 아님
      분산(DISTRIBUTION)  수급 유출 · 가격 하락 아님      ← 약세 괴리
-     하락 진행(MARKDOWN)  가격 하락 · 수급 유입 아님
+     매도 주도(MARKDOWN)  가격 하락 · 수급 유입 아님
      관망(NEUTRAL)       그 외
    3거래일 미만의 짧은 구간은 이웃 구간에 흡수(노이즈 제거)하고 같은 국면은 병합한다.
 
@@ -35,11 +35,12 @@ import numpy as np
 from . import calendar as cal
 
 STATES = ("ACCUMULATION", "MARKUP", "DISTRIBUTION", "MARKDOWN", "NEUTRAL")
-KO_STATE = {"ACCUMULATION": "매집", "MARKUP": "상승 진행", "DISTRIBUTION": "분산", "MARKDOWN": "하락 진행",
-            "NEUTRAL": "관망(횡보)"}
+# 국면 이름은 '자금 흐름' 어휘만 쓴다 — 향후 전망(상승/중립/하락 시나리오)과 같은 단어를 피해 혼동 방지
+KO_STATE = {"ACCUMULATION": "매집", "MARKUP": "매수 주도", "DISTRIBUTION": "분산", "MARKDOWN": "매도 주도",
+            "NEUTRAL": "관망"}
 BULLISH_STATES = {"ACCUMULATION", "MARKUP"}
 BEARISH_STATES = {"DISTRIBUTION", "MARKDOWN"}
-# 전형적 순환(데이터가 부족할 때의 사전 분포): 매집 → 상승 → 분산 → 하락 → 매집
+# 전형적 순환(데이터가 부족할 때의 사전 분포): 매집 → 매수 주도 → 분산 → 매도 주도 → 매집
 CYCLE_NEXT = {"ACCUMULATION": "MARKUP", "MARKUP": "DISTRIBUTION", "DISTRIBUTION": "MARKDOWN",
               "MARKDOWN": "ACCUMULATION", "NEUTRAL": None}
 W = 10

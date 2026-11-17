@@ -247,7 +247,7 @@ def _phase_rows(ph: Dict, l1: Dict, l3: Dict) -> List[List[str]]:
         emp = (f"과거 {C.q(cu['state_ko'])} 다음에 {C.jo(C.q(nx['state_ko']), '이')} 온 경우 {nx['emp_hits']}/{nx['emp_n']}회"
                + (f"(가장 많았던 다음 국면은 {C.q(R_KO.get(et[0], et[0]))} {et[1]}회)" if et and et[0] != nx["state"] else ""))
     else:
-        emp = "과거 전이 표본이 없어 전형적인 순환(매집→상승→분산→하락)을 가정"
+        emp = "과거 전이 표본이 없어 전형적인 순환(매집→매수 주도→분산→매도 주도)을 가정"
     return [
         [f"<b>Phase 1</b> · {e(pv['state_ko'])}", e(ph["p1_date"]), e(_seg_line(pv)) + conf(pv), pill("완료", "muted")],
         [f"<b>Phase 2</b> · {e(cu['state_ko'])}", e(f"{cu['start']} ~ (예상) {ph['p2_end']}"),
@@ -257,7 +257,7 @@ def _phase_rows(ph: Dict, l1: Dict, l3: Dict) -> List[List[str]]:
          f"{e(C.kt(C.KO_DIR, ph.get('p3_direction')))} · {tgt}{e(cats)}", pill("예정", "info")]]
 
 
-R_KO = {"ACCUMULATION": "매집", "MARKUP": "상승 진행", "DISTRIBUTION": "분산", "MARKDOWN": "하락 진행", "NEUTRAL": "관망(횡보)"}
+R_KO = {"ACCUMULATION": "매집", "MARKUP": "매수 주도", "DISTRIBUTION": "분산", "MARKDOWN": "매도 주도", "NEUTRAL": "관망"}
 
 
 def _regime_card(ph: Dict) -> str:
@@ -269,7 +269,7 @@ def _regime_card(ph: Dict) -> str:
         cf = sg.get("confirm")
         k = "muted" if cf is None else "pos" if cf >= 0.67 else "warn" if cf >= 0.5 else "neg"
         col, _ = REG_COLOR[sg["state"]]
-        rows.append([e(f"{sg['start']} ~ {sg['end']}"), f'<b style="color:{col};">{e(sg["state_ko"])}</b>', f"{sg['days']}",
+        rows.append([e(f"{sg['start']} ~ {sg['end']}"), f'<b style="color:{col};">{e(R_KO.get(sg["state"], sg.get("state_ko")))}</b>', f"{sg['days']}",
                      colored(sg.get("ret_pct"), C.pc(sg.get("ret_pct"))),
                      colored(sg.get("flow_per_day"), C.pc(0.0 if abs(sg.get("flow_per_day") or 0) < 0.5 else sg.get("flow_per_day"), 0)),
                      _num(sg.get("dp_avg"), 1, suffix="%"), _num(sg.get("short_avg"), 1, suffix="%"),
@@ -279,7 +279,7 @@ def _regime_card(ph: Dict) -> str:
     return (f'<div class="card"><div class="ct">수급 국면 타임라인 — 가격·순체결(CLV)로 나눈 구간과 누적 리포트 근거 (최근 160거래일)</div>'
             f'<div class="ch"><canvas id="cReg"></canvas></div><div class="rg-l">{legend}</div>'
             + table(["기간", "국면", "일수", "가격", "순체결/일", "다크풀 평균", "공매도 평균", "근거 일치"], rows, mode="card")
-            + '<div class="muted" style="margin-top:6px;">국면 판정: 10거래일 가격 변화와 순체결을 각자의 평소 변동폭으로 나눠 ±0.5 기준으로 분류 · '
+            + '<div class="muted" style="margin-top:6px;">수급 국면은 지금까지의 자금 흐름(매집·매수 주도·분산·매도 주도·관망)이고, 상승/중립/하락은 앞으로의 시나리오 확률입니다 · 국면 판정: 10거래일 가격 변화와 순체결을 각자의 평소 변동폭으로 나눠 ±0.5 기준으로 분류 · '
               '근거 일치 = 같은 기간 리포트의 L1 판정·기관 체결·다크풀·공매도 중 국면과 맞는 항목 수 · '
               '다음 국면 확률 = 이 종목의 2년간 국면 전이 빈도 50% + 현재 시나리오 확률 50%.</div></div>')
 
