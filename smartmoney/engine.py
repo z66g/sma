@@ -58,6 +58,14 @@ class SmartMoneyAnalyzer:
             return data
         self.sources["l4"] = ["Yahoo Finance (일봉)"]
         last_bar = data["ohlcv"][-1]["date"]
+        if last_bar < self.date_str and not self.is_index:
+            # Yahoo 일봉이 아직 세션 봉을 게시하지 않은 경우 (마감 직후 실행) → SIP/Polygon 일봉으로 보강
+            bar, src = self._try("l4", "session_bar", S.fetch_session_bar, T, d, yft, default=(None, ""))
+            if bar:
+                data["ohlcv"].append(bar)
+                self.sources["l4"].append(f"{src} (세션 봉 보강)")
+                log(f"{T}: session bar {self.date_str} patched from {src}")
+                last_bar = bar["date"]
         if last_bar != self.date_str:
             self.warnings.append(f"l4/session_mismatch: 최신 일봉 {last_bar} ≠ 세션 {self.date_str}")
 
@@ -121,6 +129,7 @@ class SmartMoneyAnalyzer:
         T, d = self.ticker, self.session
         ohlcv = data["ohlcv"]
         l4 = A.analyze_l4(ohlcv)
+        l4["session_bar_ok"] = True if (ohlcv and ohlcv[-1]["date"] == self.date_str) else None
         price = l4.get("current_price") or ohlcv[-1]["close"]
         calx = data.get("calendar") or {}
         opt_hist = H.read_state("options", self.display_ticker)

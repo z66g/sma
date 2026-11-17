@@ -12,7 +12,7 @@ REQUIRED = {
     "l3": [("max_pain", 3, "Max Pain"), ("net_gex", 2, "Net GEX"), ("flip_zone|flip_status", 2, "GEX 플립"),
            ("pc_oi", 1, "P/C OI"), ("skew_25d", 1, "25Δ 스큐"), ("expected_move", 1, "예상 변동폭"),
            ("call_wall", 1, "콜월")],
-    "l4": [("sma200", 1, "SMA200"), ("bb_width_pct", 1, "볼린저 폭"), ("rsi14", 1, "RSI"),
+    "l4": [("session_bar_ok", 2, "세션 일봉(당일)"), ("sma200", 1, "SMA200"), ("bb_width_pct", 1, "볼린저 폭"), ("rsi14", 1, "RSI"),
            ("immediate_support", 1, "지지선")],
 }
 LAYER_W = {"l1": 0.30, "l2": 0.25, "l3": 0.30, "l4": 0.10, "macro": 0.03, "news": 0.02}

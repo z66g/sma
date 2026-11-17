@@ -75,6 +75,49 @@ def fetch_ohlcv(yft, session_date: date, period: str = "2y") -> List[Dict[str, A
     return rows
 
 
+def fetch_session_bar(symbol: str, session_date: date, yft=None) -> Tuple[Optional[Dict[str, Any]], str]:
+    """Yahoo 일봉에 세션 봉이 아직 없을 때 쓰는 폴백: Alpaca SIP 일봉 → Polygon 일봉.
+    (전체 세션 거래량이 필요하므로 정규장 분봉 합산은 쓰지 않는다 — 다크풀 비중 분모 왜곡)"""
+    from . import flow as F
+    try:
+        b = F.daily_bar(symbol, session_date)
+        if b:
+            return b, "Alpaca SIP 일봉"
+    except Exception as e:  # noqa: BLE001
+        log(f"{symbol}: alpaca daily bar failed ({e})")
+    if POLYGON_API_KEY:
+        try:
+            ds = session_date.isoformat()
+            r = get(f"https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/{ds}/{ds}",
+                    params={"adjusted": "false", "apiKey": POLYGON_API_KEY}, timeout=20, retries=1)
+            for b in r.json().get("results") or []:
+                if b.get("c"):
+                    return ({"date": ds, "open": b["o"], "high": b["h"], "low": b["l"], "close": b["c"],
+                             "volume": float(b.get("v") or 0)}, "Polygon 일봉")
+        except Exception as e:  # noqa: BLE001
+            log(f"{symbol}: polygon daily bar failed ({e})")
+    if yft is not None:
+        # 최후 폴백: Yahoo 일봉 행이 종가 NaN 으로만 게시된 경우 → 일봉 거래량 + 정규장 1분봉 OHLC
+        try:
+            ds = session_date.isoformat()
+            h = yft.history(period="5d", interval="1d", auto_adjust=False).reset_index()
+            h["Date"] = pd.to_datetime(h["Date"]).dt.tz_localize(None)
+            row = h[h["Date"].dt.date == session_date]
+            vol = _f(row["Volume"].iloc[0], 0.0) if len(row) else 0.0
+            m = yft.history(period="5d", interval="1m", prepost=False)
+            if vol and m is not None and not m.empty:
+                idx = pd.to_datetime(m.index)
+                idx = idx.tz_convert("America/New_York") if idx.tz is not None else idx
+                m = m[[x.date() == session_date for x in idx]].dropna(subset=["Close"])
+                if len(m) >= 300:          # 정규장 거의 전 구간이 있어야 신뢰
+                    return ({"date": ds, "open": float(m["Open"].iloc[0]), "high": float(m["High"].max()),
+                             "low": float(m["Low"].min()), "close": float(m["Close"].iloc[-1]), "volume": vol},
+                            "Yahoo 1분봉 OHLC + 일봉 거래량")
+        except Exception as e:  # noqa: BLE001
+            log(f"{symbol}: yahoo partial bar fallback failed ({e})")
+    return None, ""
+
+
 def fetch_minute_bars(symbol: str, yft, session_date: date, days: int = 5) -> Tuple[List[Dict[str, Any]], str]:
     """정규장 1분봉 [{date(ET), t, o,h,l,c,v,n}] 와 소스명."""
     start = cal.prev_trading_day(session_date, days - 1)

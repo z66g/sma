@@ -39,7 +39,7 @@ def available() -> bool:
     return bool(KEY_ID and SECRET)
 
 
-def _get(params: Dict[str, Any]) -> Dict[str, Any]:
+def _get(params: Dict[str, Any], url: str = BASE) -> Dict[str, Any]:
     global _last_call
     headers = {"APCA-API-KEY-ID": KEY_ID, "APCA-API-SECRET-KEY": SECRET, "Accept": "application/json"}
     for attempt in range(6):
@@ -48,7 +48,7 @@ def _get(params: Dict[str, Any]) -> Dict[str, Any]:
             time.sleep(wait)
         _last_call = time.time()
         try:
-            r = session().get(BASE, params=params, headers=headers, timeout=40)
+            r = session().get(url, params=params, headers=headers, timeout=40)
         except Exception as e:  # noqa: BLE001
             if attempt == 5:
                 raise FetchError(f"alpaca: {e}")
@@ -66,6 +66,21 @@ def _get(params: Dict[str, Any]) -> Dict[str, Any]:
             raise FetchError(f"alpaca HTTP {r.status_code}: {r.text[:160]}")
         return r.json()
     raise FetchError("alpaca: retries exhausted")
+
+
+def daily_bar(symbol: str, d: date) -> Optional[Dict[str, Any]]:
+    """SIP 일봉 1개 (Yahoo 일봉 미게시 시 폴백). 무료 플랜 SIP 는 15분 이전 데이터 제공."""
+    if not available():
+        return None
+    j = _get({"timeframe": "1Day", "start": d.isoformat(), "end": d.isoformat(), "feed": "sip",
+              "adjustment": "raw", "limit": 5}, url=f"https://data.alpaca.markets/v2/stocks/{symbol}/bars")
+    for b in j.get("bars") or []:
+        t = _ts(b["t"])
+        et = t.astimezone(cal.ET) if cal.ET else t
+        if et.date() == d and b.get("c"):
+            return {"date": d.isoformat(), "open": float(b["o"]), "high": float(b["h"]), "low": float(b["l"]),
+                    "close": float(b["c"]), "volume": float(b.get("v") or 0)}
+    return None
 
 
 def _et_bounds(d: date):
