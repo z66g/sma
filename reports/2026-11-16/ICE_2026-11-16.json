@@ -2,20 +2,18 @@
  "schema": 3,
  "ticker": "ICE",
  "date": "2026-11-16",
- "price": 178.51,
+ "price": 178.29,
  "is_index": false,
- "generated_at": "2026-11-17T02:04:41Z",
- "prev_close": 177.86,
- "change_pct": 0.3655,
- "headline": "[C 하락 47%] · 가격은 오르는데 순체결은 매도 우위 · 감마 플립 $151.07 상단 · 회랑 $155–$180",
+ "generated_at": "2026-11-17T02:20:48Z",
+ "prev_close": 178.51,
+ "change_pct": -0.1232,
+ "headline": "[C 하락 44%] · 차트는 강세지만 체결은 분배 · 감마 플립 $151.07 상단 · 회랑 $155–$180",
  "quality": {
   "layers": {
    "l1": {
-    "status": "PARTIAL",
-    "coverage": 70,
-    "missing": [
-     "다크풀 비중"
-    ],
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
     "sources": [
      "FINRA RegSHO CNMS (off-exchange)",
      "1분봉 (polygon_1m)",
@@ -46,7 +44,8 @@
     "coverage": 100,
     "missing": [],
     "sources": [
-     "Yahoo Finance (일봉)"
+     "Yahoo Finance (일봉)",
+     "Polygon 일봉 (세션 봉 보강)"
     ]
    },
    "macro": {
@@ -69,12 +68,10 @@
     ]
    }
   },
-  "score": 91,
+  "score": 100,
   "grade": "A"
  },
- "warnings": [
-  "l4/session_mismatch: 최신 일봉 2026-11-13 ≠ 세션 2026-11-16"
- ],
+ "warnings": [],
  "patterns": [],
  "pattern_detail": {
   "theta_burn": {
@@ -127,9 +124,9 @@
    },
    {
     "name": "DXY (20d)",
-    "value": 103.641,
+    "value": 103.642,
     "unit": "",
-    "change": 1.6287,
+    "change": 1.6297,
     "status": "RESTRICTED"
    },
    {
@@ -148,9 +145,9 @@
    },
    {
     "name": "WTI",
-    "value": 85.12,
+    "value": 85.07,
     "unit": "$",
-    "change": -17.8854,
+    "change": -17.9336,
     "status": "NEUTRAL"
    },
    {
@@ -163,34 +160,34 @@
   ]
  },
  "scenarios": {
-  "A_bullish": 17.0,
-  "B_neutral": 35.6,
-  "C_bearish": 47.4,
-  "raw_score": -0.231,
-  "dispersion": 0.601,
+  "A_bullish": 19.2,
+  "B_neutral": 37.2,
+  "C_bearish": 43.6,
+  "raw_score": -0.167,
+  "dispersion": 0.504,
   "contributions": {
-   "L1": -0.214,
+   "L1": -0.14,
    "L2": 0.009,
    "L3": -0.127,
-   "L4": 0.101,
+   "L4": 0.092,
    "macro": -0.05,
    "patterns": 0.0
   }
  },
  "phase": {
-  "p1_date": "2026-10-29 ~ 2026-11-12",
+  "p1_date": "2026-10-29 ~ 2026-11-13",
   "p1_start": "2026-10-29",
-  "p1_end": "2026-11-12",
+  "p1_end": "2026-11-13",
   "p2_date": "2026-11-16 ~ 2026-11-20",
   "p2_end": "2026-11-20",
   "p3_date": "2026-11-23 ~ 2026-12-14",
   "p3_direction": "DOWNWARD",
   "p3_target_hi": 180.0,
-  "p3_target_hi2": 183.01,
-  "p3_target_lo": 177.94,
+  "p3_target_hi2": 182.79,
+  "p3_target_lo": 168.7,
   "p3_target_lo2": 155.0,
-  "p3_bb_width": 19.3962,
-  "p1_return_pct": 9.4885,
+  "p3_bb_width": 19.291,
+  "p1_return_pct": 9.3535,
   "catalysts": [
    {
     "date": "2026-11-20",
@@ -229,110 +226,110 @@
  "levels": [
   {
    "type": "BB Upper",
-   "price": 184.0915,
-   "dist_pct": 3.1267,
+   "price": 185.0937,
+   "dist_pct": 3.8161,
    "significance": "LOW"
   },
   {
    "type": "Expected Move ↑",
-   "price": 183.01,
-   "dist_pct": 2.5209,
+   "price": 182.79,
+   "dist_pct": 2.524,
    "significance": "MED"
   },
   {
    "type": "Immediate Resistance",
    "price": 181.38,
-   "dist_pct": 1.6078,
+   "dist_pct": 1.7331,
    "significance": "HIGH"
   },
   {
    "type": "52W High",
    "price": 181.38,
-   "dist_pct": 1.6078,
+   "dist_pct": 1.7331,
    "significance": "LOW"
   },
   {
    "type": "Call Wall",
    "price": 180.0,
-   "dist_pct": 0.8347,
+   "dist_pct": 0.9591,
    "significance": "HIGH"
   },
   {
    "type": "Current Price",
-   "price": 178.51,
+   "price": 178.29,
    "dist_pct": 0.0,
    "significance": "—"
   },
   {
-   "type": "Immediate Support",
-   "price": 177.94,
-   "dist_pct": -0.3193,
-   "significance": "HIGH"
-  },
-  {
    "type": "Expected Move ↓",
-   "price": 174.01,
-   "dist_pct": -2.5209,
+   "price": 173.79,
+   "dist_pct": -2.524,
    "significance": "MED"
   },
   {
-   "type": "Key Support",
+   "type": "Immediate Support",
    "price": 168.7,
-   "dist_pct": -5.4955,
+   "dist_pct": -5.3789,
+   "significance": "HIGH"
+  },
+  {
+   "type": "Key Support",
+   "price": 164.2467,
+   "dist_pct": -7.8767,
    "significance": "MED"
   },
   {
    "type": "Volume POC (60d)",
    "price": 162.746,
-   "dist_pct": -8.8309,
+   "dist_pct": -8.7184,
    "significance": "MED"
   },
   {
    "type": "SMA 50",
-   "price": 160.3182,
-   "dist_pct": -10.1909,
+   "price": 160.6588,
+   "dist_pct": -9.8891,
    "significance": "MED"
   },
   {
    "type": "Max Pain",
    "price": 160.0,
-   "dist_pct": -10.3692,
+   "dist_pct": -10.2586,
    "significance": "HIGH"
   },
   {
    "type": "Monthly Max Pain",
    "price": 160.0,
-   "dist_pct": -10.3692,
+   "dist_pct": -10.2586,
    "significance": "MED"
   },
   {
    "type": "Put Wall",
    "price": 155.0,
-   "dist_pct": -13.1701,
+   "dist_pct": -13.063,
    "significance": "HIGH"
   },
   {
    "type": "SMA 200",
-   "price": 154.577,
-   "dist_pct": -13.4071,
+   "price": 154.5996,
+   "dist_pct": -13.2876,
    "significance": "MED"
   },
   {
    "type": "BB Lower",
-   "price": 151.5415,
-   "dist_pct": -15.1076,
+   "price": 152.5283,
+   "dist_pct": -14.4493,
    "significance": "LOW"
   },
   {
    "type": "GEX Flip",
-   "price": 151.0676,
-   "dist_pct": -15.373,
+   "price": 151.068,
+   "dist_pct": -15.2684,
    "significance": "HIGH"
   },
   {
    "type": "52W Low",
    "price": 121.79,
-   "dist_pct": -31.7741,
+   "dist_pct": -31.6899,
    "significance": "LOW"
   }
  ],
@@ -340,25 +337,25 @@
   "scenario": "DISTRIBUTION",
   "signal": "BEARISH",
   "confidence": 0.8,
-  "score": -0.7629,
-  "dp_pct": null,
+  "score": -0.5012,
+  "dp_pct": 37.9034,
   "dp_avg20": 35.3181,
-  "dp_ratio": null,
-  "dp_class": "N/A",
+  "dp_ratio": 1.0732,
+  "dp_class": "NORMAL",
   "delta_total": -508743.0,
-  "obv_strength": -0.144,
-  "divergence": "BEARISH_DIVERGENCE",
+  "obv_strength": -0.1453,
+  "divergence": "NEUTRAL",
   "obv_source": "alpaca_trades,polygon_1m",
   "window_days": 5,
-  "acc20": 8646846.8995,
-  "vwap5": 177.8334,
-  "vwap_dist_pct": 0.3804,
+  "acc20": 11552327.4676,
+  "vwap5": 177.8632,
+  "vwap_dist_pct": 0.24,
   "delta_inst": -498144.0,
   "delta_pro": 32024.0,
   "delta_retail": -42623.0,
   "iar": 6.6733,
   "dp_vwap": 177.9792,
-  "dp_vwap_dist_pct": -0.2973,
+  "dp_vwap_dist_pct": -0.1743,
   "off_vol_ratio": 0.8648,
   "cumulative_daily": [
    {
@@ -563,8 +560,8 @@
    {
     "date": "2026-11-16",
     "off_exchange_volume": 1074394.321,
-    "market_volume": null,
-    "dp_pct": null,
+    "market_volume": 2834557.899387,
+    "dp_pct": 37.903417715769635,
     "vol_ratio": 0.8648386161951492,
     "anomaly": ""
    }
@@ -595,11 +592,11 @@
    "delta_total": -508743.0,
    "iar": 6.673329135799161,
    "iar_class": "INSTITUTIONAL_LEAD",
-   "inst_strength": -0.14095416493943977,
+   "inst_strength": -0.142308966872736,
    "dp_vwap": 177.97921484022064,
-   "dp_vwap_dist_pct": -0.2973389070352453,
-   "divergence": "BEARISH_DIVERGENCE",
-   "inst_slope_pct": -10.101638755151615,
+   "dp_vwap_dist_pct": -0.17431440898500025,
+   "divergence": "NEUTRAL",
+   "inst_slope_pct": -10.198732159385676,
    "sessions": [
     {
      "session": "프리마켓",
@@ -667,7 +664,7 @@
   "slope_dir": "FLAT",
   "anomaly_z": -0.7905,
   "short_shares": 405243.1273,
-  "est_short_total": null,
+  "est_short_total": 1069146.6674,
   "ctb_fee": 0.4081,
   "ctb_delta_pct": 0.0,
   "shares_available": 7500000.0,
@@ -815,7 +812,7 @@
     "short_pct": 37.7182864251197,
     "short_vol": 405243.12733,
     "total_vol": 1074394.321,
-    "est_short_total": null
+    "est_short_total": 1069146.6673766451
    }
   ],
   "borrow_series": [
@@ -852,22 +849,22 @@
   "expiry": "2026-11-20",
   "dte": 4,
   "max_pain": 160.0,
-  "max_pain_dist_pct": 11.5687,
+  "max_pain_dist_pct": 11.4312,
   "monthly_expiry": "2026-11-20",
   "monthly_max_pain": 160.0,
   "pc_oi": 0.6139,
   "pc_vol": 1.5317,
   "pc_vol_adj": 1.5317,
-  "skew": -0.4566,
+  "skew": -0.1408,
   "skew_25d": 2.6,
   "atm_iv": 0.2445,
   "iv30": 0.2411,
   "term_structure": "BACKWARDATION",
   "expected_move": 4.5,
-  "expected_move_pct": 2.5209,
-  "net_gex": 10177776.1704,
-  "net_gex_weighted": 9063164.8799,
-  "flip_zone": 151.0676,
+  "expected_move_pct": 2.524,
+  "net_gex": 10152651.9002,
+  "net_gex_weighted": 9040836.1213,
+  "flip_zone": 151.068,
   "flip_status": "FOUND",
   "gamma_regime": "POSITIVE",
   "call_wall": 180.0,
@@ -881,34 +878,34 @@
   "scenario": "UPTREND",
   "signal": "BULLISH",
   "confidence": 0.8,
-  "score": 0.8379,
+  "score": 0.765,
   "ma_alignment": "FULL_BULL",
-  "sma20": 167.8165,
-  "sma50": 160.3182,
-  "sma200": 154.577,
-  "ema9": 175.0015,
-  "ema21": 169.3191,
-  "rsi14": 67.5073,
-  "atr14": 4.025,
-  "atr_pct": 2.2548,
-  "bb_upper": 184.0915,
-  "bb_lower": 151.5415,
-  "bb_width_pct": 19.3962,
-  "bb_width_pctile": 94.4444,
-  "bb_position": 0.8285,
+  "sma20": 168.811,
+  "sma50": 160.6588,
+  "sma200": 154.5996,
+  "ema9": 175.6592,
+  "ema21": 170.1346,
+  "rsi14": 67.0429,
+  "atr14": 3.9909,
+  "atr_pct": 2.2385,
+  "bb_upper": 185.0937,
+  "bb_lower": 152.5283,
+  "bb_width_pct": 19.291,
+  "bb_width_pctile": 94.0476,
+  "bb_position": 0.7911,
   "immediate_resistance": 181.38,
-  "immediate_support": 177.94,
+  "immediate_support": 168.7,
   "key_resistance": null,
-  "key_support": 168.7,
+  "key_support": 164.2467,
   "support_source": [
    "90d 스윙",
    "90d 스윙"
   ],
   "resistance_source": [
-   "52주 고점"
+   "90d 스윙"
   ],
   "below_all_swing_lows": false,
-  "vol_ratio30": 0.6769,
+  "vol_ratio30": 0.8685,
   "high_52w": 181.38,
   "low_52w": 121.79
  },

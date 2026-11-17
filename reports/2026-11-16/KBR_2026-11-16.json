@@ -2,23 +2,21 @@
  "schema": 3,
  "ticker": "KBR",
  "date": "2026-11-16",
- "price": 35.59,
+ "price": 35.35,
  "is_index": false,
- "generated_at": "2026-11-17T02:06:16Z",
- "prev_close": 35.32,
- "change_pct": 0.7644,
- "headline": "[A 상승 40%] · 가격은 내리는데 순체결은 매수 우위 · 감마 플립 $36.43 하단 · 회랑 $35–$42",
+ "generated_at": "2026-11-17T02:21:53Z",
+ "prev_close": 35.59,
+ "change_pct": -0.6743,
+ "headline": "[A 상승 47%] · 가격은 내리는데 순체결은 매수 우위 · 감마 플립 $36.43 하단 · 회랑 $35–$40",
  "quality": {
   "layers": {
    "l1": {
-    "status": "PARTIAL",
-    "coverage": 70,
-    "missing": [
-     "다크풀 비중"
-    ],
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
     "sources": [
      "FINRA RegSHO CNMS (off-exchange)",
-     "1분봉 (polygon_1m)",
+     "1분봉 (yahoo_1m)",
      "FINRA OTC Transparency (ATS 주간)",
      "Alpaca SIP 체결 단위 (기관/프로/리테일 · 다크풀 VWAP)"
     ]
@@ -46,7 +44,8 @@
     "coverage": 100,
     "missing": [],
     "sources": [
-     "Yahoo Finance (일봉)"
+     "Yahoo Finance (일봉)",
+     "Polygon 일봉 (세션 봉 보강)"
     ]
    },
    "macro": {
@@ -69,13 +68,13 @@
     ]
    }
   },
-  "score": 91,
+  "score": 100,
   "grade": "A"
  },
- "warnings": [
-  "l4/session_mismatch: 최신 일봉 2026-11-13 ≠ 세션 2026-11-16"
+ "warnings": [],
+ "patterns": [
+  "FINAL_ABSORPTION"
  ],
- "patterns": [],
  "pattern_detail": {
   "theta_burn": {
    "low_vol_days": 0,
@@ -86,10 +85,10 @@
    "c1_close_block_concentration": false,
    "c2_no_price_slip": false,
    "basis": "trade-level",
-   "c3_dp_over_40_2d": false,
+   "c3_dp_over_40_2d": true,
    "c4_ctb_stable_or_down": true,
    "c5_short_pct_falling": true,
-   "met": 2,
+   "met": 3,
    "downtrend_context": true
   }
  },
@@ -127,9 +126,9 @@
    },
    {
     "name": "DXY (20d)",
-    "value": 103.641,
+    "value": 103.642,
     "unit": "",
-    "change": 1.6287,
+    "change": 1.6297,
     "status": "RESTRICTED"
    },
    {
@@ -148,9 +147,9 @@
    },
    {
     "name": "WTI",
-    "value": 85.12,
+    "value": 85.07,
     "unit": "$",
-    "change": -17.8854,
+    "change": -17.9336,
     "status": "NEUTRAL"
    },
    {
@@ -163,34 +162,34 @@
   ]
  },
  "scenarios": {
-  "A_bullish": 40.2,
-  "B_neutral": 35.0,
-  "C_bearish": 24.8,
-  "raw_score": 0.234,
-  "dispersion": 0.541,
+  "A_bullish": 46.7,
+  "B_neutral": 33.0,
+  "C_bearish": 20.3,
+  "raw_score": 0.278,
+  "dispersion": 0.574,
   "contributions": {
-   "L1": 0.274,
+   "L1": 0.342,
    "L2": 0.079,
-   "L3": -0.074,
-   "L4": -0.045,
+   "L3": -0.087,
+   "L4": -0.056,
    "macro": -0.05,
-   "patterns": 0.0
+   "patterns": 0.05
   }
  },
  "phase": {
-  "p1_date": "2026-11-06 ~ 2026-11-12",
-  "p1_start": "2026-11-06",
-  "p1_end": "2026-11-12",
+  "p1_date": "2026-11-09 ~ 2026-11-13",
+  "p1_start": "2026-11-09",
+  "p1_end": "2026-11-13",
   "p2_date": "2026-11-16 ~ 2026-11-20",
   "p2_end": "2026-11-20",
   "p3_date": "2026-11-23 ~ 2026-12-14",
   "p3_direction": "UPWARD",
   "p3_target_hi": 36.2411,
-  "p3_target_hi2": 42.5,
+  "p3_target_hi2": 40.0,
   "p3_target_lo": 35.0,
-  "p3_target_lo2": 33.44,
-  "p3_bb_width": 15.8432,
-  "p1_return_pct": -4.2507,
+  "p3_target_lo2": 33.2,
+  "p3_bb_width": 16.9154,
+  "p1_return_pct": -8.5382,
   "catalysts": [
    {
     "date": "2026-11-20",
@@ -230,141 +229,141 @@
   {
    "type": "52W High",
    "price": 45.37,
-   "dist_pct": 27.4796,
+   "dist_pct": 28.3451,
+   "significance": "LOW"
+  },
+  {
+   "type": "BB Upper",
+   "price": 41.4699,
+   "dist_pct": 17.3123,
    "significance": "LOW"
   },
   {
    "type": "Call Wall",
-   "price": 42.5,
-   "dist_pct": 19.4156,
+   "price": 40.0,
+   "dist_pct": 13.1542,
    "significance": "HIGH"
-  },
-  {
-   "type": "BB Upper",
-   "price": 41.341,
-   "dist_pct": 16.159,
-   "significance": "LOW"
-  },
-  {
-   "type": "Expected Move ↑",
-   "price": 37.74,
-   "dist_pct": 6.041,
-   "significance": "MED"
   },
   {
    "type": "Key Resistance",
    "price": 37.5967,
-   "dist_pct": 5.6383,
+   "dist_pct": 6.3555,
    "significance": "MED"
   },
   {
    "type": "Max Pain",
    "price": 37.5,
-   "dist_pct": 5.3667,
+   "dist_pct": 6.082,
    "significance": "HIGH"
   },
   {
    "type": "Monthly Max Pain",
    "price": 37.5,
-   "dist_pct": 5.3667,
+   "dist_pct": 6.082,
+   "significance": "MED"
+  },
+  {
+   "type": "Expected Move ↑",
+   "price": 37.5,
+   "dist_pct": 6.082,
    "significance": "MED"
   },
   {
    "type": "SMA 200",
-   "price": 36.842,
-   "dist_pct": 3.5178,
+   "price": 36.8047,
+   "dist_pct": 4.1151,
    "significance": "MED"
   },
   {
    "type": "SMA 50",
-   "price": 36.6836,
-   "dist_pct": 3.0728,
+   "price": 36.6542,
+   "dist_pct": 3.6894,
    "significance": "MED"
   },
   {
    "type": "GEX Flip",
-   "price": 36.4277,
-   "dist_pct": 2.3537,
+   "price": 36.4278,
+   "dist_pct": 3.0488,
    "significance": "HIGH"
   },
   {
    "type": "Immediate Resistance",
    "price": 36.2411,
-   "dist_pct": 1.8295,
+   "dist_pct": 2.5208,
    "significance": "HIGH"
   },
   {
    "type": "Current Price",
-   "price": 35.59,
+   "price": 35.35,
    "dist_pct": 0.0,
    "significance": "—"
   },
   {
    "type": "Volume POC (60d)",
    "price": 35.2725,
-   "dist_pct": -0.8921,
+   "dist_pct": -0.2192,
    "significance": "MED"
   },
   {
    "type": "BB Lower",
-   "price": 35.272,
-   "dist_pct": -0.8935,
+   "price": 35.0021,
+   "dist_pct": -0.9841,
    "significance": "LOW"
   },
   {
    "type": "Put Wall",
    "price": 35.0,
-   "dist_pct": -1.6578,
+   "dist_pct": -0.9901,
    "significance": "HIGH"
   },
   {
    "type": "Immediate Support",
-   "price": 34.7867,
-   "dist_pct": -2.2572,
+   "price": 34.86,
+   "dist_pct": -1.3861,
    "significance": "HIGH"
   },
   {
    "type": "Key Support",
    "price": 34.005,
-   "dist_pct": -4.4535,
+   "dist_pct": -3.8048,
    "significance": "MED"
   },
   {
    "type": "Expected Move ↓",
-   "price": 33.44,
-   "dist_pct": -6.041,
+   "price": 33.2,
+   "dist_pct": -6.082,
    "significance": "MED"
   },
   {
    "type": "52W Low",
    "price": 29.94,
-   "dist_pct": -15.8752,
+   "dist_pct": -15.3041,
    "significance": "LOW"
   }
  ],
  "l1": {
   "scenario": "ACCUMULATION",
   "signal": "BULLISH",
-  "confidence": 0.8,
-  "score": 0.9774,
-  "dp_pct": null,
+  "confidence": 1.0,
+  "score": 0.9772,
+  "dp_pct": 44.4854,
   "dp_avg20": 35.1634,
-  "dp_ratio": null,
-  "dp_class": "N/A",
+  "dp_ratio": 1.2651,
+  "dp_class": "ELEVATED",
   "delta_total": 634239.0,
-  "obv_strength": 0.319,
+  "obv_strength": 0.3134,
   "divergence": "BULLISH_DIVERGENCE",
-  "obv_source": "alpaca_trades,polygon_1m",
+  "obv_source": "alpaca_trades,yahoo_1m",
   "window_days": 5,
-  "acc20": 6306726.6321,
-  "vwap5": 36.517,
-  "vwap_dist_pct": -2.5385,
+  "acc20": 4226557.8082,
+  "vwap5": 36.3978,
+  "vwap_dist_pct": -2.8786,
   "delta_inst": 745209.0,
   "delta_pro": -6644.0,
   "delta_retail": -104326.0,
   "iar": 6.7154,
   "dp_vwap": 35.9421,
-  "dp_vwap_dist_pct": 0.9893,
+  "dp_vwap_dist_pct": 1.6749,
   "off_vol_ratio": 0.8898,
   "cumulative_daily": [
    {
@@ -569,8 +568,8 @@
    {
     "date": "2026-11-16",
     "off_exchange_volume": 661553.040761,
-    "market_volume": null,
-    "dp_pct": null,
+    "market_volume": 1487124.503041,
+    "dp_pct": 44.485383665469804,
     "vol_ratio": 0.889774833097957,
     "anomaly": ""
    }
@@ -601,11 +600,11 @@
    "delta_total": 634239.0,
    "iar": 6.715409570154096,
    "iar_class": "INSTITUTIONAL_LEAD",
-   "inst_strength": 0.37481025837051046,
+   "inst_strength": 0.3682099146684323,
    "dp_vwap": 35.942088348317476,
-   "dp_vwap_dist_pct": 0.9892896718742608,
+   "dp_vwap_dist_pct": 1.674931678408698,
    "divergence": "BULLISH_DIVERGENCE",
-   "inst_slope_pct": 12.42731474728779,
+   "inst_slope_pct": 12.208471888016522,
    "sessions": [
     {
      "session": "프리마켓",
@@ -673,7 +672,7 @@
   "slope_dir": "FALLING",
   "anomaly_z": -0.8046,
   "short_shares": 300705.3838,
-  "est_short_total": null,
+  "est_short_total": 675964.4608,
   "ctb_fee": 0.4135,
   "ctb_delta_pct": 0.9768,
   "shares_available": 1900000.0,
@@ -821,7 +820,7 @@
     "short_pct": 45.454463258318874,
     "short_vol": 300705.383847,
     "total_vol": 661553.040761,
-    "est_short_total": null
+    "est_short_total": 675964.4608402285
    }
   ],
   "borrow_series": [
@@ -854,11 +853,11 @@
   "scenario": "VOLATILITY_EXPANSION",
   "signal": "BEARISH",
   "confidence": 1.0,
-  "score": -0.246,
+  "score": -0.2891,
   "expiry": "2026-11-20",
   "dte": 4,
   "max_pain": 37.5,
-  "max_pain_dist_pct": -5.0933,
+  "max_pain_dist_pct": -5.7333,
   "monthly_expiry": "2026-11-20",
   "monthly_max_pain": 37.5,
   "pc_oi": 0.7697,
@@ -870,13 +869,13 @@
   "iv30": 0.3875,
   "term_structure": "FLAT",
   "expected_move": 2.15,
-  "expected_move_pct": 6.041,
-  "net_gex": -91391.3212,
-  "net_gex_weighted": -153925.689,
-  "flip_zone": 36.4277,
+  "expected_move_pct": 6.082,
+  "net_gex": -90162.8876,
+  "net_gex_weighted": -160449.7808,
+  "flip_zone": 36.4278,
   "flip_status": "FOUND",
   "gamma_regime": "NEGATIVE",
-  "call_wall": 42.5,
+  "call_wall": 40.0,
   "put_wall": 35.0,
   "oi_total": 9238.0,
   "oi_trend_pct": 275.987,
@@ -887,23 +886,23 @@
   "scenario": "RANGE_BOUND",
   "signal": "BEARISH",
   "confidence": 0.8,
-  "score": -0.3726,
+  "score": -0.4678,
   "ma_alignment": "MIXED",
-  "sma20": 38.3065,
-  "sma50": 36.6836,
-  "sma200": 36.842,
-  "ema9": 37.2071,
-  "ema21": 37.5449,
-  "rsi14": 40.6037,
-  "atr14": 1.5786,
-  "atr_pct": 4.4356,
-  "bb_upper": 41.341,
-  "bb_lower": 35.272,
-  "bb_width_pct": 15.8432,
-  "bb_width_pctile": 73.4127,
-  "bb_position": 0.0524,
+  "sma20": 38.236,
+  "sma50": 36.6542,
+  "sma200": 36.8047,
+  "ema9": 36.8357,
+  "ema21": 37.3454,
+  "rsi14": 39.6457,
+  "atr14": 1.6,
+  "atr_pct": 4.5262,
+  "bb_upper": 41.4699,
+  "bb_lower": 35.0021,
+  "bb_width_pct": 16.9154,
+  "bb_width_pctile": 77.7778,
+  "bb_position": 0.0538,
   "immediate_resistance": 36.2411,
-  "immediate_support": 34.7867,
+  "immediate_support": 34.86,
   "key_resistance": 37.5967,
   "key_support": 34.005,
   "support_source": [
@@ -915,7 +914,7 @@
    "90d 스윙"
   ],
   "below_all_swing_lows": false,
-  "vol_ratio30": 1.1421,
+  "vol_ratio30": 0.8143,
   "high_52w": 45.37,
   "low_52w": 29.94
  },

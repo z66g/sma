@@ -2,23 +2,21 @@
  "schema": 3,
  "ticker": "TSLA",
  "date": "2026-11-16",
- "price": 390.22,
+ "price": 379.74,
  "is_index": false,
- "generated_at": "2026-11-17T02:09:25Z",
- "prev_close": 397.45,
- "change_pct": -1.8191,
- "headline": "[B 중립 43%] · 양감마 레짐과 Max Pain 근접이 겹친 핀닝 구조 · 감마 플립 $369.08 상단 · 회랑 $380–$400",
+ "generated_at": "2026-11-17T02:24:01Z",
+ "prev_close": 390.22,
+ "change_pct": -2.6857,
+ "headline": "[B 중립 40%] · 감마 플립 $369.08 상단 · 회랑 $350–$400",
  "quality": {
   "layers": {
    "l1": {
-    "status": "PARTIAL",
-    "coverage": 70,
-    "missing": [
-     "다크풀 비중"
-    ],
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
     "sources": [
      "FINRA RegSHO CNMS (off-exchange)",
-     "1분봉 (polygon_1m)",
+     "1분봉 (yahoo_1m)",
      "FINRA OTC Transparency (ATS 주간)",
      "Alpaca SIP 체결 단위 (기관/프로/리테일 · 다크풀 VWAP)"
     ]
@@ -46,7 +44,8 @@
     "coverage": 100,
     "missing": [],
     "sources": [
-     "Yahoo Finance (일봉)"
+     "Yahoo Finance (일봉)",
+     "Polygon 일봉 (세션 봉 보강)"
     ]
    },
    "macro": {
@@ -69,20 +68,18 @@
     ]
    }
   },
-  "score": 91,
+  "score": 100,
   "grade": "A"
  },
- "warnings": [
-  "l4/session_mismatch: 최신 일봉 2026-11-13 ≠ 세션 2026-11-16"
- ],
+ "warnings": [],
  "patterns": [
-  "OPTION_PINNING"
+  "FINAL_ABSORPTION"
  ],
  "pattern_detail": {
   "theta_burn": {
    "low_vol_days": 0,
    "flat_inst_flow": true,
-   "daily_em": 11.062685591663534
+   "daily_em": 9.740395910844692
   },
   "final_absorption": {
    "c1_close_block_concentration": false,
@@ -92,7 +89,7 @@
    "c4_ctb_stable_or_down": true,
    "c5_short_pct_falling": true,
    "met": 3,
-   "downtrend_context": false
+   "downtrend_context": true
   }
  },
  "macro_env": "RESTRICTED",
@@ -129,9 +126,9 @@
    },
    {
     "name": "DXY (20d)",
-    "value": 103.641,
+    "value": 103.642,
     "unit": "",
-    "change": 1.6287,
+    "change": 1.6297,
     "status": "RESTRICTED"
    },
    {
@@ -150,9 +147,9 @@
    },
    {
     "name": "WTI",
-    "value": 85.12,
+    "value": 85.07,
     "unit": "$",
-    "change": -17.8854,
+    "change": -17.9336,
     "status": "NEUTRAL"
    },
    {
@@ -165,34 +162,34 @@
   ]
  },
  "scenarios": {
-  "A_bullish": 25.3,
-  "B_neutral": 43.2,
-  "C_bearish": 31.5,
-  "raw_score": 0.016,
-  "dispersion": 0.206,
+  "A_bullish": 28.9,
+  "B_neutral": 40.1,
+  "C_bearish": 31.0,
+  "raw_score": -0.016,
+  "dispersion": 0.25,
   "contributions": {
-   "L1": -0.074,
+   "L1": -0.123,
    "L2": -0.0,
-   "L3": 0.058,
-   "L4": 0.032,
+   "L3": 0.099,
+   "L4": 0.008,
    "macro": -0.05,
-   "patterns": 0.0
+   "patterns": 0.05
   }
  },
  "phase": {
-  "p1_date": "2026-11-05 ~ 2026-11-12",
+  "p1_date": "2026-11-05 ~ 2026-11-13",
   "p1_start": "2026-11-05",
-  "p1_end": "2026-11-12",
+  "p1_end": "2026-11-13",
   "p2_date": "2026-11-16 ~ 2026-11-18",
   "p2_end": "2026-11-18",
   "p3_date": "2026-11-19 ~ 2026-12-10",
   "p3_direction": "RANGE",
-  "p3_target_hi": 400.0,
-  "p3_target_hi2": 411.195,
-  "p3_target_lo": 386.056,
-  "p3_target_lo2": 369.245,
-  "p3_bb_width": 17.0715,
-  "p1_return_pct": 13.5384,
+  "p3_target_hi": 386.056,
+  "p3_target_hi2": 406.59,
+  "p3_target_lo": 375.44,
+  "p3_target_lo2": 350.0,
+  "p3_bb_width": 16.6075,
+  "p1_return_pct": 10.4891,
   "catalysts": [
    {
     "date": "2026-11-20",
@@ -232,141 +229,141 @@
   {
    "type": "52W High",
    "price": 498.83,
-   "dist_pct": 27.833,
+   "dist_pct": 31.3609,
    "significance": "LOW"
   },
   {
    "type": "BB Upper",
-   "price": 418.2539,
-   "dist_pct": 7.1841,
+   "price": 417.9924,
+   "dist_pct": 10.0733,
    "significance": "LOW"
   },
   {
    "type": "Key Resistance",
-   "price": 410.85,
-   "dist_pct": 5.2868,
-   "significance": "MED"
-  },
-  {
-   "type": "Immediate Resistance",
    "price": 406.59,
-   "dist_pct": 4.1951,
-   "significance": "HIGH"
-  },
-  {
-   "type": "Expected Move ↑",
-   "price": 405.865,
-   "dist_pct": 4.0093,
+   "dist_pct": 7.0706,
    "significance": "MED"
   },
   {
    "type": "Call Wall",
    "price": 400.0,
-   "dist_pct": 2.5063,
+   "dist_pct": 5.3352,
    "significance": "HIGH"
   },
   {
-   "type": "Current Price",
-   "price": 390.22,
-   "dist_pct": 0.0,
-   "significance": "—"
+   "type": "Expected Move ↑",
+   "price": 393.515,
+   "dist_pct": 3.6275,
+   "significance": "MED"
   },
   {
    "type": "Max Pain",
    "price": 390.0,
-   "dist_pct": -0.0564,
+   "dist_pct": 2.7018,
    "significance": "HIGH"
   },
   {
-   "type": "Immediate Support",
+   "type": "Immediate Resistance",
    "price": 386.056,
-   "dist_pct": -1.0671,
+   "dist_pct": 1.6632,
    "significance": "HIGH"
   },
   {
    "type": "SMA 200",
-   "price": 382.7309,
-   "dist_pct": -1.9192,
+   "price": 382.4775,
+   "dist_pct": 0.7209,
    "significance": "MED"
   },
   {
-   "type": "Put Wall",
-   "price": 380.0,
-   "dist_pct": -2.619,
+   "type": "Current Price",
+   "price": 379.74,
+   "dist_pct": 0.0,
+   "significance": "—"
+  },
+  {
+   "type": "Immediate Support",
+   "price": 375.44,
+   "dist_pct": -1.1324,
    "significance": "HIGH"
   },
   {
-   "type": "Key Support",
-   "price": 375.44,
-   "dist_pct": -3.7876,
+   "type": "SMA 50",
+   "price": 375.2538,
+   "dist_pct": -1.1814,
    "significance": "MED"
   },
   {
    "type": "Monthly Max Pain",
    "price": 375.0,
-   "dist_pct": -3.9004,
-   "significance": "MED"
-  },
-  {
-   "type": "SMA 50",
-   "price": 374.7406,
-   "dist_pct": -3.9668,
-   "significance": "MED"
-  },
-  {
-   "type": "Expected Move ↓",
-   "price": 374.575,
-   "dist_pct": -4.0093,
+   "dist_pct": -1.2482,
    "significance": "MED"
   },
   {
    "type": "GEX Flip",
-   "price": 369.0772,
-   "dist_pct": -5.4182,
+   "price": 369.0777,
+   "dist_pct": -2.8078,
    "significance": "HIGH"
+  },
+  {
+   "type": "Key Support",
+   "price": 367.63,
+   "dist_pct": -3.189,
+   "significance": "MED"
+  },
+  {
+   "type": "Expected Move ↓",
+   "price": 365.965,
+   "dist_pct": -3.6275,
+   "significance": "MED"
   },
   {
    "type": "Volume POC (60d)",
    "price": 357.17,
-   "dist_pct": -8.4696,
+   "dist_pct": -5.9435,
    "significance": "MED"
   },
   {
    "type": "BB Lower",
-   "price": 352.4671,
-   "dist_pct": -9.6748,
+   "price": 353.8966,
+   "dist_pct": -6.8055,
    "significance": "LOW"
+  },
+  {
+   "type": "Put Wall",
+   "price": 350.0,
+   "dist_pct": -7.8317,
+   "significance": "HIGH"
   },
   {
    "type": "52W Low",
    "price": 297.38,
-   "dist_pct": -23.7917,
+   "dist_pct": -21.6885,
    "significance": "LOW"
   }
  ],
  "l1": {
   "scenario": "DISTRIBUTION",
   "signal": "BEARISH",
-  "confidence": 0.8,
-  "score": -0.2657,
-  "dp_pct": null,
+  "confidence": 0.95,
+  "score": -0.371,
+  "dp_pct": 42.6406,
   "dp_avg20": 46.0335,
-  "dp_ratio": null,
-  "dp_class": "N/A",
+  "dp_ratio": 0.9263,
+  "dp_class": "ELEVATED",
   "delta_total": -7165566.0,
-  "obv_strength": -0.1751,
-  "divergence": "CONVERGENCE",
-  "obv_source": "alpaca_trades,polygon_1m",
+  "obv_strength": -0.1818,
+  "divergence": "NEUTRAL",
+  "obv_source": "alpaca_trades,yahoo_1m",
   "window_days": 5,
-  "acc20": 71969244.6817,
-  "vwap5": 389.0798,
-  "vwap_dist_pct": 0.2931,
+  "acc20": 28258944.9697,
+  "vwap5": 386.6765,
+  "vwap_dist_pct": -1.7939,
   "delta_inst": -1364082.0,
   "delta_pro": -4346993.0,
   "delta_retail": -1454491.0,
   "iar": 0.2351,
   "dp_vwap": 379.853,
-  "dp_vwap_dist_pct": -2.6567,
+  "dp_vwap_dist_pct": 0.0297,
   "off_vol_ratio": 0.7138,
   "cumulative_daily": [
    {
@@ -571,8 +568,8 @@
    {
     "date": "2026-11-16",
     "off_exchange_volume": 12901097.044201,
-    "market_volume": null,
-    "dp_pct": null,
+    "market_volume": 30255400.8055,
+    "dp_pct": 42.64064167299269,
     "vol_ratio": 0.7138438508617033,
     "anomaly": ""
    }
@@ -603,11 +600,11 @@
    "delta_total": -7165566.0,
    "iar": 0.23512639179906383,
    "iar_class": "RETAIL_PRO_LEAD",
-   "inst_strength": -0.03334036437067857,
+   "inst_strength": -0.034600395166534195,
    "dp_vwap": 379.8529564858767,
-   "dp_vwap_dist_pct": -2.656717928962072,
-   "divergence": "CONVERGENCE",
-   "inst_slope_pct": 0.6523344306802858,
+   "dp_vwap_dist_pct": 0.029745743370906366,
+   "divergence": "NEUTRAL",
+   "inst_slope_pct": 0.6769880746151731,
    "sessions": [
     {
      "session": "프리마켓",
@@ -675,7 +672,7 @@
   "slope_dir": "RISING",
   "anomaly_z": 0.746,
   "short_shares": 7421599.8875,
-  "est_short_total": null,
+  "est_short_total": 17404991.0985,
   "ctb_fee": 0.25,
   "ctb_delta_pct": 0.0,
   "shares_available": 10000000.0,
@@ -823,7 +820,7 @@
     "short_pct": 57.526889861230714,
     "short_vol": 7421599.887508,
     "total_vol": 12901097.044201,
-    "est_short_total": null
+    "est_short_total": 17404991.098453894
    }
   ],
   "borrow_series": [
@@ -853,33 +850,33 @@
   }
  },
  "l3": {
-  "scenario": "PINNING",
-  "signal": "NEUTRAL",
+  "scenario": "HEDGING",
+  "signal": "BULLISH",
   "confidence": 1.0,
-  "score": 0.1942,
+  "score": 0.3295,
   "expiry": "2026-11-18",
   "dte": 2,
   "max_pain": 390.0,
-  "max_pain_dist_pct": 0.0564,
+  "max_pain_dist_pct": -2.6308,
   "monthly_expiry": "2026-11-20",
   "monthly_max_pain": 375.0,
   "pc_oi": 0.8206,
   "pc_vol": 0.7612,
   "pc_vol_adj": 0.7612,
-  "skew": 0.0617,
+  "skew": 0.2032,
   "skew_25d": 7.72,
-  "atm_iv": 0.4867,
+  "atm_iv": 0.4952,
   "iv30": 0.4977,
   "term_structure": "BACKWARDATION",
-  "expected_move": 15.645,
-  "expected_move_pct": 4.0093,
-  "net_gex": 163598419.689,
-  "net_gex_weighted": 135990046.8089,
-  "flip_zone": 369.0772,
+  "expected_move": 13.775,
+  "expected_move_pct": 3.6275,
+  "net_gex": 153944571.6758,
+  "net_gex_weighted": 70821005.7073,
+  "flip_zone": 369.0777,
   "flip_status": "FOUND",
   "gamma_regime": "POSITIVE",
   "call_wall": 400.0,
-  "put_wall": 380.0,
+  "put_wall": 350.0,
   "oi_total": 3073190.0,
   "oi_trend_pct": 69.8977,
   "binary_event": false,
@@ -887,33 +884,33 @@
   "pinning": {
    "expiry": "2026-11-16",
    "max_pain": 387.5,
-   "dist_pct": 0.701935798891129,
+   "dist_pct": 2.002580645161288,
    "status": "BREAKAWAY"
   }
  },
  "l4": {
   "scenario": "RANGE_BOUND",
-  "signal": "BULLISH",
+  "signal": "NEUTRAL",
   "confidence": 0.8,
-  "score": 0.2663,
+  "score": 0.0675,
   "ma_alignment": "MIXED",
-  "sma20": 385.3605,
-  "sma50": 374.7406,
-  "sma200": 382.7309,
-  "ema9": 385.4977,
-  "ema21": 382.8057,
-  "rsi14": 53.5327,
-  "atr14": 16.7149,
-  "atr_pct": 4.2835,
-  "bb_upper": 418.2539,
-  "bb_lower": 352.4671,
-  "bb_width_pct": 17.0715,
-  "bb_width_pctile": 61.1111,
-  "bb_position": 0.5739,
-  "immediate_resistance": 406.59,
-  "immediate_support": 386.056,
-  "key_resistance": 410.85,
-  "key_support": 375.44,
+  "sma20": 385.9445,
+  "sma50": 375.2538,
+  "sma200": 382.4775,
+  "ema9": 384.3462,
+  "ema21": 382.527,
+  "rsi14": 49.4541,
+  "atr14": 16.5614,
+  "atr_pct": 4.3612,
+  "bb_upper": 417.9924,
+  "bb_lower": 353.8966,
+  "bb_width_pct": 16.6075,
+  "bb_width_pctile": 57.5397,
+  "bb_position": 0.4032,
+  "immediate_resistance": 386.056,
+  "immediate_support": 375.44,
+  "key_resistance": 406.59,
+  "key_support": 367.63,
   "support_source": [
    "90d 스윙",
    "90d 스윙"
@@ -923,7 +920,7 @@
    "90d 스윙"
   ],
   "below_all_swing_lows": false,
-  "vol_ratio30": 0.8545,
+  "vol_ratio30": 0.8178,
   "high_52w": 498.83,
   "low_52w": 297.38
  },
