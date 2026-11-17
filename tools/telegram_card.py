@@ -4,7 +4,7 @@
   python3 tools/telegram_card.py 2026-11-16 --tickers "ASTS COIN ..." --out card.png
 
 - reports/{DATE}/{T}_{DATE}.json 만 읽는다 (분석 재실행 없음).
-- 행 순서: 상승 우위 → 중립 → 하락 우위 (각 그룹 내 확률 높은 순), 지수는 맨 아래.
+- 행 순서: 티커 알파벳 순, 지수는 맨 아래.
 - 렌더: Playwright(있으면) → 헤드리스 Chrome/Chromium CLI. 둘 다 없으면 이미지 없이 종료(exit 0).
 - 고정 행 높이로 이미지 크기를 정확히 계산 (빈 여백 없음).
 """
@@ -95,7 +95,7 @@ def build_html(date: str, stocks: list[dict], idx: list[dict]) -> tuple[str, int
     body = "".join(row(d, i) for i, d in enumerate(stocks))
     ib = ""
     if idx:
-        ib = (f'<tr><td colspan="5" class="sec">지수</td></tr>' + "".join(row(d, i) for i, d in enumerate(idx)))
+        ib = (f'<tr><td colspan="5" class="sec">지수</td></tr>' + "".join(row(d, i) for i, d in enumerate(sorted(idx, key=lambda d: d.get("ticker") or ""))))
     h = HEAD_H + COLH_H + ROW_H * (len(stocks) + len(idx)) + (SEC_H if idx else 0) + FOOT_H + 24
     doc = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box}} html,body{{margin:0;background:#FFFFFF}}
@@ -130,8 +130,7 @@ def text_line(d: dict) -> str:
 
 
 def sorted_stocks(stocks: list[dict]) -> list[dict]:
-    order = {"A": 0, "B": 1, "C": 2}
-    return sorted(stocks, key=lambda d: (order[top(d)[0]], -top(d)[1], d.get("ticker") or ""))
+    return sorted(stocks, key=lambda d: d.get("ticker") or "")      # 알파벳 순
 
 
 def _chrome() -> str | None:

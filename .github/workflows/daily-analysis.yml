@@ -232,7 +232,7 @@ jobs:
             fi
           fi
 
-          # ② 텍스트: 리포트 링크만 (카드와 같은 순서 · 종목명 나열)
+          # ② 텍스트: 리포트 링크만 (알파벳 순 · 종목명 나열)
           STOCK_LINKS=""
           while IFS=$'\t' read -r T LINE; do
             [ -n "${T}" ] || continue
@@ -244,7 +244,7 @@ jobs:
           INDEX_BLOCK=""
           if [ -z "${SINGLE}" ] && [ -f indexes.txt ]; then
             INDEX_LINKS=""
-            for IDX in $(grep -v '^#' indexes.txt | tr -d '\r\t ' | grep -E '^[A-Z^.-]{1,10}$' | xargs); do
+            for IDX in $(grep -v '^#' indexes.txt | tr -d '\r\t ' | grep -E '^[A-Z^.-]{1,10}$' | sed 's/^\^//' | sort | xargs); do
               TAG="${IDX#^}"
               [ -f "reports/${DATE}/${TAG}_Index_${DATE}.html" ] || continue
               INDEX_LINKS="${INDEX_LINKS}${INDEX_LINKS:+ · }<a href=\"${BASE}/${DATE}/${TAG}_Index_${DATE}.html\">${TAG}</a>"
