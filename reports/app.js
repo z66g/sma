@@ -1,6 +1,7 @@
 
 // Dashboard logic — operates on window.__DB__ (array of ticker summaries)
 const DB = window.__DB__ || [];
+const KO = window.__KO__ || {};
 const COLS = 20;
 const bodyActive  = document.getElementById('tbody-active');
 const bodyArchive = document.getElementById('tbody-archive');
@@ -33,13 +34,13 @@ function qualityPill(r) {
   const warn = r.warnings_count ? ` · ⚠${r.warnings_count}` : '';
   return `<span class="pill ${cls}" title="${esc(title)}">${esc(r.quality_grade)}${isNum(r.quality_score) ? ' ' + r.quality_score.toFixed(0) : ''}${esc(warn)}</span>`;
 }
-function casePretty(c) { return c ? esc(String(c).replace(/^CASE_\d+_/, '').replace(/^CASE_/, '')) : NA; }
-function txt(v) { return v ? esc(v) : NA; }
+function casePretty(c) { return c ? esc(KO[c] || String(c).replace(/^CASE_\d+_/, '').replace(/^CASE_/, '')) : NA; }
+function txt(v) { return v ? esc(KO[v] || v) : NA; }
 
 function rowHTML(r, mode) {
   const t = esc(r.ticker), tq = encodeURIComponent(r.ticker);
-  const patBadges = (r.patterns || []).map(p => `<span class="pattern">${esc(p)}</span>`).join('') || '-';
-  const tickerLink = `<a href="tickers/${tq}/" title="${esc(r.headline || '')}"><b>${t}</b></a>`;
+  const patBadges = (r.patterns || []).map(p => `<span class="pattern">${esc(KO[p] || p)}</span>`).join('') || '-';
+  const tickerLink = `<a href="tickers/${tq}/" title="${esc(r.one_liner || r.headline || '')}"><b>${t}</b></a>`;
   const url = safePath(r.report_url);
   const dateCell = url ? `<a href="${esc(url)}">${esc(r.latest_date)}</a>` : esc(r.latest_date || 'N/A');
   const ctb = isNum(r.ctb_fee) ? r.ctb_fee.toFixed(2) + '%' + (isNum(r.ctb_delta_pct) ? ` <span class="muted">(${fmtSigned(r.ctb_delta_pct)}%)</span>` : '') : NA;
@@ -74,6 +75,8 @@ function rowHTML(r, mode) {
   </tr>`;
 }
 
+const olList = document.getElementById('ol-list');
+const olHead = document.getElementById('ol-h');
 function render() {
   const rows = DB.slice().sort((a, b) => a.ticker.localeCompare(b.ticker));
   const active  = rows.filter(r => r.is_active);
@@ -87,6 +90,13 @@ function render() {
     ? archive.map(r => rowHTML(r, 'archive')).join('')
     : `<tr><td colspan="${COLS}" class="empty">아카이브 비어있음.</td></tr>`;
   archiveWrap.style.display = archive.length ? '' : 'none';
+  const ols = active.filter(r => r.one_liner);
+  olList.innerHTML = ols.map(r => {
+    const u = safePath(r.report_url);
+    return `<a class="ol" href="${u ? esc(u) : 'tickers/' + encodeURIComponent(r.ticker) + '/'}"><div><b>${esc(r.ticker)}</b>`
+      + `<span class="olp">${scenarioPill(r.scenario, r.scenario_pct)}</span></div><div>${esc(r.one_liner)}</div></a>`;
+  }).join('');
+  olHead.style.display = olList.style.display = ols.length ? '' : 'none';
 }
 
 render();

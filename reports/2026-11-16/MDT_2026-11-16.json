@@ -4,10 +4,96 @@
  "date": "2026-11-16",
  "price": 102.88,
  "is_index": false,
- "generated_at": "2026-11-17T02:51:45Z",
+ "generated_at": "2026-11-17T03:04:20Z",
  "prev_close": 102.86,
  "change_pct": 0.0194,
  "headline": "[B 중립 41%] · 가격은 오르는데 순체결은 매도 우위 · 감마 플립 $85.84 위 · 풋월~콜월 $90–$105",
+ "one_liner": "기관이 5일간 2.76M주를 덜어냈지만, 옵션 시장이 큰 폭의 갭에 대비하고 있어 방향이 확인되기 전까지는 중립(41%)이 우세합니다.",
+ "flow_board": [
+  {
+   "actor": "기관 (대량 체결)",
+   "action": "순매도",
+   "evidence": "5일 -2.76M주 · ADV -30.9% · IAR 7.79",
+   "tag": "매도",
+   "kind": "neg",
+   "strength": -1.0
+  },
+  {
+   "actor": "리테일 (소량 체결)",
+   "action": "순매도",
+   "evidence": "5일 -134.6K주 · 프로 -219.3K주 · 서브페니 불균형 -0.05",
+   "tag": "참고",
+   "kind": "muted",
+   "strength": null
+  },
+  {
+   "actor": "다크풀 (장외)",
+   "action": "장외 거래 확대",
+   "evidence": "비중 40.5% (20일 평균의 1.21배) · 장외 VWAP 종가 대비 +0.49%",
+   "tag": "중립",
+   "kind": "warn",
+   "strength": null
+  },
+  {
+   "actor": "공매도",
+   "action": "숏커버링(공매도 축소)",
+   "evidence": "비중 34.2% (z -1.0) · 대차 수수료 0.25% (전일 대비 +0.0%)",
+   "tag": "상방",
+   "kind": "pos",
+   "strength": 0.55
+  },
+  {
+   "actor": "옵션 딜러 (감마)",
+   "action": "변동성 억제 쪽 헤지",
+   "evidence": "양감마 · Net GEX +$21.6M/1% · 플립 $85.84 · 콜월 $105.00 / 풋월 $90.00",
+   "tag": "변동성↓",
+   "kind": "info",
+   "strength": null
+  },
+  {
+   "actor": "옵션 신규 포지션",
+   "action": "기존 포지션과 비슷한 구성",
+   "evidence": "풋/콜 거래량 0.67 vs OI 0.66 · 25델타 스큐 +0.9%p",
+   "tag": "중립",
+   "kind": "warn",
+   "strength": 0.0
+  },
+  {
+   "actor": "차트 추세 (후행)",
+   "action": "상승 추세",
+   "evidence": "이동평균 정배열 · RSI 64 · 거래량 30일 평균의 0.31배",
+   "tag": "상방",
+   "kind": "pos",
+   "strength": 0.806
+  }
+ ],
+ "watch_points": [
+  {
+   "kind": "pos",
+   "label": "위쪽 첫 관문",
+   "text": "콜월 $105.00 (+2.1%) — 종가로 넘어서면 딜러 헤지 매수로 상승이 빨라질 수 있습니다"
+  },
+  {
+   "kind": "neg",
+   "label": "아래쪽 첫 지지",
+   "text": "1차 지지 $100.02 (-2.8%) — 종가로 깨지면 다음 지지까지 열립니다"
+  },
+  {
+   "kind": "warn",
+   "label": "움직임 시작 신호",
+   "text": "거래량이 30일 평균의 150%를 넘고 볼린저밴드가 넓어지는지 (현재 0.31배)"
+  },
+  {
+   "kind": "info",
+   "label": "공매도 성격 변화",
+   "text": "대차 수수료(0.25%)가 전일 대비 5% 이상 오르면 공격적인 공매도 전환 신호"
+  },
+  {
+   "kind": "info",
+   "label": "가까운 주요 일정",
+   "text": "2026-11-24 실적 발표 (Earnings) (D-8)"
+  }
+ ],
  "quality": {
   "layers": {
    "l1": {
@@ -126,9 +212,9 @@
    },
    {
     "name": "DXY (20d)",
-    "value": 103.597,
+    "value": 103.586,
     "unit": "",
-    "change": 1.5856,
+    "change": 1.5748,
     "status": "RESTRICTED"
    },
    {
@@ -147,9 +233,9 @@
    },
    {
     "name": "WTI",
-    "value": 84.85,
+    "value": 85.04,
     "unit": "$",
-    "change": -18.1459,
+    "change": -17.9626,
     "status": "NEUTRAL"
    },
    {

@@ -4,10 +4,91 @@
  "date": "2026-11-16",
  "price": 26.45,
  "is_index": false,
- "generated_at": "2026-11-17T02:49:30Z",
+ "generated_at": "2026-11-17T03:02:02Z",
  "prev_close": 28.88,
  "change_pct": -8.4141,
  "headline": "[C 하락 53%] · 음감마 구간 진입 · 감마 플립 $30.08 아래 · 풋월~콜월 $25–$30",
+ "one_liner": "기관이 5일간 8.33M주를 팔며 25% 하락을 주도했고, 방향성 공매도가 늘고 있어 하락 우위(53%)입니다.",
+ "flow_board": [
+  {
+   "actor": "기관 (대량 체결)",
+   "action": "순매도",
+   "evidence": "5일 -8.33M주 · ADV -38.5% · IAR 0.75",
+   "tag": "매도",
+   "kind": "neg",
+   "strength": -1.0
+  },
+  {
+   "actor": "리테일 (소량 체결)",
+   "action": "순매도",
+   "evidence": "5일 -4.10M주 · 프로 -7.06M주 · 서브페니 불균형 +0.11",
+   "tag": "참고",
+   "kind": "muted",
+   "strength": null
+  },
+  {
+   "actor": "다크풀 (장외)",
+   "action": "종가보다 비싸게 매수",
+   "evidence": "비중 39.0% (20일 평균의 0.99배) · 장외 VWAP 종가 대비 +0.99%",
+   "tag": "상방",
+   "kind": "pos",
+   "strength": 0.496
+  },
+  {
+   "actor": "공매도",
+   "action": "방향성 공매도 증가",
+   "evidence": "비중 57.5% (z +1.5) · 대차 수수료 0.63% (전일 대비 +11.8%)",
+   "tag": "하방",
+   "kind": "neg",
+   "strength": -0.8
+  },
+  {
+   "actor": "옵션 딜러 (감마)",
+   "action": "변동성 확대 쪽 헤지",
+   "evidence": "음감마 · Net GEX -$2.4M/1% · 플립 $30.08 · 콜월 $30.00 / 풋월 $25.00",
+   "tag": "변동성↑",
+   "kind": "warn",
+   "strength": null
+  },
+  {
+   "actor": "옵션 신규 포지션",
+   "action": "신규 콜 매수 증가",
+   "evidence": "풋/콜 거래량 0.47 vs OI 0.91 · 25델타 스큐 -1.2%p",
+   "tag": "상방",
+   "kind": "pos",
+   "strength": 0.5
+  },
+  {
+   "actor": "차트 추세 (후행)",
+   "action": "하락 추세",
+   "evidence": "이동평균 역배열 · RSI 37 · 거래량 30일 평균의 0.95배",
+   "tag": "하방",
+   "kind": "neg",
+   "strength": -0.755
+  }
+ ],
+ "watch_points": [
+  {
+   "kind": "pos",
+   "label": "위쪽 첫 관문",
+   "text": "1차 저항 $27.93 (+5.6%) — 종가로 넘어서면 다음 저항까지 길이 열립니다"
+  },
+  {
+   "kind": "neg",
+   "label": "아래쪽 첫 지지",
+   "text": "1차 지지 $25.89 (-2.1%) — 종가로 깨지면 다음 지지까지 열립니다"
+  },
+  {
+   "kind": "warn",
+   "label": "움직임 시작 신호",
+   "text": "거래량이 30일 평균의 150%를 넘고 볼린저밴드가 넓어지는지 (현재 0.95배)"
+  },
+  {
+   "kind": "info",
+   "label": "공매도 성격 변화",
+   "text": "대차 수수료(0.63%)가 전일 대비 5% 이상 오르면 공격적인 공매도 전환 신호"
+  }
+ ],
  "quality": {
   "layers": {
    "l1": {
@@ -123,9 +204,9 @@
    },
    {
     "name": "DXY (20d)",
-    "value": 103.597,
+    "value": 103.586,
     "unit": "",
-    "change": 1.5856,
+    "change": 1.5748,
     "status": "RESTRICTED"
    },
    {
@@ -144,9 +225,9 @@
    },
    {
     "name": "WTI",
-    "value": 84.85,
+    "value": 85.04,
     "unit": "$",
-    "change": -18.1459,
+    "change": -17.9626,
     "status": "NEUTRAL"
    },
    {
