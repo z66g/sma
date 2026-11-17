@@ -76,15 +76,8 @@ def fetch_ohlcv(yft, session_date: date, period: str = "2y") -> List[Dict[str, A
 
 
 def fetch_session_bar(symbol: str, session_date: date, yft=None) -> Tuple[Optional[Dict[str, Any]], str]:
-    """Yahoo 일봉에 세션 봉이 아직 없을 때 쓰는 폴백: Alpaca SIP 일봉 → Polygon 일봉.
+    """Yahoo 일봉에 세션 봉이 아직 없을 때 쓰는 폴백: Polygon 일봉 → Alpaca SIP 일봉 → Yahoo 1분봉.
     (전체 세션 거래량이 필요하므로 정규장 분봉 합산은 쓰지 않는다 — 다크풀 비중 분모 왜곡)"""
-    from . import flow as F
-    try:
-        b = F.daily_bar(symbol, session_date)
-        if b:
-            return b, "Alpaca SIP 일봉"
-    except Exception as e:  # noqa: BLE001
-        log(f"{symbol}: alpaca daily bar failed ({e})")
     if POLYGON_API_KEY:
         try:
             ds = session_date.isoformat()
@@ -96,6 +89,13 @@ def fetch_session_bar(symbol: str, session_date: date, yft=None) -> Tuple[Option
                              "volume": float(b.get("v") or 0)}, "Polygon 일봉")
         except Exception as e:  # noqa: BLE001
             log(f"{symbol}: polygon daily bar failed ({e})")
+    from . import flow as F
+    try:
+        b = F.daily_bar(symbol, session_date)
+        if b:
+            return b, "Alpaca SIP 일봉"
+    except Exception as e:  # noqa: BLE001
+        log(f"{symbol}: alpaca daily bar failed ({e})")
     if yft is not None:
         # 최후 폴백: Yahoo 일봉 행이 종가 NaN 으로만 게시된 경우 → 일봉 거래량 + 정규장 1분봉 OHLC
         try:

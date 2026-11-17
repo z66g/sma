@@ -72,7 +72,10 @@ def daily_bar(symbol: str, d: date) -> Optional[Dict[str, Any]]:
     """SIP 일봉 1개 (Yahoo 일봉 미게시 시 폴백). 무료 플랜 SIP 는 15분 이전 데이터 제공."""
     if not available():
         return None
-    j = _get({"timeframe": "1Day", "start": d.isoformat(), "end": d.isoformat(), "feed": "sip",
+    # 무료 플랜은 '최근 15분' SIP 조회 불가 → end 를 명시 타임스탬프(세션 20:00 ET 와 now-16분 중 이른 쪽)로 지정
+    end = min(_et_bounds(d)[3], datetime.now(timezone.utc) - timedelta(minutes=16))
+    j = _get({"timeframe": "1Day", "start": _et_bounds(d)[0].strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "end": end.strftime("%Y-%m-%dT%H:%M:%SZ"), "feed": "sip",
               "adjustment": "raw", "limit": 5}, url=f"https://data.alpaca.markets/v2/stocks/{symbol}/bars")
     for b in j.get("bars") or []:
         t = _ts(b["t"])
