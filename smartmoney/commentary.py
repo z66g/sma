@@ -810,3 +810,44 @@ def takeaways(a: Dict) -> Dict[str, str]:
         s5 += (f" 수급 국면은 {q(cu['state_ko'])} {cu['days']}거래일째이며, 다음 국면은 {q(nx['state_ko'])}({nx['prob']:.0f}%) 가능성이 가장 높습니다."
                + (f" 최근 {cu['emerging']['days']}일은 {q(cu['emerging']['state_ko'])} 조짐이 있습니다." if cu.get("emerging") else ""))
     return {"s0": s0, "s1": tl[0], "s2": tl[1], "s3": tl[2], "s4": s4, "s5": s5}
+
+
+def short_parts(a: Dict) -> Tuple[str, str, str]:
+    """한줄평의 압축형 (주체 · 구조 · 판정) — 텔레그램 카드/목록용."""
+    l1, l2, l3 = a["l1"], a["l2"], a["l3"]
+    p = a["meta"]["price"]
+    code, name, prob = _top(a["scenarios"])
+    verdict = f"{name} {prob:.0f}%"
+    if a["meta"].get("is_index"):
+        r5 = _ret(a)
+        who = f"5일 {pc(r5)}" if r5 is not None else "—"
+    else:
+        inst = l1.get("delta_inst")
+        v = inst if inst is not None else l1.get("delta_total")
+        adv = l1.get("avg_vol20") or 0
+        st = (v / adv) if (v is not None and adv) else 0
+        lbl = "기관" if inst is not None else "순체결"
+        who = f"{lbl} 관망" if v is None or abs(st) < 0.03 else f"{lbl} {ssh(v)} {'매수' if v > 0 else '매도'}"
+    flip, reg = l3.get("flip_zone"), l3.get("gamma_regime")
+    neg = (flip and p < flip) or (not flip and reg == "NEGATIVE")
+    cw, pw = l3.get("call_wall"), l3.get("put_wall")
+    d = 0 if p >= 20 else 2
+    if l2.get("low_ctb_paradox"):
+        struct = "저비용 공매도 축적"
+    elif l2.get("case") == "CASE_2_DIRECTIONAL_SHORT":
+        struct = "방향성 공매도↑"
+    elif l3.get("binary_event"):
+        struct = "옵션 갭 대비"
+    elif neg:
+        struct = "음감마(변동성↑)"
+    elif cw and pw and pw < p < cw:
+        struct = f"{usd(pw, d)}–{usd(cw, d)} 박스"
+    elif reg:
+        struct = "양감마(변동성↓)"
+    else:
+        struct = ""
+    return who, struct, verdict
+
+
+def short_take(a: Dict) -> str:
+    return " · ".join(x for x in short_parts(a) if x)

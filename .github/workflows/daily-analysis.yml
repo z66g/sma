@@ -220,13 +220,25 @@ jobs:
           BASE="https://analyzer.zbbg.kr/reports"
           NL=$'\n'
 
+          # ① 한 장 요약 카드 (이미지) — 한글 폰트가 없으면 설치, 실패해도 텍스트 알림은 계속
+          if [ -n "${PRODUCED_TICKERS:-}" ]; then
+            if ! fc-list :lang=ko 2>/dev/null | grep -q .; then
+              (sudo apt-get update -qq && sudo apt-get install -y -qq fonts-nanum) >/dev/null 2>&1 || true
+            fi
+            timeout 120 python3 tools/telegram_card.py "${DATE}" --tickers "${PRODUCED_TICKERS}" --out card.png || true
+            if [ -f card.png ]; then
+              printf '%s' "📩 <b>${DATE} 세션 스마트머니 요약</b>${NL}종목별 상세 리포트 링크는 다음 메시지에 있습니다." \
+                | python3 tools/telegram_send.py --photo card.png
+            fi
+          fi
+
+          # ② 텍스트: 카드와 같은 순서 · 종목당 한 줄 (판정 · 주체 · 구조) + 리포트 링크
           STOCK_LINKS=""
-          for T in ${PRODUCED_TICKERS:-}; do
-            F="reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html"
-            [ -f "${F}" ] || continue
-            OL="$(python3 -c 'import json,sys,html; print(html.escape(json.load(open(sys.argv[1])).get("one_liner") or "", quote=False)[:220])' "reports/${DATE}/${T}_${DATE}.json" 2>/dev/null || true)"
-            STOCK_LINKS="${STOCK_LINKS}• <a href=\"${BASE}/${DATE}/${T}_3Layer_Forensic_${DATE}.html\"><b>${T}</b></a>${OL:+ — ${OL}}${NL}"
-          done
+          while IFS=$'\t' read -r T LINE; do
+            [ -n "${T}" ] || continue
+            [ -f "reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html" ] || continue
+            STOCK_LINKS="${STOCK_LINKS}• <a href=\"${BASE}/${DATE}/${T}_3Layer_Forensic_${DATE}.html\"><b>${T}</b></a> ${LINE}${NL}"
+          done < <(python3 tools/telegram_card.py "${DATE}" --tickers "${PRODUCED_TICKERS:-}" --lines 2>/dev/null || true)
 
           INDEX_BLOCK=""
           if [ -z "${SINGLE}" ] && [ -f indexes.txt ]; then

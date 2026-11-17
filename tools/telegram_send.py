@@ -2,6 +2,7 @@
 """텔레그램 메시지 전송 (워크플로 공용). 메시지는 stdin, 토큰/채팅ID 는 env.
 
   echo "$MSG" | TG_TOKEN=... TG_CHAT=... python3 tools/telegram_send.py
+  echo "$CAPTION" | python3 tools/telegram_send.py --photo card.png     # 이미지(+캡션, HTML)
 
 - 실패 원인(HTTP 상태 · Telegram description)을 로그에 남긴다 (토큰은 절대 출력하지 않음).
 - HTML 파싱 오류(400 "can't parse entities")면 태그를 제거한 일반 텍스트로 1회 재전송.
@@ -54,11 +55,49 @@ def _post(token: str, chat: str, text: str, parse_html: bool):
     return None, {}
 
 
+def _send_photo(token: str, chat: str, path: str, caption: str) -> bool:
+    """sendPhoto (캡션은 1024자 제한). 실패해도 예외 없이 False."""
+    data = {"chat_id": chat}
+    if caption:
+        data.update(caption=caption[:1000], parse_mode="HTML")
+    for attempt in range(3):
+        try:
+            with open(path, "rb") as f:
+                r = requests.post(f"https://api.telegram.org/bot{token}/sendPhoto", data=data,
+                                  files={"photo": (os.path.basename(path), f, "image/png")}, timeout=60)
+            j = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+            if r.status_code == 200 and j.get("ok"):
+                return True
+            if r.status_code == 429 and attempt < 2:
+                time.sleep(int((j.get("parameters") or {}).get("retry_after", 3)))
+                continue
+            if r.status_code == 400 and "parse" in str(j.get("description", "")) and "parse_mode" in data:
+                data.pop("parse_mode")
+                data["caption"] = html.unescape(re.sub(r"<[^>]+>", "", data.get("caption", "")))
+                continue
+            print(f"::warning::telegram photo failed: HTTP {r.status_code} — {str(j.get('description', ''))[:200]}")
+            return False
+        except (OSError, requests.RequestException) as e:
+            if attempt == 2:
+                print(f"::warning::telegram photo failed: {type(e).__name__}")
+                return False
+            time.sleep(2)
+    return False
+
+
 def main() -> int:
     token = os.environ.get("TG_TOKEN", "").strip()
     chat = os.environ.get("TG_CHAT", "").strip()
     if not token or not chat:
         print("::warning::telegram: TG_TOKEN / TG_CHAT secret 미설정 — 알림 생략")
+        return 0
+    if len(sys.argv) >= 3 and sys.argv[1] == "--photo":
+        path = sys.argv[2]
+        if not os.path.exists(path):
+            print("telegram: photo not found — skip")
+            return 0
+        cap = "" if sys.stdin.isatty() else sys.stdin.read().strip()
+        print("telegram: photo ok" if _send_photo(token, chat, path, cap) else "telegram: photo failed")
         return 0
     text = sys.stdin.read().strip()
     if not text:

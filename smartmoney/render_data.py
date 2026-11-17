@@ -21,7 +21,7 @@ def render_json(a: Dict[str, Any]) -> str:
         "schema": 3,
         "ticker": m["ticker"], "date": m["date"], "price": _r(m["price"]), "is_index": m["is_index"],
         "generated_at": m["generated_at"], "prev_close": _r(l4.get("prev_close")), "change_pct": _r(l4.get("change_pct")),
-        "headline": a.get("headline"), "one_liner": a.get("one_liner"),
+        "headline": a.get("headline"), "one_liner": a.get("one_liner"), "short_take": a.get("short_take"),
         "flow_board": C.flow_board(a), "watch_points": C.watch_points(a),
         "quality": a["quality"],
         "warnings": m.get("warnings") or [],
