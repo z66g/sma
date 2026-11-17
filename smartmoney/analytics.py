@@ -1135,7 +1135,7 @@ def price_levels(price: float, l3: Dict, l4: Dict) -> List[Dict[str, Any]]:
 
 
 def build_phases(session: date, ohlcv: List[Dict], l1: Dict, l3: Dict, l4: Dict, scen: Dict,
-                 events: List[Dict]) -> Dict[str, Any]:
+                 events: List[Dict], regime: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     closes = [c["close"] for c in ohlcv]
     dates = [c["date"] for c in ohlcv]
     # Phase 1 시작: 최근 20거래일 내 SMA20 교차 시점 (레짐 시작)
@@ -1156,6 +1156,12 @@ def build_phases(session: date, ohlcv: List[Dict], l1: Dict, l3: Dict, l4: Dict,
             p2_end = ped if cal.is_trading_day(ped) else cal.prev_trading_day(ped)
     p3_start = cal.next_trading_day(p2_end)
     p3_end = cal.next_trading_day(p2_end, 15)
+    p2_start = session
+    if regime:                       # 누적 데이터 기반 국면이 있으면 날짜를 국면 경계로 대체
+        prv, cur = regime["previous"], regime["current"]
+        p1_start, p1_end = prv["start"], prv["end"]
+        p2_start = cal.parse_date(cur["start"])
+        p2_end, p3_start, p3_end = regime["p2_end"], regime["p3_start"], regime["p3_end"]
 
     price = closes[-1]
     A, B, C = scen["A_bullish"], scen["B_neutral"], scen["C_bearish"]
@@ -1178,12 +1184,13 @@ def build_phases(session: date, ohlcv: List[Dict], l1: Dict, l3: Dict, l4: Dict,
                  or nxt.isoformat() <= e["date"] <= p2_end.isoformat()]
     return {
         "p1_date": f"{p1_start} ~ {p1_end}", "p1_start": p1_start, "p1_end": p1_end,
-        "p2_date": f"{session.isoformat()} ~ {p2_end.isoformat()}", "p2_end": p2_end.isoformat(),
+        "p2_date": f"{p2_start.isoformat()} ~ {p2_end.isoformat()}", "p2_start": p2_start.isoformat(), "p2_end": p2_end.isoformat(),
         "p3_date": f"{p3_start.isoformat()} ~ {p3_end.isoformat()}",
         "p3_direction": direction,
         "p3_target_hi": t_up1 if direction != "DOWNWARD" else t_up1,
         "p3_target_hi2": t_up2, "p3_target_lo": t_dn1, "p3_target_lo2": t_dn2,
         "p3_bb_width": l4.get("bb_width_pct"),
-        "p1_return_pct": pct(price, closes[start_idx]),
+        "p1_return_pct": (regime["previous"].get("ret_pct") if regime else pct(price, closes[start_idx])),
+        "regime": regime,
         "catalysts": catalysts[:4],
     }

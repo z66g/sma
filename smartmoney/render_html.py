@@ -38,7 +38,8 @@ def table(headers: List[str], rows: List[List[str]], hl: Optional[Dict[int, str]
     body = []
     for i, r in enumerate(rows):
         st = f' style="background:{hl[i]};"' if i in hl else ""
-        tds = "".join(f'<td data-label="{e(headers[j]) if j < len(headers) else ""}">{c}</td>' for j, c in enumerate(r))
+        wrap_c = (lambda j, c: f'<div class="cv">{c}</div>' if mode == "card" and j > 0 else c)
+        tds = "".join(f'<td data-label="{e(headers[j]) if j < len(headers) else ""}">{wrap_c(j, c)}</td>' for j, c in enumerate(r))
         body.append(f"<tr{st}>{tds}</tr>")
     klass = " ".join(x for x in (cls, {"card": "rt", "ts": "tsr"}.get(mode, "")) if x)
     wrap = "tw tsw" if mode == "ts" else "tw"
@@ -202,6 +203,85 @@ def _flow_session_card(l1: Dict) -> str:
             + f'<div class="muted" style="margin-top:6px;">블록 {fl.get("blocks") or 0}건 (장외 블록 {fl.get("dark_blocks") or 0}건) · '
               f'체결 {C.sh(fl.get("trades"))}건 · 거래량 비중 기관 {_num(fl["cohort_vol_share"]["inst"], 1, suffix="%")} / '
               f'프로 {_num(fl["cohort_vol_share"]["pro"], 1, suffix="%")} / 리테일 {_num(fl["cohort_vol_share"]["ret"], 1, suffix="%")}</div></div>')
+
+
+REG_COLOR = {"ACCUMULATION": (BULL, .12), "MARKUP": (BULL, .26), "DISTRIBUTION": (WARN, .18), "MARKDOWN": (BEAR, .16),
+             "NEUTRAL": (MUTED, .07)}
+
+
+def _seg_line(sg: Dict) -> str:
+    bits = [f"{sg['days']}거래일", f"가격 {C.pc(sg.get('ret_pct'))}"]
+    if sg.get("flow_per_day") is not None:
+        fpd = 0.0 if abs(sg["flow_per_day"]) < 0.5 else sg["flow_per_day"]
+        bits.append(f"순체결 일평균 {C.pc(fpd, 0)} (ADV 대비)")
+    if sg.get("inst_sum") is not None and sg.get("inst_days"):
+        bits.append(f"기관 {C.ssh(sg['inst_sum'])}주")
+    return " · ".join(bits)
+
+
+def _phase_rows(ph: Dict, l1: Dict, l3: Dict) -> List[List[str]]:
+    rg = ph.get("regime")
+    tgt = (f"상단 {_num(ph.get('p3_target_hi'), 2, '$')} / {_num(ph.get('p3_target_hi2'), 2, '$')} · "
+           f"하단 {_num(ph.get('p3_target_lo'), 2, '$')} / {_num(ph.get('p3_target_lo2'), 2, '$')}")
+    cats = (" · 주요 일정: " + ", ".join(f"{c['date']} {c['event']}" for c in ph.get("catalysts") or [])) if ph.get("catalysts") else ""
+    if not rg:
+        return [["<b>Phase 1</b> · 준비", e(ph["p1_date"]), f"구간 시작 이후 {C.pc(ph.get('p1_return_pct'))}", pill("완료", "muted")],
+                ["<b>Phase 2</b> · 진행", e(ph["p2_date"]), f"L1 {C.ko(l1.get('scenario'))} · L3 {C.ko(l3.get('scenario'))}", pill("진행 중", "warn")],
+                ["<b>Phase 3</b> · 결과", e(ph["p3_date"]), f"{e(C.kt(C.KO_DIR, ph.get('p3_direction')))} · {tgt}{e(cats)}", pill("예정", "info")]]
+    pv, cu, nx = rg["previous"], rg["current"], rg["next"]
+    def conf(sg):
+        if sg.get("confirm") is None:
+            return ""
+        k = "pos" if sg["confirm"] >= 0.67 else "warn" if sg["confirm"] >= 0.5 else "neg"
+        return " " + pill(f"누적 근거 {sg['confirm_n']} 일치", k, " / ".join(sg.get("evidence") or []))
+    remain = max(1, cu["median_days"] - cu["days"])
+    p2_note = ("이 종목의 같은 국면 평균 지속기간을 넘겨 전환이 가까워진 상태입니다" if cu["overdue"]
+               else f"같은 국면 평균 지속 {cu['median_days']}거래일(과거 {cu['samples']}회) 기준 약 {remain}거래일 남았습니다")
+    em = cu.get("emerging")
+    if em:
+        p2_note += (f". 다만 {em['start']}부터 최근 {em['days']}일은 {C.q(em['state_ko'])} 신호(가격 {C.pc(em.get('ret_pct'))})가 "
+                    "나타나 전환 여부를 확인하는 중입니다")
+    contra = " <b style=\"color:#CF222B;\">리포트·체결 데이터가 다른 방향을 가리켜, 국면이 바뀌는 중일 수 있습니다.</b>" if cu.get("contradicted") else ""
+    et = nx.get("emp_top")
+    if nx.get("emp_n"):
+        emp = (f"과거 {C.q(cu['state_ko'])} 다음에 {C.jo(C.q(nx['state_ko']), '이')} 온 경우 {nx['emp_hits']}/{nx['emp_n']}회"
+               + (f"(가장 많았던 다음 국면은 {C.q(R_KO.get(et[0], et[0]))} {et[1]}회)" if et and et[0] != nx["state"] else ""))
+    else:
+        emp = "과거 전이 표본이 없어 전형적인 순환(매집→상승→분산→하락)을 가정"
+    return [
+        [f"<b>Phase 1</b> · {e(pv['state_ko'])}", e(ph["p1_date"]), e(_seg_line(pv)) + conf(pv), pill("완료", "muted")],
+        [f"<b>Phase 2</b> · {e(cu['state_ko'])}", e(f"{cu['start']} ~ (예상) {ph['p2_end']}"),
+         e(_seg_line(cu)) + conf(cu) + f"<br><span class=\"muted\">{e(p2_note)}</span>{contra}", pill(f"진행 중 · {cu['days']}일째", "warn")],
+        [f"<b>Phase 3</b> · {e(nx['state_ko'])} 예상", e(ph["p3_date"]),
+         f"다음 국면 확률 <b>{nx['prob']:.0f}%</b> — {e(emp)}, 현재 시나리오 확률을 반반 반영<br>"
+         f"{e(C.kt(C.KO_DIR, ph.get('p3_direction')))} · {tgt}{e(cats)}", pill("예정", "info")]]
+
+
+R_KO = {"ACCUMULATION": "매집", "MARKUP": "상승 진행", "DISTRIBUTION": "분산", "MARKDOWN": "하락 진행", "NEUTRAL": "관망(횡보)"}
+
+
+def _regime_card(ph: Dict) -> str:
+    rg = ph.get("regime")
+    if not rg:
+        return ""
+    rows = []
+    for sg in reversed(rg["segments"][-7:]):
+        cf = sg.get("confirm")
+        k = "muted" if cf is None else "pos" if cf >= 0.67 else "warn" if cf >= 0.5 else "neg"
+        col, _ = REG_COLOR[sg["state"]]
+        rows.append([e(f"{sg['start']} ~ {sg['end']}"), f'<b style="color:{col};">{e(sg["state_ko"])}</b>', f"{sg['days']}",
+                     colored(sg.get("ret_pct"), C.pc(sg.get("ret_pct"))),
+                     colored(sg.get("flow_per_day"), C.pc(0.0 if abs(sg.get("flow_per_day") or 0) < 0.5 else sg.get("flow_per_day"), 0)),
+                     _num(sg.get("dp_avg"), 1, suffix="%"), _num(sg.get("short_avg"), 1, suffix="%"),
+                     pill(sg.get("confirm_n") or "—", k, " / ".join(sg.get("evidence") or []))])
+    legend = " ".join(f'<span class="rg-k"><i style="background:{c};opacity:{min(1, o * 3):.2f};"></i>{R_KO[st]}</span>'
+                      for st, (c, o) in REG_COLOR.items())
+    return (f'<div class="card"><div class="ct">수급 국면 타임라인 — 가격·순체결(CLV)로 나눈 구간과 누적 리포트 근거 (최근 160거래일)</div>'
+            f'<div class="ch"><canvas id="cReg"></canvas></div><div class="rg-l">{legend}</div>'
+            + table(["기간", "국면", "일수", "가격", "순체결/일", "다크풀 평균", "공매도 평균", "근거 일치"], rows, mode="card")
+            + '<div class="muted" style="margin-top:6px;">국면 판정: 10거래일 가격 변화와 순체결을 각자의 평소 변동폭으로 나눠 ±0.5 기준으로 분류 · '
+              '근거 일치 = 같은 기간 리포트의 L1 판정·기관 체결·다크풀·공매도 중 국면과 맞는 항목 수 · '
+              '다음 국면 확률 = 이 종목의 2년간 국면 전이 빈도 50% + 현재 시나리오 확률 50%.</div></div>')
 
 
 def _num(x: Optional[float], d: int = 2, prefix: str = "", suffix: str = "") -> str:
@@ -453,13 +533,8 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
                        "●" if sig == "BULLISH" else "", "●" if sig == "NEUTRAL" else "", "●" if sig == "BEARISH" else "",
                        f"{(L.get('score') or 0):+.2f}", f"{(L.get('confidence') or 0):.0%}", f"{w:.2f}",
                        colored(contrib.get(k), f"{contrib.get(k, 0):+.3f}")])
-    phase_rows = [
-        ["<b>Phase 1</b> · 준비", e(ph["p1_date"]), f"구간 시작 이후 {C.pc(ph.get('p1_return_pct'))} · L1 {C.ko(l1.get('scenario'))} 흐름 형성", pill("완료", "muted")],
-        ["<b>Phase 2</b> · 진행", e(ph["p2_date"]), f"L1 {C.ko(l1.get('scenario'))} · L3 {C.ko(l3.get('scenario'))} · 주 만기 {e(l3.get('expiry'))}", pill("진행 중", "warn")],
-        ["<b>Phase 3</b> · 결과", e(ph["p3_date"]),
-         f"{e(C.kt(C.KO_DIR, ph.get('p3_direction')))} · 상단 {_num(ph.get('p3_target_hi'), 2, '$')} / {_num(ph.get('p3_target_hi2'), 2, '$')} · 하단 {_num(ph.get('p3_target_lo'), 2, '$')} / {_num(ph.get('p3_target_lo2'), 2, '$')}"
-         + (" · 주요 일정: " + ", ".join(f"{c['date']} {c['event']}" for c in ph.get("catalysts") or []) if ph.get("catalysts") else ""),
-         pill("예정", "info")]]
+    phase_rows = _phase_rows(ph, l1, l3)
+    regime_card = _regime_card(ph)
     lv_rows, lv_hl = [], {}
     for i, lv in enumerate(a["levels"]):
         if lv["type"] == "Current Price":
@@ -475,7 +550,8 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
                                       pill(", ".join(C.KO_PAT.get(p, p) for p in a["patterns"]) or "특이 패턴 없음", "warn" if a["patterns"] else "muted")]) + take(tk["s5"], "", {"A": "pos", "B": "warn", "C": "neg"}[top_code]) + f"""
 <div class="card"><div class="ct">레이어별 신호 (가중 점수 = 점수 × 신뢰도 × 가중치)</div>
 {table(["레이어", "시나리오", "상승", "중립", "하락", "점수", "신뢰도", "가중치", "기여"], mrows5, mode="card")}</div>
-<div class="card"><div class="ct">설계자 각본 — Phase 구조 (거래일 기준)</div>{table(["Phase", "기간", "내용", "상태"], phase_rows, mode="card")}</div>
+<div class="card"><div class="ct">설계자 각본 — Phase 구조 (누적 수급 국면 기준 · 거래일)</div>{table(["Phase", "기간", "내용", "상태"], phase_rows, mode="card")}</div>
+{regime_card}
 <div class="g2">
   <div class="card"><div class="ct">시나리오 확률</div><div class="ch sm"><canvas id="cProb"></canvas></div>
   <div class="muted">원점수 {s['raw_score']:+.3f} · 레이어 간 분산 {s.get('dispersion', 0):.2f} · 거시 보정 {contrib.get('macro', 0) * 100:+.1f}%p · 패턴 보정 {contrib.get('patterns', 0) * 100:+.1f}%p · 시나리오별 상한 80%</div></div>
@@ -539,6 +615,23 @@ FINRA 공매도 비중은 장외(TRF) 보고 체결 기준이며 공매도 잔�
 
 def _shift(v: Optional[float], far: float) -> Optional[float]:
     return None if v is None else v + (1 if far else 0)
+
+
+def _reg_payload(a: Dict) -> Optional[Dict[str, Any]]:
+    rg = (a.get("phase") or {}).get("regime")
+    oh = a.get("ohlcv") or []
+    if not rg or not oh:
+        return None
+    dates = [c["date"] for c in oh]
+    first = dates[0]
+    segs = []
+    for sg in rg.get("timeline") or []:
+        if sg["end"] < first:
+            continue
+        s0 = max(sg["start"], first)
+        segs.append({"s": s0[5:], "e": sg["end"][5:], "c": REG_COLOR[sg["state"]][0], "o": REG_COLOR[sg["state"]][1],
+                     "k": R_KO[sg["state"]]})
+    return {"labels": [d[5:] for d in dates], "c": [c["close"] for c in oh], "segs": segs}
 
 
 def _chart_payload(a: Dict) -> str:
@@ -613,6 +706,7 @@ def _chart_payload(a: Dict) -> str:
         "px": {"labels": [c["date"][5:] for c in oh[-N:]], "c": closes[-N:], "s20": sma_series(20)[-N:],
                "s50": sma_series(50)[-N:], "s200": sma_series(200)[-N:], "bbu": bbu[-N:], "bbl": bbl[-N:],
                "v": [c["volume"] for c in oh[-N:]]},
+        "reg": _reg_payload(a),
         "prob": [s["A_bullish"], s["B_neutral"], s["C_bearish"]],
         "contrib": s.get("contributions") or {},
         "hist_n": len(hist_full),
@@ -652,6 +746,8 @@ a{{color:{INFO};text-decoration:none}} a:hover{{text-decoration:underline}}
 .wp{{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}}
 .wp li{{display:grid;grid-template-columns:120px 1fr;gap:10px;font-size:12.5px;background:#FFFFFF;border:0.5px solid {BORDER};border-radius:6px;padding:6px 12px}}
 .wp-l{{font-weight:700;font-size:12px}}
+.rg-l{{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:{MUTED};margin:6px 0 8px}}
+.rg-k{{display:inline-flex;align-items:center;gap:4px}} .rg-k i{{display:inline-block;width:12px;height:10px;border-radius:2px}}
 .tk{{background:#FFFFFF;border:0.5px solid {BORDER};border-left:4px solid {INFO};border-radius:0 6px 6px 0;padding:10px 14px;margin:0 0 12px}}
 .tk-h{{font-size:11px;font-weight:700;letter-spacing:.06em;margin-bottom:3px}} .tk-t{{font-size:14px;font-weight:600;line-height:1.6}}
 .tk-x{{margin-top:7px;padding-top:7px;border-top:0.5px dashed {BORDER};font-size:12px;color:{TXT}}}
@@ -734,7 +830,7 @@ html{{scroll-behavior:smooth}} .sec,.exec{{scroll-margin-top:52px}}
  table.rt td::before{{content:attr(data-label);flex:0 0 30%;max-width:96px;text-align:left;color:{MUTED};font-size:11px;font-weight:600;padding-top:1px}}
  table.rt td:first-child{{display:block;text-align:left;font-weight:700;border-bottom:0.5px solid {PANEL};padding:5px 0 6px;margin-bottom:2px}}
  table.rt td:first-child::before{{display:none}}
- table.rt td:empty{{display:none}}
+ table.rt td:empty{{display:none}} table.rt td .cv{{flex:1;min-width:0}}
  table.rt tr[style]{{border-left:3px solid {WARN}}}
  /* 시계열 표: 줄바꿈 금지 + 첫 열 고정 + 가로 스크롤 */
  .tsw{{position:relative;margin:0 -10px;padding:0 10px}}
@@ -829,6 +925,12 @@ if(D.px.labels.length){const p=D.px;mk('cPx',{data:{labels:p.labels,datasets:[
  {type:'bar',label:'거래량',data:p.v,backgroundColor:a('#656D76',.25),yAxisID:'yv'}]},
  options:{interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10}}},
  scales:{y:{grid},yv:{position:'right',grid:{display:false},ticks:{callback:fmt},max:Math.max(...p.v)*4},x:{grid:{display:false},ticks:{maxTicksLimit:10,maxRotation:0}}}}});}
+// 국면 타임라인
+if(D.reg){const g=D.reg,an={},cw=(document.getElementById('cReg')||{}).clientWidth||0,minSpan=cw>700?8:cw>0?22:99;
+ g.segs.forEach((x,i)=>{an['r'+i]={type:'box',xMin:x.s,xMax:x.e,backgroundColor:a(x.c,x.o),borderWidth:0,
+ label:{display:(g.labels.indexOf(x.e)-g.labels.indexOf(x.s))>=minSpan,content:x.k,position:{x:'center',y:'start'},font:{size:10,weight:'600'},color:x.c}};});
+ mk('cReg',{type:'line',data:{labels:g.labels,datasets:[{label:'종가',data:g.c,borderColor:'#1F2328',borderWidth:1.6,pointRadius:0,tension:.1}]},
+ options:{plugins:{legend:{display:false},annotation:{annotations:an}},scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:10,maxRotation:0}}}}});}
 // S5
 mk('cProb',{type:'bar',data:{labels:['[A] 상승','[B] 중립','[C] 하락'],datasets:[{data:D.prob,backgroundColor:[a(BU,.85),a(WA,.85),a(BE,.85)],barThickness:18}]},
  options:{indexAxis:'y',plugins:{legend:{display:false},endLabels:{on:true,f:v=>v.toFixed(1)+'%'}},scales:{x:{min:0,max:80,grid,ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}}}});

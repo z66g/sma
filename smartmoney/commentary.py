@@ -574,7 +574,16 @@ def conclusions(a: Dict) -> List[str]:
         trig.append(f"대차 수수료({n(l2['ctb_fee'])}%)가 전일 대비 5% 이상 계속 상승(공격적인 공매도로 전환)")
     cats = ph.get("catalysts") or []
     cat_s = f" 일정으로는 {cats[0]['date']} {cats[0]['event']} 일정이 Phase 2에서 Phase 3으로 넘어가는 기준 시점입니다." if cats else ""
-    p3 = ("가장 먼저 확인할 트리거는 다음과 같습니다. " + "; ".join(trig) + "." + cat_s +
+    rg = ph.get("regime")
+    reg_s = ""
+    if rg:
+        cu, nx = rg["current"], rg["next"]
+        reg_s = (f"누적 데이터로 보면 {cu['start']}부터 {q(cu['state_ko'])} 국면이 {cu['days']}거래일째 이어지고 있고"
+                 f"(이 종목의 같은 국면 평균 {cu['median_days']}거래일), 다음은 {jo(q(nx['state_ko']), '이')} 될 가능성이 {nx['prob']:.0f}%로 가장 높습니다. "
+                 + ("다만 같은 기간 리포트·체결 데이터가 다른 방향을 가리켜 국면 전환이 진행 중일 수 있습니다. " if cu.get("contradicted") else "")
+                 + (f"최근 {cu['emerging']['days']}일은 {jo(q(cu['emerging']['state_ko']), '으로')} 바뀌는 조짐이 보여 다음 리포트에서 확정 여부를 확인해야 합니다. "
+                    if cu.get("emerging") else ""))
+    p3 = (reg_s + "가장 먼저 확인할 트리거는 다음과 같습니다. " + "; ".join(trig) + "." + cat_s +
           f" Phase 3({ph['p3_date']})의 기본 방향은 {kt(KO_DIR, ph.get('p3_direction'))}이며, 1차 목표는 위로 {usd(ph.get('p3_target_hi'))}, "
           f"아래로 {usd(ph.get('p3_target_lo'))}입니다. 트리거가 현재 가설과 반대 방향으로 나오면 시나리오 전체를 다시 계산합니다.")
     return [p1, p2, p3]
@@ -795,4 +804,9 @@ def takeaways(a: Dict) -> Dict[str, str]:
     code, name, prob = _top(s)
     s5 = (f"네 레이어를 합친 점수는 {s['raw_score']:+.3f}이며, {name} 시나리오가 {prob:.0f}%로 가장 높습니다"
           f"(상승 {s['A_bullish']:.0f}% · 중립 {s['B_neutral']:.0f}% · 하락 {s['C_bearish']:.0f}%).")
+    rg = (a.get("phase") or {}).get("regime")
+    if rg:
+        cu, nx = rg["current"], rg["next"]
+        s5 += (f" 수급 국면은 {q(cu['state_ko'])} {cu['days']}거래일째이며, 다음 국면은 {q(nx['state_ko'])}({nx['prob']:.0f}%) 가능성이 가장 높습니다."
+               + (f" 최근 {cu['emerging']['days']}일은 {q(cu['emerging']['state_ko'])} 조짐이 있습니다." if cu.get("emerging") else ""))
     return {"s0": s0, "s1": tl[0], "s2": tl[1], "s3": tl[2], "s4": s4, "s5": s5}

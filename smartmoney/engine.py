@@ -12,6 +12,7 @@ from . import calendar as cal
 from . import events as EV
 from . import flow as F
 from . import history as H
+from . import regimes as R
 from . import quality as Q
 from . import sources as S
 from .net import log
@@ -172,12 +173,20 @@ class SmartMoneyAnalyzer:
         layers = {"L1": l1, "L2": l2, "L3": l3, "L4": l4} if not self.is_index else {"L3": l3, "L4": l4}
         scen = A.scenario_probabilities(layers, macro, pat["patterns"])
         events = EV.upcoming(d, calx.get("earnings_date"), calx.get("ex_div"))
-        phase = A.build_phases(d, ohlcv, l1, l3, l4, scen, events)
+        history = H.load_report_history(self.display_ticker, before=d)
+        regime = None
+        try:
+            ledger = R.build_ledger(history, l1, l2, self.date_str,
+                                    H.read_state("flow", T) if not self.is_index else [],
+                                    H.read_state("borrow", T) if not self.is_index else [])
+            regime = R.analyze(d, ohlcv, ledger, scen)
+        except Exception as e:  # noqa: BLE001
+            self.warnings.append(f"phase/regime: {str(e)[:160]}")
+        phase = A.build_phases(d, ohlcv, l1, l3, l4, scen, events, regime)
         levels = A.price_levels(price, l3, l4)
         quality = Q.assess({"l1": l1, "l2": l2, "l3": l3, "l4": l4}, macro,
                            bool(data.get("news")) or bool((data.get("sec") or {}).get("filings")),
                            self.sources, is_index=self.is_index)
-        history = H.load_report_history(self.display_ticker, before=d)
         return {
             "meta": {"ticker": self.display_ticker, "symbol": self.ticker, "date": self.date_str,
                      "is_index": self.is_index, "price": price,

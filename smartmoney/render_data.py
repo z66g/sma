@@ -80,6 +80,35 @@ def _hist_row(h: Dict[str, Any]) -> str:
             f"{_p(l2.get('ctb_fee'), 2)} | {av} | {_d(l3.get('flip_zone'))} | {_d(l3.get('max_pain'))} |")
 
 
+def _z(x):
+    return None if x is None else (0.0 if abs(x) < 0.5 else x)
+
+
+def _md_phase(a: Dict[str, Any]) -> List[str]:
+    ph, l1, l3 = a["phase"], a["l1"], a["l3"]
+    tgt = f"Target: {_d(ph.get('p3_target_lo'))}–{_d(ph.get('p3_target_hi'))} (2차 {_d(ph.get('p3_target_lo2'))}–{_d(ph.get('p3_target_hi2'))})"
+    rg = ph.get("regime")
+    if not rg:
+        return [f"- **Phase 1 (Completed)**: {ph['p1_date']} — 구간 시작 이후 {C.pc(ph.get('p1_return_pct'))}",
+                f"- **Phase 2 (Current)**: {ph['p2_date']} — L1 {C.ko(l1.get('scenario'))} · L3 {C.ko(l3.get('scenario'))}",
+                f"- **Phase 3 (Target)**: {ph['p3_date']} — {C.kt(C.KO_DIR, ph.get('p3_direction'))} | {tgt}"]
+    pv, cu, nx = rg["previous"], rg["current"], rg["next"]
+    def seg(s):
+        return (f"{s['state_ko']} · {s['days']}거래일 · 가격 {C.pc(s.get('ret_pct'))} · 순체결 일평균 {C.pc(_z(s.get('flow_per_day')), 0)} ADV"
+                + (f" · 누적 근거 {s['confirm_n']} 일치" if s.get("confirm") is not None else " · 누적 근거 없음"))
+    out = [f"- **Phase 1 (Completed)**: {pv['start']} ~ {pv['end']} — {seg(pv)}",
+           f"- **Phase 2 (Current)**: {cu['start']} ~ (예상) {ph['p2_end']} — {seg(cu)} · {cu['days']}일째 (평균 {cu['median_days']}일)"
+           + (" · ⚠ 누적 근거 불일치" if cu.get("contradicted") else "")
+           + (f" · 최근 {cu['emerging']['days']}일 '{cu['emerging']['state_ko']}' 전환 조짐" if cu.get("emerging") else ""),
+           f"- **Phase 3 (Target)**: {ph['p3_date']} — {nx['state_ko']} 예상 {nx['prob']:.0f}% (과거 전이 {nx['emp_hits']}/{nx['emp_n']}회) · "
+           f"{C.kt(C.KO_DIR, ph.get('p3_direction'))} | {tgt}", "", "### 수급 국면 이력", "",
+           "| 기간 | 국면 | 일수 | 가격 | 순체결/일 | 다크풀 | 공매도 | 근거 일치 |", "|---|---|---|---|---|---|---|---|"]
+    for s in rg["segments"]:
+        out.append(f"| {s['start']} ~ {s['end']} | {s['state_ko']} | {s['days']} | {C.pc(s.get('ret_pct'))} | {C.pc(_z(s.get('flow_per_day')), 0)} | "
+                   f"{_p(s.get('dp_avg'))} | {_p(s.get('short_avg'))} | {s.get('confirm_n')} |")
+    return out
+
+
 def render_markdown(a: Dict[str, Any]) -> str:
     m, l1, l2, l3, l4, s, ph, q = (a["meta"], a["l1"], a["l2"], a["l3"], a["l4"], a["scenarios"], a["phase"], a["quality"])
     T = m["ticker"]
@@ -123,10 +152,7 @@ def render_markdown(a: Dict[str, Any]) -> str:
         f"| Raw Score · Macro | {s['raw_score']:+.3f} · {s.get('macro')} |",
         f"| Patterns | {', '.join(C.KO_PAT.get(p, p) for p in a['patterns']) or 'none'} |", "",
         "---", "", "## Architect Phase Structure",
-        f"- **Phase 1 (Completed)**: {ph['p1_date']} — 구간 시작 이후 {C.pc(ph.get('p1_return_pct'))}, L1 {C.ko(l1.get('scenario'))} 흐름 형성",
-        f"- **Phase 2 (Current)**: {ph['p2_date']} — L1 {C.ko(l1.get('scenario'))} · L3 {C.ko(l3.get('scenario'))}",
-        f"- **Phase 3 (Target)**: {ph['p3_date']} — {C.kt(C.KO_DIR, ph.get('p3_direction'))} | Target: {_d(ph.get('p3_target_lo'))}–{_d(ph.get('p3_target_hi'))} "
-        f"(2차 {_d(ph.get('p3_target_lo2'))}–{_d(ph.get('p3_target_hi2'))})", "",
+        *_md_phase(a), "",
         "---", "", "## 3-Line Summary",
     ]
     for i, t in enumerate(C.three_lines(a), 1):
