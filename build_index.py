@@ -403,8 +403,24 @@ def _overview_cards(latest: dict) -> str:
     """
 
 
+def _legacy_archive(legacy: list) -> str:
+    if not legacy:
+        return ""
+    def link(s: dict) -> str:
+        return f'<a href="../../{E(s["report_url"])}">리포트</a>' if s.get("report_url") else "—"
+    rows = "".join(f'<tr><td>{E(s["date"])}</td><td>{E(fmt_money(s.get("price")))}</td><td>{link(s)}</td></tr>'
+                   for s in reversed(legacy))
+    return (f'<details style="margin-top:18px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:{COLOR["muted"]};">'
+            f'이전 버전(v2) 리포트 아카이브 · {len(legacy)}개 세션 — 방법론이 달라 시계열·분석에서 제외 (원본 보존)</summary>'
+            f'<div class="t-scroll" style="margin-top:8px;"><table><thead><tr><th>Session</th><th>Price</th><th>Link</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div></details>')
+
+
 def render_ticker_page(ticker: str, series: list) -> str:
-    latest = series[-1] if series else {}
+    # v3(2026-11-13~) 만 시계열·해석에 사용. v2 는 방법론이 달라 아래 아카이브 목록으로만 노출.
+    legacy = [s for s in series if s.get("legacy")]
+    series = [s for s in series if not s.get("legacy")]
+    latest = series[-1] if series else (legacy[-1] if legacy else {})
     dates = [s["date"] for s in series]
 
     def col(layer, key):
@@ -573,6 +589,8 @@ def render_ticker_page(ticker: str, series: list) -> str:
     <tbody>{''.join(rows) if rows else '<tr><td colspan="8">아직 리포트 없음</td></tr>'}</tbody>
   </table>
   </div>
+
+  {_legacy_archive(legacy)}
 
   <h2>주간 AI 분석 리포트 히스토리</h2>
   {_render_narrative_archive(ticker)}

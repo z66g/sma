@@ -166,7 +166,9 @@ def render_markdown(a: Dict[str, Any]) -> str:
     cur = {"_session": m["date"], "price": m["price"], "l1": l1, "l2": l2, "l3": l3}
     for h in (a.get("history") or []) + [cur]:
         lines.append(_hist_row(h))
-    lines += ["", "> 2026-11 이전(v2) 행은 실행일 기준 파일명을 실제 세션 날짜로 바꿔 표기했습니다. 기관·프로·리테일 OBV는 체결 단위 데이터가 있는 날만 표시됩니다."]
+    lines += ["", "> v3 방법론(2026-11-13~) 리포트만 누적합니다. 이전 v2 리포트는 OBV 정의·대차 출처·판정 규칙이 달라 "
+              "이력과 분석에서 제외했으며, 원본은 reports/ 아카이브에 그대로 보존됩니다. "
+              "과거 다크풀·공매도 비중은 수급 국면 분석에서 FINRA 원천 파일로 v3 공식에 맞춰 재계산해 사용합니다."]
     if m.get("warnings"):
         lines += ["", "## Data Warnings"] + [f"- {w}" for w in m["warnings"]]
     return "\n".join(lines) + "\n"

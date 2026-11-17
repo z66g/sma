@@ -22,8 +22,12 @@ STATE_DIR = Path(os.environ.get("SMA_STATE_DIR", str(ROOT / "state")))
 _FNAME = re.compile(r"^(?P<t>[A-Z0-9.\-]+)_(?P<d>\d{4}-\d{2}-\d{2})\.json$")
 
 
-def load_report_history(ticker: str, before: Optional[date] = None, limit: int = 400) -> List[Dict[str, Any]]:
-    """해당 종목 과거 리포트 JSON 목록 (session 오름차순, session < before)."""
+def load_report_history(ticker: str, before: Optional[date] = None, limit: int = 400,
+                        min_schema: int = 3) -> List[Dict[str, Any]]:
+    """해당 종목 과거 리포트 JSON 목록 (session 오름차순, session < before).
+
+    기본은 v3(schema>=3) 리포트만 — v2 는 방법론(OBV 정의·대차 출처·판정 규칙)이 달라 분석·해석에 쓰지 않는다.
+    v2 파일은 reports/ 아카이브에 그대로 보존된다 (min_schema=2 로만 조회)."""
     best: Dict[str, Dict[str, Any]] = {}
     if not REPORTS_DIR.exists():
         return []
@@ -35,6 +39,8 @@ def load_report_history(ticker: str, before: Optional[date] = None, limit: int =
         try:
             j = json.loads(p.read_text(encoding="utf-8"))
         except (OSError, ValueError):
+            continue
+        if int(j.get("schema") or 2) < min_schema:
             continue
         try:
             if int(j.get("schema") or 2) >= 3:
@@ -76,6 +82,22 @@ def upsert_state(kind: str, ticker: str, row: Dict[str, Any], keep: int = 400) -
     rows.append(row)
     rows.sort(key=lambda r: r.get("date", ""))
     rows = rows[-keep:]
+    p = _state_file(kind, ticker)
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(rows, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    except OSError:
+        pass
+    return rows
+
+
+def merge_state(kind: str, ticker: str, new_rows: List[Dict[str, Any]], keep: int = 520) -> List[Dict[str, Any]]:
+    """여러 행을 date 기준으로 병합 저장 (새 값 우선)."""
+    by = {r.get("date"): r for r in read_state(kind, ticker)}
+    for r in new_rows:
+        if r.get("date"):
+            by[r["date"]] = r
+    rows = [by[k] for k in sorted(by) if k][-keep:]
     p = _state_file(kind, ticker)
     try:
         p.parent.mkdir(parents=True, exist_ok=True)

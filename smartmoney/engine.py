@@ -84,6 +84,13 @@ class SmartMoneyAnalyzer:
             return data
 
         data["finra"] = self._try("l1", "finra_regsho", S.finra_series, T, d, 20, default=[])
+        # FINRA 원천 일별 이력 (v3 방식으로 과거 다크풀·공매도 비중을 재계산하기 위한 상태) — 부족분만 백필
+        fh = H.read_state("finra", T)
+        if len(fh) < 200:
+            back = self._try("l1", "finra_backfill", S.finra_backfill, T, d, {r["date"] for r in fh}, 250, default=[]) or []
+        else:
+            back = []
+        H.merge_state("finra", T, back + (data["finra"] or []))
         if data["finra"] and data["finra"][-1]["date"] != self.date_str:
             self.warnings.append(f"l1/finra_lag: FINRA 최신 파일 {data['finra'][-1]['date']} (세션 {self.date_str} 미게시)")
         mb = self._try("l1", "minute_bars", S.fetch_minute_bars, T, yft, d, 5, default=([], ""))
@@ -178,7 +185,8 @@ class SmartMoneyAnalyzer:
         try:
             ledger = R.build_ledger(history, l1, l2, self.date_str,
                                     H.read_state("flow", T) if not self.is_index else [],
-                                    H.read_state("borrow", T) if not self.is_index else [])
+                                    H.read_state("borrow", T) if not self.is_index else [],
+                                    H.read_state("finra", T) if not self.is_index else [], ohlcv)
             regime = R.analyze(d, ohlcv, ledger, scen)
         except Exception as e:  # noqa: BLE001
             self.warnings.append(f"phase/regime: {str(e)[:160]}")

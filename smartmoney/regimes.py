@@ -12,9 +12,10 @@
      관망(NEUTRAL)       그 외
    3거래일 미만의 짧은 구간은 이웃 구간에 흡수(노이즈 제거)하고 같은 국면은 병합한다.
 
-2) 누적 리포트 근거 (일별 원장)
-   과거 리포트 JSON(v2·v3) + 상태 파일에서 세션별 다크풀 비중·공매도 비중·대차 수수료·L1 판정·
-   기관 체결 순매수(체결 단위)를 모아, 각 구간이 실제 데이터로 뒷받침되는지(일치/불일치) 표시한다.
+2) 누적 근거 (일별 원장 · v3 방법론 데이터만)
+   FINRA 원천 파일로 재계산한 다크풀·공매도 비중, v3 리포트의 L1 판정, IBKR 대차 수수료, 체결 단위
+   기관 순매수를 모아 각 구간이 실제 데이터로 뒷받침되는지(일치/불일치) 표시한다.
+   v2 리포트(방법론이 다름)는 쓰지 않는다.
 
 3) Phase 매핑
    Phase 1 = 직전에 끝난 구간 · Phase 2 = 지금 진행 중인 구간(시작일은 데이터가 정한 날) ·
@@ -127,34 +128,40 @@ def _runs(labels: List[Optional[str]]) -> List[List[int]]:
 
 # ─── 2) 누적 원장 ────────────────────────────────────────────────────────────
 def build_ledger(history: List[Dict[str, Any]], l1: Dict, l2: Dict, session: str,
-                 flow_rows: List[Dict[str, Any]], borrow_rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    """세션 → {dp, short, ctb, l1, inst} — 과거 리포트(v2·v3)와 상태 파일을 합친 일별 원장."""
-    led: Dict[str, Dict[str, Any]] = defaultdict(dict)
+                 flow_rows: List[Dict[str, Any]], borrow_rows: List[Dict[str, Any]],
+                 finra_rows: Optional[List[Dict[str, Any]]] = None,
+                 ohlcv: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Dict[str, Any]]:
+    """세션 → {dp, short, ctb, l1, inst} 일별 원장 — v3 방법론 데이터만.
 
-    def put(d: Optional[str], k: str, val: Any, force: bool = False) -> None:
-        if d and val is not None and (force or k not in led[d]):
-            led[d][k] = val
-    for h in history:                       # 오래된 것 → 최신 순
+    - dp·short: FINRA 원천 파일에서 v3 공식으로 재계산 (장외 거래량 ÷ 통합 거래량, 장외 공매도 ÷ 장외 거래량)
+    - l1 판정: v3 리포트만 (history 는 이미 schema>=3 로 걸러져 있음)
+    - ctb: IBKR 상태 파일 (v3 수집분) · inst: 체결 단위 상태 파일
+    """
+    led: Dict[str, Dict[str, Any]] = defaultdict(dict)
+    vol = {b["date"]: b.get("volume") for b in (ohlcv or [])}
+    for r in finra_rows or []:
+        d, off = r.get("date"), r.get("total_vol") or 0
+        if not d or off <= 0:
+            continue
+        led[d]["short"] = r.get("short_vol", 0) / off * 100
+        if vol.get(d):
+            led[d]["dp"] = off / vol[d] * 100
+    for h in history:
+        if int(h.get("schema") or 2) < 3:
+            continue
         d = h.get("_session") or h.get("date")
-        hl1, hl2 = h.get("l1") or {}, h.get("l2") or {}
-        for r in hl1.get("dp_series") or []:
-            put(r.get("date"), "dp", r.get("dp_pct"), force=True)
-        for r in hl2.get("short_series") or []:
-            put(r.get("date"), "short", r.get("short_pct"), force=True)
-        put(d, "dp", hl1.get("dp_pct"), force=True)
-        put(d, "short", hl2.get("short_pct_latest"), force=True)
-        put(d, "ctb", hl2.get("ctb_fee"), force=True)
-        put(d, "l1", hl1.get("scenario"), force=True)
-    for r in l1.get("dp_series") or []:
-        put(r.get("date"), "dp", r.get("dp_pct"), force=True)
-    for r in l2.get("short_series") or []:
-        put(r.get("date"), "short", r.get("short_pct"), force=True)
-    put(session, "l1", l1.get("scenario"), force=True)
-    put(session, "ctb", l2.get("ctb_fee"), force=True)
+        if d and (h.get("l1") or {}).get("scenario"):
+            led[d]["l1"] = h["l1"]["scenario"]
+    if l1.get("scenario"):
+        led[session]["l1"] = l1["scenario"]
     for r in borrow_rows or []:
-        put(r.get("date"), "ctb", r.get("fee"), force=True)
+        if r.get("date") and r.get("fee") is not None:
+            led[r["date"]]["ctb"] = r["fee"]
+    if l2.get("ctb_fee") is not None:
+        led[session]["ctb"] = l2["ctb_fee"]
     for r in flow_rows or []:
-        put(r.get("date"), "inst", r.get("inst"), force=True)
+        if r.get("date") and r.get("inst") is not None:
+            led[r["date"]]["inst"] = r["inst"]
     return dict(led)
 
 

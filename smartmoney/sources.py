@@ -272,6 +272,23 @@ def finra_series(symbol: str, session_date: date, n: int = 20) -> List[Dict[str,
     return list(reversed(rows))
 
 
+def finra_backfill(symbol: str, session_date: date, have: set, days: int = 250, max_fetch: int = 400) -> List[Dict[str, Any]]:
+    """과거 RegSHO 원천 행 (have 에 없는 날만). 일별 파일은 디스크 캐시돼 여러 종목이 공유한다."""
+    out, d, n_fetch = [], session_date, 0
+    for _ in range(days):
+        d = cal.prev_trading_day(d)
+        if d.isoformat() in have:
+            continue
+        if n_fetch >= max_fetch:
+            break
+        n_fetch += 1
+        tbl = finra_regsho(d)
+        if tbl and symbol in tbl:
+            s_, ex, tot = tbl[symbol]
+            out.append({"date": d.isoformat(), "short_vol": s_, "short_exempt": ex, "total_vol": tot})
+    return out
+
+
 # ─── FINRA OTC Transparency (weekly ATS vs non-ATS OTC) ─────────────────────
 FINRA_OTC = "https://api.finra.org/data/group/otcMarket/name/weeklySummary"
 

@@ -724,7 +724,8 @@ def _page(ticker: str, date_str: str, mode: str, meta: str, html_body: str) -> s
 
 def _load_series(ticker: str, days: int) -> List[dict]:
     from build_index import scan_ticker
-    return scan_ticker(ticker)[-max(1, days):]
+    # v3 리포트만 — v2 는 방법론(OBV·대차 출처·판정 규칙)이 달라 추세 해석에 섞지 않는다
+    return [r for r in scan_ticker(ticker) if not r.get("legacy")][-max(1, days):]
 
 
 def cmd_prepare(ticker: str, mode: str, days: int, force: bool, out_dir_s: str) -> int:
