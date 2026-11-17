@@ -4,12 +4,12 @@
  "date": "2026-11-16",
  "price": 95.93,
  "is_index": false,
- "generated_at": "2026-11-17T09:02:35Z",
+ "generated_at": "2026-11-17T09:55:47Z",
  "prev_close": 94.18,
  "change_pct": 1.8581,
- "headline": "[B 중립 38%] · 양감마 구간에서 Max Pain에 근접 · 감마 플립 $90.83 위 · 풋월~콜월 $95–$100",
- "one_liner": "기관이 5일간 913.9K주를 팔며 3% 하락을 주도했지만, 양감마 구간이라 $95~$100 범위에 묶이기 쉬워 방향이 확인되기 전까지는 중립(38%)이 우세합니다.",
- "short_take": "기관 -913.9K 매도 · $95–$100 박스 · 중립 38%",
+ "headline": "[C 하락 45%] · 대차 비용은 낮은데 빌릴 수 있는 주식은 감소 · 감마 플립 $90.83 위 · 풋월~콜월 $95–$100",
+ "one_liner": "기관이 5일간 913.9K주를 팔며 3% 하락을 주도했고, 낮은 비용의 공매도가 쌓이고 있어 하락 우위(45%)입니다.",
+ "short_take": "기관 -913.9K 매도 · 저비용 공매도 축적 · 하락 45%",
  "flow_board": [
   {
    "actor": "기관 (대량 체결)",
@@ -37,11 +37,11 @@
   },
   {
    "actor": "공매도",
-   "action": "옵션 헤지용 공매도",
+   "action": "낮은 비용으로 공매도 축적",
    "evidence": "비중 47.1% (z +1.0) · 대차 수수료 0.25% (전일 대비 +0.0%)",
-   "tag": "중립",
-   "kind": "warn",
-   "strength": -0.0
+   "tag": "하방",
+   "kind": "neg",
+   "strength": -0.5
   },
   {
    "actor": "옵션 딜러 (감마)",
@@ -154,7 +154,8 @@
  },
  "warnings": [],
  "patterns": [
-  "FINAL_ABSORPTION"
+  "FINAL_ABSORPTION",
+  "LOW_CTB_PARADOX"
  ],
  "pattern_detail": {
   "theta_burn": {
@@ -207,14 +208,14 @@
    },
    {
     "name": "DXY (20d)",
-    "value": 103.472,
+    "value": 103.484,
     "unit": "",
-    "change": 1.7124,
+    "change": 1.7242,
     "status": "RESTRICTED"
    },
    {
     "name": "VIX",
-    "value": 23.24,
+    "value": 24.13,
     "unit": "",
     "change": null,
     "status": "NEUTRAL"
@@ -228,9 +229,9 @@
    },
    {
     "name": "WTI",
-    "value": 85.4,
+    "value": 85.91,
     "unit": "$",
-    "change": -16.1018,
+    "change": -15.6007,
     "status": "NEUTRAL"
    },
    {
@@ -243,14 +244,14 @@
   ]
  },
  "scenarios": {
-  "A_bullish": 24.2,
-  "B_neutral": 37.9,
-  "C_bearish": 37.9,
-  "raw_score": -0.135,
-  "dispersion": 0.52,
+  "A_bullish": 21.3,
+  "B_neutral": 34.0,
+  "C_bearish": 44.7,
+  "raw_score": -0.235,
+  "dispersion": 0.507,
   "contributions": {
    "L1": -0.188,
-   "L2": -0.0,
+   "L2": -0.1,
    "L3": 0.147,
    "L4": -0.095,
    "macro": -0.05,
@@ -276,7 +277,7 @@
    "segments": [
     {
      "state": "NEUTRAL",
-     "state_ko": "관망(횡보)",
+     "state_ko": "관망",
      "start": "2026-08-03",
      "end": "2026-08-11",
      "days": 7,
@@ -297,7 +298,7 @@
     },
     {
      "state": "MARKDOWN",
-     "state_ko": "하락 진행",
+     "state_ko": "매도 주도",
      "start": "2026-08-12",
      "end": "2026-09-08",
      "days": 19,
@@ -345,7 +346,7 @@
     },
     {
      "state": "MARKDOWN",
-     "state_ko": "하락 진행",
+     "state_ko": "매도 주도",
      "start": "2026-09-18",
      "end": "2026-10-01",
      "days": 10,
@@ -369,7 +370,7 @@
     },
     {
      "state": "NEUTRAL",
-     "state_ko": "관망(횡보)",
+     "state_ko": "관망",
      "start": "2026-10-02",
      "end": "2026-10-14",
      "days": 9,
@@ -390,7 +391,7 @@
     },
     {
      "state": "MARKUP",
-     "state_ko": "상승 진행",
+     "state_ko": "매수 주도",
      "start": "2026-10-15",
      "end": "2026-10-20",
      "days": 4,
@@ -414,7 +415,7 @@
     },
     {
      "state": "MARKDOWN",
-     "state_ko": "하락 진행",
+     "state_ko": "매도 주도",
      "start": "2026-10-21",
      "end": "2026-11-05",
      "days": 12,
@@ -574,7 +575,7 @@
    },
    "previous": {
     "state": "MARKDOWN",
-    "state_ko": "하락 진행",
+    "state_ko": "매도 주도",
     "start": "2026-10-21",
     "end": "2026-11-05",
     "days": 12,
@@ -598,13 +599,13 @@
    },
    "next": {
     "state": "MARKDOWN",
-    "state_ko": "하락 진행",
-    "prob": 39.0,
+    "state_ko": "매도 주도",
+    "prob": 42.3,
     "probs": {
-     "MARKDOWN": 39.0,
-     "MARKUP": 27.4,
-     "NEUTRAL": 21.2,
-     "ACCUMULATION": 12.4
+     "MARKDOWN": 42.3,
+     "MARKUP": 26.2,
+     "NEUTRAL": 20.1,
+     "ACCUMULATION": 11.4
     },
     "emp_n": 5,
     "emp_top": [
@@ -1080,11 +1081,11 @@
   }
  },
  "l2": {
-  "scenario": "MM_HEDGE",
-  "signal": "NEUTRAL",
+  "scenario": "DIRECTIONAL_SHORT",
+  "signal": "BEARISH",
   "confidence": 1.0,
-  "score": -0.0,
-  "case": "CASE_1_MM_DELTA_HEDGE",
+  "score": -0.5,
+  "case": "CASE_2_DIRECTIONAL_SHORT",
   "short_pct_latest": 47.1297,
   "short_avg_14d": 36.2651,
   "short_slope": 0.7539,
@@ -1094,12 +1095,12 @@
   "est_short_total": 1124704.3278,
   "ctb_fee": 0.25,
   "ctb_delta_pct": 0.0,
-  "shares_available": 3600000.0,
+  "shares_available": 3100000.0,
   "available_capped": false,
-  "avail_delta_pct": 9.0909,
+  "avail_delta_pct": -6.0606,
   "borrow_source": "ibkr_ftp",
   "htb_class": "ETB",
-  "low_ctb_paradox": false,
+  "low_ctb_paradox": true,
   "short_series": [
    {
     "date": "2026-10-20",
@@ -1253,7 +1254,7 @@
    {
     "date": "2026-11-16",
     "fee": 0.25,
-    "available": 3600000.0,
+    "available": 3100000.0,
     "capped": false,
     "source": "ibkr_ftp"
    }
