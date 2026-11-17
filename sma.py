@@ -63,6 +63,7 @@ def main() -> int:
         return 2
 
     a["headline"] = C.headline(a)
+    a["one_liner"] = C.one_liner(a)
     out_dir = Path(os.environ.get("SMA_OUT_DIR") or (Path(__file__).resolve().parent / "output" / an.date_str))
     out_dir.mkdir(parents=True, exist_ok=True)
     tag = an.display_ticker

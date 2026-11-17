@@ -64,10 +64,40 @@ def alert(body: str, kind: str = "warn", title: str = "") -> str:
     return f'<div class="alert" style="background:{bg};border-left:3px solid {fg};">{t}{body}</div>'
 
 
-def interp(paras: List[str], xv: str) -> str:
+def interp(paras: List[str], xv: str = "") -> str:
     lis = "".join(f"<li>{p}</li>" for p in paras)
-    return (f'<div class="interp"><div class="ih">해석</div><ul>{lis}</ul>'
-            f'<div class="xv"><b>교차검증</b> · {xv}</div></div>')
+    return f'<div class="interp"><div class="ih">세부 해석</div><ul>{lis}</ul></div>'
+
+
+def take(text: str, xv: str = "", kind: str = "info") -> str:
+    """섹션 상단 핵심 판단 (+ 교차검증)."""
+    bg, fg = KIND.get(kind, KIND["info"])
+    x = f'<div class="tk-x"><b>교차검증</b> · {xv}</div>' if xv else ""
+    return (f'<div class="tk" style="border-left-color:{fg};"><div class="tk-h" style="color:{fg};">핵심 판단</div>'
+            f'<div class="tk-t">{e(text)}</div>{x}</div>')
+
+
+def _flow_board(rows: List[Dict]) -> str:
+    out = []
+    for r in rows:
+        st = r.get("strength")
+        bar = ""
+        if st is not None:
+            c = BULL if st > 0 else BEAR if st < 0 else MUTED
+            left = 50 + min(st, 0) * 50
+            bar = (f'<div class="bar fb-bar"><div class="mid"></div><div style="position:absolute;left:{left:.1f}%;'
+                   f'width:{abs(st) * 50:.1f}%;top:0;bottom:0;background:{c};opacity:.85;border-radius:3px;"></div></div>')
+        out.append(f'<div class="fb-row"><div class="fb-a">{e(r["actor"])}</div>'
+                   f'<div class="fb-x"><b>{e(r["action"])}</b><div class="fb-e">{e(r["evidence"])}</div></div>'
+                   f'<div class="fb-p">{pill(r["tag"], r["kind"])}{bar}</div></div>')
+    return f'<div class="fb">{"".join(out)}</div>'
+
+
+def _watch(points: List[Dict]) -> str:
+    li = "".join(f'<li><span class="wp-l" style="color:{KIND.get(p["kind"], KIND["info"])[1]};">{e(p["label"])}</span>'
+                 f'<span class="wp-t">{e(p["text"])}</span></li>' for p in points)
+    return f'<ul class="wp">{li}</ul>'
+
 
 
 def sig_kind(sig: Optional[str]) -> str:
@@ -202,14 +232,25 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
                  f'<div style="width:{s["C_bearish"]}%;background:{BEAR};">C {s["C_bearish"]:.0f}%</div></div>')
     tiles = "".join(_layer_tile(k, n_, L, w) for k, n_, L, w in (
         ("L1", "다크풀", l1, 0.35), ("L2", "공매도·대차", l2, 0.20), ("L3", "옵션", l3, 0.30), ("L4", "차트", l4, 0.15)))
+    top_code = C._top(s)[0]
+    vk = {"A": "pos", "B": "warn", "C": "neg"}[top_code]
+    verdict = (f'<div class="verdict" style="background:{KIND[vk][0]};border-left-color:{KIND[vk][1]};">'
+               f'<div class="vl" style="color:{KIND[vk][1]};">한줄평</div><div class="vt">{e(a.get("one_liner") or C.one_liner(a))}</div></div>')
     summary = f"""
 <div class="exec" id="sum">
-  <div class="eh">핵심 요약</div>
+  <div class="eh">스마트머니 브리핑</div>
   <div class="hl">{e(a.get('headline'))}</div>
   {prob_mini}
+  <div class="eh2">수급 주체별 동향 · 누가 무엇을 하고 있나</div>
+  {_flow_board(C.flow_board(a))}
+  <div class="eh2">레이어별 판단</div>
   <div class="tiles">{tiles}</div>
+  <div class="eh2">핵심 가격 지도</div>
   {_ladder(a['levels'], price)}
+  <div class="eh2">다음 확인 포인트</div>
+  {_watch(C.watch_points(a))}
 </div>"""
+    tk = C.takeaways(a)
 
     # ── 품질 패널 ──
     qrows = []
@@ -273,7 +314,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
     env = mac["env"]
     s0 = sec(0, "뉴스·일정·공시·거시 환경", [
         pill(f"거시 {C.KO_ENV.get(env)}", {"FAVORABLE": "pos", "RESTRICTED": "neg"}.get(env, "warn")),
-        pill(f"이벤트 {len(a['events'])}건", "info"), pill(f"공시 {len(fl)}건", "info")]) + f"""
+        pill(f"이벤트 {len(a['events'])}건", "info"), pill(f"공시 {len(fl)}건", "info")]) + take(tk["s0"]) + f"""
 <div class="g3">
   <div class="card"><div class="ct">향후 1개월 이벤트</div>{table(["날짜", "이벤트", "중요도"], ev_rows, mode="card")}</div>
   <div class="card"><div class="ct">최근 1주일 뉴스</div>{table(["날짜", "헤드라인", "출처"], nw_rows, mode="card")}</div>
@@ -299,7 +340,8 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
         ats = l1.get("ats") or {}
         s1 = sec(1, "다크풀 레이어 (L1)", [pill(scen_label(l1), sig_kind(l1.get("signal"))),
                                        pill(f"다크풀 {C.pc(l1.get('dp_pct'), sign=False)}", "info"),
-                                       pill(C.kt(C.KO_DIV, l1.get("divergence")), {"BULLISH_DIVERGENCE": "pos", "BEARISH_DIVERGENCE": "neg"}.get(l1.get("divergence"), "muted"))]) + f"""
+                                       pill(C.kt(C.KO_DIV, l1.get("divergence")), {"BULLISH_DIVERGENCE": "pos", "BEARISH_DIVERGENCE": "neg"}.get(l1.get("divergence"), "muted"))]) + \
+            take(tk["s1"], x1, sig_kind(l1.get("signal"))) + f"""
 {_l1_kpis(l1, ats)}
 <div class="g2">
   <div class="card"><div class="ct">다크풀 비중 & 장외 거래량 (20거래일)</div><div class="ch"><canvas id="cDp"></canvas></div></div>
@@ -313,7 +355,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
 </div>
 {_flow_session_card(l1)}
 <div class="card"><div class="ct">일별 장외 거래량 (20일 평균 대비)</div>{table(["날짜", "장외 거래량", "총 거래량", "다크풀 비중", "평균 대비", "이상 정도"], dp_rows, mode="ts")}</div>
-{interp(p1, x1)}"""
+{interp(p1)}"""
 
         # ── SECTION 2 ──
         p2, x2 = C.l2_text(l2, l1, l3)
@@ -332,7 +374,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
         fee = l2.get("ctb_fee")
         s2 = sec(2, "공매도 레이어 (L2)", [pill(scen_label(l2), sig_kind(l2.get("signal"))),
                                        pill(f"z {(l2.get('anomaly_z') or 0):+.2f} · 추세 {C.kt(C.KO_SLOPE, l2.get('slope_dir'))}", "info"),
-                                       pill(f"대차 수수료 {_num(fee, 2, suffix='%')}" if fee is not None else "대차 수수료 미수집", "info" if fee is not None else "neg")]) + f"""
+                                       pill(f"대차 수수료 {_num(fee, 2, suffix='%')}" if fee is not None else "대차 수수료 미수집", "info" if fee is not None else "neg")]) + take(tk["s2"], x2, sig_kind(l2.get("signal"))) + f"""
 <div class="kpis">
  {kpi("공매도 비중 (장외)", _num(l2.get('short_pct_latest'), 1, suffix='%'), f"14일 평균 {_num(l2.get('short_avg_14d'), 1, suffix='%')} · z {_num(l2.get('anomaly_z'))}")}
  {kpi("공매도 비중 추세", _num(l2.get('short_slope'), 2, suffix='%p/일'), e(C.kt(C.KO_SLOPE, l2.get('slope_dir'), '')))}
@@ -346,7 +388,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
   <div class="card"><div class="ct">공매도 거래량 (최근 14일)</div>{table(["날짜", "공매도 비중", "변화", "공매도량", "장외 거래량", "추정 총 공매도", "대차 수수료"], srows, mode="ts")}</div>
 </div>
 {alert('대차 수수료는 1% 미만으로 낮은데 대여 가능 물량이 줄고 있습니다. 기술적 반등 신호만 보고 진입하면 가격이 오래 묶일 수 있습니다.', 'neg', '저CTB 역설 경고') if l2.get('low_ctb_paradox') else ''}
-{interp(p2, x2)}"""
+{interp(p2)}"""
 
     # ── SECTION 3 ──
     p3, x3 = C.l3_text(l3, l1, l4, price)
@@ -368,7 +410,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
     pin = l3.get("pinning")
     s3 = sec(3, "옵션 레이어 (L3)", [pill(scen_label(l3), sig_kind(l3.get("signal"))),
                                   pill(f"{'양' if (l3.get('flip_zone') and price > l3['flip_zone']) or (not l3.get('flip_zone') and l3.get('gamma_regime') == 'POSITIVE') else '음'}감마", "info"),
-                                  pill("이벤트 급변동 반영", "neg") if l3.get("binary_event") else pill(f"만기까지 {l3.get('dte')}일", "muted")]) + f"""
+                                  pill("이벤트 급변동 반영", "neg") if l3.get("binary_event") else pill(f"만기까지 {l3.get('dte')}일", "muted")]) + take(tk["s3"], x3, sig_kind(l3.get("signal"))) + f"""
 <div class="g2 w">
   <div class="card"><div class="ct">GEX 분포 — 60일 내 만기 합산 · 거리 가중 (±30% 밖 행사가는 양 끝에 합산)</div><div class="ch lg"><canvas id="cGex"></canvas></div>
   <div class="muted">콜 GEX는 위(+), 풋 GEX는 아래(−). 거리 가중치: ±2.5%=1.0 · ±5%=0.9 · ±10%=0.65 · ±15%=0.35 · ±20%=0.18 · 원거리=0.07</div></div>
@@ -379,7 +421,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
   <div class="card"><div class="ct">감마 프로파일 (가격대별 총 GEX)</div><div class="ch"><canvas id="cProf"></canvas></div></div>
   <div class="card"><div class="ct">OI 분포 — 주 만기 {e(l3.get('expiry'))} (콜은 위, 풋은 아래)</div><div class="ch"><canvas id="cOi"></canvas></div></div>
 </div>
-{interp(p3, x3)}"""
+{interp(p3)}"""
 
     # ── SECTION 4 ──
     p4, x4 = C.l4_text(l4, l1, l3)
@@ -394,12 +436,12 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
               ["52주 고점 / 저점", f"{_num(l4.get('high_52w'), 2, '$')} / {_num(l4.get('low_52w'), 2, '$')}"]]
     s4 = sec(4, "차트 레이어 (L4 · 일봉)", [pill(scen_label(l4), sig_kind(l4.get("signal"))),
                                        pill(f"이동평균 {C.kt(C.KO_MA, l4.get('ma_alignment'))}", "muted"),
-                                       pill(f"볼린저 {C.kt(C.KO_WIDTH, l4.get('bb_width_trend'))}", "info")]) + f"""
+                                       pill(f"볼린저 {C.kt(C.KO_WIDTH, l4.get('bb_width_trend'))}", "info")]) + take(tk["s4"], x4, sig_kind(l4.get("signal"))) + f"""
 <div class="g2 w">
   <div class="card"><div class="ct">가격 · 이동평균 · 볼린저밴드 (최근 120거래일)</div><div class="ch lg"><canvas id="cPx"></canvas></div></div>
   <div class="card">{table(["지표", "값"], l4rows)}</div>
 </div>
-{interp(p4, x4)}"""
+{interp(p4)}"""
 
     # ── SECTION 5 ──
     contrib = s.get("contributions") or {}
@@ -430,7 +472,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
                         e(C.KO_SIGF.get(lv["significance"], lv["significance"]))])
     s5 = sec(5, "3-Layer 통합 시나리오", [pill(f"점수 {s['raw_score']:+.3f}", "info"),
                                       pill(f"거시 {C.KO_ENV.get(s.get('macro'))}", {"FAVORABLE": "pos", "RESTRICTED": "neg"}.get(s.get("macro"), "warn")),
-                                      pill(", ".join(C.KO_PAT.get(p, p) for p in a["patterns"]) or "특이 패턴 없음", "warn" if a["patterns"] else "muted")]) + f"""
+                                      pill(", ".join(C.KO_PAT.get(p, p) for p in a["patterns"]) or "특이 패턴 없음", "warn" if a["patterns"] else "muted")]) + take(tk["s5"], "", {"A": "pos", "B": "warn", "C": "neg"}[top_code]) + f"""
 <div class="card"><div class="ct">레이어별 신호 (가중 점수 = 점수 × 신뢰도 × 가중치)</div>
 {table(["레이어", "시나리오", "상승", "중립", "하락", "점수", "신뢰도", "가중치", "기여"], mrows5, mode="card")}</div>
 <div class="card"><div class="ct">설계자 각본 — Phase 구조 (거래일 기준)</div>{table(["Phase", "기간", "내용", "상태"], phase_rows, mode="card")}</div>
@@ -476,7 +518,7 @@ FINRA 공매도 비중은 장외(TRF) 보고 체결 기준이며 공매도 잔�
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)}</title>
-<meta name="description" content="{e(a.get('headline'))}">
+<meta name="description" content="{e(a.get('one_liner') or a.get('headline'))}">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -484,7 +526,7 @@ FINRA 공매도 비중은 장외(TRF) 보고 체결 기준이며 공매도 잔�
 <style>{CSS}</style>
 </head>
 <body id="top"><div class="wrap">
-{header}{NAV}{summary}{quality}
+{header}{verdict}{NAV}{summary}{quality}
 {s0}{s1}{s2}{s3}{s4}{s5}{s6}{s7}
 {footer}
 </div>
@@ -582,7 +624,7 @@ def _chart_payload(a: Dict) -> str:
 
 
 NAV = ('<nav class="snav">' + "".join(f'<a href="#{h}">{t}</a>' for h, t in (
-    ("sum", "요약"), ("s0", "0 이벤트·거시"), ("s1", "1 다크풀"), ("s2", "2 공매도"), ("s3", "3 옵션"),
+    ("sum", "브리핑"), ("s0", "0 이벤트·거시"), ("s1", "1 다크풀"), ("s2", "2 공매도"), ("s3", "3 옵션"),
     ("s4", "4 차트"), ("s5", "5 시나리오"), ("s6", "6 대응"), ("s7", "7 결론"))) + "</nav>")
 
 CSS = f"""
@@ -598,7 +640,21 @@ a{{color:{INFO};text-decoration:none}} a:hover{{text-decoration:underline}}
 .pill{{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;font-family:{FONT}}}
 .exec{{background:{CARD};border:0.5px solid {BORDER};border-radius:8px;padding:14px 16px;margin-bottom:12px}}
 .eh{{font-size:10px;letter-spacing:.12em;color:{MUTED};font-weight:700}}
-.hl{{font-size:15px;font-weight:700;margin:6px 0 10px}}
+.hl{{font-size:14px;font-weight:600;margin:6px 0 10px;color:{MUTED}}}
+.verdict{{border-left:4px solid {WARN};border-radius:0 8px 8px 0;padding:12px 16px;margin:0 0 12px}}
+.vl{{font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:3px}}
+.vt{{font-size:17px;font-weight:700;line-height:1.55;color:{TXT}}}
+.eh2{{font-size:11px;font-weight:700;color:{MUTED};margin:16px 0 6px;padding-top:10px;border-top:0.5px solid {BORDER}}}
+.fb{{display:flex;flex-direction:column;gap:6px}}
+.fb-row{{display:grid;grid-template-columns:150px 1fr 120px;gap:12px;align-items:center;background:#FFFFFF;border:0.5px solid {BORDER};border-radius:6px;padding:7px 12px}}
+.fb-a{{font-size:12px;font-weight:700;color:{TXT}}} .fb-x b{{font-size:13px}} .fb-e{{font-size:11px;color:{MUTED};margin-top:1px}}
+.fb-p{{display:flex;flex-direction:column;align-items:flex-end;gap:5px}} .fb-bar{{width:100%}}
+.wp{{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}}
+.wp li{{display:grid;grid-template-columns:120px 1fr;gap:10px;font-size:12.5px;background:#FFFFFF;border:0.5px solid {BORDER};border-radius:6px;padding:6px 12px}}
+.wp-l{{font-weight:700;font-size:12px}}
+.tk{{background:#FFFFFF;border:0.5px solid {BORDER};border-left:4px solid {INFO};border-radius:0 6px 6px 0;padding:10px 14px;margin:0 0 12px}}
+.tk-h{{font-size:11px;font-weight:700;letter-spacing:.06em;margin-bottom:3px}} .tk-t{{font-size:14px;font-weight:600;line-height:1.6}}
+.tk-x{{margin-top:7px;padding-top:7px;border-top:0.5px dashed {BORDER};font-size:12px;color:{TXT}}}
 .pm{{display:flex;height:22px;border-radius:5px;overflow:hidden;font-size:11px;font-weight:700;color:#FFFFFF}}
 .pm div{{display:flex;align-items:center;justify-content:center;opacity:.9;min-width:34px}}
 .tiles{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}}
@@ -661,7 +717,12 @@ html{{scroll-behavior:smooth}} .sec,.exec{{scroll-margin-top:52px}}
  .ch{{height:210px}} .ch.sm{{height:165px}} .ch.lg{{height:260px}}
  .sec{{flex-direction:column;align-items:flex-start;gap:6px;margin:22px 0 10px}} .sec-t{{font-size:15px}}
  .interp{{padding:9px 11px}} .interp li{{margin:5px 0;line-height:1.6}}
- .hl{{font-size:14px;line-height:1.45}}
+ .hl{{font-size:13px;line-height:1.45}}
+ .vt{{font-size:15.5px}} .verdict{{padding:10px 12px}}
+ .fb-row{{grid-template-columns:1fr auto;gap:4px 10px;padding:8px 10px}} .fb-a{{grid-column:1}} .fb-p{{grid-column:2;grid-row:1}}
+ .fb-x{{grid-column:1 / span 2}} .fb-p .fb-bar{{width:70px}}
+ .wp li{{grid-template-columns:1fr;gap:1px;padding:7px 10px}}
+ .tk-t{{font-size:13.5px}}
  .ladder{{display:none}} .llist{{display:flex;flex-direction:column;gap:2px;font-size:11.5px;margin-top:10px;border-top:0.5px solid {BORDER};padding-top:8px}}
  .totop{{display:flex}}
  .cc{{font-size:13.5px;line-height:1.8}}

@@ -224,7 +224,8 @@ jobs:
           for T in ${PRODUCED_TICKERS:-}; do
             F="reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html"
             [ -f "${F}" ] || continue
-            STOCK_LINKS="${STOCK_LINKS}• <a href=\"${BASE}/${DATE}/${T}_3Layer_Forensic_${DATE}.html\">${T}</a>${NL}"
+            OL="$(python3 -c 'import json,sys,html; print(html.escape(json.load(open(sys.argv[1])).get("one_liner") or "", quote=False)[:220])' "reports/${DATE}/${T}_${DATE}.json" 2>/dev/null || true)"
+            STOCK_LINKS="${STOCK_LINKS}• <a href=\"${BASE}/${DATE}/${T}_3Layer_Forensic_${DATE}.html\"><b>${T}</b></a>${OL:+ — ${OL}}${NL}"
           done
 
           INDEX_BLOCK=""

@@ -33,6 +33,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from smartmoney import commentary as C
 from smartmoney.calendar import legacy_session_for, parse_date
 
 ROOT = Path(__file__).resolve().parent
@@ -130,7 +131,7 @@ def top_scenario(sc: dict):
 
 
 def case_pretty(c) -> str:
-    return re.sub(r"^CASE_\d+_|^CASE_", "", c) if c else "—"
+    return C.KO_CASE.get(c, re.sub(r"^CASE_\d+_|^CASE_", "", c)) if c else "—"
 
 
 def quality_of(row: dict) -> dict:
@@ -339,7 +340,7 @@ def _overview_cards(latest: dict) -> str:
     if l1.get("delta_inst") is not None:
         obv_str = (f"기관 {fmt_compact(l1.get('delta_inst'))} · 프로 {fmt_compact(l1.get('delta_pro'))} · "
                    f"리테일 {fmt_compact(l1.get('delta_retail'))} · IAR {_num(l1.get('iar')) or 0:.2f}")
-    div = l1.get("divergence") or "N/A"
+    div = C.kt(C.KO_DIV, l1.get("divergence"))
     tt2 = ("<b>FINRA 오프거래소 거래량 ÷ 총거래량</b><br>"
            "다크풀·ATS·내부화 비중. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br>"
            "<b>구성원별 OBV (5d)</b>: SIP 전 체결 tick rule — 기관 ≥10,000주/$200k · 리테일 <100주/$5k · 프로 그 외. "
@@ -381,7 +382,7 @@ def _overview_cards(latest: dict) -> str:
     return f"""
     <div class="card"><div class="card-label">Top Scenario {tt_icon(tt1)}</div>
       <div class="card-value" style="color:{top_color};">{E(top_str)}</div>
-      <div class="card-sub">Score {E(score_str)} · Macro {E(latest.get('macro_env') or 'N/A')}</div>
+      <div class="card-sub">점수 {E(score_str)} · 거시 {E(C.KO_ENV.get(latest.get('macro_env'), latest.get('macro_env') or 'N/A'))}</div>
     </div>
     <div class="card"><div class="card-label">Dark Pool % {tt_icon(tt2)}</div>
       <div class="card-value">{E(dp_str)}</div>
@@ -393,7 +394,7 @@ def _overview_cards(latest: dict) -> str:
     </div>
     <div class="card"><div class="card-label">Max Pain · GEX Flip {tt_icon(tt4)}</div>
       <div class="card-value">{E(mp_str)} · {E(fl_str)}</div>
-      <div class="card-sub">{E(dte_str)} · {E(l3.get('scenario') or 'N/A')}</div>
+      <div class="card-sub">{E(dte_str)} · {E(C.ko(l3.get('scenario')))}</div>
     </div>
     <div class="card"><div class="card-label">Call / Put Wall · Exp. Move {tt_icon(tt5)}</div>
       <div class="card-value">{E(cw)} / {E(pw)}</div>
@@ -429,18 +430,20 @@ def render_ticker_page(ticker: str, series: list) -> str:
         q_str = (q["grade"] or "—") + (f" {q['score']:.0f}" if q["score"] is not None else "")
         rows.append(
             f'<tr><td>{E(s["date"])}</td><td>{E(fmt_money(s.get("price")))}</td>{top_cell}'
-            f'<td>{E(sl1.get("scenario") or "—")}</td><td>{E(case_pretty(sl2.get("case")))}</td>'
-            f'<td>{E(sl3.get("scenario") or "—")}</td><td>{E(q_str if not s.get("legacy") else "v2")}</td>'
+            f'<td>{E(C.ko(sl1.get("scenario")) if sl1.get("scenario") else "—")}</td><td>{E(case_pretty(sl2.get("case")))}</td>'
+            f'<td>{E(C.ko(sl3.get("scenario")) if sl3.get("scenario") else "—")}</td><td>{E(q_str if not s.get("legacy") else "v2")}</td>'
             f'<td>{link}</td></tr>'
         )
 
     patterns = latest.get("patterns") or []
     pattern_badges = "".join(
-        f'<span style="background:{COLOR["alert_amber"]};color:{COLOR["warn"]};padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">{E(p)}</span>'
+        f'<span style="background:{COLOR["alert_amber"]};color:{COLOR["warn"]};padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">{E(C.KO_PAT.get(p, p))}</span>'
         for p in patterns
     ) or f"<span style='color:{COLOR['muted']};font-size:11px;'>패턴 없음</span>"
     headline = latest.get("headline")
-    headline_html = (f'<div class="headline">{E(headline)}</div>' if isinstance(headline, str) and headline.strip() else "")
+    ol = latest.get("one_liner")
+    headline_html = ((f'<div class="oneliner"><span>한줄평</span>{E(ol)}</div>' if isinstance(ol, str) and ol.strip() else "")
+                     + (f'<div class="headline">{E(headline)}</div>' if isinstance(headline, str) and headline.strip() else ""))
     warn_n = len(latest.get("warnings") or [])
     warn_html = (f' · <span title="{E("; ".join(map(str, latest.get("warnings") or []))[:1500])}" '
                  f'style="color:{COLOR["warn"]};">경고 {warn_n}건</span>') if warn_n else ""
@@ -495,6 +498,8 @@ def render_ticker_page(ticker: str, series: list) -> str:
   h1 {{ font-size:22px; margin:0 0 4px 0; }}
   h2 {{ font-size:14px; color:{COLOR['warn']}; border-bottom:0.5px solid {COLOR['warn']}; padding-bottom:4px; margin-top:24px; }}
   .meta {{ color:{COLOR['muted']}; font-size:12px; margin-bottom:12px; }}
+  .oneliner {{ background:{COLOR['alert_amber']}; border-left:4px solid {COLOR['warn']}; border-radius:0 6px 6px 0; padding:10px 14px; font-size:15px; font-weight:700; line-height:1.55; margin-bottom:8px; }}
+  .oneliner span {{ display:block; font-size:11px; color:{COLOR['warn']}; letter-spacing:.06em; margin-bottom:2px; }}
   .headline {{ background:{COLOR['alert_blue']}; color:{COLOR['text']}; border-radius:6px; padding:8px 12px; font-size:13px; margin-bottom:12px; }}
   .grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; }}
   .card {{ background:{COLOR['card']}; border:0.5px solid {COLOR['border']}; border-radius:6px; padding:12px; }}
@@ -683,6 +688,7 @@ def summarize(t: str, series: list, watchlist: set) -> dict:
         "quality_missing": q["missing"],
         "warnings_count": len(latest.get("warnings") or []),
         "headline": headline if isinstance(headline, str) else None,
+        "one_liner": latest.get("one_liner") if isinstance(latest.get("one_liner"), str) else None,
         "report_count": len(series),
     }
 
@@ -718,6 +724,12 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
   body {{ font-family:{FONT}; background:{COLOR['bg']}; color:{COLOR['text']}; margin:0; padding:24px; font-size:13px;
          -webkit-tap-highlight-color:transparent; }}
   .wrap {{ max-width:1400px; margin:0 auto; }}
+  .ol-list {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:6px; }}
+  .ol {{ display:grid; grid-template-columns:92px 1fr; gap:4px 10px; align-items:start; background:{COLOR['card']}; border:0.5px solid {COLOR['border']};
+         border-radius:6px; padding:8px 12px; color:{COLOR['text']}; text-decoration:none; font-size:12.5px; line-height:1.55; }}
+  .ol:hover {{ border-color:{COLOR['warn']}; text-decoration:none; }}
+  .ol b {{ font-size:13px; }} .ol .olp {{ display:block; margin-top:3px; white-space:nowrap; }}
+  @media (max-width:640px) {{ .ol-list {{ grid-template-columns:1fr; }} .ol {{ grid-template-columns:84px 1fr; padding:8px 10px; }} }}
   header {{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid {COLOR['border']}; padding-bottom:12px; margin-bottom:16px; flex-wrap:wrap; gap:12px; }}
   h1 {{ font-size:20px; margin:0; }}
   .meta {{ color:{COLOR['muted']}; font-size:11px; }}
@@ -812,6 +824,9 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
   </div>
 </div>
 
+<h2 id="ol-h" style="font-size:14px;color:{COLOR['warn']};margin:18px 0 6px;border-bottom:0.5px solid {COLOR['warn']};padding-bottom:4px;">▶ 종목별 한줄평 <span style="font-size:11px;color:{COLOR['muted']};font-weight:400;">{E(latest_session)} 세션</span></h2>
+<div id="ol-list" class="ol-list"></div>
+
 <h2 style="font-size:14px;color:{COLOR['warn']};margin:18px 0 6px;border-bottom:0.5px solid {COLOR['warn']};padding-bottom:4px;">▶ 감시 중 (Active Watchlist) <span id="active-count" style="font-size:11px;color:{COLOR['muted']};font-weight:400;"></span></h2>
 <div class="tbl-wrap">
 <table id="tbl-active">
@@ -832,6 +847,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 </div>
 <script>
 window.__DB__ = {_js(summary)};
+window.__KO__ = {_js({**C.KO_SCEN, **C.KO_CASE, **C.KO_ENV, **C.KO_PAT})};
 </script>
 <script src="app.js"></script>
 </body>
@@ -843,6 +859,7 @@ window.__DB__ = {_js(summary)};
 APP_JS = r"""
 // Dashboard logic — operates on window.__DB__ (array of ticker summaries)
 const DB = window.__DB__ || [];
+const KO = window.__KO__ || {};
 const COLS = 20;
 const bodyActive  = document.getElementById('tbody-active');
 const bodyArchive = document.getElementById('tbody-archive');
@@ -875,13 +892,13 @@ function qualityPill(r) {
   const warn = r.warnings_count ? ` · ⚠${r.warnings_count}` : '';
   return `<span class="pill ${cls}" title="${esc(title)}">${esc(r.quality_grade)}${isNum(r.quality_score) ? ' ' + r.quality_score.toFixed(0) : ''}${esc(warn)}</span>`;
 }
-function casePretty(c) { return c ? esc(String(c).replace(/^CASE_\d+_/, '').replace(/^CASE_/, '')) : NA; }
-function txt(v) { return v ? esc(v) : NA; }
+function casePretty(c) { return c ? esc(KO[c] || String(c).replace(/^CASE_\d+_/, '').replace(/^CASE_/, '')) : NA; }
+function txt(v) { return v ? esc(KO[v] || v) : NA; }
 
 function rowHTML(r, mode) {
   const t = esc(r.ticker), tq = encodeURIComponent(r.ticker);
-  const patBadges = (r.patterns || []).map(p => `<span class="pattern">${esc(p)}</span>`).join('') || '-';
-  const tickerLink = `<a href="tickers/${tq}/" title="${esc(r.headline || '')}"><b>${t}</b></a>`;
+  const patBadges = (r.patterns || []).map(p => `<span class="pattern">${esc(KO[p] || p)}</span>`).join('') || '-';
+  const tickerLink = `<a href="tickers/${tq}/" title="${esc(r.one_liner || r.headline || '')}"><b>${t}</b></a>`;
   const url = safePath(r.report_url);
   const dateCell = url ? `<a href="${esc(url)}">${esc(r.latest_date)}</a>` : esc(r.latest_date || 'N/A');
   const ctb = isNum(r.ctb_fee) ? r.ctb_fee.toFixed(2) + '%' + (isNum(r.ctb_delta_pct) ? ` <span class="muted">(${fmtSigned(r.ctb_delta_pct)}%)</span>` : '') : NA;
@@ -916,6 +933,8 @@ function rowHTML(r, mode) {
   </tr>`;
 }
 
+const olList = document.getElementById('ol-list');
+const olHead = document.getElementById('ol-h');
 function render() {
   const rows = DB.slice().sort((a, b) => a.ticker.localeCompare(b.ticker));
   const active  = rows.filter(r => r.is_active);
@@ -929,6 +948,13 @@ function render() {
     ? archive.map(r => rowHTML(r, 'archive')).join('')
     : `<tr><td colspan="${COLS}" class="empty">아카이브 비어있음.</td></tr>`;
   archiveWrap.style.display = archive.length ? '' : 'none';
+  const ols = active.filter(r => r.one_liner);
+  olList.innerHTML = ols.map(r => {
+    const u = safePath(r.report_url);
+    return `<a class="ol" href="${u ? esc(u) : 'tickers/' + encodeURIComponent(r.ticker) + '/'}"><div><b>${esc(r.ticker)}</b>`
+      + `<span class="olp">${scenarioPill(r.scenario, r.scenario_pct)}</span></div><div>${esc(r.one_liner)}</div></a>`;
+  }).join('');
+  olHead.style.display = olList.style.display = ols.length ? '' : 'none';
 }
 
 render();

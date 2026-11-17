@@ -460,6 +460,11 @@ def paradoxes(a: Dict) -> List[str]:
     l1, l2, l3, l4 = a["l1"], a["l2"], a["l3"], a["l4"]
     p = a["meta"]["price"]
     out = []
+    inst, ret_ = l1.get("delta_inst"), l1.get("delta_retail")
+    adv = l1.get("avg_vol20") or 0
+    if inst is not None and ret_ is not None and adv and inst * ret_ < 0 and abs(inst) / adv >= 0.03 and abs(ret_) / adv >= 0.01:
+        out.append("기관 매수 · 리테일 매도 — 개인이 내놓는 물량을 기관이 받아 가는 손바뀜입니다" if inst > 0 else
+                   "기관 매도 · 리테일 매수 — 기관이 개인에게 물량을 넘기는 손바뀜입니다")
     if l1.get("divergence") == "BEARISH_DIVERGENCE":
         out.append("가격은 오르는데 순체결은 매도 우위 — 상승 과정에서 매도 물량이 꾸준히 나오고 있습니다")
     if l1.get("divergence") == "BULLISH_DIVERGENCE":
@@ -573,3 +578,219 @@ def conclusions(a: Dict) -> List[str]:
           f" Phase 3({ph['p3_date']})의 기본 방향은 {kt(KO_DIR, ph.get('p3_direction'))}이며, 1차 목표는 위로 {usd(ph.get('p3_target_hi'))}, "
           f"아래로 {usd(ph.get('p3_target_lo'))}입니다. 트리거가 현재 가설과 반대 방향으로 나오면 시나리오 전체를 다시 계산합니다.")
     return [p1, p2, p3]
+
+
+# ─── 한줄평 · 수급 주체 보드 · 다음 확인 포인트 · 섹션 핵심 ─────────────────────
+def _ret(a: Dict, n_: int = 5) -> Optional[float]:
+    oh = a.get("ohlcv") or []
+    if len(oh) <= n_:
+        return None
+    base = oh[-1 - n_]["close"]
+    return (oh[-1]["close"] / base - 1) * 100 if base else None
+
+
+def _gamma_clause(a: Dict) -> Tuple[str, str, str]:
+    """(원인형 '…쉬워', 양보형 '…쉽지만', 성격) — 성격: vol(변동성 확대)·range(범위 고정)·calm(안정)·gap(이벤트)."""
+    l3, p = a["l3"], a["meta"]["price"]
+    flip, reg = l3.get("flip_zone"), l3.get("gamma_regime")
+    neg = (flip and p < flip) or (not flip and reg == "NEGATIVE")
+    pos = (flip and p > flip) or (not flip and reg == "POSITIVE")
+    cw, pw = l3.get("call_wall"), l3.get("put_wall")
+    d = 0 if p >= 20 else 2
+    if l3.get("binary_event"):
+        return "옵션 시장이 큰 폭의 갭에 대비하고 있어", "옵션 시장이 큰 폭의 갭에 대비하고 있지만", "gap"
+    if neg:
+        return "음감마 구간이라 변동성이 커지기 쉬워", "음감마 구간이라 변동성이 커지기 쉽지만", "vol"
+    if pos and cw and pw and pw < p < cw:
+        r = f"양감마 구간이라 {usd(pw, d)}~{usd(cw, d)} 범위에 묶이기 "
+        return r + "쉬워", r + "쉽지만", "range"
+    if pos:
+        return "양감마 구간이라 급등락이 억제되는 편이어서", "양감마 구간이라 급등락이 억제되는 편이지만", "calm"
+    return "", "", ""
+
+
+def one_liner(a: Dict) -> str:
+    """종목 한줄평: 누가(수급 주체) · 구조(공매도/감마) · 결론(우세 시나리오)."""
+    l1, l2 = a["l1"], a["l2"]
+    s = a["scenarios"]
+    code, name, prob = _top(s)
+    verdict = {"A": f"상승 우위({prob:.0f}%)입니다.", "B": f"방향이 확인되기 전까지는 중립({prob:.0f}%)이 우세합니다.",
+               "C": f"하락 우위({prob:.0f}%)입니다."}[code]
+    r5 = _ret(a)
+    rs = "" if r5 is None else f"{abs(r5):.0f}%"
+    # 구조 절: 공매도 특이 → 감마.  결론과 같은 방향이면 원인형, 어긋나면 양보형.
+    if l2.get("low_ctb_paradox"):
+        g_c, g_x, g_t = "낮은 비용의 공매도가 쌓이고 있어", "낮은 비용의 공매도가 쌓이고 있지만", "bear"
+    elif l2.get("case") == "CASE_2_DIRECTIONAL_SHORT":
+        g_c, g_x, g_t = "방향성 공매도가 늘고 있어", "방향성 공매도가 늘고 있지만", "bear"
+    else:
+        g_c, g_x, g_t = _gamma_clause(a)
+    fits = {"bear": code == "C", "range": code == "B", "calm": code in ("A", "B"), "vol": code != "A", "gap": True}.get(g_t, True)
+    g = g_c if fits else g_x
+    if a["meta"].get("is_index"):
+        mv = f"5일간 {pc(r5)} 움직였고" if r5 is not None else "최근 흐름은 뚜렷하지 않고"
+        return f"{mv}, {g} {verdict}" if g else f"{mv}, {verdict}"
+    inst = l1.get("delta_inst")
+    v = inst if inst is not None else l1.get("delta_total")
+    adv = l1.get("avg_vol20") or 0
+    st = (v / adv) if (v is not None and adv) else 0
+    up, dn = (r5 or 0) > 2, (r5 or 0) < -2
+    if v is None or abs(st) < 0.03:
+        stem, side = f"{'기관' if inst is not None else '순체결'} 수급은 뚜렷한 방향이 없", 0
+    elif inst is not None:
+        x = sh(abs(v))
+        side = 1 if v > 0 else -1
+        stem = (f"주가가 5일간 {rs} 밀리는 동안 기관은 {x}주를 사들였" if side > 0 and dn else
+                f"기관이 5일간 {x}주를 사들이며 {rs} 상승을 이끌었" if side > 0 and up else
+                f"기관이 5일간 {x}주를 조용히 사들였" if side > 0 else
+                f"주가가 5일간 {rs} 오르는 동안 기관은 {x}주를 팔았" if up else
+                f"기관이 5일간 {x}주를 팔며 {rs} 하락을 주도했" if dn else
+                f"기관이 5일간 {x}주를 덜어냈")
+    else:
+        x = sh(abs(v))
+        side = 1 if v > 0 else -1
+        stem = (f"주가가 5일간 {rs} 밀리는 동안 순체결은 {x}주 매수 우위였" if side > 0 and dn else
+                f"5일간 순매수 체결 {x}주와 함께 {rs} 올랐" if side > 0 and up else
+                f"5일간 순체결은 {x}주 매수 우위였" if side > 0 else
+                f"주가가 5일간 {rs} 오르는 동안 순체결은 {x}주 매도 우위였" if up else
+                f"5일간 순매도 체결 {x}주와 함께 {rs} 내렸" if dn else
+                f"5일간 순체결은 {x}주 매도 우위였")
+    contra = (side > 0 and code == "C") or (side < 0 and code == "A") or (side != 0 and code == "B")
+    conn = "지만" if contra else "고"
+    return f"{stem}{conn}, {g} {verdict}" if g else f"{stem}{conn}, {verdict}"
+
+
+def flow_board(a: Dict) -> List[Dict[str, Any]]:
+    """수급 주체별 '무엇을 하고 있나' — actor/action/evidence/tag/kind/strength(-1..1, 방향 없음=None)."""
+    l1, l2, l3, l4 = a["l1"], a["l2"], a["l3"], a["l4"]
+    p = a["meta"]["price"]
+    rows: List[Dict[str, Any]] = []
+    adv = l1.get("avg_vol20") or 0
+
+    def clamp(x: float) -> float:
+        return max(-1.0, min(1.0, x))
+
+    def add(actor, action, evidence, tag, kind, strength=None):
+        rows.append({"actor": actor, "action": action, "evidence": evidence, "tag": tag, "kind": kind,
+                     "strength": None if strength is None else round(clamp(strength), 3)})
+    if not a["meta"].get("is_index"):
+        fl = l1.get("flow")
+        inst, ret_, pro = l1.get("delta_inst"), l1.get("delta_retail"), l1.get("delta_pro")
+        if inst is not None:
+            sti = inst / adv if adv else 0
+            act = ("뚜렷한 방향 없음" if abs(sti) < 0.03 else "순매수" if inst > 0 else "순매도")
+            add("기관 (대량 체결)", act, f"5일 {ssh(inst)}주 · ADV {pc(sti * 100)} · IAR {n(l1.get('iar'))}",
+                "매수" if inst > 0 and abs(sti) >= 0.03 else "매도" if inst < 0 and abs(sti) >= 0.03 else "중립",
+                "pos" if inst > 0 and abs(sti) >= 0.03 else "neg" if inst < 0 and abs(sti) >= 0.03 else "warn", sti / 0.15)
+        else:
+            v = l1.get("delta_total")
+            st = (l1.get("obv_strength") or 0)
+            add("전체 순체결 (추정)", "순매수" if st > 0.03 else "순매도" if st < -0.03 else "뚜렷한 방향 없음",
+                f"5일 {ssh(v)}주 · ADV {pc(st * 100)} (주체별 분해 없음)",
+                "매수" if st > 0.03 else "매도" if st < -0.03 else "중립",
+                "pos" if st > 0.03 else "neg" if st < -0.03 else "warn", st / 0.15)
+        if ret_ is not None:
+            str_ = ret_ / adv if adv else 0
+            opp = inst is not None and inst * ret_ < 0 and abs(inst) > abs(ret_) * 0.5
+            act = ("뚜렷한 방향 없음" if abs(str_) < 0.01 else "순매수" if ret_ > 0 else "순매도")
+            if opp and abs(str_) >= 0.01:
+                act += " (기관과 반대 → 손바뀜)"
+            bj = (fl or {}).get("bjzz_imbalance")
+            add("리테일 (소량 체결)", act, f"5일 {ssh(ret_)}주 · 프로 {ssh(pro)}주" + (f" · 서브페니 불균형 {bj:+.2f}" if bj is not None else ""),
+                "참고", "muted", None)
+        dp, ratio = l1.get("dp_pct"), l1.get("dp_ratio")
+        dvd = l1.get("dp_vwap_dist_pct")
+        if dp is not None:
+            if dvd is not None and abs(dvd) > 0.5:
+                act = "종가보다 비싸게 매수" if dvd > 0 else "종가보다 싸게 처분"
+                tag, kind, stv = ("상방", "pos", dvd / 2) if dvd > 0 else ("하방", "neg", dvd / 2)
+            else:
+                act = ("장외 거래 확대" if (ratio or 1) > 1.1 else "장외 거래 축소" if (ratio or 1) < 0.9 else "평소 수준")
+                tag, kind, stv = "중립", "warn", None
+            add("다크풀 (장외)", act, f"비중 {pc(dp, sign=False)} (20일 평균의 {n(ratio)}배)"
+                + (f" · 장외 VWAP 종가 대비 {pc(dvd, 2)}" if dvd is not None else ""), tag, kind, stv)
+        if l2.get("short_pct_latest") is not None:
+            case = l2.get("case")
+            act = {"CASE_1_MM_DELTA_HEDGE": "옵션 헤지용 공매도", "CASE_2_DIRECTIONAL_SHORT": "방향성 공매도 증가",
+                   "CASE_3_SYNTHETIC_HEDGE": "보유 물량 헤지", "SHORT_COVERING": "숏커버링(공매도 축소)"}.get(case, "뚜렷한 성격 없음")
+            if l2.get("low_ctb_paradox"):
+                act = "낮은 비용으로 공매도 축적"
+            fee = l2.get("ctb_fee")
+            ev = f"비중 {pc(l2.get('short_pct_latest'), sign=False)} (z {(l2.get('anomaly_z') or 0):+.1f})" + \
+                 (f" · 대차 수수료 {n(fee)}% (전일 대비 {pc(l2.get('ctb_delta_pct'))})" if fee is not None else " · 대차 수수료 미수집")
+            sc = l2.get("score") or 0
+            add("공매도", act, ev, "하방" if sc < -0.2 else "상방" if sc > 0.2 else "중립",
+                "neg" if sc < -0.2 else "pos" if sc > 0.2 else "warn", sc)
+    flip, reg = l3.get("flip_zone"), l3.get("gamma_regime")
+    if l3.get("net_gex") is not None:
+        neg = (flip and p < flip) or (not flip and reg == "NEGATIVE")
+        add("옵션 딜러 (감마)", "변동성 확대 쪽 헤지" if neg else "변동성 억제 쪽 헤지",
+            f"{'음' if neg else '양'}감마 · Net GEX {money_big(l3.get('net_gex'))}/1% · "
+            + (f"플립 {usd(flip)}" if flip else "플립 없음") + f" · 콜월 {usd(l3.get('call_wall'))} / 풋월 {usd(l3.get('put_wall'))}",
+            "변동성↑" if neg else "변동성↓", "warn" if neg else "info", None)
+    pvo, pvv, sk = l3.get("pc_oi"), l3.get("pc_vol"), l3.get("skew_25d")
+    if pvo is not None and pvv is not None:
+        if pvv < pvo * 0.8:
+            act, tag, kind, stv = "신규 콜 매수 증가", "상방", "pos", 0.5
+        elif pvv > pvo * 1.2:
+            act, tag, kind, stv = "신규 풋 매수(하락 대비) 증가", "하방", "neg", -0.5
+        else:
+            act, tag, kind, stv = "기존 포지션과 비슷한 구성", "중립", "warn", 0.0
+        add("옵션 신규 포지션", act, f"풋/콜 거래량 {n(pvv)} vs OI {n(pvo)}" + (f" · 25델타 스큐 {sk:+.1f}%p" if sk is not None else ""),
+            tag, kind, stv)
+    if l4.get("ma_alignment"):
+        sc = l4.get("score") or 0
+        add("차트 추세 (후행)", ko(l4.get("scenario")), f"이동평균 {kt(KO_MA, l4.get('ma_alignment'))} · RSI {n(l4.get('rsi14'), 0)} · "
+            f"거래량 30일 평균의 {n(l4.get('vol_ratio30'))}배", "상방" if sc > 0.2 else "하방" if sc < -0.2 else "중립",
+            "pos" if sc > 0.2 else "neg" if sc < -0.2 else "warn", sc)
+    return rows
+
+
+def watch_points(a: Dict) -> List[Dict[str, str]]:
+    """다음 확인 포인트 — 위/아래 가장 가까운 핵심 가격, 거래량 트리거, 가까운 일정."""
+    l3, l4, l2 = a["l3"], a["l4"], a["l2"]
+    p = a["meta"]["price"]
+    # (이름, 가격, 위에 있을 때 설명, 아래에 있을 때 설명)
+    cands = [("콜월", l3.get("call_wall"), "종가로 넘어서면 딜러 헤지 매수로 상승이 빨라질 수 있습니다", "아래로 밀리면 상단 저항이 낮아집니다"),
+             ("풋월", l3.get("put_wall"), "회복하면 하단 지지가 다시 살아납니다", "종가로 깨지면 딜러 헤지 매도로 하락이 빨라질 수 있습니다"),
+             ("감마 플립", l3.get("flip_zone"), "회복하면 양감마로 바뀌며 변동성이 줄어듭니다", "이탈하면 음감마로 바뀌며 변동성이 커집니다"),
+             ("1차 저항", l4.get("immediate_resistance"), "종가로 넘어서면 다음 저항까지 길이 열립니다", ""),
+             ("1차 지지", l4.get("immediate_support"), "", "종가로 깨지면 다음 지지까지 열립니다"),
+             ("Max Pain", l3.get("max_pain"), "만기 주간에 가격이 끌려 올라갈 수 있는 수준입니다", "만기 주간에 가격이 끌려 내려갈 수 있는 수준입니다")]
+    ups = sorted([(v, nm, w) for nm, v, w, _ in cands if v and v > p * 1.001 and w])
+    dns = sorted([(v, nm, w) for nm, v, _, w in cands if v and v < p * 0.999 and w], reverse=True)
+    out = []
+    if ups:
+        v, nm, why = ups[0]
+        out.append({"kind": "pos", "label": "위쪽 첫 관문", "text": f"{nm} {usd(v)} ({pc((v - p) / p * 100)}) — {why}"})
+    if dns:
+        v, nm, why = dns[0]
+        out.append({"kind": "neg", "label": "아래쪽 첫 지지", "text": f"{nm} {usd(v)} ({pc((v - p) / p * 100)}) — {why}"})
+    vr = l4.get("vol_ratio30")
+    if vr is not None:
+        out.append({"kind": "warn", "label": "움직임 시작 신호",
+                    "text": f"거래량이 30일 평균의 150%를 넘고 볼린저밴드가 넓어지는지 (현재 {n(vr)}배)"})
+    if l2.get("ctb_fee") is not None and not a["meta"].get("is_index"):
+        out.append({"kind": "info", "label": "공매도 성격 변화",
+                    "text": f"대차 수수료({n(l2['ctb_fee'])}%)가 전일 대비 5% 이상 오르면 공격적인 공매도 전환 신호"})
+    ev = [e for e in a.get("events") or [] if e.get("significance") == "HIGH" and (e.get("days_until") or 99) <= 14]
+    if ev:
+        out.append({"kind": "info", "label": "가까운 주요 일정", "text": f"{ev[0]['date']} {ev[0]['event']} (D-{ev[0]['days_until']})"})
+    return out
+
+
+def takeaways(a: Dict) -> Dict[str, str]:
+    """섹션 상단 '핵심 판단' 한 문장."""
+    l4, mac, s = a["l4"], a["macro"], a["scenarios"]
+    tl = three_lines(a)
+    env = KO_ENV.get(mac.get("env"), mac.get("env") or "N/A")
+    hi = [e for e in a.get("events") or [] if e.get("significance") == "HIGH"]
+    s0 = (f"거시 유동성은 {q(env)} 환경(점수 {mac.get('score', 0):+d})입니다. "
+          + (f"30일 안의 고중요도 일정은 {len(hi)}건이며, 가장 가까운 것은 {hi[0]['date']} {hi[0]['event']}입니다."
+             if hi else "30일 안에 고중요도 일정은 없습니다."))
+    s4 = (f"이동평균 {kt(KO_MA, l4.get('ma_alignment'))}, RSI {n(l4.get('rsi14'), 1)}, 볼린저밴드 {kt(KO_WIDTH, l4.get('bb_width_trend'))} — "
+          f"{jo(q(ko(l4.get('scenario'))), '으로')} 판단합니다.")
+    code, name, prob = _top(s)
+    s5 = (f"네 레이어를 합친 점수는 {s['raw_score']:+.3f}이며, {name} 시나리오가 {prob:.0f}%로 가장 높습니다"
+          f"(상승 {s['A_bullish']:.0f}% · 중립 {s['B_neutral']:.0f}% · 하락 {s['C_bearish']:.0f}%).")
+    return {"s0": s0, "s1": tl[0], "s2": tl[1], "s3": tl[2], "s4": s4, "s5": s5}
