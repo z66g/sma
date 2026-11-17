@@ -79,7 +79,12 @@ def nyse_holidays(year: int) -> Set[date]:
     hs.add(_nth_weekday(year, 9, 0, 1))      # Labor
     hs.add(_nth_weekday(year, 11, 3, 4))     # Thanksgiving
     hs.add(_observed(date(year, 12, 25)))    # Christmas
+    hs |= {d for d in SPECIAL_CLOSURES if d.year == year}
     return hs
+
+
+# 규칙 밖 임시 휴장 (국가 애도일·재해)
+SPECIAL_CLOSURES = {date(2012, 10, 29), date(2012, 10, 30), date(2018, 12, 5), date(2025, 1, 9)}
 
 
 def is_holiday(d: date) -> bool:

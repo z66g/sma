@@ -242,7 +242,11 @@ def finra_regsho(d: date) -> Optional[Dict[str, Tuple[float, float, float]]]:
     if key in _REGSHO_MEMO:
         return _REGSHO_MEMO[key]
     url = f"https://cdn.finra.org/equity/regsho/daily/CNMSshvol{d.strftime('%Y%m%d')}.txt"
-    txt = cached_text(url, max_age_s=72 * 3600)
+    try:
+        txt = cached_text(url, max_age_s=72 * 3600)
+    except FetchError as e:              # 파일 미게시·임시 휴장일 등 — 그 날만 건너뛴다
+        log(f"finra regsho {key}: {e}")
+        txt = None
     parsed: Optional[Dict[str, Tuple[float, float, float]]] = None
     if txt and len(txt) > 200:
         parsed = {}

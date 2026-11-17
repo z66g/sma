@@ -86,7 +86,7 @@ class SmartMoneyAnalyzer:
         data["finra"] = self._try("l1", "finra_regsho", S.finra_series, T, d, 20, default=[])
         # FINRA 원천 일별 이력 (v3 방식으로 과거 다크풀·공매도 비중을 재계산하기 위한 상태) — 부족분만 백필
         fh = H.read_state("finra", T)
-        if len(fh) < 200:
+        if len(fh) < 30:                 # 새 종목만 1회 백필 (상장 기간이 짧은 종목이 매번 재시도하지 않도록)
             back = self._try("l1", "finra_backfill", S.finra_backfill, T, d, {r["date"] for r in fh}, 250, default=[]) or []
         else:
             back = []
