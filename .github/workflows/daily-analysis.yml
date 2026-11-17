@@ -232,13 +232,14 @@ jobs:
             fi
           fi
 
-          # ② 텍스트: 카드와 같은 순서 · 종목당 한 줄 (판정 · 주체 · 구조) + 리포트 링크
+          # ② 텍스트: 리포트 링크만 (카드와 같은 순서 · 종목명 나열)
           STOCK_LINKS=""
           while IFS=$'\t' read -r T LINE; do
             [ -n "${T}" ] || continue
             [ -f "reports/${DATE}/${T}_3Layer_Forensic_${DATE}.html" ] || continue
-            STOCK_LINKS="${STOCK_LINKS}• <a href=\"${BASE}/${DATE}/${T}_3Layer_Forensic_${DATE}.html\"><b>${T}</b></a> ${LINE}${NL}"
+            STOCK_LINKS="${STOCK_LINKS}${STOCK_LINKS:+ · }<a href=\"${BASE}/${DATE}/${T}_3Layer_Forensic_${DATE}.html\">${T}</a>"
           done < <(python3 tools/telegram_card.py "${DATE}" --tickers "${PRODUCED_TICKERS:-}" --lines 2>/dev/null || true)
+          [ -n "${STOCK_LINKS}" ] && STOCK_LINKS="${STOCK_LINKS}${NL}"
 
           INDEX_BLOCK=""
           if [ -z "${SINGLE}" ] && [ -f indexes.txt ]; then
@@ -246,9 +247,9 @@ jobs:
             for IDX in $(grep -v '^#' indexes.txt | tr -d '\r\t ' | grep -E '^[A-Z^.-]{1,10}$' | xargs); do
               TAG="${IDX#^}"
               [ -f "reports/${DATE}/${TAG}_Index_${DATE}.html" ] || continue
-              INDEX_LINKS="${INDEX_LINKS}• <a href=\"${BASE}/${DATE}/${TAG}_Index_${DATE}.html\">${TAG}</a>${NL}"
+              INDEX_LINKS="${INDEX_LINKS}${INDEX_LINKS:+ · }<a href=\"${BASE}/${DATE}/${TAG}_Index_${DATE}.html\">${TAG}</a>"
             done
-            [ -n "${INDEX_LINKS}" ] && INDEX_BLOCK="${NL}📊 <b>지수 옵션 (L3 GEX)</b>${NL}${INDEX_LINKS}"
+            [ -n "${INDEX_LINKS}" ] && INDEX_BLOCK="${NL}📊 <b>지수</b>${NL}${INDEX_LINKS}${NL}"
           fi
 
           EXTRA=""
