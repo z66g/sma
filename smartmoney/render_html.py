@@ -92,7 +92,7 @@ def _layer_tile(code: str, name: str, L: Dict, weight: float) -> str:
             f'<div class="tv" style="color:{color};">{e(scen_label(L))}</div>'
             f'<div class="bar"><div class="mid"></div><div style="position:absolute;left:{left:.1f}%;width:{width:.1f}%;'
             f'top:0;bottom:0;background:{color};opacity:.85;border-radius:3px;"></div></div>'
-            f'<div class="ts">score {s:+.2f} · conf {conf:.0%}</div>'
+            f'<div class="ts">점수 {s:+.2f} · 신뢰도 {conf:.0%}</div>'
             + (f'<div class="ts">기관 {C.ssh(L.get("delta_inst"))} · 프로 {C.ssh(L.get("delta_pro"))} · 리테일 '
                f'{C.ssh(L.get("delta_retail"))} · IAR {_num(L.get("iar"))}</div>' if L.get("delta_inst") is not None else "")
             + '</div>')
@@ -119,9 +119,9 @@ def _ladder(levels: List[Dict], price: float) -> str:
         big = p["type"] == "Current Price"
         marks.append(
             f'<div class="lm" style="left:{x:.2f}%;"><div class="lt" style="top:{tops[lane]}px;color:{c};">'
-            f'{e(p["type"].replace("Current Price", "현재가"))} <b>${p["price"]:,.2f}</b></div>'
+            f'{e(C.KO_LEVEL.get(p["type"], p["type"]))} <b>${p["price"]:,.2f}</b></div>'
             f'<div class="ld" style="background:{c};{"width:12px;height:12px;margin-left:-6px;top:52px;" if big else ""}"></div></div>')
-    items = "".join(f'<span style="color:{keys[p["type"]]};"><b>{e(p["type"].replace("Current Price", "현재가"))}</b> '
+    items = "".join(f'<span style="color:{keys[p["type"]]};"><b>{e(C.KO_LEVEL.get(p["type"], p["type"]))}</b> '
                     f'${p["price"]:,.2f}</span>' for p in reversed(pts))
     return (f'<div class="ladder"><div class="lline"></div>{"".join(marks)}</div>'
             f'<div class="llist">{items}</div>')
@@ -136,24 +136,24 @@ def _l1_kpis(l1: Dict, ats: Dict) -> str:
     fl = l1.get("flow")
     share = (fl or {}).get("cohort_vol_share") or {}
     if fl:
-        row1 = (kpi("기관 OBV (5d)", C.ssh(l1.get("delta_inst")), f"{rel(l1.get('delta_inst'))} · 거래량 {_num(share.get('inst'), 1, suffix='%')}", sc(l1.get("delta_inst")))
-                + kpi("프로 OBV (5d)", C.ssh(l1.get("delta_pro")), f"{rel(l1.get('delta_pro'))} · 거래량 {_num(share.get('pro'), 1, suffix='%')}", sc(l1.get("delta_pro")))
-                + kpi("리테일 OBV (5d)", C.ssh(l1.get("delta_retail")), f"{rel(l1.get('delta_retail'))} · 거래량 {_num(share.get('ret'), 1, suffix='%')}", sc(l1.get("delta_retail")))
+        row1 = (kpi("기관 OBV (5일)", C.ssh(l1.get("delta_inst")), f"{rel(l1.get('delta_inst'))} · 거래량 {_num(share.get('inst'), 1, suffix='%')}", sc(l1.get("delta_inst")))
+                + kpi("프로 OBV (5일)", C.ssh(l1.get("delta_pro")), f"{rel(l1.get('delta_pro'))} · 거래량 {_num(share.get('pro'), 1, suffix='%')}", sc(l1.get("delta_pro")))
+                + kpi("리테일 OBV (5일)", C.ssh(l1.get("delta_retail")), f"{rel(l1.get('delta_retail'))} · 거래량 {_num(share.get('ret'), 1, suffix='%')}", sc(l1.get("delta_retail")))
                 + kpi("Net OBV (합계)", C.ssh(l1.get("delta_total")), rel(l1.get("delta_total")), sc(l1.get("delta_total")))
-                + kpi("기관 흡수율 IAR", _num(l1.get("iar")), e(fl.get("iar_class") or ""))
+                + kpi("기관 흡수율 IAR", _num(l1.get("iar")), e(C.kt(C.KO_IAR, fl.get("iar_class"), "")))
                 + kpi("다크풀 VWAP", _num(l1.get("dp_vwap"), 2, "$"), f"종가 대비 {C.pc(l1.get('dp_vwap_dist_pct'), 2)}"))
     else:
-        row1 = (kpi("Net OBV (5d)", C.ssh(l1.get("delta_total")), rel(l1.get("delta_total")), sc(l1.get("delta_total")))
+        row1 = (kpi("Net OBV (5일)", C.ssh(l1.get("delta_total")), rel(l1.get("delta_total")), sc(l1.get("delta_total")))
                 + kpi("기관 OBV", "N/A", "체결 단위 데이터 필요", MUTED) + kpi("프로 OBV", "N/A", "체결 단위 데이터 필요", MUTED)
                 + kpi("리테일 OBV", "N/A", "체결 단위 데이터 필요", MUTED) + kpi("기관 흡수율 IAR", "N/A", "체결 단위 데이터 필요", MUTED)
                 + kpi("다크풀 VWAP", "N/A", "체결 단위 데이터 필요", MUTED))
-    row2 = (kpi("다크풀 비중", _num(l1.get("dp_pct"), 1, suffix="%"), f"20일 평균 {_num(l1.get('dp_avg20'), 1, suffix='%')} · {_num(l1.get('dp_ratio'))}x")
-            + kpi("VWAP 앵커 (5d)", _num(l1.get("vwap5"), 2, "$"), f"종가 {C.pc(l1.get('vwap_dist_pct'), 2)}")
-            + kpi("20일 누적 A/D", C.ssh(l1.get("acc20")), f"ADV {_num(l1.get('acc20_strength'))}x")
+    row2 = (kpi("다크풀 비중", _num(l1.get("dp_pct"), 1, suffix="%"), f"20일 평균 {_num(l1.get('dp_avg20'), 1, suffix='%')} · {_num(l1.get('dp_ratio'))}배")
+            + kpi("5일 VWAP", _num(l1.get("vwap5"), 2, "$"), f"종가 대비 {C.pc(l1.get('vwap_dist_pct'), 2)}")
+            + kpi("20일 누적 매집/분산", C.ssh(l1.get("acc20")), f"ADV의 {_num(l1.get('acc20_strength'))}배")
             + kpi("블록 체결", (f"{fl.get('blocks'):,}" if fl and fl.get("blocks") is not None else "N/A"),
                   f"장외 블록 {fl.get('dark_blocks'):,}" if fl and fl.get("dark_blocks") is not None else "체결 단위 데이터 필요")
-            + kpi("ATS 주간 비중", _num(ats.get("ats_share_pct"), 1, suffix="%"), f"{e(ats.get('week_start') or '')}주 · 평균 {_num(ats.get('ats_trades_avg_size'), 0)}주/건")
-            + kpi("리테일 교차검증", _num((fl or {}).get("bjzz_imbalance")), "BJZZ 서브페니 매수−매도 불균형" if fl else "체결 단위 데이터 필요"))
+            + kpi("ATS 주간 비중", _num(ats.get("ats_share_pct"), 1, suffix="%"), f"{e(ats.get('week_start') or '')} 주간 · 건당 {_num(ats.get('ats_trades_avg_size'), 0)}주")
+            + kpi("리테일 교차검증", _num((fl or {}).get("bjzz_imbalance")), "서브페니 체결 기준 매수−매도 불균형" if fl else "체결 단위 데이터 필요"))
     return f'<div class="kpis">{row1}</div><div class="kpis">{row2}</div>'
 
 
@@ -166,9 +166,9 @@ def _flow_session_card(l1: Dict) -> str:
         fg = x.get("flag") or ""
         rows.append([e(x["session"]), C.sh(x.get("volume")), C.sh(x.get("dark")), _num(x.get("dark_pct"), 1, suffix="%"),
                      C.sh(x.get("avg20_dark")), _num(x.get("ratio"), 2, suffix="x"),
-                     pill(fg, {"EXTREME": "neg", "HIGH": "warn", "MODERATE": "info"}[fg]) if fg else "—"])
-    return (f'<div class="card"><div class="ct">다크풀 세션별 이상 탐지 — {e(fl["days"][-1])} (체결 단위 · 프리/정규/애프터, 누적 평균 대비)</div>'
-            + table(["세션", "총 거래량", "장외(다크풀)", "장외 %", "장외 평균", "배수", "플래그"], rows, mode="card")
+                     pill(C.KO_FLAG[fg], {"EXTREME": "neg", "HIGH": "warn", "MODERATE": "info"}[fg]) if fg else "—"])
+    return (f'<div class="card"><div class="ct">세션별 다크풀 거래량 — {e(fl["days"][-1])} (프리마켓·정규장·애프터마켓, 평소 대비)</div>'
+            + table(["세션", "총 거래량", "장외(다크풀)", "장외 비중", "장외 평균", "평균 대비", "이상 정도"], rows, mode="card")
             + f'<div class="muted" style="margin-top:6px;">블록 {fl.get("blocks") or 0}건 (장외 블록 {fl.get("dark_blocks") or 0}건) · '
               f'체결 {C.sh(fl.get("trades"))}건 · 거래량 비중 기관 {_num(fl["cohort_vol_share"]["inst"], 1, suffix="%")} / '
               f'프로 {_num(fl["cohort_vol_share"]["pro"], 1, suffix="%")} / 리테일 {_num(fl["cohort_vol_share"]["ret"], 1, suffix="%")}</div></div>')
@@ -193,18 +193,18 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
 <div class="top"><a href="../tickers/{e(T)}/">← {e(T)} 종목 페이지</a><a href="../">대시보드</a></div>
 <div class="hdr">
   <div><h1>{e(T)} <span class="nm">{e(m.get('name') or ('Index Options' if is_idx else ''))}</span></h1>
-  <div class="sub">세션 <b>{e(m['date'])}</b> (미 정규장 마감 기준{' · 조기폐장' if m.get('early_close') else ''}) · 생성 {e(m['generated_at'])} · 주 만기 {e(l3.get('expiry') or 'N/A')}</div></div>
+  <div class="sub">세션 <b>{e(m['date'])}</b> (미국 정규장 마감 기준{' · 조기 폐장' if m.get('early_close') else ''}) · 생성 {e(m['generated_at'])} · 주 만기 {e(l3.get('expiry') or 'N/A')}</div></div>
   <div class="px"><div class="pv">${price:,.2f}</div><div style="color:{BULL if (chg or 0) >= 0 else BEAR};font-weight:600;">{C.pc(chg, 2)}</div>
-  {pill(f"데이터 품질 {q['grade']} · {q['score']}", qk, "레이어별 커버리지 가중 점수")}</div>
+  {pill(f"데이터 품질 {q['grade']} · {q['score']}", qk, "레이어별 데이터 확보율을 가중한 점수")}</div>
 </div>"""
     prob_mini = (f'<div class="pm"><div style="width:{s["A_bullish"]}%;background:{BULL};">A {s["A_bullish"]:.0f}%</div>'
                  f'<div style="width:{s["B_neutral"]}%;background:{WARN};">B {s["B_neutral"]:.0f}%</div>'
                  f'<div style="width:{s["C_bearish"]}%;background:{BEAR};">C {s["C_bearish"]:.0f}%</div></div>')
     tiles = "".join(_layer_tile(k, n_, L, w) for k, n_, L, w in (
-        ("L1", "Dark Pool", l1, 0.35), ("L2", "Short/CTB", l2, 0.20), ("L3", "Options", l3, 0.30), ("L4", "Chart", l4, 0.15)))
+        ("L1", "다크풀", l1, 0.35), ("L2", "공매도·대차", l2, 0.20), ("L3", "옵션", l3, 0.30), ("L4", "차트", l4, 0.15)))
     summary = f"""
 <div class="exec" id="sum">
-  <div class="eh">EXECUTIVE SUMMARY</div>
+  <div class="eh">핵심 요약</div>
   <div class="hl">{e(a.get('headline'))}</div>
   {prob_mini}
   <div class="tiles">{tiles}</div>
@@ -215,18 +215,18 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
     qrows = []
     for k, L in q["layers"].items():
         kind = {"OK": "pos", "PARTIAL": "warn", "MISSING": "neg"}[L["status"]]
-        qrows.append([f"<b>{k.upper()}</b>", pill(L["status"], kind), f'{L["coverage"]}%',
+        qrows.append([f"<b>{k.upper()}</b>", pill(C.KO_QSTAT[L["status"]], kind), f'{L["coverage"]}%',
                       e(", ".join(L["missing"]) or "—"), e(" · ".join(L["sources"]) or "—")])
     warn_li = "".join(f"<li>{e(w)}</li>" for w in m.get("warnings") or [])
     quality = f"""
 <details class="dq" {'open' if q['grade'] in ('D', 'F') else ''}><summary>데이터 품질 · 출처 · 수집 경고 ({len(m.get('warnings') or [])}건) — 등급 {q['grade']} ({q['score']}/100)</summary>
-{table(["Layer", "상태", "커버리지", "누락 필드", "출처"], qrows, mode="card")}
+{table(["레이어", "상태", "확보율", "누락 항목", "출처"], qrows, mode="card")}
 {f'<ul class="wl">{warn_li}</ul>' if warn_li else '<div class="muted" style="margin-top:6px;">수집 경고 없음</div>'}
 </details>"""
 
     # ── SECTION 0 ──
     ev_rows = [[f'{e(x["date"])} <span class="muted">(D-{x["days_until"]})</span>', e(x["event"]),
-                pill(x["significance"], {"HIGH": "neg", "MED": "warn", "LOW": "info"}[x["significance"]])]
+                pill(C.KO_SIGF[x["significance"]], {"HIGH": "neg", "MED": "warn", "LOW": "info"}[x["significance"]])]
                for x in a["events"]] or [["—", "향후 30일 예정 이벤트 없음", "—"]]
     nw_rows = []
     for x in a["news"][:5]:
@@ -252,11 +252,11 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
         items = f' <span class="muted">Item {e(f["items"])}</span>' if f.get("items") else ""
         fi_rows.append([e(f["date"]), f'<a href="{e(f["link"])}" target="_blank" rel="noopener">{e(f["form"])}</a>',
                         e(f["label"]) + items + extra,
-                        pill(f["flag"], {"INSIDER": "warn", "DILUTION": "neg", "MATERIAL": "info", "OWNERSHIP": "info"}.get(f["flag"], "muted"))])
+                        pill(C.KO_FILING.get(f["flag"], f["flag"]), {"INSIDER": "warn", "DILUTION": "neg", "MATERIAL": "info", "OWNERSHIP": "info"}.get(f["flag"], "muted"))])
     f4s = [f["form4"] for f in fl if f.get("form4")]
     ins_buy = sum(x.get("buy_usd") or 0 for x in f4s)
     ins_sell = sum(x.get("sell_usd") or 0 for x in f4s)
-    fi_note = (f'<div class="muted" style="margin-top:6px;">30일 공시 {len(fl)}건 · Form 4 {len(f4s)}건 분석: 내부자 매수 '
+    fi_note = (f'<div class="muted" style="margin-top:6px;">최근 30일 공시 {len(fl)}건 · Form 4 {len(f4s)}건 기준 내부자 매수 '
                f'<b style="color:{BULL};">${ins_buy:,.0f}</b> / 매도 <b style="color:{BEAR};">${ins_sell:,.0f}</b></div>') if fl else ""
     fi_rows = fi_rows or [["—", "—", "최근 30일 주요 공시 없음", "—"]]
     mrows = []
@@ -271,22 +271,22 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
                                       f"{ch:+,.1f}B" if unit == "$B" else f"{ch:+.2f}pp" if unit == "%" else f"{ch:+.2f}%")
         mrows.append([e(r["name"]), val, chs, pill(C.KO_ENV.get(st, "—"), {"FAVORABLE": "pos", "RESTRICTED": "neg", "NEUTRAL": "warn"}.get(st, "muted"))])
     env = mac["env"]
-    s0 = sec(0, "뉴스·이벤트·공시·거시 컨텍스트", [
+    s0 = sec(0, "뉴스·일정·공시·거시 환경", [
         pill(f"거시 {C.KO_ENV.get(env)}", {"FAVORABLE": "pos", "RESTRICTED": "neg"}.get(env, "warn")),
         pill(f"이벤트 {len(a['events'])}건", "info"), pill(f"공시 {len(fl)}건", "info")]) + f"""
 <div class="g3">
   <div class="card"><div class="ct">향후 1개월 이벤트</div>{table(["날짜", "이벤트", "중요도"], ev_rows, mode="card")}</div>
   <div class="card"><div class="ct">최근 1주일 뉴스</div>{table(["날짜", "헤드라인", "출처"], nw_rows, mode="card")}</div>
-  <div class="card"><div class="ct">최근 공시 (8-K · Form 4 · 희석)</div>{table(["날짜", "Form", "내용", "플래그"], fi_rows, mode="card")}{fi_note}</div>
+  <div class="card"><div class="ct">최근 공시 (8-K · Form 4 · 희석)</div>{table(["날짜", "양식", "내용", "구분"], fi_rows, mode="card")}{fi_note}</div>
 </div>
 <div class="card" style="margin-top:12px;"><div class="ct">거시 유동성 (Financial Plumbing) — 종합 <b style="color:{ {'FAVORABLE': BULL, 'RESTRICTED': BEAR}.get(env, WARN) };">{C.KO_ENV.get(env)}</b> (점수 {mac['score']:+d})</div>
 {table(["지표", "값", "변화", "평가"], mrows)}
-<div class="muted" style="margin-top:6px;">{'(거시 유동성 검색 실패) — 미시 수급만으로 확률 산출.' if mac.get('failed') else '우호 시 상방 +5~10%p, 제한 시 하방 +5~10%p 확률 보정. 관세·지정학 등 정성 요인은 주간 AI 내러티브에서 다룬다.'}</div></div>"""
+<div class="muted" style="margin-top:6px;">{'(거시 유동성 검색 실패) 미시 수급 데이터만으로 확률을 계산했습니다.' if mac.get('failed') else '우호 환경이면 상승 확률을, 제한 환경이면 하락 확률을 5~10%p 높여 반영합니다. 관세·지정학 같은 정성 요인은 주간 AI 내러티브에서 다룹니다.'}</div></div>"""
 
     # ── SECTION 1 ──
     if is_idx:
-        s1 = sec(1, "다크풀 레이어", [pill("지수 — 해당 없음", "muted")]) + '<div class="muted">지수에는 개별 체결 기반 다크풀 데이터가 없다.</div>'
-        s2 = sec(2, "공매도 레이어", [pill("지수 — 해당 없음", "muted")]) + '<div class="muted">지수에는 공매도·대차 데이터가 없다.</div>'
+        s1 = sec(1, "다크풀 레이어", [pill("지수 — 해당 없음", "muted")]) + '<div class="muted">지수에는 개별 체결 기반 다크풀 데이터가 없습니다.</div>'
+        s2 = sec(2, "공매도 레이어", [pill("지수 — 해당 없음", "muted")]) + '<div class="muted">지수에는 공매도·대차 데이터가 없습니다.</div>'
     else:
         p1, x1 = C.l1_text(l1, l2, l3)
         dp_rows = []
@@ -294,25 +294,25 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
             fl_ = r.get("anomaly") or ""
             dp_rows.append([e(r["date"]), C.sh(r["off_exchange_volume"]), C.sh(r.get("market_volume")),
                             _num(r.get("dp_pct"), 1, suffix="%"), _num(r.get("vol_ratio"), 2, suffix="x"),
-                            pill(fl_, {"EXTREME": "neg", "HIGH": "warn", "MODERATE": "info"}[fl_]) if fl_ else "—"])
+                            pill(C.KO_FLAG[fl_], {"EXTREME": "neg", "HIGH": "warn", "MODERATE": "info"}[fl_]) if fl_ else "—"])
         dp_rows = dp_rows[:10]
         ats = l1.get("ats") or {}
         s1 = sec(1, "다크풀 레이어 (L1)", [pill(scen_label(l1), sig_kind(l1.get("signal"))),
-                                       pill(f"DP {C.pc(l1.get('dp_pct'), sign=False)}", "info"),
-                                       pill(l1.get("divergence") or "N/A", {"BULLISH_DIVERGENCE": "pos", "BEARISH_DIVERGENCE": "neg"}.get(l1.get("divergence"), "muted"))]) + f"""
+                                       pill(f"다크풀 {C.pc(l1.get('dp_pct'), sign=False)}", "info"),
+                                       pill(C.kt(C.KO_DIV, l1.get("divergence")), {"BULLISH_DIVERGENCE": "pos", "BEARISH_DIVERGENCE": "neg"}.get(l1.get("divergence"), "muted"))]) + f"""
 {_l1_kpis(l1, ats)}
 <div class="g2">
   <div class="card"><div class="ct">다크풀 비중 & 장외 거래량 (20거래일)</div><div class="ch"><canvas id="cDp"></canvas></div></div>
-  <div class="card"><div class="ct">{'구성원별 일별 OBV (기관·프로·리테일) + 누적 — 체결 단위 tick rule' if l1.get('flow') else 'Net OBV 누적 (CLV 가중)'} · 5거래일</div><div class="ch"><canvas id="cObv"></canvas></div></div>
+  <div class="card"><div class="ct">{'주체별 일별 OBV(기관·프로·리테일)와 누적' if l1.get('flow') else 'Net OBV 누적 (CLV 가중 추정)'} · 5거래일</div><div class="ch"><canvas id="cObv"></canvas></div></div>
 </div>
 <div class="g2">
-  <div class="card"><div class="ct">OBV 4-Way Decomposition (Δ, 5거래일)</div><div class="ch sm"><canvas id="cObv4"></canvas></div>
-  <div class="muted">{"체결 단위(SIP 전 체결) 분류: 기관 ≥10,000주 또는 $200k · 리테일 <100주 또는 <$5k · 프로 그 외. Total = 세 코호트 합(계산값). 다크풀 VWAP " + _num(l1.get('dp_vwap'), 2, '$') + " (" + C.pc(l1.get('dp_vwap_dist_pct'), 2) + ")" if l1.get('flow') else "기관·프로·리테일 분해는 체결(Trade-level) 분류가 필요해 미표기. Total = 계산값."}</div></div>
+  <div class="card"><div class="ct">OBV 4-Way 분해 (5거래일 변화량)</div><div class="ch sm"><canvas id="cObv4"></canvas></div>
+  <div class="muted">{"체결 규모로 분류: 기관 10,000주 또는 $20만 이상 · 리테일 100주 또는 $5천 미만 · 프로는 그 사이. 전체 = 세 주체의 합(계산값). 다크풀 VWAP " + _num(l1.get('dp_vwap'), 2, '$') + " (" + C.pc(l1.get('dp_vwap_dist_pct'), 2) + ")" if l1.get('flow') else "기관·프로·리테일 분해는 체결 단위 데이터가 있어야 해서 표시하지 않았습니다."}</div></div>
   <div class="card"><div class="ct">체결 주체 구성 (FINRA 주간 실측)</div><div class="ch sm"><canvas id="cCoh"></canvas></div>
-  <div class="muted">ATS = 다크풀(기관 블록) · 홀세일러 = 리테일 주문 내부화(PFOF) · Lit = 거래소(프로/HFT).</div></div>
+  <div class="muted">ATS: 다크풀(주로 기관 대량 주문) · 홀세일러: 증권사가 넘긴 리테일 주문을 자체 처리 · 거래소: 공개 시장(프로·초단타).</div></div>
 </div>
 {_flow_session_card(l1)}
-<div class="card"><div class="ct">일별 장외 볼륨 이상 탐지 (20일 평균 대비 배수)</div>{table(["세션", "장외 거래량", "총 거래량", "DP %", "배수", "플래그"], dp_rows, mode="ts")}</div>
+<div class="card"><div class="ct">일별 장외 거래량 (20일 평균 대비)</div>{table(["날짜", "장외 거래량", "총 거래량", "다크풀 비중", "평균 대비", "이상 정도"], dp_rows, mode="ts")}</div>
 {interp(p1, x1)}"""
 
         # ── SECTION 2 ──
@@ -331,71 +331,70 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
         si = l2.get("short_interest") or {}
         fee = l2.get("ctb_fee")
         s2 = sec(2, "공매도 레이어 (L2)", [pill(scen_label(l2), sig_kind(l2.get("signal"))),
-                                       pill(f"z {(l2.get('anomaly_z') or 0):+.2f} · {l2.get('slope_dir') or 'N/A'}", "info"),
-                                       pill(f"CTB {_num(fee, 2, suffix='%')}" if fee is not None else "CTB 미수집", "info" if fee is not None else "neg")]) + f"""
+                                       pill(f"z {(l2.get('anomaly_z') or 0):+.2f} · 추세 {C.kt(C.KO_SLOPE, l2.get('slope_dir'))}", "info"),
+                                       pill(f"대차 수수료 {_num(fee, 2, suffix='%')}" if fee is not None else "대차 수수료 미수집", "info" if fee is not None else "neg")]) + f"""
 <div class="kpis">
- {kpi("Short % (장외)", _num(l2.get('short_pct_latest'), 1, suffix='%'), f"14일 평균 {_num(l2.get('short_avg_14d'), 1, suffix='%')} · z {_num(l2.get('anomaly_z'))}")}
- {kpi("Short 기울기", _num(l2.get('short_slope'), 2, suffix='pp/일'), e(l2.get('slope_dir') or ''))}
- {kpi("추정 총 공매도", C.sh(l2.get('est_short_total')), f"장외 실측 {C.sh(l2.get('short_shares'))}")}
- {kpi("CTB 수수료", _num(fee, 2, suffix='%'), f"Δ {C.pc(l2.get('ctb_delta_pct'))} · {e(l2.get('htb_class') or '')}", WARN if fee is None else TXT)}
- {kpi("가용 잔고", ('10M+' if l2.get('available_capped') else C.sh(l2.get('shares_available'))), f"Δ {C.pc(l2.get('avail_delta_pct'))}")}
- {kpi("SI / Float", _num(si.get('pct_float'), 2, suffix='%'), f"DTC {_num(si.get('days_to_cover'))}일 · Δ {C.pc(si.get('change_pct'))}")}
+ {kpi("공매도 비중 (장외)", _num(l2.get('short_pct_latest'), 1, suffix='%'), f"14일 평균 {_num(l2.get('short_avg_14d'), 1, suffix='%')} · z {_num(l2.get('anomaly_z'))}")}
+ {kpi("공매도 비중 추세", _num(l2.get('short_slope'), 2, suffix='%p/일'), e(C.kt(C.KO_SLOPE, l2.get('slope_dir'), '')))}
+ {kpi("추정 총 공매도", C.sh(l2.get('est_short_total')), f"장외 집계 {C.sh(l2.get('short_shares'))}")}
+ {kpi("대차 수수료", _num(fee, 2, suffix='%'), f"전일 대비 {C.pc(l2.get('ctb_delta_pct'))} · {e(C.kt(C.KO_HTB, l2.get('htb_class'), ''))}", WARN if fee is None else TXT)}
+ {kpi("대여 가능 물량", ('10M+' if l2.get('available_capped') else C.sh(l2.get('shares_available'))), f"전일 대비 {C.pc(l2.get('avail_delta_pct'))}")}
+ {kpi("공매도 잔고 / 유통주식", _num(si.get('pct_float'), 2, suffix='%'), f"상환 {_num(si.get('days_to_cover'))}일 · 직전 대비 {C.pc(si.get('change_pct'))}")}
 </div>
 <div class="g2">
-  <div class="card"><div class="ct">Short % 추세 (20거래일) · CTB</div><div class="ch"><canvas id="cShort"></canvas></div></div>
-  <div class="card"><div class="ct">Short Volume 히스토리 (14일)</div>{table(["세션", "Short %", "Δ", "Short Vol", "Total(장외)", "추정 총숏", "CTB"], srows, mode="ts")}</div>
+  <div class="card"><div class="ct">공매도 비중 추세 (20거래일) · 대차 수수료</div><div class="ch"><canvas id="cShort"></canvas></div></div>
+  <div class="card"><div class="ct">공매도 거래량 (최근 14일)</div>{table(["날짜", "공매도 비중", "변화", "공매도량", "장외 거래량", "추정 총 공매도", "대차 수수료"], srows, mode="ts")}</div>
 </div>
-{alert('CTB 수수료가 1% 미만인데 가용잔고가 감소 중 — 기술적 반등 신호만으로 진입 시 무한 핀 리스크.', 'neg', '저CTB 역설 경고') if l2.get('low_ctb_paradox') else ''}
+{alert('대차 수수료는 1% 미만으로 낮은데 대여 가능 물량이 줄고 있습니다. 기술적 반등 신호만 보고 진입하면 가격이 오래 묶일 수 있습니다.', 'neg', '저CTB 역설 경고') if l2.get('low_ctb_paradox') else ''}
 {interp(p2, x2)}"""
 
     # ── SECTION 3 ──
     p3, x3 = C.l3_text(l3, l1, l4, price)
     l3rows = [
-        ["주 만기 / DTE", f"{e(l3.get('expiry'))} / {e(l3.get('dte'))}"],
+        ["주 만기 / 남은 일수", f"{e(l3.get('expiry'))} / {e(l3.get('dte'))}일"],
         ["Max Pain (주)", f"{_num(l3.get('max_pain'), 2, '$')} ({C.pc(-(l3.get('max_pain_dist_pct') or 0), 2)})"],
         ["Max Pain (월물 " + e(l3.get('monthly_expiry') or '-') + ")", _num(l3.get('monthly_max_pain'), 2, '$')],
-        ["GEX 플립 / 레짐", (f"{_num(l3.get('flip_zone'), 2, '$')}" if l3.get('flip_zone') else
-                           {"NO_FLIP_ALL_POSITIVE": "플립 없음 (±50% 전 구간 양감마)", "NO_FLIP_ALL_NEGATIVE": "플립 없음 (±50% 전 구간 음감마)",
-                            "NO_FLIP_IN_RANGE": "플립 없음 (탐색 구간)"}.get(l3.get('flip_status') or '', 'N/A'))
-                          + f" / {e(l3.get('gamma_regime') or 'N/A')}"],
+        ["감마 플립 / 감마 구간", (f"{_num(l3.get('flip_zone'), 2, '$')}" if l3.get('flip_zone') else
+                           C.KO_FLIP.get(l3.get('flip_status') or '', 'N/A'))
+                          + f" / {e(C.kt(C.KO_REGIME, l3.get('gamma_regime')))}"],
         ["콜월 / 풋월", f"{_num(l3.get('call_wall'), 2, '$')} / {_num(l3.get('put_wall'), 2, '$')}"],
-        ["Net GEX (1% 이동당)", C.money_big(l3.get('net_gex'))],
-        ["P/C OI · P/C Vol (보정)", f"{_num(l3.get('pc_oi'))} · {_num(l3.get('pc_vol'))} ({_num(l3.get('pc_vol_adj'))})"],
+        ["Net GEX (1% 움직임당)", C.money_big(l3.get('net_gex'))],
+        ["풋/콜 비율 OI · 거래량 (만기물 제외)", f"{_num(l3.get('pc_oi'))} · {_num(l3.get('pc_vol'))} ({_num(l3.get('pc_vol_adj'))})"],
         ["ATM IV · IV30(CBOE)", f"{_num((l3.get('atm_iv') or 0) * 100 if l3.get('atm_iv') else None, 1, suffix='%')} · {_num((l3.get('iv30') or 0) * 100 if l3.get('iv30') else None, 1, suffix='%')}"],
-        ["25Δ 스큐 · 기간구조", f"{_num(l3.get('skew_25d'), 1, suffix=' vol')} · {e(l3.get('term_structure') or 'N/A')}"],
+        ["25델타 스큐 · 기간구조", f"{_num(l3.get('skew_25d'), 1, suffix='%p')} · {e(C.kt(C.KO_TERM, l3.get('term_structure')))}"],
         ["예상 변동폭 (주/월)", f"±{_num(l3.get('expected_move'), 2, '$')} ({_num(l3.get('expected_move_pct'), 1, suffix='%')}) / ±{_num(l3.get('monthly_expected_move'), 2, '$')}"],
-        ["OI 합계 (60D) · 5일 Δ", f"{C.sh(l3.get('oi_total'))} · {C.pc(l3.get('oi_trend_pct'))}"],
+        ["OI 합계 (60일 내 만기) · 5일 변화", f"{C.sh(l3.get('oi_total'))} · {C.pc(l3.get('oi_trend_pct'))}"],
     ]
     pin = l3.get("pinning")
     s3 = sec(3, "옵션 레이어 (L3)", [pill(scen_label(l3), sig_kind(l3.get("signal"))),
                                   pill(f"{'양' if (l3.get('flip_zone') and price > l3['flip_zone']) or (not l3.get('flip_zone') and l3.get('gamma_regime') == 'POSITIVE') else '음'}감마", "info"),
-                                  pill("이진 이벤트", "neg") if l3.get("binary_event") else pill(f"DTE {l3.get('dte')}", "muted")]) + f"""
+                                  pill("이벤트 급변동 반영", "neg") if l3.get("binary_event") else pill(f"만기까지 {l3.get('dte')}일", "muted")]) + f"""
 <div class="g2 w">
-  <div class="card"><div class="ct">Gamma Exposure (GEX) Distribution — 60일 내 만기 합산 · 거리 가중 · ±30% 밖 행사가는 양끝 합산</div><div class="ch lg"><canvas id="cGex"></canvas></div>
-  <div class="muted">콜 GEX=양(+, 위) · 풋 GEX=음(−, 아래). 가중치: ±2.5%=1.0 · ±5%=0.9 · ±10%=0.65 · ±15%=0.35 · ±20%=0.18 · 원거리=0.07</div></div>
+  <div class="card"><div class="ct">GEX 분포 — 60일 내 만기 합산 · 거리 가중 (±30% 밖 행사가는 양 끝에 합산)</div><div class="ch lg"><canvas id="cGex"></canvas></div>
+  <div class="muted">콜 GEX는 위(+), 풋 GEX는 아래(−). 거리 가중치: ±2.5%=1.0 · ±5%=0.9 · ±10%=0.65 · ±15%=0.35 · ±20%=0.18 · 원거리=0.07</div></div>
   <div class="card">{table(["지표", "값"], l3rows, {1: R_BG, 3: A_BG})}
-  {f'<div class="muted" style="margin-top:6px;">핀닝 사후검증({e(pin["expiry"])}): {e(pin["status"])} · 괴리 {pin["dist_pct"]:.2f}%</div>' if pin else ''}</div>
+  {f'<div class="muted" style="margin-top:6px;">직전 만기({e(pin["expiry"])}) 핀닝 검증: {e(C.KO_PIN.get(pin["status"], pin["status"]))} · 차이 {pin["dist_pct"]:.2f}%</div>' if pin else ''}</div>
 </div>
 <div class="g2">
-  <div class="card"><div class="ct">감마 프로파일 (가상 현재가별 총 GEX)</div><div class="ch"><canvas id="cProf"></canvas></div></div>
-  <div class="card"><div class="ct">OI 분포 — 주 만기 {e(l3.get('expiry'))} (콜 위 · 풋 아래)</div><div class="ch"><canvas id="cOi"></canvas></div></div>
+  <div class="card"><div class="ct">감마 프로파일 (가격대별 총 GEX)</div><div class="ch"><canvas id="cProf"></canvas></div></div>
+  <div class="card"><div class="ct">OI 분포 — 주 만기 {e(l3.get('expiry'))} (콜은 위, 풋은 아래)</div><div class="ch"><canvas id="cOi"></canvas></div></div>
 </div>
 {interp(p3, x3)}"""
 
     # ── SECTION 4 ──
     p4, x4 = C.l4_text(l4, l1, l3)
-    l4rows = [["SMA 20 / 50 / 200", f"{_num(l4.get('sma20'), 2, '$')} / {_num(l4.get('sma50'), 2, '$')} / {_num(l4.get('sma200'), 2, '$')}"],
+    l4rows = [["이동평균 20 / 50 / 200일", f"{_num(l4.get('sma20'), 2, '$')} / {_num(l4.get('sma50'), 2, '$')} / {_num(l4.get('sma200'), 2, '$')}"],
               ["EMA 9 / 21", f"{_num(l4.get('ema9'), 2, '$')} / {_num(l4.get('ema21'), 2, '$')}"],
-              ["BB 상단 / 하단 · 폭", f"{_num(l4.get('bb_upper'), 2, '$')} / {_num(l4.get('bb_lower'), 2, '$')} · {_num(l4.get('bb_width_pct'), 1, suffix='%')}"],
+              ["볼린저 상단 / 하단 · 폭", f"{_num(l4.get('bb_upper'), 2, '$')} / {_num(l4.get('bb_lower'), 2, '$')} · {_num(l4.get('bb_width_pct'), 1, suffix='%')}"],
               ["RSI(14) · ATR(14)", f"{_num(l4.get('rsi14'), 1)} · {_num(l4.get('atr14'), 2, '$')}"],
-              ["지지 (즉시 / 핵심)", f"{_num(l4.get('immediate_support'), 2, '$')} / {_num(l4.get('key_support'), 2, '$')}"
-                                + f" <span class=\"muted\">{e(' · '.join(l4.get('support_source') or []))}</span>"],
-              ["저항 (즉시 / 핵심)", f"{_num(l4.get('immediate_resistance'), 2, '$')} / {_num(l4.get('key_resistance'), 2, '$')}"
-                                + f" <span class=\"muted\">{e(' · '.join(l4.get('resistance_source') or []))}</span>"],
-              ["52주 고 / 저", f"{_num(l4.get('high_52w'), 2, '$')} / {_num(l4.get('low_52w'), 2, '$')}"]]
+              ["지지 (1차 / 2차)", f"{_num(l4.get('immediate_support'), 2, '$')} / {_num(l4.get('key_support'), 2, '$')}"
+                                + f" <span class=\"muted\">{e(C.srcs(l4.get('support_source')))}</span>"],
+              ["저항 (1차 / 2차)", f"{_num(l4.get('immediate_resistance'), 2, '$')} / {_num(l4.get('key_resistance'), 2, '$')}"
+                                + f" <span class=\"muted\">{e(C.srcs(l4.get('resistance_source')))}</span>"],
+              ["52주 고점 / 저점", f"{_num(l4.get('high_52w'), 2, '$')} / {_num(l4.get('low_52w'), 2, '$')}"]]
     s4 = sec(4, "차트 레이어 (L4 · 일봉)", [pill(scen_label(l4), sig_kind(l4.get("signal"))),
-                                       pill(l4.get("ma_alignment") or "N/A", "muted"),
-                                       pill(f"BB {l4.get('bb_width_trend') or ''}", "info")]) + f"""
+                                       pill(f"이동평균 {C.kt(C.KO_MA, l4.get('ma_alignment'))}", "muted"),
+                                       pill(f"볼린저 {C.kt(C.KO_WIDTH, l4.get('bb_width_trend'))}", "info")]) + f"""
 <div class="g2 w">
   <div class="card"><div class="ct">가격 · 이동평균 · 볼린저밴드 (최근 120거래일)</div><div class="ch lg"><canvas id="cPx"></canvas></div></div>
   <div class="card">{table(["지표", "값"], l4rows)}</div>
@@ -405,7 +404,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
     # ── SECTION 5 ──
     contrib = s.get("contributions") or {}
     mrows5 = []
-    for k, nm, w in (("L1", "Dark Pool", .35), ("L2", "Short/CTB", .20), ("L3", "Options", .30), ("L4", "Chart", .15)):
+    for k, nm, w in (("L1", "다크풀", .35), ("L2", "공매도·대차", .20), ("L3", "옵션", .30), ("L4", "차트", .15)):
         L = a[k.lower()]
         sig = L.get("signal") or "NEUTRAL"
         mrows5.append([f"<b>{k}</b> {nm}", pill(scen_label(L), sig_kind(sig)),
@@ -413,12 +412,12 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
                        f"{(L.get('score') or 0):+.2f}", f"{(L.get('confidence') or 0):.0%}", f"{w:.2f}",
                        colored(contrib.get(k), f"{contrib.get(k, 0):+.3f}")])
     phase_rows = [
-        ["<b>Phase 1</b> · Setup", e(ph["p1_date"]), f"레짐 시작 이후 {C.pc(ph.get('p1_return_pct'))} · L1 {C.ko(l1.get('scenario'))} 전개", pill("COMPLETE", "muted")],
-        ["<b>Phase 2</b> · Transition", e(ph["p2_date"]), f"{C.ko(l1.get('scenario'))} × {C.ko(l3.get('scenario'))} · 주 만기 {e(l3.get('expiry'))}", pill("IN PROGRESS", "warn")],
-        ["<b>Phase 3</b> · Resolution", e(ph["p3_date"]),
-         f"{e(ph['p3_direction'])} · 상단 {_num(ph.get('p3_target_hi'), 2, '$')} / {_num(ph.get('p3_target_hi2'), 2, '$')} · 하단 {_num(ph.get('p3_target_lo'), 2, '$')} / {_num(ph.get('p3_target_lo2'), 2, '$')}"
-         + (" · 촉매: " + ", ".join(f"{c['date']} {c['event']}" for c in ph.get("catalysts") or []) if ph.get("catalysts") else ""),
-         pill("PENDING", "info")]]
+        ["<b>Phase 1</b> · 준비", e(ph["p1_date"]), f"구간 시작 이후 {C.pc(ph.get('p1_return_pct'))} · L1 {C.ko(l1.get('scenario'))} 흐름 형성", pill("완료", "muted")],
+        ["<b>Phase 2</b> · 진행", e(ph["p2_date"]), f"L1 {C.ko(l1.get('scenario'))} · L3 {C.ko(l3.get('scenario'))} · 주 만기 {e(l3.get('expiry'))}", pill("진행 중", "warn")],
+        ["<b>Phase 3</b> · 결과", e(ph["p3_date"]),
+         f"{e(C.kt(C.KO_DIR, ph.get('p3_direction')))} · 상단 {_num(ph.get('p3_target_hi'), 2, '$')} / {_num(ph.get('p3_target_hi2'), 2, '$')} · 하단 {_num(ph.get('p3_target_lo'), 2, '$')} / {_num(ph.get('p3_target_lo2'), 2, '$')}"
+         + (" · 주요 일정: " + ", ".join(f"{c['date']} {c['event']}" for c in ph.get("catalysts") or []) if ph.get("catalysts") else ""),
+         pill("예정", "info")]]
     lv_rows, lv_hl = [], {}
     for i, lv in enumerate(a["levels"]):
         if lv["type"] == "Current Price":
@@ -427,46 +426,46 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
             lv_hl[i] = A_BG
         elif lv["type"] in ("Call Wall", "Put Wall"):
             lv_hl[i] = G_BG
-        lv_rows.append([e(lv["type"]), f"${lv['price']:,.2f}", colored(lv["dist_pct"] or None, C.pc(lv["dist_pct"])) if lv["dist_pct"] else "0%",
-                        e(lv["significance"])])
-    s5 = sec(5, "3-Layer 통합 시나리오", [pill(f"Score {s['raw_score']:+.3f}", "info"),
+        lv_rows.append([e(C.KO_LEVEL.get(lv["type"], lv["type"])), f"${lv['price']:,.2f}", colored(lv["dist_pct"] or None, C.pc(lv["dist_pct"])) if lv["dist_pct"] else "0%",
+                        e(C.KO_SIGF.get(lv["significance"], lv["significance"]))])
+    s5 = sec(5, "3-Layer 통합 시나리오", [pill(f"점수 {s['raw_score']:+.3f}", "info"),
                                       pill(f"거시 {C.KO_ENV.get(s.get('macro'))}", {"FAVORABLE": "pos", "RESTRICTED": "neg"}.get(s.get("macro"), "warn")),
-                                      pill(", ".join(C.KO_PAT.get(p, p) for p in a["patterns"]) or "정형 패턴 없음", "warn" if a["patterns"] else "muted")]) + f"""
-<div class="card"><div class="ct">레이어 신호 매트릭스 (가중 점수 = score × confidence × weight)</div>
-{table(["Layer", "시나리오", "Bull", "Neut", "Bear", "Score", "Conf", "Weight", "기여"], mrows5, mode="card")}</div>
+                                      pill(", ".join(C.KO_PAT.get(p, p) for p in a["patterns"]) or "특이 패턴 없음", "warn" if a["patterns"] else "muted")]) + f"""
+<div class="card"><div class="ct">레이어별 신호 (가중 점수 = 점수 × 신뢰도 × 가중치)</div>
+{table(["레이어", "시나리오", "상승", "중립", "하락", "점수", "신뢰도", "가중치", "기여"], mrows5, mode="card")}</div>
 <div class="card"><div class="ct">설계자 각본 — Phase 구조 (거래일 기준)</div>{table(["Phase", "기간", "내용", "상태"], phase_rows, mode="card")}</div>
 <div class="g2">
-  <div class="card"><div class="ct">시나리오 확률 매트릭스</div><div class="ch sm"><canvas id="cProb"></canvas></div>
-  <div class="muted">Raw Score {s['raw_score']:+.3f} · 분산 {s.get('dispersion', 0):.2f} · 거시 보정 {contrib.get('macro', 0) * 100:+.1f}%p · 패턴 보정 {contrib.get('patterns', 0) * 100:+.1f}%p · 상한 80%</div></div>
+  <div class="card"><div class="ct">시나리오 확률</div><div class="ch sm"><canvas id="cProb"></canvas></div>
+  <div class="muted">원점수 {s['raw_score']:+.3f} · 레이어 간 분산 {s.get('dispersion', 0):.2f} · 거시 보정 {contrib.get('macro', 0) * 100:+.1f}%p · 패턴 보정 {contrib.get('patterns', 0) * 100:+.1f}%p · 시나리오별 상한 80%</div></div>
   <div class="card"><div class="ct">점수 기여도 분해</div><div class="ch sm"><canvas id="cContrib"></canvas></div></div>
 </div>
-<div class="card"><div class="ct">핵심 가격 레벨 지도</div>{table(["레벨", "가격", "거리", "중요도"], lv_rows, lv_hl)}</div>"""
+<div class="card"><div class="ct">핵심 가격 레벨</div>{table(["레벨", "가격", "현재가 대비", "중요도"], lv_rows, lv_hl)}</div>"""
 
     # ── SECTION 6 ──
     lines = C.three_lines(a)
     trig = C.triggers(a)
-    trows = [[e(t["trigger"]), e(t["type"]),
-              pill(t["status"], {"MET": "pos", "NOT MET": "muted", "N/A": "warn"}[t["status"]]), e(t["implication"])] for t in trig]
+    trows = [[e(t["trigger"]), e(C.KO_TTYPE.get(t["type"], t["type"])),
+              pill(C.KO_STATUS[t["status"]], {"MET": "pos", "NOT MET": "muted", "N/A": "warn"}[t["status"]]), e(t["implication"])] for t in trig]
     met_b = sum(1 for t in trig if t["status"] == "MET" and t["type"] == "BULLISH")
     met_r = sum(1 for t in trig if t["status"] == "MET" and t["type"] == "BEARISH")
     rlis = "".join(f"<li>{e(r)}</li>" for r in C.risks(a))
-    s6 = sec(6, "요약 및 대응 포인트", [pill(f"Bull 트리거 {met_b}", "pos"), pill(f"Bear 트리거 {met_r}", "neg")]) + f"""
+    s6 = sec(6, "요약 및 대응 포인트", [pill(f"상승 트리거 {met_b}개 충족", "pos"), pill(f"하락 트리거 {met_r}개 충족", "neg")]) + f"""
 <div class="three">
-  <div><b style="color:{BEAR};">①</b> <b>[DARK POOL]</b> {e(lines[0])}</div>
-  <div><b style="color:{BEAR};">②</b> <b>[SHORT/CTB]</b> {e(lines[1])}</div>
-  <div><b style="color:{BEAR};">③</b> <b>[OPTIONS]</b> {e(lines[2])}</div>
+  <div><b style="color:{BEAR};">①</b> <b>[다크풀]</b> {e(lines[0])}</div>
+  <div><b style="color:{BEAR};">②</b> <b>[공매도·대차]</b> {e(lines[1])}</div>
+  <div><b style="color:{BEAR};">③</b> <b>[옵션]</b> {e(lines[2])}</div>
 </div>
-<div class="card"><div class="ct">트리거 체크리스트</div>{table(["트리거", "유형", "상태", "함의"], trows, mode="card")}</div>
+<div class="card"><div class="ct">트리거 체크리스트</div>{table(["트리거", "유형", "상태", "의미"], trows, mode="card")}</div>
 <div class="card"><div class="ct">리스크 요인</div><ul class="risk">{rlis}</ul></div>"""
 
     # ── SECTION 7 ──
     concl = "".join(f'<p class="cc">{p}</p>' for p in C.conclusions(a))
-    s7 = sec(7, "핵심 결론 요약", [pill(f"[{max((('A', s['A_bullish']), ('B', s['B_neutral']), ('C', s['C_bearish'])), key=lambda x: x[1])[0]}] 우세", "info")]) + \
+    s7 = sec(7, "핵심 결론 요약", [pill("[{}] {} 우세".format(*C._top(s)[:2]), "info")]) + \
         f'<div class="concl">{concl}</div>'
 
     footer = f"""
 <div class="foot">데이터: FINRA RegSHO · FINRA OTC Transparency · CBOE delayed options · IBKR stock-loan · Nasdaq short interest · Yahoo Finance · SEC EDGAR · FRED.
-FINRA Short%는 TRF 보고(장외) 체결 기준이며 포지션 잔고가 아니다. 본 리포트는 구조적 자금 흐름 분석 자료이며 투자 권유가 아니다. Smart Money Analyzer v3 · {e(m.get('elapsed_s'))}s</div>"""
+FINRA 공매도 비중은 장외(TRF) 보고 체결 기준이며 공매도 잔고와는 다릅니다. 이 리포트는 자금 흐름 분석 자료이며 투자 권유가 아닙니다. Smart Money Analyzer v3 · {e(m.get('elapsed_s'))}s</div>"""
 
     charts = _chart_payload(a)
     md_block = f'<div id="md-archive" style="display:none;"><pre id="md-archive-text">{e(md_text)}</pre></div>' if md_text else ""
@@ -730,7 +729,7 @@ if(D.obv.labels.length){const end=D.obv.cum[D.obv.cum.length-1]||0,c=end>=0?BU:B
  mk('cObv',{data:{labels:D.obv.labels,datasets:ds},
  options:{interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10}},tooltip:{callbacks:{label:t=>t.dataset.label+': '+fmt(t.raw)}}},
  scales:{y:{grid,stacked:coh,ticks:{callback:fmt}},x:{grid:{display:false},stacked:coh}}}});}
-{const o=D.obv4,labels=['기관','프로','리테일','전체(Total)'],vals=[o.inst,o.pro,o.ret,o.total];
+{const o=D.obv4,labels=['기관','프로','리테일','전체'],vals=[o.inst,o.pro,o.ret,o.total];
  mk('cObv4',{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:[a(BU,.85),a(WA,.85),a(BE,.85),a('#A32D2D',.85)]}]},
  options:{indexAxis:'y',plugins:{legend:{display:false},endLabels:{on:true,f:v=>(v>=0?'+':'')+fmt(v)}},
  scales:{x:{grid,ticks:{callback:fmt},suggestedMin:-Math.abs(o.total||1)*1.4,suggestedMax:Math.abs(o.total||1)*1.4},y:{grid:{display:false}}}}});}

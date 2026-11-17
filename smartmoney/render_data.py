@@ -93,11 +93,11 @@ def render_markdown(a: Dict[str, Any]) -> str:
         f"**Analyst**: Smart Money Analyzer v3.0", "",
         f"> {a.get('headline')}", "", "---", "", "## Key Metrics Summary", "",
         "| Metric | Value |", "|--------|-------|",
-        f"| Institutional OBV Δ | {_m(l1.get('delta_inst'))} (체결 단위 데이터 필요) |",
+        f"| Institutional OBV Δ | {_m(l1.get('delta_inst'))} |",
         f"| Professional OBV Δ | {_m(l1.get('delta_pro'))} |",
         f"| Retail OBV Δ | {_m(l1.get('delta_retail'))} |",
         f"| Total OBV Δ (5d, CLV) | {_m(l1.get('delta_total'))} ({C.pc((l1.get('obv_strength') or 0) * 100)} ADV) |",
-        f"| Divergence | {l1.get('divergence', 'N/A')} |",
+        f"| Divergence | {C.kt(C.KO_DIV, l1.get('divergence'))} |",
         f"| Dark Pool % | {_p(l1.get('dp_pct'))} (20d avg {_p(l1.get('dp_avg20'))}) |",
         f"| Institutional Absorption Ratio | {'N/A' if l1.get('iar') is None else round(l1['iar'], 2)} |",
         f"| VWAP Anchor (5d) | {_d(l1.get('vwap5'))} ({C.pc(l1.get('vwap_dist_pct'), 2)}) |",
@@ -106,7 +106,7 @@ def render_markdown(a: Dict[str, Any]) -> str:
         f"| Short Case | {C.KO_CASE.get(l2.get('case'), l2.get('case'))} |",
         f"| CTB Fee | {_p(l2.get('ctb_fee'), 2)} (Δ {C.pc(l2.get('ctb_delta_pct'))}) |",
         f"| Available Shares | {'10M+' if l2.get('available_capped') else C.sh(l2.get('shares_available'))} (Δ {C.pc(l2.get('avail_delta_pct'))}) |",
-        f"| Short Interest / Float | {_p(si.get('pct_float'), 2)} · DTC {si.get('days_to_cover') or 'N/A'} |",
+        f"| Short Interest / Float | {_p(si.get('pct_float'), 2)} · DTC {_r(si.get('days_to_cover'), 2) or 'N/A'} |",
         f"| Max Pain | {_d(l3.get('max_pain'))} ({C.pc(-(l3.get('max_pain_dist_pct') or 0), 2)}) |",
         f"| GEX Flip Zone | {_d(l3.get('flip_zone'))} ({l3.get('gamma_regime') or 'N/A'}) |",
         f"| Call / Put Wall | {_d(l3.get('call_wall'))} / {_d(l3.get('put_wall'))} |",
@@ -118,10 +118,10 @@ def render_markdown(a: Dict[str, Any]) -> str:
         f"| Raw Score · Macro | {s['raw_score']:+.3f} · {s.get('macro')} |",
         f"| Patterns | {', '.join(C.KO_PAT.get(p, p) for p in a['patterns']) or 'none'} |", "",
         "---", "", "## Architect Phase Structure",
-        f"- **Phase 1 (Completed)**: {ph['p1_date']} — 레짐 시작 이후 {C.pc(ph.get('p1_return_pct'))}, L1 {C.ko(l1.get('scenario'))}",
-        f"- **Phase 2 (Current)**: {ph['p2_date']} — {C.ko(l1.get('scenario'))} × {C.ko(l3.get('scenario'))}",
-        f"- **Phase 3 (Target)**: {ph['p3_date']} — {ph['p3_direction']} | Target: {_d(ph.get('p3_target_lo'))}–{_d(ph.get('p3_target_hi'))} "
-        f"(확장 {_d(ph.get('p3_target_lo2'))}–{_d(ph.get('p3_target_hi2'))})", "",
+        f"- **Phase 1 (Completed)**: {ph['p1_date']} — 구간 시작 이후 {C.pc(ph.get('p1_return_pct'))}, L1 {C.ko(l1.get('scenario'))} 흐름 형성",
+        f"- **Phase 2 (Current)**: {ph['p2_date']} — L1 {C.ko(l1.get('scenario'))} · L3 {C.ko(l3.get('scenario'))}",
+        f"- **Phase 3 (Target)**: {ph['p3_date']} — {C.kt(C.KO_DIR, ph.get('p3_direction'))} | Target: {_d(ph.get('p3_target_lo'))}–{_d(ph.get('p3_target_hi'))} "
+        f"(2차 {_d(ph.get('p3_target_lo2'))}–{_d(ph.get('p3_target_hi2'))})", "",
         "---", "", "## 3-Line Summary",
     ]
     for i, t in enumerate(C.three_lines(a), 1):
@@ -135,7 +135,7 @@ def render_markdown(a: Dict[str, Any]) -> str:
     cur = {"_session": m["date"], "price": m["price"], "l1": l1, "l2": l2, "l3": l3}
     for h in (a.get("history") or []) + [cur]:
         lines.append(_hist_row(h))
-    lines += ["", "> v2(2026-11 이전) 행은 실행일 기준 파일명을 실제 세션 날짜로 보정해 표기. 기관/프로/리테일 OBV 는 체결 단위 데이터 확보 전까지 N/A."]
+    lines += ["", "> 2026-11 이전(v2) 행은 실행일 기준 파일명을 실제 세션 날짜로 바꿔 표기했습니다. 기관·프로·리테일 OBV는 체결 단위 데이터가 있는 날만 표시됩니다."]
     if m.get("warnings"):
         lines += ["", "## Data Warnings"] + [f"- {w}" for w in m["warnings"]]
     return "\n".join(lines) + "\n"

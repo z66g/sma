@@ -426,27 +426,27 @@ def analyze_l2(finra: List[Dict], ohlcv: List[Dict], borrow: Optional[Dict], bor
     ctb_rising = (fee_d or 0) > 5
     ctb_known = fee_d is not None
     ctb_flat = fee_d is None or abs(fee_d) <= 5
-    ctb_note = "CTB 불변" if ctb_known else ("CTB 수준만 확인(Δ 이력 부족)" if fee is not None else "CTB 미수집 — 잠정 판별")
+    ctb_note = "대차 수수료 변화 없음" if ctb_known else ("대차 수수료 변화 이력 부족" if fee is not None else "대차 수수료 미수집(잠정 판단)")
     supply_tight = (avail_d or 0) < -5
     l1s = l1.get("score") or 0
     case, case_basis = "MIXED", []
     if rising and (ctb_rising or supply_tight) and ((put_oi_trend or 0) > 3 or not opt_vol_ratio or opt_vol_ratio < 1.3):
         case = "CASE_2_DIRECTIONAL_SHORT"
-        case_basis = ["Short% 상승"] + ([f"CTB {fee_d:+.1f}%"] if ctb_rising else []) + \
-                     ([f"가용잔고 {avail_d:+.1f}%"] if supply_tight else [])
+        case_basis = ["공매도 비중 상승"] + ([f"대차 수수료 {fee_d:+.1f}%"] if ctb_rising else []) + \
+                     ([f"대여 가능 물량 {avail_d:+.1f}%"] if supply_tight else [])
     elif rising and (opt_vol_ratio or 0) >= 1.3 and ctb_flat:
         case = "CASE_1_MM_DELTA_HEDGE"
-        case_basis = [f"옵션 거래량 {opt_vol_ratio:.1f}x", ctb_note]
+        case_basis = [f"옵션 거래량 평소의 {opt_vol_ratio:.1f}배", ctb_note]
     elif (out.get("short_pct_latest") or 0) >= (out.get("short_avg_14d") or 999) and l1s > 0.2 \
             and (l1.get("dp_pct") or 0) > 40:
         case = "CASE_3_SYNTHETIC_HEDGE"
-        case_basis = ["Short% ≥ 14일 평균", "기관 순매수 흐름", "다크풀 40%+"]
+        case_basis = ["공매도 비중이 14일 평균 이상", "기관 순매수 흐름", "다크풀 비중 40% 이상"]
     elif rising and ctb_flat:
         case = "CASE_1_MM_DELTA_HEDGE"
-        case_basis = ["Short% 상승", ctb_note, "옵션 거래량 이력 부족" if opt_vol_ratio is None else f"옵션 거래량 {opt_vol_ratio:.1f}x"]
+        case_basis = ["공매도 비중 상승", ctb_note, "옵션 거래량 이력 부족" if opt_vol_ratio is None else f"옵션 거래량 평소의 {opt_vol_ratio:.1f}배"]
     elif falling:
         case = "SHORT_COVERING"
-        case_basis = ["Short% 기울기 하락"]
+        case_basis = ["공매도 비중 추세 하락"]
     out.update(case=case, case_basis=case_basis)
 
     # ── 시나리오/점수 ──
@@ -681,11 +681,11 @@ def analyze_l3(chain: Dict, spot: float, session: date, opt_hist: List[Dict],
             mny = abs(o["strike"] - spot) / spot
             if 0.10 < mny <= 0.25 and o["oi"] >= 500 and o.get("bid", 0) > 0 and o.get("iv", 0) > iv30 * 1.6:
                 binary = True
-                binary_basis.append(f"OTM {o['strike']:g} IV {o['iv']*100:.0f}% vs ATM {iv30*100:.0f}%")
+                binary_basis.append(f"외가격 {o['strike']:g} 행사가 IV {o['iv']*100:.0f}%로 ATM({iv30*100:.0f}%)보다 크게 높음")
                 break
     if iv_front and iv60 and iv_front > iv60 * 1.25:
         binary = True
-        binary_basis.append(f"기간구조 꺾임: 단기 {iv_front*100:.0f}% vs 차월 {iv60*100:.0f}%")
+        binary_basis.append(f"단기 만기 IV {iv_front*100:.0f}%가 차월({iv60*100:.0f}%)보다 크게 높음")
 
     # P/C, 만기일 보정
     pc_oi = tp_oi / tc_oi if tc_oi else None
