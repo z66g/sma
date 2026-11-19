@@ -75,7 +75,7 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 | `plans[]` | `{item, timing, impact}` — 가정에 반영한 경영 계획 |
 | `news[]` | `{date, headline, impact: POS/NEG/NEU, why}` — 가정을 바꾼 것만 |
 | `risks[]`, `catalysts[]` | 약세·강세 시나리오로 가는 구체적 사건 |
-| `scenarios`, `options`, `adjustments` | §2. `adjustments.nonop_assets`(달러: 지분투자·보유 암호화폐·**제한현금** 등 엔진의 현금에 안 잡힌 자산), `extra_dilution_pct`(전환증권·예정 증자), `minority_economic_share`(0~0.9: 연결 이익·가치 중 소수주주 몫 — 자회사 지분이 커서 **장부 비지배지분이 경제적 몫을 크게 밑돌 때**. 최근 3년 '비지배지분 귀속 순이익 ÷ 연결 순이익'과 지분율로 근거 제시), `minority_in_share_count`(true: Up-C 구조처럼 비지배지분 보유자가 이미 주식수에 포함된 경우 — 엔진의 비지배지분 차감을 되돌린다), `note`(근거) |
+| `scenarios`, `options`, `adjustments` | §2. `adjustments.nonop_assets`(달러: 지분투자·보유 암호화폐·**제한현금** 등 엔진의 현금에 안 잡힌 자산), `extra_dilution_pct`(전환증권·예정 증자), `shares`(희석 주식수 — 엔진 주식수(시가총액÷주가)가 미획득 성과주를 포함하거나 발행 예정 주식을 빠뜨릴 때, 10-Q 표지·희석 가중평균 근거로), `operating_leases_in_debt`(달러: 엔진 부채에 포함된 운용리스 부채 — 리스료가 이미 영업이익에서 빠지므로 되돌린다), `minority_economic_share`(0~0.9: 연결 이익·가치 중 소수주주 몫 — 자회사 지분이 커서 **장부 비지배지분이 경제적 몫을 크게 밑돌 때**. 최근 3년 '비지배지분 귀속 순이익 ÷ 연결 순이익'과 지분율로 근거 제시), `minority_in_share_count`(true: Up-C 구조처럼 비지배지분 보유자가 이미 주식수에 포함된 경우 — 엔진의 비지배지분 차감을 되돌린다), `note`(근거) |
 | `valuation_notes` | 컨센서스·기계적 기준선과 다른 지점과 이유, 확인하지 못한 것 |
 | `confidence` | HIGH(1차 자료로 대부분 검증) / MEDIUM / LOW(핵심 가정이 추정) |
 | `sources[]` | `{title, url, date}` 최소 6개, SEC 공시 포함 |

@@ -1255,9 +1255,14 @@ def scenario_value(D, P, exit10, s: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: Optional[str]) -> Dict[str, Any]:
-    price, shares = D["price"], D["shares"]
+    price = D["price"]
     adjm = R.get("adjustments") or {}
-    add = float(adjm.get("nonop_assets") or 0.0) / shares
+    if _ok(adjm.get("shares")) and 0.5 <= adjm["shares"] / D["shares"] <= 2.0:
+        # 엔진 주식수(시가총액÷주가)가 미획득 성과주 등을 포함/누락하는 경우: 리서치가 공시 근거로 준 희석 주식수를 쓴다
+        D = {**D, "shares": float(adjm["shares"])}
+    shares = D["shares"]
+    # 엔진 부채에는 운용리스 부채가 들어 있다. 리스료는 이미 영업이익에서 차감되므로 리서치가 금액을 주면 이중 차감을 되돌린다
+    add = (float(adjm.get("nonop_assets") or 0.0) + float(adjm.get("operating_leases_in_debt") or 0.0)) / shares
     if adjm.get("minority_in_share_count"):                 # Up-C 구조: 비지배지분 보유자가 이미 주식수에 포함 → 차감분 복원
         add += D["minority"] / shares
     dil = 1 + float(adjm.get("extra_dilution_pct") or 0.0)
@@ -1272,10 +1277,11 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
     for name in ("bear", "base", "bull"):
         s = R["scenarios"][name]
         r = scenario_value(D, P, exit10, s)
-        core = max(r["value"], 0.0)
+        raw = r["value"]
         if ms is not None:      # 소수주주의 '경제적 몫': 장부 비지배지분 차감을 되돌리고, 전체 주주가치에서 그 비율을 뗀다
-            core = max(r["value"] + D["minority"] / shares, 0.0) * (1 - ms)
-        val = (core + add) / dil + opt_total
+            raw = (r["value"] + D["minority"] / shares) * (1 - ms)
+        core = max(raw + add, 0.0)                          # 영업 외 자산은 음(-)의 주주가치를 먼저 메운 뒤에 남는 만큼만 가치
+        val = core / dil + opt_total
         scen[name] = {**r, "prob": float(s["prob"]), "core": core, "value": val, "story": s.get("story"),
                       "target_margin": s.get("target_margin"), "margin_year": s.get("margin_year"),
                       "rev_growth": s.get("rev_growth"), "wacc_adj": s.get("wacc_adj") or 0.0}

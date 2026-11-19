@@ -119,6 +119,11 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append("adjustments.minority_economic_share: 0~0.9 (연결 이익·가치 중 소수주주 몫)")
         if adj.get("minority_in_share_count"):
             err.append("adjustments: minority_economic_share 와 minority_in_share_count 는 함께 쓸 수 없음")
+    for key in ("nonop_assets", "operating_leases_in_debt"):
+        if adj.get(key) is not None and (not V._ok(adj[key]) or adj[key] < 0):
+            err.append(f"adjustments.{key}: 0 이상의 달러 금액")
+    if adj.get("shares") is not None and (not V._ok(adj["shares"]) or adj["shares"] <= 0):
+        err.append("adjustments.shares: 희석 주식수(주)")
     if adj.get("extra_dilution_pct") is not None and (not V._ok(adj["extra_dilution_pct"]) or not 0 <= adj["extra_dilution_pct"] <= 0.5):
         err.append("adjustments.extra_dilution_pct: 0~0.5 (희석 외 용도로 쓰지 말 것)")
     for i, o in enumerate(R.get("options") or []):
