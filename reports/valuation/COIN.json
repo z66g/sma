@@ -1,0 +1,159 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-19",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 108.87,
+ "fair_value": 87.42,
+ "fair_low": 42.94,
+ "fair_high": 142.4,
+ "upside_pct": -19.71,
+ "verdict": "OVERVALUED",
+ "verdict_ko": "고평가",
+ "mos_band_pct": 15.0,
+ "n_models": 10,
+ "summary": "리서치 기반 적정가 87.42 = 약세 42.94(30%) · 기본 86.52(45%) · 강세 142.40(25%)의 확률가중. 현재가 108.87 대비 -19.7% · 고평가 (불확실성 보통). 기계적 기준선 48.08.",
+ "archetype": {
+  "code": "CYCLICAL",
+  "label": "경기순환",
+  "traits": [
+   "주식보상 비중 높음(매출의 17%)",
+   "서사 프리미엄(선행 P/E 60배 초과 · 성장률은 25% 미만)"
+  ]
+ },
+ "uncertainty": {
+  "level": "MEDIUM",
+  "label": "보통",
+  "score": 63
+ },
+ "wacc": 0.1212,
+ "ke": 0.1364,
+ "models": [
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 84.79,
+   "low": 69.03,
+   "high": 104.47,
+   "weight": 0.212
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 38.46,
+   "low": 31.21,
+   "high": 48.12,
+   "weight": 0.143
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 33.9,
+   "low": 6.0,
+   "high": 35.61,
+   "weight": 0.127
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 34.61,
+   "low": 26.9,
+   "high": 37.23,
+   "weight": 0.127
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 42.44,
+   "low": 33.32,
+   "high": 55.23,
+   "weight": 0.106
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 80.34,
+   "low": 58.15,
+   "high": 109.65,
+   "weight": 0.1
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 92.42,
+   "low": 56.24,
+   "high": 116.69,
+   "weight": 0.063
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 62.23,
+   "low": 44.73,
+   "high": 87.05,
+   "weight": 0.059
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 17.49,
+   "low": 13.4,
+   "high": 20.22,
+   "weight": 0.042
+  },
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 198.47,
+   "low": 133.71,
+   "high": 271.58,
+   "weight": 0.021
+  }
+ ],
+ "implied_cagr_5y": 0.458,
+ "base_cagr_5y": 0.127,
+ "mc": {
+  "p10": 0.0,
+  "p50": 36.35,
+  "p90": 86.64,
+  "prob_above_price": 0.04
+ },
+ "analyst_target": 195.0,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude Opus (Valuation Desk)",
+  "thesis": "코인베이스의 가치는 (1) 암호화폐 사이클을 관통하는 매출 수준과 (2) 연 42억 달러 수준으로 굳어진 비용 기반(조정비용, 주식보상 포함) 위에서 얻는 사이클 평균 GAAP 영업이익률로 결정된다. 2026년 3분기 매출은 12억 달러로 2025년 3분기 대비 35% 줄었고 영업이익률은 5%에 그쳤다. 반면 구독·서비스(스테이블코인 이자 등)가 순매출의 49%까지 올라와 바닥 매출을 받치고, 거래량 점유율은 10.7%로 네 분기 연속 상승했다. 11월에는 비트코인이 9월 말 약 8.36만 달러에서 약 6.3만 달러로 떨어져 2027년 상반기까지 침체가 이어질 위험이 커졌다. 확률가중 적정가는 기본 시나리오 근처이며, 현재가는 기본과 강세 사이의 회복을 전제한다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.3,
+    "value": 42.94,
+    "cagr5": 0.031,
+    "target_margin": 0.11
+   },
+   "base": {
+    "prob": 0.45,
+    "value": 86.52,
+    "cagr5": 0.1108,
+    "target_margin": 0.21
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 142.4,
+    "cagr5": 0.1635,
+    "target_margin": 0.3
+   }
+  },
+  "n_sources": 15,
+  "second_opinion": null
+ },
+ "mechanical_fair": 48.08,
+ "ticker": "COIN",
+ "name": "Coinbase Global, Inc.",
+ "published": "2026-11-19"
+}
