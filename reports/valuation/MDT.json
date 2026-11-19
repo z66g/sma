@@ -1,0 +1,148 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-19",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 100.61,
+ "fair_value": 91.79,
+ "fair_low": 70.23,
+ "fair_high": 112.01,
+ "upside_pct": -8.77,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 10.0,
+ "n_models": 9,
+ "summary": "리서치 기반 적정가 91.79 = 약세 70.23(25%) · 기본 94.23(55%) · 강세 112.01(20%)의 확률가중. 현재가 100.61 대비 -8.8% · 적정 범위 (불확실성 낮음). 기계적 기준선 71.08.",
+ "archetype": {
+  "code": "DIVIDEND_DEFENSIVE",
+  "label": "배당·방어주",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "LOW",
+  "label": "낮음",
+  "score": 81
+ },
+ "wacc": 0.0781,
+ "ke": 0.0852,
+ "models": [
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 122.83,
+   "low": 90.64,
+   "high": 162.31,
+   "weight": 0.158
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 123.41,
+   "low": 96.51,
+   "high": 152.61,
+   "weight": 0.142
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 67.27,
+   "low": 45.57,
+   "high": 102.83,
+   "weight": 0.127
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 93.12,
+   "low": 65.86,
+   "high": 127.19,
+   "weight": 0.127
+  },
+  {
+   "id": "ddm_multi",
+   "name": "배당할인(DDM) · 다단계",
+   "mid": 55.61,
+   "low": 46.36,
+   "high": 67.97,
+   "weight": 0.127
+  },
+  {
+   "id": "ddm_stable",
+   "name": "배당할인(DDM) · 안정성장",
+   "mid": 66.33,
+   "low": 51.7,
+   "high": 92.16,
+   "weight": 0.114
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 39.99,
+   "low": 34.83,
+   "high": 46.74,
+   "weight": 0.079
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 66.86,
+   "low": 45.4,
+   "high": 101.34,
+   "weight": 0.063
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 52.57,
+   "low": 44.17,
+   "high": 60.97,
+   "weight": 0.063
+  }
+ ],
+ "implied_cagr_5y": 0.1103,
+ "base_cagr_5y": 0.0359,
+ "mc": {
+  "p10": 45.64,
+  "p50": 66.87,
+  "p90": 98.13,
+  "prob_above_price": 0.08
+ },
+ "analyst_target": 106.35,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude (Valuation Desk)",
+  "thesis": "2026-10-15 당뇨 사업(MiniMed) 분리가 완료되어 Medtronic 은 심혈관·신경과학·메디컬서지컬 3개 포트폴리오(TTM 매출 약 343억 달러)만 남았고, 교환공개매수로 자사주 5,503만 주(4.3%)가 소각됐다. 가치를 결정하는 변수는 ① PFA(심방세동 절제)·신장신경차단술·Hugo 로봇이 끄는 6% 안팎 유기 성장이 몇 년 지속되는가, ② 성장이 마진으로 이어지는가(FY26 조정 영업이익률은 오히려 130bp 하락), ③ 연 16억 달러 인수 무형자산 상각이 줄면서 GAAP 마진이 얼마나 올라오는가이다. 현재 증거는 매출 쪽은 강하고(4개 분기 연속 가이던스 상회·FY27 가이던스 상향), 마진 쪽은 아직 미확인이다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 70.23,
+    "cagr5": 0.0136,
+    "target_margin": 0.21
+   },
+   "base": {
+    "prob": 0.55,
+    "value": 94.23,
+    "cagr5": 0.0349,
+    "target_margin": 0.235
+   },
+   "bull": {
+    "prob": 0.2,
+    "value": 112.01,
+    "cagr5": 0.0477,
+    "target_margin": 0.255
+   }
+  },
+  "n_sources": 22,
+  "second_opinion": null
+ },
+ "mechanical_fair": 71.08,
+ "ticker": "MDT",
+ "name": "Medtronic plc",
+ "published": "2026-11-19"
+}
