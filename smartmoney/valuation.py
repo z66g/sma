@@ -1236,6 +1236,8 @@ def scenario_value(D, P, exit10, s: Dict[str, Any]) -> Dict[str, Any]:
         q["s2c"] = float(s["s2c"])
     if _ok(s.get("terminal_growth")):
         q["gT"] = _clip(float(s["terminal_growth"]), 0.01, 0.04)
+    if _ok(s.get("tax_rate")):                              # 구조적으로 낮거나 높은 장기 세율의 근거가 있을 때
+        q["taxT"] = _clip(float(s["tax_rate"]), 0.05, 0.35)
     pf = float(s["fail_prob"]) if _ok(s.get("fail_prob")) else P["p_fail"]
     ev = float(dcf(q, 10, "growth", gpath=gp))
     if exit10 and q["mT"] > 0:
@@ -1259,6 +1261,7 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
     if adjm.get("minority_in_share_count"):                 # Up-C 구조: 비지배지분 보유자가 이미 주식수에 포함 → 차감분 복원
         add += D["minority"] / shares
     dil = 1 + float(adjm.get("extra_dilution_pct") or 0.0)
+    ms = float(adjm["minority_economic_share"]) if _ok(adjm.get("minority_economic_share")) else None
     opts = []
     for o in R.get("options") or []:
         ev_ = float(o["prob"]) * float(o["value_per_share"])
@@ -1270,13 +1273,16 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
         s = R["scenarios"][name]
         r = scenario_value(D, P, exit10, s)
         core = max(r["value"], 0.0)
+        if ms is not None:      # 소수주주의 '경제적 몫': 장부 비지배지분 차감을 되돌리고, 전체 주주가치에서 그 비율을 뗀다
+            core = max(r["value"] + D["minority"] / shares, 0.0) * (1 - ms)
         val = (core + add) / dil + opt_total
         scen[name] = {**r, "prob": float(s["prob"]), "core": core, "value": val, "story": s.get("story"),
                       "target_margin": s.get("target_margin"), "margin_year": s.get("margin_year"),
                       "rev_growth": s.get("rev_growth"), "wacc_adj": s.get("wacc_adj") or 0.0}
         fair += float(s["prob"]) * val
     lo, hi = min(v["value"] for v in scen.values()), max(v["value"] for v in scen.values())
-    spread = (hi - lo) / fair if fair > 0 else 9.9
+    # 시나리오 분산: 확률가중 변동계수 (단순 범위는 '서로 다른 세계'를 제대로 쓴 리서치일수록 불리해진다)
+    spread = math.sqrt(sum(v["prob"] * (v["value"] - fair) ** 2 for v in scen.values())) / fair if fair > 0 else 9.9
     conf = str(R.get("confidence") or "MEDIUM").upper()
     age = None
     try:
@@ -1286,10 +1292,9 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
     stale = age is not None and age > RESEARCH_STALE_DAYS
     code = out["archetype"]["code"]
     score, why = 100.0, []
-    sp = min(45.0, spread * 35)
-    score -= sp
-    if spread > 0.6:
-        why.append(f"시나리오 폭이 적정가의 {spread * 100:.0f}% (약세 {lo:,.0f} ~ 강세 {hi:,.0f})")
+    score -= min(45.0, spread * 45)
+    if spread > 0.4:
+        why.append(f"시나리오 간 편차 큼 (확률가중 변동계수 {spread * 100:.0f}% · 약세 {lo:,.0f} ~ 강세 {hi:,.0f})")
     if CONF_PENALTY.get(conf, 12):
         score -= CONF_PENALTY.get(conf, 12)
         why.append(f"리서치 확신도 {conf}")

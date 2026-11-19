@@ -39,6 +39,7 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 | `margin_year` | 목표 마진 도달 연차 (1~10) | 경영진 목표 시점 또는 설비·제품 램프 일정에 맞춘다 |
 | `wacc_adj` | 할인율 가감 (±3%p 이내) | 기본 0. 사업 위험이 기계적 베타에 반영되지 않았다고 판단할 근거가 있을 때만 |
 | `s2c` | Sales-to-Capital (선택) | 자본집약도가 과거와 달라질 명확한 이유가 있을 때만 |
+| `tax_rate` | 장기 세율 (선택, 0.05~0.35) | 기본은 엔진이 max(유효세율, 21%)로 수렴. 구조적으로 다른 세율의 근거(관할·세제)가 있을 때만 |
 | `fail_prob` | 자금조달 실패 확률 (선택) | 현금 소진 기업: 조달 계획·현금 여력을 확인했으면 명시. 같은 위험을 `wacc_adj` 로 또 올리지 말 것(이중 반영) |
 | `extra_investment` | 연도별 추가 투자 유출 (달러, 선택) | 매출보다 **앞서** 집행되는 투자(위성망·공장·광산 증설). 엔진의 재투자는 매출 증가 시점에 잡히므로, 회사가 밝힌 CAPEX 계획 중 그 이상분을 연도별로 적는다 |
 | `value_per_share` + `value_basis` | 직접 산출 | **금융·REIT** 는 필수(P/B-ROE, 초과이익, P/FFO 등으로 계산해 방법·입력값 기재). 그 외에는 쓰지 않는다 |
@@ -47,6 +48,15 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 - **현재 주가에 맞추지 않는다.** 시나리오는 주가를 보지 않고 쓴다. dry-run 결과가 주가와 크게 달라도 가정을 주가 쪽으로 조정하지 말 것 —
   고치는 것은 오류(단위·이중 계산·근거 없는 숫자)뿐이다. 애널리스트 목표가도 입력으로 쓰지 않는다.
 - **현실성 점검**: 10년 뒤 매출이 시장 규모·점유율로 설명되는가? 목표 마진이 업계 최고 수준 이내인가? 성장에 필요한 자본을 조달할 수 있는가?
+
+### 자주 틀리는 처리
+- **주식보상·고객 워런트**: 매출 차감이나 비용으로 인식되는 것은 **GAAP 마진에만** 반영한다. 같은 것을 `extra_dilution_pct` 에 또 넣으면 이중 계산이다.
+  `extra_dilution_pct` 는 손익에 잡히지 않는 희석(내가격 전환사채, 확정된 증자·주식 대가)만.
+- **종결 전 인수·합병**: 종결 전에는 **단독 기준**으로 평가하고, 거래 조건(교환비율·종결 시기·해지 수수료)과 가치 영향(상대 기여도 vs 지분율)은
+  `plans`·`risks`·`valuation_notes` 에 적는다. 주식수만 늘리고 피인수 회사의 현금흐름을 빼먹는 식의 부분 반영은 하지 않는다.
+- **유한한 사업권**(광업권·특허·양허 만료): 영구성장 가정이 맞지 않으면 `terminal_growth` 를 낮추고 근거를 적는다.
+- **일회성 손익**: 패키지의 ⚠ 표시(매각이익 등)를 확인하고, 시나리오 마진은 반복 가능한 영업이익 기준으로 쓴다.
+- **회계연도 가이던스 → NTM**: `rev_growth` 1년차는 TTM 종료 시점부터 12개월이다. 패키지의 'NTM 환산'을 기준점으로 삼는다.
 
 ### 신사업 옵션 (`options`)
 아직 의미 있는 매출이 없어 시나리오 매출에 넣을 수 없는 사업만 해당한다 (자율주행, 신약 파이프라인, 위성망 등).
@@ -65,7 +75,7 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 | `plans[]` | `{item, timing, impact}` — 가정에 반영한 경영 계획 |
 | `news[]` | `{date, headline, impact: POS/NEG/NEU, why}` — 가정을 바꾼 것만 |
 | `risks[]`, `catalysts[]` | 약세·강세 시나리오로 가는 구체적 사건 |
-| `scenarios`, `options`, `adjustments` | §2. `adjustments.nonop_assets`(달러: 지분투자·보유 암호화폐·**제한현금** 등 엔진의 현금에 안 잡힌 자산), `extra_dilution_pct`(전환증권·예정 증자), `minority_in_share_count`(true: Up-C 구조처럼 비지배지분 보유자가 이미 주식수에 포함된 경우 — 엔진의 비지배지분 차감을 되돌린다), `note`(근거) |
+| `scenarios`, `options`, `adjustments` | §2. `adjustments.nonop_assets`(달러: 지분투자·보유 암호화폐·**제한현금** 등 엔진의 현금에 안 잡힌 자산), `extra_dilution_pct`(전환증권·예정 증자), `minority_economic_share`(0~0.9: 연결 이익·가치 중 소수주주 몫 — 자회사 지분이 커서 **장부 비지배지분이 경제적 몫을 크게 밑돌 때**. 최근 3년 '비지배지분 귀속 순이익 ÷ 연결 순이익'과 지분율로 근거 제시), `minority_in_share_count`(true: Up-C 구조처럼 비지배지분 보유자가 이미 주식수에 포함된 경우 — 엔진의 비지배지분 차감을 되돌린다), `note`(근거) |
 | `valuation_notes` | 컨센서스·기계적 기준선과 다른 지점과 이유, 확인하지 못한 것 |
 | `confidence` | HIGH(1차 자료로 대부분 검증) / MEDIUM / LOW(핵심 가정이 추정) |
 | `sources[]` | `{title, url, date}` 최소 6개, SEC 공시 포함 |

@@ -106,11 +106,21 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append(f"scenarios.{k}.wacc_adj: ±0.03 이내")
         if s.get("fail_prob") is not None and (not V._ok(s["fail_prob"]) or not 0 <= s["fail_prob"] <= 0.9):
             err.append(f"scenarios.{k}.fail_prob: 0~0.9")
+        if s.get("tax_rate") is not None and (not V._ok(s["tax_rate"]) or not 0.05 <= s["tax_rate"] <= 0.35):
+            err.append(f"scenarios.{k}.tax_rate: 0.05~0.35")
         xi = s.get("extra_investment")
         if xi is not None and (not isinstance(xi, list) or len(xi) > 10 or any(not V._ok(x) or x < 0 for x in xi)):
             err.append(f"scenarios.{k}.extra_investment: 연도별 추가 투자 유출(달러, 0 이상) 최대 10개")
     if len(probs) == 3 and abs(sum(probs) - 1) > 0.011:
         err.append(f"시나리오 확률 합 = {sum(probs):.3f} (1.0 이어야 함)")
+    adj = R.get("adjustments") or {}
+    if adj.get("minority_economic_share") is not None:
+        if not V._ok(adj["minority_economic_share"]) or not 0 < adj["minority_economic_share"] < 0.9:
+            err.append("adjustments.minority_economic_share: 0~0.9 (연결 이익·가치 중 소수주주 몫)")
+        if adj.get("minority_in_share_count"):
+            err.append("adjustments: minority_economic_share 와 minority_in_share_count 는 함께 쓸 수 없음")
+    if adj.get("extra_dilution_pct") is not None and (not V._ok(adj["extra_dilution_pct"]) or not 0 <= adj["extra_dilution_pct"] <= 0.5):
+        err.append("adjustments.extra_dilution_pct: 0~0.5 (희석 외 용도로 쓰지 말 것)")
     for i, o in enumerate(R.get("options") or []):
         if not isinstance(o, dict) or not o.get("name") or not V._ok(o.get("prob"), o.get("value_per_share")) \
                 or not 0 < o["prob"] <= 1 or o["value_per_share"] <= 0 or len(str(o.get("basis") or "")) < 30:
@@ -201,22 +211,27 @@ def read_published(ticker: str, price: Optional[float] = None, as_of: Optional[s
 
 
 # ─── 리서치 패키지 ───────────────────────────────────────────────────────────
-def sec_filings(ticker: str, limit_8k: int = 6) -> List[Dict[str, str]]:
-    """최근 10-K · 10-Q · 8-K(실적·중요 사건) 원문 링크."""
+def sec_filings(ticker: str) -> List[Dict[str, str]]:
+    """최근 10-K · 10-Q · 8-K · 합병/위임장 관련 문서의 원문과 제출 폴더(첨부 EX-99 등) 링크."""
     cik = FN._sec_cik(ticker)
     if not cik:
         return []
     r = get(f"https://data.sec.gov/submissions/CIK{cik}.json", headers=FN.SEC_UA, timeout=30)
     rec = ((r.json() or {}).get("filings") or {}).get("recent") or {}
-    out, seen = [], {"10-K": 0, "10-Q": 0, "8-K": 0, "20-F": 0, "6-K": 0}
-    cap = {"10-K": 1, "10-Q": 2, "8-K": limit_8k, "20-F": 1, "6-K": 4}
+    cap = {"10-K": 1, "10-Q": 3, "8-K": 14, "20-F": 1, "6-K": 6, "425": 3, "DEF 14A": 1, "S-4": 1, "424B5": 2}
+    out, seen = [], {k: 0 for k in cap}
     for form, acc, doc, fdate, items in zip(rec.get("form", []), rec.get("accessionNumber", []), rec.get("primaryDocument", []),
                                             rec.get("filingDate", []), rec.get("items", [""] * 9999)):
         if form in cap and seen[form] < cap[form]:
             seen[form] += 1
-            out.append({"form": form, "date": fdate, "items": items or "",
-                        "url": f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc.replace('-', '')}/{doc}"})
+            base = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc.replace('-', '')}/"
+            out.append({"form": form, "date": fdate, "items": items or "", "url": base + doc, "index": base})
     return out
+
+
+_ITEMS = {"1.01": "중요 계약 체결", "1.02": "중요 계약 해지", "2.01": "자산 인수·처분 완료", "2.02": "실적·재무 상태 발표", "2.03": "채무 부담",
+          "2.05": "구조조정", "2.06": "손상", "3.02": "미등록 증권 발행", "5.02": "임원 변동", "5.07": "주총 결과", "7.01": "Reg FD 공시",
+          "8.01": "기타 사건"}
 
 
 def _b(x: Optional[float]) -> str:
@@ -225,6 +240,20 @@ def _b(x: Optional[float]) -> str:
 
 def _p(x: Optional[float]) -> str:
     return "N/A" if x is None else f"{x * 100:.1f}%"
+
+
+def _price_moves(ticker: str) -> str:
+    """최근 주가 변동 — 큰 이벤트(급락·급등)가 있었는지 리서치가 바로 알 수 있게."""
+    try:
+        import yfinance as yf
+        c = yf.Ticker(ticker).history(period="6mo", interval="1d")["Close"].dropna()
+        if len(c) < 30:
+            return ""
+        ch = lambda n: (c.iloc[-1] / c.iloc[-1 - n] - 1) * 100 if len(c) > n else None  # noqa: E731
+        parts = [f"{lab} {x:+.0f}%" for lab, x in (("1주", ch(5)), ("1개월", ch(21)), ("3개월", ch(63))) if x is not None]
+        return f" ({' · '.join(parts)}, 6개월 고점 {c.max():,.2f} / 저점 {c.min():,.2f})"
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def template(ticker: str, direct: bool) -> Dict[str, Any]:
@@ -263,7 +292,8 @@ def prepare(ticker: str, work_dir: str, refresh: bool = False) -> Path:
     L: List[str] = [
         f"# {T} 적정가치 리서치 패키지", "",
         f"- 회사: {(F.get('profile') or {}).get('name')} · {A.get('sector')} / {A.get('industry')}",
-        f"- 현재가: {v['price']:,.2f} · 시가총액 {_b(M.get('mcap'))} · EV {_b(M.get('ev'))} · 재무 스냅샷 {F.get('fetched')}",
+        f"- 현재가: {v['price']:,.2f}{_price_moves(T)} · 시가총액 {_b(M.get('mcap'))} · EV {_b(M.get('ev'))} · 재무 스냅샷 {F.get('fetched')}"
+        f" (스냅샷 당시 주가 {(F.get('market') or {}).get('price')})",
         f"- 작성 지침: `docs/VALUATION_RESEARCH.md` 를 먼저 읽을 것. 결과물: `{T}_research.json` (아래 템플릿)", "",
         "## 1. 재무 실적 (Yahoo 표준화 · 연간)", "", "| 회계연도 | 매출 | 영업이익 | 영업이익률 | 순이익 | EPS | FCF |", "|---|---|---|---|---|---|---|",
     ]
@@ -275,7 +305,10 @@ def prepare(ticker: str, work_dir: str, refresh: bool = False) -> Path:
           "분기 매출: " + " · ".join(f"{q['end']} {_b(q.get('revenue'))}" for q in (F.get("quarters") or [])[-6:]), "",
           f"재무상태(최근 분기): 현금 {_b(t.get('cash'))} · 총차입 {_b(t.get('total_debt'))} · 자기자본 {_b(t.get('equity'))} · "
           f"무형자산·영업권 {_b(t.get('intangibles'))} · 주식보상(TTM) {_b(t.get('sbc'))}", "",
-          "## 2. 컨센서스 (Yahoo)", ""]
+          *([f"⚠ {w}" for w in v.get("warnings") or []] + [""] if v.get("warnings") else []),
+          "## 2. 컨센서스 (Yahoo)", "",
+          f"- **NTM 환산(엔진)**: TTM 매출 {_b(M.get('rev'))} → 향후 12개월 {_b(M.get('rev_ntm'))} (성장 {_p(M.get('g1'))}), 그 다음 12개월 성장 {_p(M.get('g2'))}. "
+          "`rev_growth` 의 1년차는 이 NTM 기준(TTM 종료 시점부터 12개월)이다 — 회계연도 가이던스를 쓸 때는 이 기간으로 환산할 것."]
     for key, lab in (("rev", "매출"), ("eps", "EPS")):
         for per in ("0y", "+1y"):
             b = (est.get(key) or {}).get(per)
@@ -302,7 +335,14 @@ def prepare(ticker: str, work_dir: str, refresh: bool = False) -> Path:
     L += ["", "peer 중앙값: " + " · ".join(f"{k} {ps[k]['median']:.2f}" for k in ("fpe", "ev_ebitda", "ev_rev", "rev_growth", "op_margin") if k in ps),
           "peer: " + ", ".join(p["symbol"] for p in (v.get("peers") or {}).get("table") or []), "",
           "## 4. 1차 자료 (SEC EDGAR — 반드시 직접 읽을 것)", ""]
-    L += [f"- {f['form']} {f['date']}" + (f" (items {f['items']})" if f.get("items") else "") + f": {f['url']}" for f in filings] or ["- (SEC 공시 목록 수집 실패 — EDGAR 에서 직접 검색)"]
+    for f in filings:
+        its = ", ".join(f"{x} {_ITEMS.get(x, '')}".strip() for x in (f.get("items") or "").split(",") if x)
+        L.append(f"- {f['form']} {f['date']}" + (f" ({its})" if its else "") + f": {f['url']}  · 첨부 목록: {f['index']}")
+    if not filings:
+        L.append("- (SEC 공시 목록 수집 실패 — EDGAR 에서 직접 검색)")
+    L += ["", "주의: 8-K item 번호만으로 내용을 단정하지 말 것(2.02 가 합병 발표와 함께 나오기도 한다). 실적 보도자료·투자자 자료는 첨부(EX-99.x)에 있으니 "
+          "'첨부 목록' 폴더를 열어 확인한다. 전체 제출 목록: "
+          f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={FN._sec_cik(T) or T}&type=&dateb=&owner=include&count=40"]
     L += ["", "## 5. 결과물 템플릿", "",
           ("이 종목은 금융·REIT 유형이라 FCFF DCF 를 쓰지 않는다. 각 시나리오의 `value_per_share` 를 직접 산출하고 `value_basis` 에 방법과 입력값을 적는다."
            if direct else
