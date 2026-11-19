@@ -1,0 +1,164 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-19",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 184.99,
+ "fair_value": 150.88,
+ "fair_low": 65.02,
+ "fair_high": 246.08,
+ "upside_pct": -18.44,
+ "verdict": "OVERVALUED",
+ "verdict_ko": "고평가",
+ "mos_band_pct": 15.0,
+ "n_models": 11,
+ "summary": "리서치 기반 적정가 150.88 = 약세 65.02(30%) · 기본 164.32(50%) · 강세 246.08(20%)의 확률가중. 현재가 184.99 대비 -18.4% · 고평가 (불확실성 보통). 기계적 기준선 162.69.",
+ "archetype": {
+  "code": "HIGH_GROWTH",
+  "label": "고성장 흑자",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "MEDIUM",
+  "label": "보통",
+  "score": 61
+ },
+ "wacc": 0.119,
+ "ke": 0.1224,
+ "models": [
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 136.71,
+   "low": 96.38,
+   "high": 197.78,
+   "weight": 0.165
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 164.21,
+   "low": 112.04,
+   "high": 239.18,
+   "weight": 0.165
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 170.34,
+   "low": 135.7,
+   "high": 199.35,
+   "weight": 0.149
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 127.93,
+   "low": 121.37,
+   "high": 171.66,
+   "weight": 0.116
+  },
+  {
+   "id": "lynch",
+   "name": "피터 린치 공정가(PEG)",
+   "mid": 199.99,
+   "low": 150.31,
+   "high": 249.68,
+   "weight": 0.099
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 177.65,
+   "low": 122.85,
+   "high": 252.14,
+   "weight": 0.069
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 116.78,
+   "low": 84.96,
+   "high": 163.02,
+   "weight": 0.066
+  },
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 172.82,
+   "low": 123.57,
+   "high": 239.12,
+   "weight": 0.066
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 209.57,
+   "low": 104.68,
+   "high": 234.02,
+   "weight": 0.066
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 146.65,
+   "low": 112.37,
+   "high": 169.5,
+   "weight": 0.033
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 38.55,
+   "low": 28.33,
+   "high": 44.08,
+   "weight": 0.006
+  }
+ ],
+ "implied_cagr_5y": 0.2512,
+ "base_cagr_5y": 0.216,
+ "mc": {
+  "p10": 88.32,
+  "p50": 151.19,
+  "p90": 254.39,
+  "prob_above_price": 0.32
+ },
+ "analyst_target": 334.29,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude (Valuation Desk)",
+  "thesis": "Vertiv의 가치는 (1) AI 데이터센터 증설 사이클이 2027년 이후에도 이어지는가, (2) 급증한 수주를 증설한 설비로 차질 없이 매출로 바꾸는가, (3) 25%대 조정 영업이익률이 호황기 가격 효과가 아니라 구조적 수준인가에 달려 있다. 3분기 유기적 수주가 전년 대비 100% 넘게 늘고 4분기 가이던스(매출 44.1억 달러)의 연환산만으로 이미 TTM 대비 +35%여서 향후 12개월 성장은 수주잔고로 대부분 설명된다. 반면 2028년 이후는 하이퍼스케일러·네오클라우드의 자본지출 지속 여부에 달려 있고, 11월 AI주 급락이 보여 주듯 시장은 이 지속성을 의심하고 있다. 현재 증거는 단기 실행은 강하고 장기 수요는 불확실한 쪽을 가리킨다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.3,
+    "value": 65.02,
+    "cagr5": 0.0612,
+    "target_margin": 0.16
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 164.32,
+    "cagr5": 0.1868,
+    "target_margin": 0.245
+   },
+   "bull": {
+    "prob": 0.2,
+    "value": 246.08,
+    "cagr5": 0.2519,
+    "target_margin": 0.27
+   }
+  },
+  "n_sources": 15,
+  "second_opinion": null
+ },
+ "mechanical_fair": 162.69,
+ "ticker": "VRT",
+ "name": "Vertiv Holdings Co",
+ "published": "2026-11-19"
+}
