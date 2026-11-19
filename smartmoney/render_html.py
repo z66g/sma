@@ -284,6 +284,17 @@ def _regime_card(ph: Dict) -> str:
               '다음 국면 확률 = 이 종목의 2년간 국면 전이 빈도 50% + 현재 시나리오 확률 50%.</div></div>')
 
 
+def _valuation_block(a: Dict[str, Any], T: str) -> str:
+    """펀더멘털 적정가치 요약 — 수급(SECTION 0~7)과 독립된 축이라 번호 섹션이 아닌 브리핑 안에 둔다."""
+    v = a.get("valuation")
+    if not v or v.get("fair_value") is None:
+        return ""
+    from . import valuation as V
+    from .render_valuation import card
+    return ('<div class="eh2">펀더멘털 적정가치 · 수급과 독립된 축</div>'
+            + card(V.compact(v), f"../tickers/{e(T)}/valuation.html"))
+
+
 def _num(x: Optional[float], d: int = 2, prefix: str = "", suffix: str = "") -> str:
     return "N/A" if x is None else f"{prefix}{x:,.{d}f}{suffix}"
 
@@ -329,6 +340,7 @@ def render(a: Dict[str, Any], md_text: str = "") -> str:
   {_ladder(a['levels'], price)}
   <div class="eh2">다음 확인 포인트</div>
   {_watch(C.watch_points(a))}
+  {_valuation_block(a, T)}
 </div>"""
     tk = C.takeaways(a)
 

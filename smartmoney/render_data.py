@@ -5,6 +5,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 from . import commentary as C
+from . import valuation as V
 
 
 def _r(x, d=4):
@@ -56,6 +57,8 @@ def render_json(a: Dict[str, Any]) -> str:
     }
     if l3.get("pinning"):
         out["l3"]["pinning"] = l3["pinning"]
+    if a.get("valuation"):
+        out["valuation"] = V.compact(a["valuation"])
     return json.dumps(out, ensure_ascii=False, indent=1, default=str)
 
 
@@ -82,6 +85,18 @@ def _hist_row(h: Dict[str, Any]) -> str:
 
 def _z(x):
     return None if x is None else (0.0 if abs(x) < 0.5 else x)
+
+
+def _md_valuation(v: Optional[Dict[str, Any]]) -> List[str]:
+    if not v or v.get("fair_value") is None:
+        return []
+    u, rd = v.get("uncertainty") or {}, v.get("reverse_dcf") or {}
+    rows = [f"| Fair Value (펀더멘털 {v.get('n_models')}개 모델) | ${v['fair_value']:,.2f} (${v['fair_low']:,.2f}~${v['fair_high']:,.2f}) · "
+            f"{v['upside_pct']:+.1f}% · {v.get('verdict_ko')} |",
+            f"| Valuation Archetype · Uncertainty | {(v.get('archetype') or {}).get('label')} · {u.get('label')} |"]
+    if rd.get("status") == "OK":
+        rows.append(f"| Market-implied 5y Revenue CAGR | {rd['implied_cagr_5y'] * 100:.1f}% (모델 가정 {rd['base_cagr_5y'] * 100:.1f}%) |")
+    return rows
 
 
 def _md_phase(a: Dict[str, Any]) -> List[str]:
@@ -150,7 +165,8 @@ def render_markdown(a: Dict[str, Any]) -> str:
         f"| Scenario [A] Bullish | {s['A_bullish']}% |", f"| Scenario [B] Neutral | {s['B_neutral']}% |",
         f"| Scenario [C] Bearish | {s['C_bearish']}% |",
         f"| Raw Score · Macro | {s['raw_score']:+.3f} · {s.get('macro')} |",
-        f"| Patterns | {', '.join(C.KO_PAT.get(p, p) for p in a['patterns']) or 'none'} |", "",
+        f"| Patterns | {', '.join(C.KO_PAT.get(p, p) for p in a['patterns']) or 'none'} |",
+        *_md_valuation(a.get("valuation")), "",
         "---", "", "## Architect Phase Structure",
         *_md_phase(a), "",
         "---", "", "## 3-Line Summary",

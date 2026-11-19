@@ -80,12 +80,23 @@ def main() -> int:
         hpath = out_dir / f"{tag}_3Layer_Forensic_{an.date_str}.html"
         hpath.write_text(render(a, md), encoding="utf-8")
     jpath.write_text(render_json(a), encoding="utf-8")
+    vpath = None
+    if a.get("valuation"):
+        # 종목당 1개의 '살아있는' 상세 페이지 (매 세션 덮어씀) — 이력은 리포트 JSON 의 valuation 요약으로 남는다
+        from smartmoney.render_valuation import page as valuation_page
+        vpath = out_dir.parent / "tickers" / tag / "valuation.html"
+        vpath.parent.mkdir(parents=True, exist_ok=True)
+        vpath.write_text(valuation_page(a["valuation"], a["meta"].get("name")), encoding="utf-8")
     q = a["quality"]
     log(f"done {tag} in {a['meta']['elapsed_s']}s · quality {q['grade']}({q['score']}) · warnings {len(a['meta']['warnings'])}")
     print(f"HTML: {hpath}")
     if mpath:
         print(f"MD:   {mpath}")
     print(f"JSON: {jpath}")
+    if vpath:
+        v = a["valuation"]
+        log(f"valuation {tag}: {v.get('summary')}")
+        print(f"VAL:  {vpath}")
     return 0
 
 

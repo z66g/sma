@@ -22,6 +22,7 @@
 11. [Design System](#11-design-system)
 12. [File Output Rules](#12-file-output-rules)
 13. [API Source Map](#13-api-source-map)
+14. [Fundamental Fair Value Engine](#14-fundamental-fair-value-engine)
 
 ---
 
@@ -1663,6 +1664,61 @@ class SmartMoneyAnalyzer:
         html = self.render_html(analysis)
         md   = self.render_markdown(analysis)
         return html, md
+```
+
+---
+
+## 14. FUNDAMENTAL FAIR VALUE ENGINE
+
+> Full specification: `docs/VALUATION.md`. Code: `smartmoney/fundamentals.py`, `smartmoney/valuation.py`,
+> `smartmoney/render_valuation.py`, CLI `valuation.py`, tests `tools/test_valuation.py`.
+
+The fair value engine is an **independent axis** from the flow analysis (Sections 0–7). It never feeds the
+scenario probabilities, and flow signals never feed it. It answers one question: what is the stock worth on
+public fundamentals, and what does the current price assume?
+
+### 14.1 Pipeline
+
+```
+fundamentals snapshot → derive metrics → classify archetype → cost of capital
+  → run every model (with applicability rules + validation checks)
+  → blend (archetype weights × reliability, outlier down-weighting)
+  → uncertainty level + verdict
+  + diagnostics: reverse DCF, Monte Carlo, sensitivity grid
+```
+
+### 14.2 Rules
+
+```
+1. CLASSIFY FIRST. Never run one model on every stock. Archetypes:
+   MATURE_COMPOUNDER, HIGH_GROWTH, HYPERGROWTH_UNPROFITABLE, PRE_REVENUE, CYCLICAL,
+   DIVIDEND_DEFENSIVE, TURNAROUND, BANK, INSURANCE, REIT.
+2. A model that does not fit the archetype is EXCLUDED with a stated reason
+   (no dividend → no DDM; bank → no FCFF DCF or EV multiples; losses → no P/E, EPV, Graham).
+3. Every assumption is derived from data (consensus, history, peers) and shown in the output.
+   Missing inputs stay missing — never fabricate.
+4. Cyclicals are valued on mid-cycle (long-run median) margins, not current-year earnings.
+5. Loss-makers converge to a peer-based target margin with operating leverage, not linearly.
+6. High growth mean-reverts: excess growth decays 35% per year after the consensus window.
+7. Discount rates converge toward a mature-company cost of capital over the forecast horizon.
+8. Models are blended by archetype weight × reliability; a model more than 3× away from the
+   cross-model median keeps a quarter of its weight.
+9. Uncertainty widens the verdict band (10 / 15 / 25 / 35 %). Report the range, not only the point.
+10. When fair value and price differ by more than 3×, flag `model_gap` and lead with the
+    reverse DCF (what the price assumes) instead of the point estimate.
+11. Analyst price targets are shown for reference only and never enter the blend.
+12. Deterministic: Monte Carlo is seeded from the ticker.
+```
+
+### 14.3 Placement
+
+```
+- Report JSON: `valuation` key (summary). Markdown: three rows in Key Metrics.
+- 3-Layer report: a card inside the briefing block — NOT a numbered section
+  (Sections 0–7 and their order are unchanged; Section 7 stays last).
+- reports/tickers/{T}/valuation.html: one living detail page per ticker.
+- Dashboard: "적정가 (괴리)" column; ticker page: card + fair value line on the price chart.
+- Not attached to index reports or to re-runs of sessions older than 7 days.
 ```
 
 ---

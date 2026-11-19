@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional
 
 from smartmoney import commentary as C
 from smartmoney.calendar import legacy_session_for, parse_date
+from smartmoney.render_valuation import card as valuation_card
 
 ROOT = Path(__file__).resolve().parent
 REPORTS = ROOT / "reports"
@@ -473,6 +474,14 @@ def render_ticker_page(ticker: str, series: list) -> str:
         price_ds.append({"label": "Call Wall", "data": call_wall, "borderColor": "#57AB5A", "borderDash": [6, 3]})
     if any(v is not None for v in put_wall):
         price_ds.append({"label": "Put Wall", "data": put_wall, "borderColor": "#E5534B", "borderDash": [6, 3]})
+    fair_hist = [_num((s.get("valuation") or {}).get("fair_value")) if isinstance(s.get("valuation"), dict) else None for s in series]
+    if any(v is not None for v in fair_hist):
+        price_ds.append({"label": "적정가 (펀더멘털)", "data": fair_hist, "borderColor": "#1F2328", "borderWidth": 2, "borderDash": [1, 3]})
+    val = latest.get("valuation") if isinstance(latest.get("valuation"), dict) else None
+    val_html = ""
+    if val and val.get("fair_value") is not None:
+        href = "valuation.html" if (TICKERS_DIR / ticker / "valuation.html").exists() else None
+        val_html = f'<h2>펀더멘털 적정가치 <span style="font-size:11px;color:{COLOR["muted"]};font-weight:400;">수급 분석과 독립된 축 · {E(latest.get("date"))} 세션 기준</span></h2>' + valuation_card(val, href)
     datasets = {
         "priceChart": (price_ds, False),
         "probChart": ([
@@ -574,9 +583,11 @@ def render_ticker_page(ticker: str, series: list) -> str:
     {_overview_cards(latest)}
   </div>
 
+  {val_html}
+
   <h2>시계열 추이</h2>
   <div class="chart-grid">
-    <div class="card" style="grid-column:1/-1;"><div class="card-label">Price · Max Pain · GEX Flip · Walls</div><canvas id="priceChart"></canvas></div>
+    <div class="card" style="grid-column:1/-1;"><div class="card-label">Price · Max Pain · GEX Flip · Walls · 적정가</div><canvas id="priceChart"></canvas></div>
     <div class="card"><div class="card-label">구성원별 OBV (기관·프로·리테일·Total, 5d, 좌) vs Dark Pool % (우)</div><canvas id="obvChart"></canvas></div>
     <div class="card"><div class="card-label">Short % (좌) · CTB Fee % (우)</div><canvas id="shortChart"></canvas></div>
     <div class="card" style="grid-column:1/-1;"><div class="card-label">Scenario Probabilities (%)</div><canvas id="probChart"></canvas></div>
@@ -708,11 +719,29 @@ def summarize(t: str, series: list, watchlist: set) -> dict:
         "headline": headline if isinstance(headline, str) else None,
         "one_liner": latest.get("one_liner") if isinstance(latest.get("one_liner"), str) else None,
         "report_count": len(series),
+        **_valuation_summary(t, latest),
+    }
+
+
+def _valuation_summary(t: str, latest: dict) -> dict:
+    """대시보드용 적정가치 요약 (v3 리포트 JSON 의 `valuation` 키 — 없으면 전부 None)."""
+    v = latest.get("valuation") if isinstance(latest.get("valuation"), dict) else {}
+    fair = _num(v.get("fair_value"))
+    return {
+        "fair_value": fair,
+        "fair_low": _num(v.get("fair_low")), "fair_high": _num(v.get("fair_high")),
+        "fair_upside": _num(v.get("upside_pct")) if fair is not None else None,
+        "fair_verdict": v.get("verdict") if fair is not None else None,
+        "fair_verdict_ko": v.get("verdict_ko") if fair is not None else None,
+        "fair_unc": (v.get("uncertainty") or {}).get("label") if fair is not None else None,
+        "fair_type": (v.get("archetype") or {}).get("label") if fair is not None else None,
+        "fair_models": v.get("n_models") if fair is not None else None,
+        "val_url": f"tickers/{t}/valuation.html" if fair is not None and (TICKERS_DIR / t / "valuation.html").exists() else None,
     }
 
 
 TABLE_HEAD = """<thead><tr>
-    <th>Ticker</th><th>Session</th><th>Quality</th><th>Price</th><th>Top Scenario</th><th>Score</th>
+    <th>Ticker</th><th>Session</th><th>Quality</th><th>Price</th><th title="펀더멘털 모델 통합 적정가 · 현재가 대비 괴리">적정가 (괴리)</th><th>Top Scenario</th><th>Score</th>
     <th>Macro</th><th>Darkpool</th><th>Short Case</th><th>Options</th><th>DP %</th><th>Short %</th>
     <th>CTB % (Δ)</th><th>DTC</th><th>±Move</th><th>Max Pain</th><th>Call/Put Wall</th><th>Patterns</th>
     <th>📄</th><th></th>
@@ -878,7 +907,7 @@ APP_JS = r"""
 // Dashboard logic — operates on window.__DB__ (array of ticker summaries)
 const DB = window.__DB__ || [];
 const KO = window.__KO__ || {};
-const COLS = 20;
+const COLS = 21;
 const bodyActive  = document.getElementById('tbody-active');
 const bodyArchive = document.getElementById('tbody-archive');
 const archiveWrap = document.getElementById('archive-wrap');
@@ -910,6 +939,25 @@ function qualityPill(r) {
   const warn = r.warnings_count ? ` · ⚠${r.warnings_count}` : '';
   return `<span class="pill ${cls}" title="${esc(title)}">${esc(r.quality_grade)}${isNum(r.quality_score) ? ' ' + r.quality_score.toFixed(0) : ''}${esc(warn)}</span>`;
 }
+function fairCell(r) {
+  if (!isNum(r.fair_value)) return NA;
+  const up = r.fair_upside, v = r.fair_verdict || '';
+  const col = v.indexOf('UNDER') >= 0 ? '#1A7F5A' : v.indexOf('OVER') >= 0 ? '#CF222B' : '#656D76';
+  const title = [r.fair_type, r.fair_verdict_ko, r.fair_unc ? '불확실성 ' + r.fair_unc : '',
+    (isNum(r.fair_low) && isNum(r.fair_high)) ? '범위 $' + r.fair_low.toFixed(2) + '~$' + r.fair_high.toFixed(2) : '',
+    r.fair_models ? r.fair_models + '개 모델' : ''].filter(Boolean).join(' · ');
+  const body = `${fmtDol(r.fair_value)} <span style="color:${col};font-weight:600;">${isNum(up) ? fmtSigned(up, 0) + '%' : ''}</span>`;
+  const url = safePath(r.val_url);
+  return url ? `<a href="${esc(url)}" title="${esc(title)}" style="color:inherit;">${body}</a>` : `<span title="${esc(title)}">${body}</span>`;
+}
+function fairChip(r) {
+  if (!isNum(r.fair_value) || !isNum(r.fair_upside)) return '';
+  const v = r.fair_verdict || '';
+  const col = v.indexOf('UNDER') >= 0 ? '#1A7F5A' : v.indexOf('OVER') >= 0 ? '#CF222B' : '#656D76';
+  const px = '$' + (r.fair_value >= 100 ? r.fair_value.toFixed(0) : r.fair_value.toFixed(2));
+  return `<span class="olp" style="font-size:10.5px;color:#656D76;" title="펀더멘털 적정가 ${esc(fmtDol(r.fair_value))} · ${esc(r.fair_verdict_ko || '')}">적정 ${px} `
+    + `<b style="color:${col};font-size:10.5px;">${fmtSigned(r.fair_upside, 0)}%</b></span>`;
+}
 function casePretty(c) { return c ? esc(KO[c] || String(c).replace(/^CASE_\d+_/, '').replace(/^CASE_/, '')) : NA; }
 function txt(v) { return v ? esc(KO[v] || v) : NA; }
 
@@ -932,6 +980,7 @@ function rowHTML(r, mode) {
     <td>${dateCell}</td>
     <td>${qualityPill(r)}</td>
     <td>${fmtDol(r.price)}</td>
+    <td>${fairCell(r)}</td>
     <td>${scenarioPill(r.scenario, r.scenario_pct)}</td>
     <td>${isNum(r.raw_score) ? r.raw_score.toFixed(2) : NA}</td>
     <td>${txt(r.macro_env)}</td>
@@ -970,7 +1019,7 @@ function render() {
   olList.innerHTML = ols.map(r => {
     const u = safePath(r.report_url);
     return `<a class="ol" href="${u ? esc(u) : 'tickers/' + encodeURIComponent(r.ticker) + '/'}"><div><b>${esc(r.ticker)}</b>`
-      + `<span class="olp">${scenarioPill(r.scenario, r.scenario_pct)}</span></div><div>${esc(r.one_liner)}</div></a>`;
+      + `<span class="olp">${scenarioPill(r.scenario, r.scenario_pct)}</span>${fairChip(r)}</div><div>${esc(r.one_liner)}</div></a>`;
   }).join('');
   olHead.style.display = olList.style.display = ols.length ? '' : 'none';
 }

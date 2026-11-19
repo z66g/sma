@@ -51,7 +51,29 @@ narrative.py, narrative.js)는 새 키가 없을 수도 있다고 가정하고 `
 추가: `ema9, ema21, rsi14, atr14, atr_pct, bb_upper, bb_lower, bb_position, bb_width_pctile` (1y 백분위),
 `key_resistance, key_support, vol_ratio30, high_52w, low_52w`
 
+## valuation (펀더멘털 적정가치 · 선택)
+개별 종목 리포트에만 있고, 수집 실패·과거 세션 재실행(7일 초과)·`SMA_VALUATION=0` 이면 키 자체가 없다. 소비자는 누락을 N/A 로 표시한다.
+알고리즘: `docs/VALUATION.md`.
+
+| key | type | 비고 |
+|---|---|---|
+| `version`, `status` | int, str | `status`: `OK` / `NO_MODEL` (적용 가능한 모델 없음 → `fair_value` null) |
+| `as_of`, `fundamentals_asof` | str | 세션 날짜 / 재무 스냅샷 수집일 |
+| `price`, `fair_value`, `fair_low`, `fair_high` | float | 주당, `currency` 기준 |
+| `upside_pct` | float | `(fair_value / price − 1) × 100` |
+| `verdict`, `verdict_ko` | str | `DEEP_UNDERVALUED` / `UNDERVALUED` / `FAIR` / `OVERVALUED` / `DEEP_OVERVALUED` |
+| `mos_band_pct` | float | 판정 밴드 (불확실성 등급별 10/15/25/35) |
+| `archetype` | obj | `{code, label, traits:[str]}` — code: `MATURE_COMPOUNDER`, `HIGH_GROWTH`, `HYPERGROWTH_UNPROFITABLE`, `PRE_REVENUE`, `CYCLICAL`, `DIVIDEND_DEFENSIVE`, `TURNAROUND`, `BANK`, `INSURANCE`, `REIT` |
+| `uncertainty` | obj | `{level:"LOW"/"MEDIUM"/"HIGH"/"VERY_HIGH", label, score:0-100}` |
+| `n_models`, `models` | int, [obj] | 통합에 쓴 모델 `{id, name, low, mid, high, weight}` (가중치 내림차순) |
+| `wacc`, `ke` | float | 소수 (0.09 = 9%) |
+| `implied_cagr_5y`, `base_cagr_5y` | float\|null | 역DCF 내재 5년 매출 CAGR / 모델 기본 가정 |
+| `mc` | obj\|null | 몬테카를로 `{p10, p50, p90, prob_above_price}` |
+| `analyst_target` | float\|null | 참고용 (통합에 미포함) |
+| `summary` | str | 한 문장 요약 (한국어) |
+
 ## 상태 저장소 (`state/`)
 - `state/flow/{T}.json` — 일별 체결 단위 집계 (Alpaca)
 - `state/borrow/{T}.json` — 일별 대차 스냅샷 `[{date, fee, available}]` (IBKR FTP 는 히스토리가 없어 직접 누적)
+- `state/fundamentals/{T}.json` — 재무 스냅샷 (적정가치 입력) · `state/fundamentals/_peers.json` — peer 프로필 공유 캐시
 - 워크플로 커밋 단계는 `reports/` 와 함께 `state/` 도 add 해야 한다.
