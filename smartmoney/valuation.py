@@ -530,6 +530,10 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
     rev0 = f("rev0")
     rev_prev = rev0 * np.ones(np.broadcast(g1, m0, mT, s2c, w0, gT).shape)
     scale_m = bool(p.get("scale_margin"))
+    explicit = p.get("capex_pct") is not None
+    if explicit:
+        cap_list = [float(x) for x in (p["capex_pct"] if isinstance(p["capex_pct"], (list, tuple)) else [p["capex_pct"]])]
+        dep, nwc = float(p.get("dep_pct") if p.get("dep_pct") is not None else p["da_pct"]), float(p.get("nwc_pct") or 0.0)
     nol = np.zeros_like(rev_prev)
     pv = np.zeros_like(rev_prev)
     df = np.ones_like(rev_prev)
@@ -550,8 +554,13 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
         use = np.minimum(nol, np.maximum(ebit, 0))          # 이월결손금: 예측 기간 중 발생분만 (보수적)
         taxes = (np.maximum(ebit, 0) - use) * rate
         nol = nol - use + np.maximum(-ebit, 0)
-        reinv = np.maximum(rev - rev_prev, 0) / s2c
-        fcff = ebit - taxes - reinv + amort0 * AMORT_DECAY ** t
+        if explicit:     # Finbox 식 명시적 현금흐름: NOPAT + D&A − CAPEX − 순운전자본 증가 (리서치가 CAPEX 계획을 직접 줄 때)
+            cx = cap_list[min(t - 1, len(cap_list) - 1)]
+            reinv = (cx - dep) * rev + nwc * (rev - rev_prev)
+            fcff = ebit - taxes - reinv
+        else:
+            reinv = np.maximum(rev - rev_prev, 0) / s2c
+            fcff = ebit - taxes - reinv + amort0 * AMORT_DECAY ** t
         w = w0 + (wT - w0) * (t - 1) / max(N - 1, 1)
         df = df / (1 + w)
         pv = pv + fcff * df * np.sqrt(1 + w)                # 기중(mid-year) 할인
@@ -562,11 +571,13 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
     roicT = wT + f("roic_prem")
     rr = np.clip(gT / roicT, 0, 0.9)
     fcff_t1 = rev_prev * (1 + gT) * m * (1 - taxT) * (1 - rr)
+    if explicit:         # 마지막 해의 자본집약도가 유지된다고 보고 영구성장 (Terminal FCF × (1+g) ÷ (WACC − g))
+        fcff_t1 = (rev_prev * m * (1 - taxT) + (dep - cap_list[-1]) * rev_prev) * (1 + gT) - nwc * rev_prev * gT
     tv_g = fcff_t1 / np.maximum(wT - gT, 0.025)
     if terminal == "growth":
         tv = tv_g
     elif terminal == "ebitda":
-        tv = np.maximum(ebit + rev_prev * f("da_pct"), 0) * np.asarray(mult, float)
+        tv = np.maximum(ebit + rev_prev * (dep if explicit else f("da_pct")), 0) * np.asarray(mult, float)
     else:
         tv = rev_prev * np.asarray(mult, float)
     ev = pv + tv * df
@@ -848,7 +859,12 @@ def model_ddm(mid: str, D, K, A, g_term) -> Dict[str, Any]:
         r["mid"], r["low"], r["high"] = v(ke, g_s), v(ke + 0.0075, max(g_s - 0.02, 0)), v(ke - 0.0075, g_s + 0.02)
         r["notes"].append(f"1단계 5년: 이익성장 {g_s * 100:.1f}%→{g_term * 100:.1f}% · 배당성향 {payout * 100:.0f}% / "
                           f"이후 영구성장 · 성숙기 배당성향 {pay_T * 100:.0f}% (자기자본비용 {ke * 100:.1f}%)")
-    _check(r, "배당성향", payout <= 0.9, f"배당성향 {payout * 100:.0f}%" + ("" if payout <= 0.9 else " — 여력 부족"), 0.7)
+    fit = 0.8 <= payout <= 1.1 or A["code"] == "REIT"
+    _check(r, "배당 대표성", fit or payout >= 0.5, f"배당성향 {payout * 100:.0f}%"
+           + ("" if fit else " — 배당이 잉여현금의 80~110% 일 때 DDM 이 가장 잘 맞는다" + (" (그 미만은 과소평가 경향)" if payout < 0.8 else " (여력 부족)")),
+           0.6)
+    if not fit and payout >= 0.5:
+        r["rel"] *= 0.8
     return r
 
 
@@ -1236,6 +1252,10 @@ def scenario_value(D, P, exit10, s: Dict[str, Any]) -> Dict[str, Any]:
         q["s2c"] = float(s["s2c"])
     if _ok(s.get("terminal_growth")):
         q["gT"] = _clip(float(s["terminal_growth"]), 0.01, 0.04)
+    if s.get("capex_pct") is not None:                      # 명시적 현금흐름 빌드 (CAPEX·D&A·순운전자본을 매출 대비 비율로)
+        q["capex_pct"] = s["capex_pct"]
+        q["dep_pct"] = float(s["da_pct"]) if _ok(s.get("da_pct")) else P["da_pct"]
+        q["nwc_pct"] = float(s.get("nwc_pct") or 0.0)
     if _ok(s.get("tax_rate")):                              # 구조적으로 낮거나 높은 장기 세율의 근거가 있을 때
         q["taxT"] = _clip(float(s["tax_rate"]), 0.05, 0.35)
     pf = float(s["fail_prob"]) if _ok(s.get("fail_prob")) else P["p_fail"]
@@ -1262,7 +1282,8 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
         D = {**D, "shares": float(adjm["shares"])}
     shares = D["shares"]
     # 엔진 부채에는 운용리스 부채가 들어 있다. 리스료는 이미 영업이익에서 차감되므로 리서치가 금액을 주면 이중 차감을 되돌린다
-    add = (float(adjm.get("nonop_assets") or 0.0) + float(adjm.get("operating_leases_in_debt") or 0.0)) / shares
+    add = (float(adjm.get("nonop_assets") or 0.0) + float(adjm.get("operating_leases_in_debt") or 0.0)
+           - float(adjm.get("debt_like_liabilities") or 0.0)) / shares     # 연금 부족분 등 부채성 항목은 차감
     if adjm.get("minority_in_share_count"):                 # Up-C 구조: 비지배지분 보유자가 이미 주식수에 포함 → 차감분 복원
         add += D["minority"] / shares
     dil = 1 + float(adjm.get("extra_dilution_pct") or 0.0)

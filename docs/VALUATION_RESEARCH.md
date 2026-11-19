@@ -39,6 +39,7 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 | `margin_year` | 목표 마진 도달 연차 (1~10) | 경영진 목표 시점 또는 설비·제품 램프 일정에 맞춘다 |
 | `wacc_adj` | 할인율 가감 (±3%p 이내) | 기본 0. 사업 위험이 기계적 베타에 반영되지 않았다고 판단할 근거가 있을 때만 |
 | `s2c` | Sales-to-Capital (선택) | 자본집약도가 과거와 달라질 명확한 이유가 있을 때만 |
+| `capex_pct` (+`da_pct`, `nwc_pct`) | 명시적 현금흐름 빌드 (선택) | Finbox 식: FCF = NOPAT + D&A − CAPEX − 순운전자본 증가. `capex_pct` 는 매출 대비 CAPEX(숫자 또는 연도별 목록), `da_pct` 는 D&A, `nwc_pct` 는 매출 증가분 대비 순운전자본. **회사가 CAPEX 계획을 공시했거나 자본집약도가 과거와 달라질 때** `s2c`·`extra_investment` 대신 쓴다(셋을 섞지 말 것). 마지막 해 비율이 영구히 유지된다고 계산되므로 마지막 값은 유지 수준으로 둔다 |
 | `tax_rate` | 장기 세율 (선택, 0.05~0.35) | 기본은 엔진이 max(유효세율, 21%)로 수렴. 구조적으로 다른 세율의 근거(관할·세제)가 있을 때만 |
 | `fail_prob` | 자금조달 실패 확률 (선택) | 현금 소진 기업: 조달 계획·현금 여력을 확인했으면 명시. 같은 위험을 `wacc_adj` 로 또 올리지 말 것(이중 반영) |
 | `extra_investment` | 연도별 추가 투자 유출 (달러, 선택; 엔진이 이미 잡는 재투자·감가상각을 뺀 **초과분**. 여기 넣은 자산의 감가상각을 목표 마진에서 또 빼지 말 것) | 매출보다 **앞서** 집행되는 투자(위성망·공장·광산 증설). 엔진의 재투자는 매출 증가 시점에 잡히므로, 회사가 밝힌 CAPEX 계획 중 그 이상분을 연도별로 적는다 |
@@ -80,7 +81,7 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 | `plans[]` | `{item, timing, impact}` — 가정에 반영한 경영 계획 |
 | `news[]` | `{date, headline, impact: POS/NEG/NEU, why}` — 가정을 바꾼 것만 |
 | `risks[]`, `catalysts[]` | 약세·강세 시나리오로 가는 구체적 사건 |
-| `scenarios`, `options`, `adjustments` | §2. `adjustments.nonop_assets`(달러: 지분투자·보유 암호화폐·**제한현금** 등 엔진의 현금에 안 잡힌 자산), `extra_dilution_pct`(전환증권·예정 증자), `shares`(희석 주식수 — 엔진 주식수(시가총액÷주가)가 미획득 성과주를 포함하거나 발행 예정 주식을 빠뜨릴 때, 10-Q 표지·희석 가중평균 근거로), `operating_leases_in_debt`(달러: 엔진 부채에 포함된 운용리스 부채 — 리스료가 이미 영업이익에서 빠지므로 되돌린다), `minority_economic_share`(0~0.9: 연결 이익·가치 중 소수주주 몫 — 자회사 지분이 커서 **장부 비지배지분이 경제적 몫을 크게 밑돌 때**. 최근 3년 '비지배지분 귀속 순이익 ÷ 연결 순이익'과 지분율로 근거 제시), `minority_in_share_count`(true: Up-C 구조처럼 비지배지분 보유자가 이미 주식수에 포함된 경우 — 엔진의 비지배지분 차감을 되돌린다), `note`(근거) |
+| `scenarios`, `options`, `adjustments` | §2. `adjustments.nonop_assets`(달러: 지분투자·보유 암호화폐·**제한현금** 등 엔진의 현금에 안 잡힌 자산), `extra_dilution_pct`(전환증권·예정 증자), `shares`(희석 주식수 — 엔진 주식수(시가총액÷주가)가 미획득 성과주를 포함하거나 발행 예정 주식을 빠뜨릴 때, 10-Q 표지·희석 가중평균 근거로), `debt_like_liabilities`(달러: 연금 부족분·확정된 소송 배상 등 엔진 부채에 없는 부채성 항목 — 차감), `operating_leases_in_debt`(달러: 엔진 부채에 포함된 운용리스 부채 — 리스료가 이미 영업이익에서 빠지므로 되돌린다), `minority_economic_share`(0~0.9: 연결 이익·가치 중 소수주주 몫 — 자회사 지분이 커서 **장부 비지배지분이 경제적 몫을 크게 밑돌 때**. 최근 3년 '비지배지분 귀속 순이익 ÷ 연결 순이익'과 지분율로 근거 제시), `minority_in_share_count`(true: Up-C 구조처럼 비지배지분 보유자가 이미 주식수에 포함된 경우 — 엔진의 비지배지분 차감을 되돌린다), `note`(근거) |
 | `valuation_notes` | 컨센서스·기계적 기준선과 다른 지점과 이유, 확인하지 못한 것 |
 | `confidence` | HIGH(1차 자료로 대부분 검증) / MEDIUM / LOW(핵심 가정이 추정) |
 | `sources[]` | `{title, url, date}` 최소 6개, SEC 공시 포함 |

@@ -141,6 +141,17 @@ def main() -> int:
     check("할인율↑ → 가치↓", float(V.dcf({**P, "w0": 0.10, "wT5": 0.10}, 5, "growth")) < got)
     check("목표마진↑ → 가치↑", float(V.dcf({**P, "mT": 0.25}, 5, "growth")) > got)
     check("영구성장률↑ → 가치↑ (ROIC > WACC)", float(V.dcf({**P, "gT": 0.035}, 5, "growth")) > got)
+    q = {**P, "capex_pct": [0.08, 0.07, 0.06], "dep_pct": 0.05, "nwc_pct": 0.10}       # Finbox 식 명시적 현금흐름 빌드
+    rev2, pv2, df2, caps = 1000.0, 0.0, 1.0, [0.08, 0.07, 0.06, 0.06, 0.06]
+    for t in range(1, 6):
+        g = 0.10 if t == 1 else 0.08 if t == 2 else 0.03 + (0.08 - 0.03) * V.GROWTH_DECAY ** (t - 2)
+        new = rev2 * (1 + g)
+        df2 /= 1.09
+        pv2 += (new * 0.20 * 0.75 + 0.05 * new - caps[t - 1] * new - 0.10 * (new - rev2)) * df2 * 1.09 ** 0.5
+        rev2 = new
+    tv2 = ((rev2 * 0.20 * 0.75 + (0.05 - 0.06) * rev2) * 1.03 - 0.10 * rev2 * 0.03) / (0.09 - 0.03)
+    check("DCF(명시적 빌드: NOPAT + D&A − CAPEX − ΔNWC) = 독립 계산", abs(float(V.dcf(q, 5, "growth")) / (pv2 + tv2 * df2) - 1) < 1e-9)
+    check("CAPEX 비율↑ → 가치↓", float(V.dcf({**q, "capex_pct": 0.12}, 5, "growth")) < float(V.dcf({**q, "capex_pct": 0.06}, 5, "growth")))
     hi = float(V.dcf({**P, "g1": 3.0, "g2": 2.0}, 10, "growth", detail=True)["rev_n"])
     cap = float(V.dcf({**P, "g1": 3.0, "g2": 0.95}, 10, "growth", detail=True)["rev_n"])
     check("초고성장 완충: 2년차 200% 와 95% 의 10년 뒤 매출 차이 < 2.5배", hi / cap < 2.5, f"{hi / cap:.2f}")

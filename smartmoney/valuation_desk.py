@@ -106,6 +106,17 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append(f"scenarios.{k}.wacc_adj: ±0.03 이내")
         if s.get("fail_prob") is not None and (not V._ok(s["fail_prob"]) or not 0 <= s["fail_prob"] <= 0.9):
             err.append(f"scenarios.{k}.fail_prob: 0~0.9")
+        cx = s.get("capex_pct")
+        if cx is not None:
+            xs = cx if isinstance(cx, list) else [cx]
+            if not xs or len(xs) > 10 or any(not V._ok(x) or not 0 <= x <= 1.5 for x in xs):
+                err.append(f"scenarios.{k}.capex_pct: 매출 대비 CAPEX 비율(0~1.5), 숫자 또는 연도별 목록(최대 10)")
+            if s.get("da_pct") is not None and (not V._ok(s["da_pct"]) or not 0 <= s["da_pct"] <= 0.6):
+                err.append(f"scenarios.{k}.da_pct: 0~0.6")
+            if s.get("nwc_pct") is not None and (not V._ok(s["nwc_pct"]) or not -0.5 <= s["nwc_pct"] <= 0.8):
+                err.append(f"scenarios.{k}.nwc_pct: −0.5~0.8")
+            if s.get("extra_investment"):
+                err.append(f"scenarios.{k}: capex_pct(명시적 현금흐름)와 extra_investment 는 함께 쓰지 않는다 — CAPEX 계획은 capex_pct 에 모두 담을 것")
         if s.get("tax_rate") is not None and (not V._ok(s["tax_rate"]) or not 0.05 <= s["tax_rate"] <= 0.35):
             err.append(f"scenarios.{k}.tax_rate: 0.05~0.35")
         xi = s.get("extra_investment")
@@ -119,7 +130,7 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append("adjustments.minority_economic_share: 0~0.9 (연결 이익·가치 중 소수주주 몫)")
         if adj.get("minority_in_share_count"):
             err.append("adjustments: minority_economic_share 와 minority_in_share_count 는 함께 쓸 수 없음")
-    for key in ("nonop_assets", "operating_leases_in_debt"):
+    for key in ("nonop_assets", "operating_leases_in_debt", "debt_like_liabilities"):
         if adj.get(key) is not None and (not V._ok(adj[key]) or adj[key] < 0):
             err.append(f"adjustments.{key}: 0 이상의 달러 금액")
     if adj.get("shares") is not None and (not V._ok(adj["shares"]) or adj["shares"] <= 0):
