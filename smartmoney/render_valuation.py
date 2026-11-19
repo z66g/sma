@@ -95,6 +95,10 @@ def card(vc: Optional[Dict[str, Any]], href: Optional[str] = None) -> str:
     extra = []
     if is_r and vc.get("mechanical_fair") is not None:
         extra.append(f"기계적 기준선 {_px(vc['mechanical_fair'], ccy)}")
+    if is_r and (R.get("second_opinion") or {}).get("fair_value"):
+        extra.append(f"독립 2차 의견 {_px(R['second_opinion']['fair_value'], ccy)}")
+    if vc.get("model_gap"):
+        extra.append(f'<b style="color:{WARN};">⚠ 시장과 3배 이상 괴리 — 상세의 "현재가가 맞으려면" 참고</b>')
     if vc.get("implied_cagr_5y") is not None and vc.get("base_cagr_5y") is not None:
         extra.append(f"시장 내재 5년 매출성장 <b>{vc['implied_cagr_5y'] * 100:.0f}%</b> vs 모델 가정 {vc['base_cagr_5y'] * 100:.0f}%")
     if vc.get("analyst_target") is not None:
@@ -168,9 +172,14 @@ def page(v: Dict[str, Any], name: Optional[str] = None, home: str = "./", dash: 
         R_ = v.get("research")
         hero_label = (f"적정가치 판정 · 리서치 기반 시나리오 확률가중 (리서치 {e(R_.get('as_of'))}" + (" · 갱신 필요" if R_.get("stale") else "") + ")") if R_ \
             else "기계적 기준선 · 재무제표만 반영 (사업모델·계획·뉴스 미반영 — 리서치 전 참고용)"
-        gap = alert("현 재무·컨센서스 기반 모델과 시장 가격의 괴리가 3배 이상입니다. 이 경우 적정가 수치 자체보다 "
-                    "<b>시장이 어떤 가정을 가격에 넣고 있는지</b>(아래 VALUATION 4)가 핵심 정보입니다.", "warn", "모델로 설명되지 않는 가격") \
-            if v.get("model_gap") else ""
+        gap = ""
+        if v.get("model_gap") and v.get("research"):
+            gap = alert("리서치 적정가와 시장 가격의 괴리가 3배 이상입니다. 리서치가 검토한 사업·계획·신사업 옵션으로는 현재가가 설명되지 않는다는 뜻이며, "
+                        "<b>현재가가 맞으려면 무엇이 실현돼야 하는지</b>는 아래 '가정에 대한 메모'에 있습니다. 시장이 옳을 수 있습니다 — "
+                        "이 수치는 '공개 증거로 뒷받침되는 가치'이지 주가 예측이 아닙니다.", "warn", "시장과 리서치의 큰 괴리")
+        elif v.get("model_gap"):
+            gap = alert("현 재무·컨센서스 기반 모델과 시장 가격의 괴리가 3배 이상입니다. 이 경우 적정가 수치 자체보다 "
+                        "<b>시장이 어떤 가정을 가격에 넣고 있는지</b>(아래 VALUATION 4)가 핵심 정보입니다.", "warn", "모델로 설명되지 않는 가격")
         hero = f"""
 <div class="verdict" style="background:{bg};border-left-color:{fg};">
   <div class="vl" style="color:{fg};">{hero_label}</div>
@@ -385,6 +394,12 @@ def _research_html(v: Dict[str, Any], ccy: str) -> str:
     if mech.get("fair_value"):
         gap = (f'<div class="tk-x"><b>기계적 기준선과의 차이</b> · 재무제표만 본 결과는 {_px(mech["fair_value"], ccy)}'
                f' — 리서치 적정가는 그 {v["fair_value"] / mech["fair_value"]:.1f}배. 차이의 근거는 아래 시나리오 가정과 옵션가치에 있다.</div>')
+    so = R.get("second_opinion") or {}
+    if so.get("fair_value"):
+        sv = so.get("scenarios") or {}
+        gap += (f'<div class="tk-x"><b>독립 2차 의견</b> · {e(so.get("analyst"))}: 적정가 <b>{_px(so["fair_value"], ccy)}</b>'
+                + (f' (약세 {_px(sv.get("bear"), ccy)} · 기본 {_px(sv.get("base"), ccy)} · 강세 {_px(sv.get("bull"), ccy)})' if sv else "")
+                + f' — 이 리서치와 {abs(so["fair_value"] / v["fair_value"] - 1) * 100:.0f}% 차이. {e(so.get("note") or "")}</div>')
     conf = str(R.get("confidence") or "").upper()
     return _vsec("v0", 0, "리서치 — 사업·성과·계획·뉴스를 시나리오로", [
         pill(f"리서치 {R.get('as_of')}", "warn" if R.get("stale") else "info"),

@@ -739,6 +739,7 @@ def _valuation_summary(t: str, latest: dict) -> dict:
         "fair_method": v.get("method") if fair is not None else None,
         "fair_research": (v.get("research") or {}).get("as_of") if fair is not None else None,
         "fair_stale": bool(v.get("stale")) if fair is not None else None,
+        "fair_gap": bool(v.get("model_gap")) if fair is not None else None,
         "val_url": f"tickers/{t}/valuation.html" if fair is not None and (TICKERS_DIR / t / "valuation.html").exists() else None,
     }
 
@@ -950,7 +951,8 @@ function fairCell(r) {
     (isNum(r.fair_low) && isNum(r.fair_high)) ? '범위 $' + r.fair_low.toFixed(2) + '~$' + r.fair_high.toFixed(2) : '',
     r.fair_method === 'RESEARCH' ? '리서치 ' + (r.fair_research || '') + (r.fair_stale ? ' (갱신 필요)' : '') : '기계적 기준선(참고)'].filter(Boolean).join(' · ');
   const body = `${fmtDol(r.fair_value)} <span style="color:${col};font-weight:600;">${isNum(up) ? fmtSigned(up, 0) + '%' : ''}</span>`
-    + (r.fair_stale ? ' <span title="리서치 갱신 필요" style="color:#9A6700;">⏳</span>' : '');
+    + (r.fair_stale ? ' <span title="리서치 갱신 필요" style="color:#9A6700;">⏳</span>' : '')
+    + (r.fair_gap ? ' <span title="시장 가격과 3배 이상 괴리 — 상세 페이지의 전제 조건 참고" style="color:#9A6700;">⚠</span>' : '');
   const url = safePath(r.val_url);
   return url ? `<a href="${esc(url)}" title="${esc(title)}" style="color:inherit;">${body}</a>` : `<span title="${esc(title)}">${body}</span>`;
 }

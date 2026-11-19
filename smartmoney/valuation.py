@@ -1324,11 +1324,11 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
     out["mechanical"] = {k: out.get(k) for k in ("fair_value", "fair_low", "fair_high", "upside_pct", "verdict", "verdict_ko",
                                                  "n_models", "uncertainty", "summary", "status")}
     out["research"] = {**{k: R.get(k) for k in ("as_of", "analyst", "thesis", "business", "performance", "plans", "news", "risks",
-                                                "catalysts", "confidence", "sources", "adjustments", "valuation_notes")},
+                                                "catalysts", "confidence", "sources", "adjustments", "valuation_notes", "second_opinion")},
                        "scenarios": scen, "options": opts, "option_value": opt_total, "age_days": age, "stale": stale}
     out.update({"method": "RESEARCH", "status": "OK", "fair_value": fair, "fair_low": lo, "fair_high": hi,
                 "upside_pct": (fair / price - 1) * 100, "verdict": verdict, "verdict_ko": VERDICT_KO[verdict],
-                "mos_band_pct": band * 100, "model_gap": False,
+                "mos_band_pct": band * 100, "model_gap": not 1 / 3 <= fair / price <= 3,
                 "uncertainty": {"level": level, "label": UNC_KO[level], "score": round(score), "reasons": why}})
     out["summary"] = (f"리서치 기반 적정가 {fair:,.2f} = 약세 {scen['bear']['value']:,.2f}({scen['bear']['prob'] * 100:.0f}%) · "
                       f"기본 {scen['base']['value']:,.2f}({scen['base']['prob'] * 100:.0f}%) · 강세 {scen['bull']['value']:,.2f}({scen['bull']['prob'] * 100:.0f}%)의 확률가중"
@@ -1358,13 +1358,16 @@ def compact(v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     out["mc"] = {k2: r(mc.get(k2)) for k2 in ("p10", "p50", "p90", "prob_above_price")} if mc else None
     out["analyst_target"] = r(an.get("target_mean"))
     out["method"] = v.get("method") or "MECHANICAL"
+    out["model_gap"] = bool(v.get("model_gap"))
     R = v.get("research")
     if R:
         out["research"] = {"as_of": R.get("as_of"), "analyst": R.get("analyst"), "thesis": R.get("thesis"),
                            "confidence": R.get("confidence"), "stale": R.get("stale"), "option_value": r(R.get("option_value")),
                            "scenarios": {k: {"prob": r(s["prob"], 3), "value": r(s["value"]), "cagr5": r(s.get("cagr5"), 4),
                                              "target_margin": s.get("target_margin")} for k, s in R["scenarios"].items()},
-                           "n_sources": len(R.get("sources") or [])}
+                           "n_sources": len(R.get("sources") or []),
+                           "second_opinion": ({k: (R["second_opinion"] or {}).get(k) for k in ("analyst", "fair_value")}
+                                              if R.get("second_opinion") else None)}
         out["mechanical_fair"] = r((v.get("mechanical") or {}).get("fair_value"))
     return out
 
