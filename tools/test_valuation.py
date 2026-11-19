@@ -118,6 +118,9 @@ def main() -> int:
           not any(m[k]["applicable"] for k in ("pe", "ev_ebitda", "epv", "dcf_growth_5y", "graham")))
     m = models(out["HYPERGROWTH_UNPROFITABLE고성장 적자"])
     check("고성장 적자 → 후행 이익 모델(그레이엄·EPV) 미적용", not m["graham"]["applicable"] and not m["epv"]["applicable"])
+    kq = out["HYPERGROWTH_UNPROFITABLE고성장 적자"]["wacc"]
+    check("적자 기업: 타인자본비용 ≤ 자기자본비용 (WACC ≤ ke)", kq["kd"] <= kq["ke"] + 1e-12 and kq["wacc"] <= kq["ke"] + 1e-12,
+          f"kd={kq['kd']:.3f} ke={kq['ke']:.3f} wacc={kq['wacc']:.3f}")
     m = models(out["DIVIDEND_DEFENSIVE배당·방어"])
     check("배당주 → DDM 통합 포함", m["ddm_multi"].get("included") and m["ddm_stable"].get("included"))
 

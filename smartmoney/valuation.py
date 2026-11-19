@@ -436,7 +436,9 @@ def capital(F: Dict[str, Any], D: Dict[str, Any], PS: Dict[str, Any], rf: float)
         spread = 0.02 if _ok(D["ebit"]) and D["ebit"] > 0 else 0.075
     else:
         spread = next(s for th, s in _SPREADS if cov > th)
-    kd = rf + spread
+    # 합성 신용등급은 이자보상배율로 정하므로 적자 기업은 부도 수준 스프레드를 받는다. 그러나 채권자는 주주보다 선순위이므로
+    # 타인자본비용이 자기자본비용을 넘을 수는 없다 (저금리 전환사채를 쓰는 적자 성장기업에서 WACC 가 ke 보다 높아지던 문제)
+    kd = min(rf + spread, ke)
     tax = max(D["tax_eff"], 0.0) if _ok(D["ebit"]) and D["ebit"] > 0 else 0.0
     we = mc / (mc + D["debt"])
     wacc = we * ke + (1 - we) * kd * (1 - tax)
