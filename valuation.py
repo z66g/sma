@@ -47,7 +47,9 @@ def _show(v: dict) -> None:
             print(f"  [옵션] {o['name']}: {o['prob'] * 100:.0f}% × {o['value_per_share']:,.2f} = {o['expected']:,.2f}")
         print("  분해(주당): " + " · ".join(f"{n} 본업 {s['core']:,.2f} + 옵션 {R.get('option_value') or 0:,.2f}"
                                           + (f" (추가투자 PV {s['extra_investment_pv'] / 1e9:,.1f}B)" if s.get("extra_investment_pv") else "")
-                                          for n, s in R["scenarios"].items()) + f" · 주식수 {v['metrics']['shares'] / 1e6:,.0f}M(엔진)")
+                                          for n, s in R["scenarios"].items())
+              + (f" · 주식수 {(R.get('adjustments') or {})['shares'] / 1e6:,.0f}M(리서치 지정; 엔진 {v['metrics']['shares'] / 1e6:,.0f}M)"
+                 if (R.get("adjustments") or {}).get("shares") else f" · 주식수 {v['metrics']['shares'] / 1e6:,.0f}M(엔진)"))
         m = v.get("mechanical") or {}
         print(f"  기계적 기준선: {m.get('fair_value') and round(m['fair_value'], 2)} — {m.get('summary')}")
     else:
