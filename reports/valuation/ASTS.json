@@ -1,0 +1,101 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-19",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 25.55,
+ "fair_value": 12.31,
+ "fair_low": 0.0,
+ "fair_high": 45.71,
+ "upside_pct": -51.83,
+ "verdict": "DEEP_OVERVALUED",
+ "verdict_ko": "크게 고평가",
+ "mos_band_pct": 35.0,
+ "n_models": 3,
+ "summary": "리서치 기반 적정가 12.31 = 약세 0.00(30%) · 기본 6.33(50%) · 강세 45.71(20%)의 확률가중. 현재가 25.55 대비 -51.8% · 크게 고평가 (불확실성 매우 높음). 기계적 기준선 9.47.",
+ "archetype": {
+  "code": "PRE_REVENUE",
+  "label": "초기 단계·컨셉주 (매출 미미)",
+  "traits": [
+   "현금 소진(FCF<0)",
+   "주식보상 비중 높음(매출의 130%)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 15
+ },
+ "wacc": 0.1568,
+ "ke": 0.1431,
+ "models": [
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 4.22,
+   "low": 1.34,
+   "high": 9.23,
+   "weight": 0.557
+  },
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 13.71,
+   "low": 8.51,
+   "high": 38.79,
+   "weight": 0.261
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 13.57,
+   "low": 3.17,
+   "high": 30.98,
+   "weight": 0.183
+  }
+ ],
+ "implied_cagr_5y": null,
+ "base_cagr_5y": 0.9404,
+ "mc": {
+  "p10": 0.0,
+  "p50": 10.7,
+  "p90": 925.74,
+  "prob_above_price": 0.49
+ },
+ "analyst_target": 63.35,
+ "method": "RESEARCH",
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude Opus (Valuation Desk 파일럿 세션)",
+  "thesis": "ASTS의 가치는 (1) 연속 커버리지에 필요한 45~60기(주요 시장)·약 90기(전 목표 시장) 위성을 언제 궤도에 올리느냐, (2) AT&T·Verizon·Vodafone·stc·Rakuten 등과의 수익배분형 계약이 실제 가입자 매출로 전환되느냐, (3) 그 사이 Starlink Mobile(자체 EchoStar 주파수 + FCC 15,000기 D2D 허가)에게 시장을 얼마나 내주느냐로 결정된다. 현재 증거는 기술·계약·자금 측면은 진전, 배치 일정은 반복적으로 크게 지연(2026년 말 45~60기 목표 → 2026년 11월 현재 13기 궤도, 목표를 2027년 중반 45기로 이연)을 가리킨다. 따라서 기준 시나리오는 경영진 일정보다 약 1년 늦은 램프를 가정한다.",
+  "confidence": "LOW",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.3,
+    "value": 0.0,
+    "cagr5": 0.4878,
+    "target_margin": 0.08
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 6.33,
+    "cagr5": 0.8477,
+    "target_margin": 0.25
+   },
+   "bull": {
+    "prob": 0.2,
+    "value": 45.71,
+    "cagr5": 1.1537,
+    "target_margin": 0.35
+   }
+  },
+  "n_sources": 15
+ },
+ "mechanical_fair": 9.47,
+ "ticker": "ASTS",
+ "name": "AST SpaceMobile, Inc.",
+ "published": "2026-11-19"
+}

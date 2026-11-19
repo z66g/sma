@@ -208,7 +208,7 @@ def read_published(ticker: str, price: Optional[float] = None, as_of: Optional[s
     try:
         ref = (pub.get("research") or {}).get("as_of") or pub.get("published")
         base = date.fromisoformat(as_of) if as_of else datetime.now(timezone.utc).date()
-        pub["age_days"] = (base - date.fromisoformat(ref)).days
+        pub["age_days"] = max((base - date.fromisoformat(ref)).days, 0)
         pub["stale"] = pub["age_days"] > V.RESEARCH_STALE_DAYS
     except (ValueError, TypeError):
         pass

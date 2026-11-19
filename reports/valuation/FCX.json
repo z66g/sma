@@ -1,0 +1,156 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-19",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 49.12,
+ "fair_value": 26.28,
+ "fair_low": 11.08,
+ "fair_high": 47.38,
+ "upside_pct": -46.5,
+ "verdict": "DEEP_OVERVALUED",
+ "verdict_ko": "크게 고평가",
+ "mos_band_pct": 25.0,
+ "n_models": 10,
+ "summary": "리서치 기반 적정가 26.28 = 약세 11.08(28%) · 기본 25.51(50%) · 강세 47.38(22%)의 확률가중. 현재가 49.12 대비 -46.5% · 크게 고평가 (불확실성 높음). 기계적 기준선 59.76.",
+ "archetype": {
+  "code": "CYCLICAL",
+  "label": "경기순환",
+  "traits": [
+   "경기민감 업종"
+  ]
+ },
+ "uncertainty": {
+  "level": "HIGH",
+  "label": "높음",
+  "score": 41
+ },
+ "wacc": 0.0971,
+ "ke": 0.1054,
+ "models": [
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 77.19,
+   "low": 63.68,
+   "high": 135.44,
+   "weight": 0.161
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 38.65,
+   "low": 24.59,
+   "high": 58.87,
+   "weight": 0.136
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 65.4,
+   "low": 41.42,
+   "high": 97.42,
+   "weight": 0.136
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 21.19,
+   "low": 18.74,
+   "high": 27.2,
+   "weight": 0.121
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 43.35,
+   "low": 26.8,
+   "high": 68.06,
+   "weight": 0.101
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 74.19,
+   "low": 52.9,
+   "high": 119.39,
+   "weight": 0.097
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 57.86,
+   "low": 35.04,
+   "high": 90.36,
+   "weight": 0.08
+  },
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 50.41,
+   "low": 39.27,
+   "high": 75.53,
+   "weight": 0.08
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 110.92,
+   "low": 50.65,
+   "high": 172.7,
+   "weight": 0.048
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 65.24,
+   "low": 49.99,
+   "high": 75.41,
+   "weight": 0.04
+  }
+ ],
+ "implied_cagr_5y": 0.172,
+ "base_cagr_5y": 0.1633,
+ "mc": {
+  "p10": 10.76,
+  "p50": 36.23,
+  "p90": 73.87,
+  "prob_above_price": 0.3
+ },
+ "analyst_target": 78.22,
+ "method": "RESEARCH",
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude Opus (Valuation Desk 파일럿 세션)",
+  "thesis": "FCX의 가치는 (1) 구리 가격의 사이클 평균 수준, (2) 2025년 9월 머드러시 사고 이후 그라스버그 블록케이브(GBC)의 정상화 속도, (3) 연결 이익의 약 절반을 가져가는 PTFI·세로베르데 소수주주 몫이 결정한다. 회사 가이던스는 구리 판매량 2026e 30억 lbs → 2027e 37억 → 2028e 41억 lbs의 회복을 제시하지만 같은 해 1월 이후 2027e 전망은 41억→38억→37억 lbs로 두 차례 하향됐고, 현재 구리 현물(약 $6.2/lb)은 ICSG가 2026~27년 정련구리 공급과잉을 전망하는 가운데 형성된 고점권이다. 따라서 기준 시나리오는 물량 가이던스에 소폭 할인을, 가격은 현물이 아닌 사이클 평균($5.00/lb)을 적용하며, 소수주주의 경제적 몫(약 43%)을 장부가 대신 반영한다.",
+  "confidence": "LOW",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.28,
+    "value": 11.08,
+    "cagr5": 0.0056,
+    "target_margin": 0.18
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 25.51,
+    "cagr5": 0.0562,
+    "target_margin": 0.27
+   },
+   "bull": {
+    "prob": 0.22,
+    "value": 47.38,
+    "cagr5": 0.1128,
+    "target_margin": 0.36
+   }
+  },
+  "n_sources": 16
+ },
+ "mechanical_fair": 59.76,
+ "ticker": "FCX",
+ "name": "Freeport-McMoRan Inc.",
+ "published": "2026-11-19"
+}
