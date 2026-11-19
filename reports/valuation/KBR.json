@@ -1,0 +1,148 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-19",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 31.99,
+ "fair_value": 49.75,
+ "fair_low": 35.79,
+ "fair_high": 65.9,
+ "upside_pct": 55.52,
+ "verdict": "DEEP_UNDERVALUED",
+ "verdict_ko": "크게 저평가",
+ "mos_band_pct": 10.0,
+ "n_models": 9,
+ "summary": "리서치 기반 적정가 49.75 = 약세 35.79(30%) · 기본 51.67(50%) · 강세 65.90(20%)의 확률가중. 현재가 31.99 대비 +55.5% · 크게 저평가 (불확실성 낮음). 기계적 기준선 42.24.",
+ "archetype": {
+  "code": "MATURE_COMPOUNDER",
+  "label": "성숙·현금창출",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "LOW",
+  "label": "낮음",
+  "score": 78
+ },
+ "wacc": 0.0879,
+ "ke": 0.1136,
+ "models": [
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 41.58,
+   "low": 25.25,
+   "high": 66.81,
+   "weight": 0.161
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 43.65,
+   "low": 27.12,
+   "high": 64.62,
+   "weight": 0.161
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 53.72,
+   "low": 44.42,
+   "high": 67.68,
+   "weight": 0.161
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 36.97,
+   "low": 31.18,
+   "high": 47.72,
+   "weight": 0.161
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 43.95,
+   "low": 26.53,
+   "high": 71.18,
+   "weight": 0.097
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 45.17,
+   "low": 27.71,
+   "high": 68.49,
+   "weight": 0.097
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 19.53,
+   "low": 15.13,
+   "high": 23.9,
+   "weight": 0.081
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 38.79,
+   "low": 31.84,
+   "high": 45.74,
+   "weight": 0.048
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 37.75,
+   "low": 19.06,
+   "high": 62.2,
+   "weight": 0.032
+  }
+ ],
+ "implied_cagr_5y": -0.0045,
+ "base_cagr_5y": 0.0471,
+ "mc": {
+  "p10": 27.26,
+  "p50": 40.94,
+  "p90": 59.64,
+  "prob_above_price": 0.79
+ },
+ "analyst_target": 44.86,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude Opus (Valuation Desk)",
+  "thesis": "KBR 주가는 2027-01-04 예정인 MTS(Trinzic) 스핀오프 직전의 '합산 가치'다. 2026년 연결 실적에는 종료되는 Plaquemines LNG JV 이익(STS 조정 EBITDA 약 1.4억 달러)과 분리 전 공유 비용 구조가 들어 있어, 2027년 두 회사 합산 조정 EBITDA는 2026 가이던스(약 10.1억 달러)보다 낮은 약 8.6~9억 달러로 내려간다. 반면 패키지의 TTM 영업이익률 7.3%는 영업이익에 포함된 JV 지분법이익(연 약 2.1억 달러)을 뺀 수치라 실제 GAAP 영업이익률(9.3%)보다 낮다. 두 효과가 상쇄되며, 가치는 STS의 10%+ 성장 목표 실행과 Trinzic의 NASA 인소싱 이후 성장 복귀에 달려 있다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.3,
+    "value": 35.79,
+    "cagr5": 0.027,
+    "target_margin": 0.07
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 51.67,
+    "cagr5": 0.051,
+    "target_margin": 0.084
+   },
+   "bull": {
+    "prob": 0.2,
+    "value": 65.9,
+    "cagr5": 0.071,
+    "target_margin": 0.094
+   }
+  },
+  "n_sources": 11,
+  "second_opinion": null
+ },
+ "mechanical_fair": 42.24,
+ "ticker": "KBR",
+ "name": "KBR, Inc.",
+ "published": "2026-11-19"
+}
