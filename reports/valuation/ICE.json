@@ -5,42 +5,46 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 170.88,
- "fair_value": 137.11,
- "fair_low": 98.0,
- "fair_high": 173.98,
- "upside_pct": -19.76,
- "verdict": "OVERVALUED",
- "verdict_ko": "고평가",
- "mos_band_pct": 10.0,
+ "fair_value": 161.16,
+ "fair_low": 115.07,
+ "fair_high": 204.81,
+ "upside_pct": -5.69,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 15.0,
  "n_models": 9,
- "summary": "리서치 기반 적정가 137.11 = 약세 98.00(30%) · 기본 145.83(50%) · 강세 173.98(20%)의 확률가중. 현재가 170.88 대비 -19.8% · 고평가 (불확실성 낮음). 기계적 기준선 133.21.",
+ "summary": "리서치 기반 적정가 161.16 = 약세 115.07(30%) · 기본 171.35(50%) · 강세 204.81(20%)의 확률가중. 현재가 170.88 대비 -5.7% · 적정 범위 (불확실성 보통). 할인율 ±1%p 범위 129.02~212.39 — 판정이 할인율에 민감. 기계적 기준선 156.64.",
  "archetype": {
   "code": "MATURE_COMPOUNDER",
   "label": "성숙·현금창출",
   "traits": []
  },
  "uncertainty": {
-  "level": "LOW",
-  "label": "낮음",
-  "score": 79
+  "level": "MEDIUM",
+  "label": "보통",
+  "score": 74
  },
- "wacc": 0.0906,
- "ke": 0.1018,
+ "wacc": 0.0814,
+ "ke": 0.0902,
+ "wacc_stable": 0.0815,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "dcf_growth_5y",
    "name": "5년 DCF · 영구성장",
-   "mid": 91.92,
-   "low": 60.47,
-   "high": 139.13,
+   "mid": 133.65,
+   "low": 84.6,
+   "high": 221.89,
    "weight": 0.161
   },
   {
    "id": "dcf_ebitda_5y",
    "name": "5년 DCF · EBITDA Exit",
-   "mid": 140.91,
-   "low": 95.56,
-   "high": 197.6,
+   "mid": 163.88,
+   "low": 112.05,
+   "high": 228.69,
    "weight": 0.161
   },
   {
@@ -62,33 +66,33 @@
   {
    "id": "dcf_growth_10y",
    "name": "10년 DCF · 영구성장",
-   "mid": 98.69,
-   "low": 64.64,
-   "high": 150.17,
+   "mid": 140.46,
+   "low": 88.55,
+   "high": 233.37,
    "weight": 0.097
   },
   {
    "id": "dcf_ebitda_10y",
    "name": "10년 DCF · EBITDA Exit",
-   "mid": 124.82,
-   "low": 82.4,
-   "high": 180.82,
+   "mid": 158.51,
+   "low": 105.26,
+   "high": 229.17,
    "weight": 0.097
   },
   {
    "id": "epv",
    "name": "수익력 가치(EPV)",
-   "mid": 47.55,
-   "low": 39.41,
-   "high": 56.32,
+   "mid": 54.65,
+   "low": 45.11,
+   "high": 65.2,
    "weight": 0.081
   },
   {
    "id": "graham",
    "name": "그레이엄 공식",
-   "mid": 92.93,
-   "low": 78.36,
-   "high": 107.5,
+   "mid": 97.31,
+   "low": 81.43,
+   "high": 113.2,
    "weight": 0.048
   },
   {
@@ -100,13 +104,13 @@
    "weight": 0.032
   }
  ],
- "implied_cagr_5y": 0.1261,
- "base_cagr_5y": 0.0428,
+ "implied_cagr_5y": 0.0759,
+ "base_cagr_5y": 0.047,
  "mc": {
-  "p10": 61.17,
-  "p50": 91.11,
-  "p90": 129.14,
-  "prob_above_price": 0.01
+  "p10": 87.16,
+  "p50": 128.87,
+  "p90": 187.52,
+  "prob_above_price": 0.17
  },
  "analyst_target": 193.53,
  "method": "RESEARCH",
@@ -121,27 +125,34 @@
   "scenarios": {
    "bear": {
     "prob": 0.3,
-    "value": 98.0,
+    "value": 115.07,
     "cagr5": 0.0157,
     "target_margin": 0.395
    },
    "base": {
     "prob": 0.5,
-    "value": 145.83,
+    "value": 171.35,
     "cagr5": 0.054,
     "target_margin": 0.45
    },
    "bull": {
     "prob": 0.2,
-    "value": 173.98,
+    "value": 204.81,
     "cagr5": 0.072,
     "target_margin": 0.475
    }
   },
   "n_sources": 10,
+  "rate_sensitivity": {
+   "minus_1pt": 212.39,
+   "plus_1pt": 129.02
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 165.64,
+  "n_warn": 2,
   "second_opinion": null
  },
- "mechanical_fair": 133.21,
+ "mechanical_fair": 156.64,
  "ticker": "ICE",
  "name": "Intercontinental Exchange, Inc.",
  "published": "2026-11-19"

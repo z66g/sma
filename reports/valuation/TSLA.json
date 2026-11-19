@@ -5,15 +5,15 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 374.41,
- "fair_value": 43.51,
- "fair_low": 28.87,
- "fair_high": 72.47,
- "upside_pct": -88.38,
+ "fair_value": 37.93,
+ "fair_low": 23.61,
+ "fair_high": 72.05,
+ "upside_pct": -89.87,
  "verdict": "DEEP_OVERVALUED",
  "verdict_ko": "크게 고평가",
- "mos_band_pct": 15.0,
+ "mos_band_pct": 25.0,
  "n_models": 10,
- "summary": "리서치 기반 적정가 43.51 = 약세 28.87(30%) · 기본 40.70(50%) · 강세 72.47(20%)의 확률가중 (신사업 옵션 6.96 포함). 현재가 374.41 대비 -88.4% · 크게 고평가 (불확실성 보통). 기계적 기준선 36.95.",
+ "summary": "리서치 기반 적정가 37.93 = 약세 23.61(30%) · 기본 32.87(50%) · 강세 72.05(20%)의 확률가중 (신사업 옵션 6.96 포함). 현재가 374.41 대비 -89.9% · 크게 고평가 (불확실성 높음). 할인율 ±1%p 범위 33.08~44.93. 기계적 기준선 38.94.",
  "archetype": {
   "code": "CYCLICAL",
   "label": "경기순환",
@@ -23,12 +23,16 @@
   ]
  },
  "uncertainty": {
-  "level": "MEDIUM",
-  "label": "보통",
-  "score": 66
+  "level": "HIGH",
+  "label": "높음",
+  "score": 50
  },
- "wacc": 0.1069,
- "ke": 0.1076,
+ "wacc": 0.099,
+ "ke": 0.0996,
+ "wacc_stable": 0.0922,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "ev_ebitda",
@@ -41,17 +45,17 @@
   {
    "id": "dcf_growth_5y",
    "name": "5년 DCF · 영구성장",
-   "mid": 16.86,
-   "low": 13.59,
-   "high": 21.27,
+   "mid": 19.14,
+   "low": 15.05,
+   "high": 24.69,
    "weight": 0.163
   },
   {
    "id": "epv",
    "name": "수익력 가치(EPV)",
-   "mid": 18.03,
-   "low": 16.24,
-   "high": 25.96,
+   "mid": 18.63,
+   "low": 16.69,
+   "high": 27.13,
    "weight": 0.144
   },
   {
@@ -65,17 +69,17 @@
   {
    "id": "dcf_ebitda_5y",
    "name": "5년 DCF · EBITDA Exit",
-   "mid": 48.73,
-   "low": 36.25,
-   "high": 64.67,
+   "mid": 52.31,
+   "low": 38.72,
+   "high": 69.68,
    "weight": 0.114
   },
   {
    "id": "dcf_growth_10y",
    "name": "10년 DCF · 영구성장",
-   "mid": 16.87,
-   "low": 13.25,
-   "high": 22.01,
+   "mid": 18.44,
+   "low": 14.02,
+   "high": 24.76,
    "weight": 0.09
   },
   {
@@ -89,9 +93,9 @@
   {
    "id": "dcf_ebitda_10y",
    "name": "10년 DCF · EBITDA Exit",
-   "mid": 32.38,
-   "low": 23.66,
-   "high": 44.37,
+   "mid": 35.87,
+   "low": 25.75,
+   "high": 49.8,
    "weight": 0.051
   },
   {
@@ -112,11 +116,11 @@
   }
  ],
  "implied_cagr_5y": null,
- "base_cagr_5y": 0.0942,
+ "base_cagr_5y": 0.0985,
  "mc": {
-  "p10": 1.08,
-  "p50": 16.4,
-  "p90": 33.22,
+  "p10": 1.21,
+  "p50": 18.51,
+  "p90": 38.61,
   "prob_above_price": 0.0
  },
  "analyst_target": 412.48,
@@ -132,30 +136,37 @@
   "scenarios": {
    "bear": {
     "prob": 0.3,
-    "value": 28.87,
+    "value": 23.61,
     "cagr5": 0.044,
     "target_margin": 0.05
    },
    "base": {
     "prob": 0.5,
-    "value": 40.7,
+    "value": 32.87,
     "cagr5": 0.1079,
     "target_margin": 0.09
    },
    "bull": {
     "prob": 0.2,
-    "value": 72.47,
+    "value": 72.05,
     "cagr5": 0.1558,
     "target_margin": 0.14
    }
   },
   "n_sources": 18,
+  "rate_sensitivity": {
+   "minus_1pt": 44.93,
+   "plus_1pt": 33.08
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 40.35,
+  "n_warn": 2,
   "second_opinion": {
    "analyst": "Claude (Valuation Desk 파일럿 세션)",
    "fair_value": 45.79
   }
  },
- "mechanical_fair": 36.95,
+ "mechanical_fair": 38.94,
  "ticker": "TSLA",
  "name": "Tesla, Inc.",
  "published": "2026-11-19"

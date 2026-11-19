@@ -5,15 +5,15 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 108.87,
- "fair_value": 87.42,
- "fair_low": 42.94,
- "fair_high": 142.4,
- "upside_pct": -19.71,
- "verdict": "OVERVALUED",
- "verdict_ko": "고평가",
- "mos_band_pct": 15.0,
+ "fair_value": 96.15,
+ "fair_low": 41.66,
+ "fair_high": 162.69,
+ "upside_pct": -11.68,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 25.0,
  "n_models": 10,
- "summary": "리서치 기반 적정가 87.42 = 약세 42.94(30%) · 기본 86.52(45%) · 강세 142.40(25%)의 확률가중. 현재가 108.87 대비 -19.7% · 고평가 (불확실성 보통). 기계적 기준선 48.08.",
+ "summary": "리서치 기반 적정가 96.15 = 약세 41.66(30%) · 기본 95.50(45%) · 강세 162.69(25%)의 확률가중. 현재가 108.87 대비 -11.7% · 적정 범위 (불확실성 높음). 할인율 ±1%p 범위 83.87~114.24 — 판정이 할인율에 민감. 기계적 기준선 61.20.",
  "archetype": {
   "code": "CYCLICAL",
   "label": "경기순환",
@@ -23,12 +23,16 @@
   ]
  },
  "uncertainty": {
-  "level": "MEDIUM",
-  "label": "보통",
-  "score": 63
+  "level": "HIGH",
+  "label": "높음",
+  "score": 56
  },
- "wacc": 0.1212,
- "ke": 0.1364,
+ "wacc": 0.1078,
+ "ke": 0.12,
+ "wacc_stable": 0.0892,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "ev_ebitda",
@@ -36,23 +40,23 @@
    "mid": 84.79,
    "low": 69.03,
    "high": 104.47,
-   "weight": 0.212
+   "weight": 0.218
   },
   {
    "id": "dcf_growth_5y",
    "name": "5년 DCF · 영구성장",
-   "mid": 38.46,
-   "low": 31.21,
-   "high": 48.12,
-   "weight": 0.143
+   "mid": 50.96,
+   "low": 40.03,
+   "high": 65.84,
+   "weight": 0.147
   },
   {
    "id": "epv",
    "name": "수익력 가치(EPV)",
-   "mid": 33.9,
-   "low": 6.0,
-   "high": 35.61,
-   "weight": 0.127
+   "mid": 36.03,
+   "low": 5.84,
+   "high": 38.12,
+   "weight": 0.131
   },
   {
    "id": "pe",
@@ -60,23 +64,31 @@
    "mid": 34.61,
    "low": 26.9,
    "high": 37.23,
-   "weight": 0.127
+   "weight": 0.131
   },
   {
    "id": "dcf_growth_10y",
    "name": "10년 DCF · 영구성장",
-   "mid": 42.44,
-   "low": 33.32,
-   "high": 55.23,
-   "weight": 0.106
+   "mid": 52.93,
+   "low": 40.17,
+   "high": 71.17,
+   "weight": 0.109
   },
   {
    "id": "dcf_ebitda_5y",
    "name": "5년 DCF · EBITDA Exit",
-   "mid": 80.34,
-   "low": 58.15,
-   "high": 109.65,
-   "weight": 0.1
+   "mid": 91.85,
+   "low": 65.93,
+   "high": 126.08,
+   "weight": 0.103
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 74.75,
+   "low": 52.5,
+   "high": 106.4,
+   "weight": 0.065
   },
   {
    "id": "ev_rev",
@@ -84,23 +96,7 @@
    "mid": 92.42,
    "low": 56.24,
    "high": 116.69,
-   "weight": 0.063
-  },
-  {
-   "id": "dcf_ebitda_10y",
-   "name": "10년 DCF · EBITDA Exit",
-   "mid": 62.23,
-   "low": 44.73,
-   "high": 87.05,
-   "weight": 0.059
-  },
-  {
-   "id": "graham",
-   "name": "그레이엄 공식",
-   "mid": 17.49,
-   "low": 13.4,
-   "high": 20.22,
-   "weight": 0.042
+   "weight": 0.065
   },
   {
    "id": "pb",
@@ -108,16 +104,24 @@
    "mid": 198.47,
    "low": 133.71,
    "high": 271.58,
-   "weight": 0.021
+   "weight": 0.022
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 17.49,
+   "low": 13.4,
+   "high": 20.22,
+   "weight": 0.011
   }
  ],
- "implied_cagr_5y": 0.458,
- "base_cagr_5y": 0.127,
+ "implied_cagr_5y": 0.3451,
+ "base_cagr_5y": 0.1313,
  "mc": {
   "p10": 0.0,
-  "p50": 36.35,
-  "p90": 86.64,
-  "prob_above_price": 0.04
+  "p50": 47.7,
+  "p90": 116.61,
+  "prob_above_price": 0.12
  },
  "analyst_target": 195.0,
  "method": "RESEARCH",
@@ -132,27 +136,34 @@
   "scenarios": {
    "bear": {
     "prob": 0.3,
-    "value": 42.94,
+    "value": 41.66,
     "cagr5": 0.031,
     "target_margin": 0.11
    },
    "base": {
     "prob": 0.45,
-    "value": 86.52,
+    "value": 95.5,
     "cagr5": 0.1108,
     "target_margin": 0.21
    },
    "bull": {
     "prob": 0.25,
-    "value": 142.4,
+    "value": 162.69,
     "cagr5": 0.1635,
     "target_margin": 0.3
    }
   },
   "n_sources": 15,
+  "rate_sensitivity": {
+   "minus_1pt": 114.24,
+   "plus_1pt": 83.87
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 98.84,
+  "n_warn": 2,
   "second_opinion": null
  },
- "mechanical_fair": 48.08,
+ "mechanical_fair": 61.2,
  "ticker": "COIN",
  "name": "Coinbase Global, Inc.",
  "published": "2026-11-19"

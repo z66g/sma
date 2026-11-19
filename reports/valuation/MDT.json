@@ -5,27 +5,31 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 100.61,
- "fair_value": 91.79,
- "fair_low": 70.23,
- "fair_high": 112.01,
- "upside_pct": -8.77,
+ "fair_value": 113.16,
+ "fair_low": 87.61,
+ "fair_high": 137.51,
+ "upside_pct": 12.47,
  "verdict": "FAIR",
  "verdict_ko": "적정 범위",
- "mos_band_pct": 10.0,
+ "mos_band_pct": 15.0,
  "n_models": 9,
- "summary": "리서치 기반 적정가 91.79 = 약세 70.23(25%) · 기본 94.23(55%) · 강세 112.01(20%)의 확률가중. 현재가 100.61 대비 -8.8% · 적정 범위 (불확실성 낮음). 기계적 기준선 71.08.",
+ "summary": "리서치 기반 적정가 113.16 = 약세 87.61(25%) · 기본 115.92(55%) · 강세 137.51(20%)의 확률가중. 현재가 100.61 대비 +12.5% · 적정 범위 (불확실성 보통). 할인율 ±1%p 범위 88.69~154.33 — 판정이 할인율에 민감. 기계적 기준선 89.36.",
  "archetype": {
   "code": "DIVIDEND_DEFENSIVE",
   "label": "배당·방어주",
   "traits": []
  },
  "uncertainty": {
-  "level": "LOW",
-  "label": "낮음",
-  "score": 81
+  "level": "MEDIUM",
+  "label": "보통",
+  "score": 76
  },
- "wacc": 0.0781,
- "ke": 0.0852,
+ "wacc": 0.0741,
+ "ke": 0.0803,
+ "wacc_stable": 0.0778,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "pe",
@@ -46,67 +50,67 @@
   {
    "id": "dcf_growth_5y",
    "name": "5년 DCF · 영구성장",
-   "mid": 67.27,
-   "low": 45.57,
-   "high": 102.83,
+   "mid": 85.9,
+   "low": 55.68,
+   "high": 144.31,
    "weight": 0.127
   },
   {
    "id": "dcf_ebitda_5y",
    "name": "5년 DCF · EBITDA Exit",
-   "mid": 93.12,
-   "low": 65.86,
-   "high": 127.19,
+   "mid": 103.28,
+   "low": 73.3,
+   "high": 140.69,
    "weight": 0.127
   },
   {
    "id": "ddm_multi",
    "name": "배당할인(DDM) · 다단계",
-   "mid": 55.61,
-   "low": 46.36,
-   "high": 67.97,
+   "mid": 74.59,
+   "low": 59.53,
+   "high": 96.83,
    "weight": 0.127
   },
   {
    "id": "ddm_stable",
    "name": "배당할인(DDM) · 안정성장",
-   "mid": 66.33,
-   "low": 51.7,
-   "high": 92.16,
+   "mid": 76.85,
+   "low": 57.93,
+   "high": 113.62,
    "weight": 0.114
   },
   {
    "id": "epv",
    "name": "수익력 가치(EPV)",
-   "mid": 39.99,
-   "low": 34.83,
-   "high": 46.74,
+   "mid": 40.76,
+   "low": 35.29,
+   "high": 47.97,
    "weight": 0.079
   },
   {
    "id": "dcf_growth_10y",
    "name": "10년 DCF · 영구성장",
-   "mid": 66.86,
-   "low": 45.4,
-   "high": 101.34,
+   "mid": 88.35,
+   "low": 56.85,
+   "high": 149.08,
    "weight": 0.063
   },
   {
    "id": "graham",
    "name": "그레이엄 공식",
-   "mid": 52.57,
-   "low": 44.17,
-   "high": 60.97,
+   "mid": 54.68,
+   "low": 45.65,
+   "high": 63.71,
    "weight": 0.063
   }
  ],
- "implied_cagr_5y": 0.1103,
- "base_cagr_5y": 0.0359,
+ "implied_cagr_5y": 0.0625,
+ "base_cagr_5y": 0.0396,
  "mc": {
-  "p10": 45.64,
-  "p50": 66.87,
-  "p90": 98.13,
-  "prob_above_price": 0.08
+  "p10": 56.4,
+  "p50": 83.22,
+  "p90": 123.76,
+  "prob_above_price": 0.27
  },
  "analyst_target": 106.35,
  "method": "RESEARCH",
@@ -121,27 +125,34 @@
   "scenarios": {
    "bear": {
     "prob": 0.25,
-    "value": 70.23,
+    "value": 87.61,
     "cagr5": 0.0136,
     "target_margin": 0.21
    },
    "base": {
     "prob": 0.55,
-    "value": 94.23,
+    "value": 115.92,
     "cagr5": 0.0349,
     "target_margin": 0.235
    },
    "bull": {
     "prob": 0.2,
-    "value": 112.01,
+    "value": 137.51,
     "cagr5": 0.0477,
     "target_margin": 0.255
    }
   },
   "n_sources": 22,
+  "rate_sensitivity": {
+   "minus_1pt": 154.33,
+   "plus_1pt": 88.69
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 114.24,
+  "n_warn": 2,
   "second_opinion": null
  },
- "mechanical_fair": 71.08,
+ "mechanical_fair": 89.36,
  "ticker": "MDT",
  "name": "Medtronic plc",
  "published": "2026-11-19"

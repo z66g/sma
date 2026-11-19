@@ -97,6 +97,10 @@ def card(vc: Optional[Dict[str, Any]], href: Optional[str] = None) -> str:
         extra.append(f"기계적 기준선 {_px(vc['mechanical_fair'], ccy)}")
     if is_r and (R.get("second_opinion") or {}).get("fair_value"):
         extra.append(f"독립 2차 의견 {_px(R['second_opinion']['fair_value'], ccy)}")
+    rs = R.get("rate_sensitivity") if is_r else None
+    if rs:
+        extra.append(f"할인율 ±1%p {_px(rs['plus_1pt'], ccy)}~{_px(rs['minus_1pt'], ccy)}"
+                     + ("" if R.get("verdict_robust", True) else f' <b style="color:{WARN};">(판정 민감)</b>'))
     if vc.get("model_gap"):
         extra.append(f'<b style="color:{WARN};">⚠ 시장과 3배 이상 괴리 — 상세의 "현재가가 맞으려면" 참고</b>')
     if vc.get("implied_cagr_5y") is not None and vc.get("base_cagr_5y") is not None:
@@ -250,7 +254,7 @@ def page(v: Dict[str, Any], name: Optional[str] = None, home: str = "./", dash: 
     # ── V3 가정 ──
     krows = [
         ["무위험금리 (미 10년물)", _pc(K["rf"], 2), "FRED DGS10"],
-        ["주식위험프리미엄 (ERP)", _pc(K["erp"], 2), "성숙 시장 내재 ERP 근사 (환경변수 SMA_ERP 로 조정)"],
+        ["주식위험프리미엄 (ERP)", _pc(K["erp"], 2), e(K.get("erp_source") or "") + " — 시장이 지금 위험에 매기는 가격을 그대로 사용(시장 중립)"],
         ["베타", f"{K['beta']:.2f}", e(K["beta_source"]) + f" · 회귀 {K['beta_raw'] if K.get('beta_raw') is not None else 'N/A'}"
          + (f" · peer 무부채 {K['beta_peer_unlevered']:.2f}" if K.get("beta_peer_unlevered") else "")],
         ["규모 프리미엄", _pc(K["size_premium"], 2), "시가총액 구간별"],
@@ -259,14 +263,16 @@ def page(v: Dict[str, Any], name: Optional[str] = None, home: str = "./", dash: 
     if not fin:
         krows += [
             ["세전 타인자본비용", _pc(K["kd"], 2), f"rf + 신용 스프레드 {_pc(K['spread'], 2)} (이자보상배율 "
-             + (f"{K['coverage']:.1f}배" if K.get("coverage") is not None else "N/A") + " 기준 합성등급)"],
+             + (f"{K['coverage']:.1f}배" if K.get("coverage") is not None else "N/A") + " 기준 합성등급"
+             + ("; 영업적자 기업은 실효 차입금리를 B~CCC 범위로 제한" if (K.get("coverage") or 0) < 0 or K.get("coverage") is None else "")
+             + ") · 자기자본비용을 넘지 않음"],
             ["자본 구성 (시가)", f"자기자본 {_pc(K['we'], 0)} / 부채 {_pc(K['wd'], 0)}", "시가총액 · 총차입금(리스 포함)"],
-            ["<b>WACC</b>", f"<b>{_pc(K['wacc'], 2)}</b>", f"성숙기 수렴: 5년 모델 {_pc(K['wacc_t5'], 2)} · 10년 모델 {_pc(K['wacc_t10'], 2)}"],
+            ["<b>WACC</b>", f"<b>{_pc(K['wacc'], 2)}</b>", f"안정 성장기(잔존가치 구간) {_pc(K['wacc_t10'], 2)} — 베타 {K['beta']:.2f} → {K.get('beta_stable', 1.0):.2f} (성숙 기업 범위 0.8~1.2), 10년에 걸쳐 수렴"],
         ]
     if fin or A["code"] == "REIT":
         proj = ""
         arows = [["평가 기준", "자기자본 기반" if fin else "FFO·배당 기반", e(A["reasons"][0] if A.get("reasons") else "")],
-                 ["영구성장률", _pc(P["gT"], 1), "무위험금리의 60% (2~3% 범위)"],
+                 ["영구성장률", _pc(P["gT"], 1), "무위험금리 − 1%p (2~4% 범위): 장기 명목 성장률은 무위험금리를 넘지 못한다"],
                  ["ROE / 주당순자산", f"{_pc(M.get('roe'))} / {_px(M.get('bvps'), ccy)}", "초과이익·P/B 모델 입력"],
                  ["주당배당 / 배당성향", f"{_px(M.get('dps'), ccy)} / {_pc(M.get('payout'), 0)}", "DDM 입력"]]
     else:
@@ -370,7 +376,10 @@ def _research_html(v: Dict[str, Any], ccy: str) -> str:
         path = " → ".join(f"{x * 100:.0f}%" for x in g) if g else "—"
         assume = (f"매출 성장 {path}" + (f" (5년 CAGR {_pc(s.get('cagr5'), 0)}, 10년 뒤 매출 {_big(s.get('rev10'), ccy)})" if s.get("rev10") else "")
                   + f"<br>GAAP 영업이익률 {_pc(s.get('target_margin'), 0)} ({s.get('margin_year') or 5}년차 도달)"
-                  + (f" · 할인율 {s['wacc_adj'] * 100:+.1f}%p" if s.get("wacc_adj") else "")) if g else e(s.get("how"))
+                  + (f" · 할인율 {s['wacc_adj'] * 100:+.1f}%p" if s.get("wacc_adj") else "")
+                  + (f"<br><span class='muted'>예측 {s['N']}년 · 할인율 {_pc(s.get('wacc'), 1)} → {_pc(s.get('wacc_T'), 1)} · 영구성장 {_pc(s.get('g_T'), 1)}"
+                     + (f" · 잔존가치 비중 {_pc(s['tv_share'], 0)}" if s.get('tv_share') is not None else "")
+                     + (f" · 실패확률 {_pc(s['fail_prob'], 0)}" if s.get('fail_prob') else "") + "</span>" if s.get("N") else "")) if g else e(s.get("how"))
         srows.append([pill(SK[k][0], SK[k][1]), f"<b>{s['prob'] * 100:.0f}%</b>", e(s.get("story")), assume,
                       f"<b>{_px(s['value'], ccy)}</b>", _updown((s["value"] / price - 1) * 100)])
     orows = [[f"<b>{e(o['name'])}</b>", f"{o['prob'] * 100:.0f}%", _px(o["value_per_share"], ccy), f"<b>{_px(o['expected'], ccy)}</b>", e(o.get("basis"))]
@@ -400,6 +409,20 @@ def _research_html(v: Dict[str, Any], ccy: str) -> str:
         gap += (f'<div class="tk-x"><b>독립 2차 의견</b> · {e(so.get("analyst"))}: 적정가 <b>{_px(so["fair_value"], ccy)}</b>'
                 + (f' (약세 {_px(sv.get("bear"), ccy)} · 기본 {_px(sv.get("base"), ccy)} · 강세 {_px(sv.get("bull"), ccy)})' if sv else "")
                 + f' — 이 리서치와 {abs(so["fair_value"] / v["fair_value"] - 1) * 100:.0f}% 차이. {e(so.get("note") or "")}</div>')
+    # 자체 점검 · 민감도: 결론이 어느 가정에 얼마나 기대고 있는지 숨기지 않는다
+    sens, chk = R.get("rate_sensitivity"), R.get("checks") or []
+    diag = []
+    if sens:
+        diag.append(f"<li><b>할인율 민감도</b> · 할인율이 1%p 낮으면 <b>{_px(sens['minus_1pt'], ccy)}</b>, 1%p 높으면 <b>{_px(sens['plus_1pt'], ccy)}</b>"
+                    + ("" if R.get("verdict_robust", True) else f" — <b style='color:{WARN};'>이 범위 안에서 판정이 바뀐다</b>") + "</li>")
+    if R.get("fair_symmetric") is not None:
+        diag.append(f"<li><b>확률 가중</b> · 약세 {R['scenarios']['bear']['prob'] * 100:.0f}% / 기본 {R['scenarios']['base']['prob'] * 100:.0f}% / 강세 {R['scenarios']['bull']['prob'] * 100:.0f}%"
+                    f" — 대칭(25/50/25)으로 두면 {_px(R['fair_symmetric'], ccy)}"
+                    + (f"<br><span class='muted'>확률 근거: {e(R.get('prob_basis'))}</span>" if R.get("prob_basis") else "") + "</li>")
+    LV = {"ERROR": ("오류", "neg"), "WARN": ("주의", "warn"), "INFO": ("참고", "info")}
+    diag += [f"<li>{pill(LV.get(c['level'], ('참고', 'info'))[0], LV.get(c['level'], ('참고', 'info'))[1])} {e(c['text'])}</li>" for c in chk]
+    diag_html = (f'<div class="card"><div class="ct">자체 점검 — 결론이 기대고 있는 가정과 계산의 내적 일관성</div><ul class="risk">{"".join(diag)}</ul></div>'
+                 if diag else "")
     conf = str(R.get("confidence") or "").upper()
     return _vsec("v0", 0, "리서치 — 사업·성과·계획·뉴스를 시나리오로", [
         pill(f"리서치 {R.get('as_of')}", "warn" if R.get("stale") else "info"),
@@ -409,6 +432,7 @@ def _research_html(v: Dict[str, Any], ccy: str) -> str:
 <div class="tk-t">{e(R.get('thesis'))}</div>{gap}</div>
 <div class="card"><div class="ct">시나리오 — 서로 다른 세계에 확률을 부여하고 같은 DCF 로 계산</div>
 {table(["시나리오", "확률", "실현 조건", "가정", "주당 가치", "현재가 대비"], srows, {1: B_BG}, mode="card")}</div>
+{diag_html}
 {opt_html}
 <div class="g2"><div class="card"><div class="ct">사업모델 · 경쟁 우위 ({e(B.get('moat_rating') or 'N/A')})</div>
 <div>{e(B.get('summary'))}</div><div style="margin-top:6px;"><b>우위</b> · {e(B.get('moat'))}</div>

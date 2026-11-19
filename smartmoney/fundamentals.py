@@ -74,6 +74,7 @@ _CASH = [
 ]
 _BALANCE = [
     ("total_debt", ["Total Debt"]),
+    ("lease_liabilities", ["Capital Lease Obligations"]),
     ("cash", ["Cash Cash Equivalents And Short Term Investments", "Cash And Cash Equivalents",
               "Cash Cash Equivalents And Federal Funds Sold"]),
     ("equity", ["Common Stock Equity", "Stockholders Equity"]),
@@ -88,7 +89,7 @@ _BALANCE = [
 FLOW_KEYS = ["revenue", "gross_profit", "op_income", "ebit_yahoo", "pretax", "tax", "net_income", "eps",
              "interest_expense", "da", "amort_intang", "rnd", "unusual", "cfo", "capex", "fcf", "sbc", "dividends_paid",
              "buybacks", "issuance", "acquisitions"]
-STOCK_KEYS = ["total_debt", "cash", "equity", "minority", "preferred", "total_assets", "intangibles", "nwc",
+STOCK_KEYS = ["total_debt", "lease_liabilities", "cash", "equity", "minority", "preferred", "total_assets", "intangibles", "nwc",
               "lt_investments", "shares_out"]
 PER_SHARE = {"eps"}
 NOT_MONEY = {"shares_diluted", "shares_out"}

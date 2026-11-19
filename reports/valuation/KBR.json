@@ -5,42 +5,46 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 31.99,
- "fair_value": 49.75,
- "fair_low": 35.79,
- "fair_high": 65.9,
- "upside_pct": 55.52,
+ "fair_value": 71.3,
+ "fair_low": 51.97,
+ "fair_high": 94.02,
+ "upside_pct": 122.88,
  "verdict": "DEEP_UNDERVALUED",
  "verdict_ko": "크게 저평가",
- "mos_band_pct": 10.0,
+ "mos_band_pct": 15.0,
  "n_models": 9,
- "summary": "리서치 기반 적정가 49.75 = 약세 35.79(30%) · 기본 51.67(50%) · 강세 65.90(20%)의 확률가중. 현재가 31.99 대비 +55.5% · 크게 저평가 (불확실성 낮음). 기계적 기준선 42.24.",
+ "summary": "리서치 기반 적정가 71.30 = 약세 51.97(30%) · 기본 73.81(50%) · 강세 94.02(20%)의 확률가중. 현재가 31.99 대비 +122.9% · 크게 저평가 (불확실성 보통). 할인율 ±1%p 범위 54.80~98.86. 기계적 기준선 53.05.",
  "archetype": {
   "code": "MATURE_COMPOUNDER",
   "label": "성숙·현금창출",
   "traits": []
  },
  "uncertainty": {
-  "level": "LOW",
-  "label": "낮음",
-  "score": 78
+  "level": "MEDIUM",
+  "label": "보통",
+  "score": 74
  },
- "wacc": 0.0879,
- "ke": 0.1136,
+ "wacc": 0.0776,
+ "ke": 0.0961,
+ "wacc_stable": 0.0782,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "dcf_growth_5y",
    "name": "5년 DCF · 영구성장",
-   "mid": 41.58,
-   "low": 25.25,
-   "high": 66.81,
+   "mid": 65.83,
+   "low": 38.57,
+   "high": 118.1,
    "weight": 0.161
   },
   {
    "id": "dcf_ebitda_5y",
    "name": "5년 DCF · EBITDA Exit",
-   "mid": 43.65,
-   "low": 27.12,
-   "high": 64.62,
+   "mid": 54.77,
+   "low": 34.86,
+   "high": 80.06,
    "weight": 0.161
   },
   {
@@ -62,33 +66,33 @@
   {
    "id": "dcf_growth_10y",
    "name": "10년 DCF · 영구성장",
-   "mid": 43.95,
-   "low": 26.53,
-   "high": 71.18,
+   "mid": 67.78,
+   "low": 39.39,
+   "high": 122.12,
    "weight": 0.097
   },
   {
    "id": "dcf_ebitda_10y",
    "name": "10년 DCF · EBITDA Exit",
-   "mid": 45.17,
-   "low": 27.71,
-   "high": 68.49,
+   "mid": 61.79,
+   "low": 38.6,
+   "high": 93.01,
    "weight": 0.097
   },
   {
    "id": "epv",
    "name": "수익력 가치(EPV)",
-   "mid": 19.53,
-   "low": 15.13,
-   "high": 23.9,
+   "mid": 24.35,
+   "low": 19.0,
+   "high": 29.88,
    "weight": 0.081
   },
   {
    "id": "graham",
    "name": "그레이엄 공식",
-   "mid": 38.79,
-   "low": 31.84,
-   "high": 45.74,
+   "mid": 40.36,
+   "low": 32.94,
+   "high": 47.79,
    "weight": 0.048
   },
   {
@@ -100,13 +104,13 @@
    "weight": 0.032
   }
  ],
- "implied_cagr_5y": -0.0045,
- "base_cagr_5y": 0.0471,
+ "implied_cagr_5y": -0.0511,
+ "base_cagr_5y": 0.0513,
  "mc": {
-  "p10": 27.26,
-  "p50": 40.94,
-  "p90": 59.64,
-  "prob_above_price": 0.79
+  "p10": 42.4,
+  "p50": 62.82,
+  "p90": 94.14,
+  "prob_above_price": 0.98
  },
  "analyst_target": 44.86,
  "method": "RESEARCH",
@@ -121,27 +125,34 @@
   "scenarios": {
    "bear": {
     "prob": 0.3,
-    "value": 35.79,
+    "value": 51.97,
     "cagr5": 0.027,
     "target_margin": 0.07
    },
    "base": {
     "prob": 0.5,
-    "value": 51.67,
+    "value": 73.81,
     "cagr5": 0.051,
     "target_margin": 0.084
    },
    "bull": {
     "prob": 0.2,
-    "value": 65.9,
+    "value": 94.02,
     "cagr5": 0.071,
     "target_margin": 0.094
    }
   },
   "n_sources": 11,
+  "rate_sensitivity": {
+   "minus_1pt": 98.86,
+   "plus_1pt": 54.8
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 73.4,
+  "n_warn": 1,
   "second_opinion": null
  },
- "mechanical_fair": 42.24,
+ "mechanical_fair": 53.05,
  "ticker": "KBR",
  "name": "KBR, Inc.",
  "published": "2026-11-19"

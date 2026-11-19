@@ -5,15 +5,15 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 16.02,
- "fair_value": 11.53,
- "fair_low": 0.0,
- "fair_high": 30.97,
- "upside_pct": -28.01,
- "verdict": "OVERVALUED",
- "verdict_ko": "고평가",
+ "fair_value": 17.07,
+ "fair_low": 0.61,
+ "fair_high": 44.01,
+ "upside_pct": 6.56,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
  "mos_band_pct": 35.0,
  "n_models": 6,
- "summary": "리서치 기반 적정가 11.53 = 약세 0.00(35%) · 기본 11.86(45%) · 강세 30.97(20%)의 확률가중. 현재가 16.02 대비 -28.0% · 고평가 (불확실성 매우 높음). 기계적 기준선 21.03.",
+ "summary": "리서치 기반 적정가 17.07 = 약세 0.61(35%) · 기본 17.90(45%) · 강세 44.01(20%)의 확률가중. 현재가 16.02 대비 +6.6% · 적정 범위 (불확실성 매우 높음). 할인율 ±1%p 범위 13.02~23.77 — 판정이 할인율에 민감. 기계적 기준선 32.83.",
  "archetype": {
   "code": "HYPERGROWTH_UNPROFITABLE",
   "label": "고성장 적자",
@@ -22,10 +22,14 @@
  "uncertainty": {
   "level": "VERY_HIGH",
   "label": "매우 높음",
-  "score": 35
+  "score": 32
  },
- "wacc": 0.1181,
- "ke": 0.1181,
+ "wacc": 0.1,
+ "ke": 0.1,
+ "wacc_stable": 0.0843,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "ev_rev",
@@ -38,17 +42,17 @@
   {
    "id": "dcf_revenue_10y",
    "name": "10년 DCF · Revenue Exit",
-   "mid": 22.55,
-   "low": 13.49,
-   "high": 34.61,
+   "mid": 34.73,
+   "low": 22.4,
+   "high": 51.07,
    "weight": 0.2
   },
   {
    "id": "dcf_growth_10y",
    "name": "10년 DCF · 영구성장",
-   "mid": 22.18,
-   "low": 12.43,
-   "high": 36.99,
+   "mid": 36.07,
+   "low": 21.42,
+   "high": 60.53,
    "weight": 0.18
   },
   {
@@ -62,27 +66,27 @@
   {
    "id": "dcf_ebitda_10y",
    "name": "10년 DCF · EBITDA Exit",
-   "mid": 23.94,
-   "low": 13.0,
-   "high": 39.52,
+   "mid": 35.9,
+   "low": 21.22,
+   "high": 56.75,
    "weight": 0.12
   },
   {
    "id": "dcf_revenue_5y",
    "name": "5년 DCF · Revenue Exit",
-   "mid": 26.16,
-   "low": 17.94,
-   "high": 36.27,
+   "mid": 35.03,
+   "low": 24.78,
+   "high": 47.6,
    "weight": 0.1
   }
  ],
- "implied_cagr_5y": 0.0938,
- "base_cagr_5y": 0.1557,
+ "implied_cagr_5y": 0.0205,
+ "base_cagr_5y": 0.1601,
  "mc": {
   "p10": 0.0,
-  "p50": 21.59,
-  "p90": 68.1,
-  "prob_above_price": 0.58
+  "p50": 33.89,
+  "p90": 95.59,
+  "prob_above_price": 0.7
  },
  "analyst_target": 28.31,
  "method": "RESEARCH",
@@ -97,27 +101,34 @@
   "scenarios": {
    "bear": {
     "prob": 0.35,
-    "value": 0.0,
+    "value": 0.61,
     "cagr5": 0.0866,
     "target_margin": 0.04
    },
    "base": {
     "prob": 0.45,
-    "value": 11.86,
+    "value": 17.9,
     "cagr5": 0.1442,
     "target_margin": 0.09
    },
    "bull": {
     "prob": 0.2,
-    "value": 30.97,
+    "value": 44.01,
     "cagr5": 0.1942,
     "target_margin": 0.14
    }
   },
   "n_sources": 13,
+  "rate_sensitivity": {
+   "minus_1pt": 23.77,
+   "plus_1pt": 13.02
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 20.11,
+  "n_warn": 2,
   "second_opinion": null
  },
- "mechanical_fair": 21.03,
+ "mechanical_fair": 32.83,
  "ticker": "HIMS",
  "name": "Hims & Hers Health, Inc.",
  "published": "2026-11-19"

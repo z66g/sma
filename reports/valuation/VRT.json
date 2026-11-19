@@ -5,43 +5,47 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 184.99,
- "fair_value": 150.88,
- "fair_low": 65.02,
- "fair_high": 246.08,
- "upside_pct": -18.44,
- "verdict": "OVERVALUED",
- "verdict_ko": "고평가",
- "mos_band_pct": 15.0,
+ "fair_value": 174.75,
+ "fair_low": 73.23,
+ "fair_high": 286.92,
+ "upside_pct": -5.54,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 25.0,
  "n_models": 11,
- "summary": "리서치 기반 적정가 150.88 = 약세 65.02(30%) · 기본 164.32(50%) · 강세 246.08(20%)의 확률가중. 현재가 184.99 대비 -18.4% · 고평가 (불확실성 보통). 기계적 기준선 162.69.",
+ "summary": "리서치 기반 적정가 174.75 = 약세 73.23(30%) · 기본 190.80(50%) · 강세 286.92(20%)의 확률가중. 현재가 184.99 대비 -5.5% · 적정 범위 (불확실성 높음). 할인율 ±1%p 범위 149.08~211.40. 기계적 기준선 187.90.",
  "archetype": {
   "code": "HIGH_GROWTH",
   "label": "고성장 흑자",
   "traits": []
  },
  "uncertainty": {
-  "level": "MEDIUM",
-  "label": "보통",
-  "score": 61
+  "level": "HIGH",
+  "label": "높음",
+  "score": 56
  },
- "wacc": 0.119,
- "ke": 0.1224,
+ "wacc": 0.1052,
+ "ke": 0.108,
+ "wacc_stable": 0.0935,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "dcf_growth_10y",
    "name": "10년 DCF · 영구성장",
-   "mid": 136.71,
-   "low": 96.38,
-   "high": 197.78,
-   "weight": 0.165
+   "mid": 184.41,
+   "low": 123.81,
+   "high": 286.41,
+   "weight": 0.164
   },
   {
    "id": "dcf_ebitda_10y",
    "name": "10년 DCF · EBITDA Exit",
-   "mid": 164.21,
-   "low": 112.04,
-   "high": 239.18,
-   "weight": 0.165
+   "mid": 204.94,
+   "low": 137.53,
+   "high": 302.46,
+   "weight": 0.164
   },
   {
    "id": "pe",
@@ -49,7 +53,7 @@
    "mid": 170.34,
    "low": 135.7,
    "high": 199.35,
-   "weight": 0.149
+   "weight": 0.148
   },
   {
    "id": "ev_ebitda",
@@ -57,38 +61,38 @@
    "mid": 127.93,
    "low": 121.37,
    "high": 171.66,
-   "weight": 0.116
+   "weight": 0.115
   },
   {
    "id": "lynch",
    "name": "피터 린치 공정가(PEG)",
-   "mid": 199.99,
-   "low": 150.31,
-   "high": 249.68,
+   "mid": 204.09,
+   "low": 153.38,
+   "high": 254.81,
    "weight": 0.099
   },
   {
    "id": "dcf_ebitda_5y",
    "name": "5년 DCF · EBITDA Exit",
-   "mid": 177.65,
-   "low": 122.85,
-   "high": 252.14,
-   "weight": 0.069
+   "mid": 209.54,
+   "low": 144.0,
+   "high": 298.72,
+   "weight": 0.074
   },
   {
    "id": "dcf_growth_5y",
    "name": "5년 DCF · 영구성장",
-   "mid": 116.78,
-   "low": 84.96,
-   "high": 163.02,
+   "mid": 169.3,
+   "low": 116.06,
+   "high": 257.79,
    "weight": 0.066
   },
   {
    "id": "dcf_revenue_10y",
    "name": "10년 DCF · Revenue Exit",
-   "mid": 172.82,
-   "low": 123.57,
-   "high": 239.12,
+   "mid": 219.55,
+   "low": 155.17,
+   "high": 306.59,
    "weight": 0.066
   },
   {
@@ -110,19 +114,19 @@
   {
    "id": "epv",
    "name": "수익력 가치(EPV)",
-   "mid": 38.55,
-   "low": 28.33,
-   "high": 44.08,
+   "mid": 42.55,
+   "low": 31.01,
+   "high": 49.09,
    "weight": 0.006
   }
  ],
- "implied_cagr_5y": 0.2512,
- "base_cagr_5y": 0.216,
+ "implied_cagr_5y": 0.1911,
+ "base_cagr_5y": 0.2204,
  "mc": {
-  "p10": 88.32,
-  "p50": 151.19,
-  "p90": 254.39,
-  "prob_above_price": 0.32
+  "p10": 110.79,
+  "p50": 194.34,
+  "p90": 330.16,
+  "prob_above_price": 0.54
  },
  "analyst_target": 334.29,
  "method": "RESEARCH",
@@ -137,27 +141,34 @@
   "scenarios": {
    "bear": {
     "prob": 0.3,
-    "value": 65.02,
+    "value": 73.23,
     "cagr5": 0.0612,
     "target_margin": 0.16
    },
    "base": {
     "prob": 0.5,
-    "value": 164.32,
+    "value": 190.8,
     "cagr5": 0.1868,
     "target_margin": 0.245
    },
    "bull": {
     "prob": 0.2,
-    "value": 246.08,
+    "value": 286.92,
     "cagr5": 0.2519,
     "target_margin": 0.27
    }
   },
   "n_sources": 15,
+  "rate_sensitivity": {
+   "minus_1pt": 211.4,
+   "plus_1pt": 149.08
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 185.43,
+  "n_warn": 1,
   "second_opinion": null
  },
- "mechanical_fair": 162.69,
+ "mechanical_fair": 187.9,
  "ticker": "VRT",
  "name": "Vertiv Holdings Co",
  "published": "2026-11-19"

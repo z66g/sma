@@ -5,15 +5,15 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 49.12,
- "fair_value": 26.28,
- "fair_low": 11.08,
- "fair_high": 47.38,
- "upside_pct": -46.5,
- "verdict": "DEEP_OVERVALUED",
- "verdict_ko": "크게 고평가",
- "mos_band_pct": 25.0,
+ "fair_value": 28.91,
+ "fair_low": 10.13,
+ "fair_high": 57.36,
+ "upside_pct": -41.15,
+ "verdict": "OVERVALUED",
+ "verdict_ko": "고평가",
+ "mos_band_pct": 35.0,
  "n_models": 10,
- "summary": "리서치 기반 적정가 26.28 = 약세 11.08(28%) · 기본 25.51(50%) · 강세 47.38(22%)의 확률가중. 현재가 49.12 대비 -46.5% · 크게 고평가 (불확실성 높음). 기계적 기준선 59.76.",
+ "summary": "리서치 기반 적정가 28.91 = 약세 10.13(28%) · 기본 26.91(50%) · 강세 57.36(22%)의 확률가중. 현재가 49.12 대비 -41.1% · 고평가 (불확실성 매우 높음). 할인율 ±1%p 범위 24.44~35.15. 기계적 기준선 68.01.",
  "archetype": {
   "code": "CYCLICAL",
   "label": "경기순환",
@@ -22,12 +22,16 @@
   ]
  },
  "uncertainty": {
-  "level": "HIGH",
-  "label": "높음",
-  "score": 41
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 32
  },
- "wacc": 0.0971,
- "ke": 0.1054,
+ "wacc": 0.0866,
+ "ke": 0.0934,
+ "wacc_stable": 0.0851,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "ev_ebitda",
@@ -40,33 +44,33 @@
   {
    "id": "dcf_growth_5y",
    "name": "5년 DCF · 영구성장",
-   "mid": 38.65,
-   "low": 24.59,
-   "high": 58.87,
+   "mid": 57.72,
+   "low": 36.43,
+   "high": 92.11,
    "weight": 0.136
   },
   {
    "id": "dcf_ebitda_5y",
    "name": "5년 DCF · EBITDA Exit",
-   "mid": 65.4,
-   "low": 41.42,
-   "high": 97.42,
+   "mid": 76.67,
+   "low": 49.07,
+   "high": 113.48,
    "weight": 0.136
   },
   {
    "id": "epv",
    "name": "수익력 가치(EPV)",
-   "mid": 21.19,
-   "low": 18.74,
-   "high": 27.2,
+   "mid": 25.32,
+   "low": 22.27,
+   "high": 32.53,
    "weight": 0.121
   },
   {
    "id": "dcf_growth_10y",
    "name": "10년 DCF · 영구성장",
-   "mid": 43.35,
-   "low": 26.8,
-   "high": 68.06,
+   "mid": 62.85,
+   "low": 38.41,
+   "high": 103.08,
    "weight": 0.101
   },
   {
@@ -80,9 +84,9 @@
   {
    "id": "dcf_ebitda_10y",
    "name": "10년 DCF · EBITDA Exit",
-   "mid": 57.86,
-   "low": 35.04,
-   "high": 90.36,
+   "mid": 74.5,
+   "low": 45.61,
+   "high": 115.7,
    "weight": 0.08
   },
   {
@@ -110,13 +114,13 @@
    "weight": 0.04
   }
  ],
- "implied_cagr_5y": 0.172,
- "base_cagr_5y": 0.1633,
+ "implied_cagr_5y": 0.0931,
+ "base_cagr_5y": 0.1677,
  "mc": {
-  "p10": 10.76,
-  "p50": 36.23,
-  "p90": 73.87,
-  "prob_above_price": 0.3
+  "p10": 20.01,
+  "p50": 54.02,
+  "p90": 106.26,
+  "prob_above_price": 0.56
  },
  "analyst_target": 78.22,
  "method": "RESEARCH",
@@ -131,27 +135,34 @@
   "scenarios": {
    "bear": {
     "prob": 0.28,
-    "value": 11.08,
+    "value": 10.13,
     "cagr5": 0.0056,
     "target_margin": 0.18
    },
    "base": {
     "prob": 0.5,
-    "value": 25.51,
+    "value": 26.91,
     "cagr5": 0.0562,
     "target_margin": 0.27
    },
    "bull": {
     "prob": 0.22,
-    "value": 47.38,
+    "value": 57.36,
     "cagr5": 0.1128,
     "target_margin": 0.36
    }
   },
   "n_sources": 16,
+  "rate_sensitivity": {
+   "minus_1pt": 35.15,
+   "plus_1pt": 24.44
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 30.33,
+  "n_warn": 1,
   "second_opinion": null
  },
- "mechanical_fair": 59.76,
+ "mechanical_fair": 68.01,
  "ticker": "FCX",
  "name": "Freeport-McMoRan Inc.",
  "published": "2026-11-19"

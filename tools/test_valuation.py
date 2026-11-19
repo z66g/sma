@@ -135,7 +135,7 @@ def main() -> int:
         df /= 1.09
         pv += fcff * df * 1.09 ** 0.5
         rev = new
-    tv = rev * 1.03 * 0.20 * 0.75 * (1 - 0.03 / 0.12) / (0.09 - 0.03)
+    tv = rev * 1.03 * 0.20 * 0.75 * (1 - 0.03 / 0.12) / (0.09 - 0.03) * 1.09 ** 0.5     # 기중 할인: 영구 현금흐름도 연중에 들어온다
     want = pv + tv * df
     got = float(V.dcf(P, 5, "growth"))
     check("DCF(영구성장) = 독립 계산", abs(got / want - 1) < 1e-9, f"{got} vs {want}")
@@ -152,7 +152,7 @@ def main() -> int:
         df2 /= 1.09
         pv2 += (new * 0.20 * 0.75 + 0.05 * new - caps[t - 1] * new - 0.10 * (new - rev2)) * df2 * 1.09 ** 0.5
         rev2 = new
-    tv2 = ((rev2 * 0.20 * 0.75 + (0.05 - 0.06) * rev2) * 1.03 - 0.10 * rev2 * 0.03) / (0.09 - 0.03)
+    tv2 = rev2 * 0.20 * 0.75 * 1.03 * (1 - 0.03 / 0.12) / (0.09 - 0.03) * 1.09 ** 0.5     # 영구 구간: 두 방식 모두 재투자율 g ÷ ROIC
     check("DCF(명시적 빌드: NOPAT + D&A − CAPEX − ΔNWC) = 독립 계산", abs(float(V.dcf(q, 5, "growth")) / (pv2 + tv2 * df2) - 1) < 1e-9)
     check("CAPEX 비율↑ → 가치↓", float(V.dcf({**q, "capex_pct": 0.12}, 5, "growth")) < float(V.dcf({**q, "capex_pct": 0.06}, 5, "growth")))
     hi = float(V.dcf({**P, "g1": 3.0, "g2": 2.0}, 10, "growth", detail=True)["rev_n"])
@@ -238,6 +238,52 @@ def main() -> int:
         bad = copy.deepcopy(R); mut(bad)
         e2, _ = VD.validate(bad, "TEST")
         check(f"리서치 검증 거부: {name}", any(key in x for x in e2), str(e2))
+    # ── 5-b. 할인율·잔존가치 원칙과 자체 점검 ──
+    K = vr["wacc"]
+    check("안정기 베타는 성숙 기업 범위(0.8~1.2)", V.STABLE_BETA[0] <= K["beta_stable"] <= V.STABLE_BETA[1])
+    hb = make(growth=0.30, margin=0.20, price=120); hb["market"]["beta"] = 2.8
+    Kh = V.evaluate(hb, None, rf, None, "x")["wacc"]
+    check("고베타: 시작 할인율 > 안정기 할인율, 안정기 베타 = 1.2", Kh["wacc"] > Kh["wacc_t10"] and abs(Kh["beta_stable"] - 1.2) < 1e-9,
+          f"{Kh['wacc']:.3f} → {Kh['wacc_t10']:.3f}, β {Kh['beta']:.2f} → {Kh['beta_stable']:.2f}")
+    lo_e, hi_e = (V.evaluate(make(), None, rf, None, "x", R, {"erp": x})["fair_value"] for x in (0.035, 0.055))
+    check("주식위험프리미엄↑ → 적정가↓ (시장 내재 ERP 입력 반영)", lo_e > hi_e)
+    check("영구성장률 = 무위험금리 − 1%p (2~4%)", abs(vr["assumptions"]["gT"] - V._clip(rf - 0.01, 0.02, 0.04)) < 1e-12)
+    gp = V._growth_path([0.30, 0.25, 0.20, 0.18, 0.16, 0.15, 0.14, 0.13, 0.12, 0.12], 0.03)
+    check("예측 구간: 성장률이 영구성장률 ±1%p 에 들 때까지 연장(10~20년), 절벽 없음",
+          10 < len(gp) <= V.MAX_HORIZON and abs(gp[-1] - 0.03) <= 0.01 and all(a >= b - 1e-12 for a, b in zip(gp[9:], gp[10:])), str(len(gp)))
+    check("이미 수렴한 경로는 10년", len(V._growth_path([0.05, 0.04, 0.035], 0.03)) == 10)
+    check("시나리오마다 예측 연수·잔존가치 비중·말년 ROIC 보고", all(sc[k].get("N") and sc[k].get("tv_share") is not None and "roic_T" in sc[k] for k in sc))
+    rs = vr["research"]["rate_sensitivity"]
+    check("할인율 민감도: −1%p > 기준 > +1%p", rs["minus_1pt"] > vr["fair_value"] > rs["plus_1pt"], str(rs))
+    check("확률 대칭(25/50/25) 교차값 제공", abs(vr["research"]["fair_symmetric"] - vr["fair_value"]) < 1e-9)      # 이 리서치는 대칭
+    skew = copy.deepcopy(R); skew["scenarios"]["bear"]["prob"], skew["scenarios"]["bull"]["prob"] = 0.35, 0.15
+    vs = V.evaluate(make(), None, rf, None, "2026-11-18", skew)
+    check("근거 없는 비대칭 확률 → 자체 점검 경고 + 검증 경고",
+          any("비대칭" in c["text"] for c in vs["research"]["checks"]) and any("prob_basis" in w for w in VD.validate(skew, "TEST")[1]))
+    skew["prob_basis"] = "최근 8개 분기 중 6개 분기에서 가이던스 하단을 밑돌았고 업종 내 증설 프로젝트의 지연 기저율이 60%를 넘는다."
+    check("근거를 적으면 경고 없음", not any("비대칭" in c["text"] for c in V.evaluate(make(), None, rf, None, "2026-11-18", skew)["research"]["checks"]))
+    burn = make(growth=0.40, margin=-0.30, price=30, industry="software-application", sector="technology", cash=0.4e9)
+    vb = V.evaluate(burn, None, rf, None, "2026-11-18", R)
+    if vb["assumptions"]["p_fail"] > 0:
+        check("현금 소진 기업: fail_prob 미명시 → 자체 점검 ERROR (엔진 기본 실패확률을 몰래 곱하지 않음)",
+              any(c["level"] == "ERROR" for c in vb["research"]["checks"]) and all(vb["research"]["scenarios"][k]["fail_prob"] == 0 for k in sc))
+        Rf = copy.deepcopy(R)
+        for k2, pf in (("bear", 0.0), ("base", 0.05), ("bull", 0.02)):
+            Rf["scenarios"][k2]["fail_prob"] = pf
+        vf = V.evaluate(burn, None, rf, None, "2026-11-18", Rf)
+        check("fail_prob 명시 → ERROR 없음, 명시한 값만 적용", not any(c["level"] == "ERROR" for c in vf["research"]["checks"])
+              and vf["research"]["scenarios"]["base"]["fail_prob"] == 0.05)
+    else:
+        check("현금 소진 픽스처가 실패확률을 만들지 못함", False)
+    wa = copy.deepcopy(R); wa["scenarios"]["bear"]["wacc_adj"] = 0.02
+    check("리서치 검증 거부: 근거 없는 할인율 가감(이중 반영)", any("wacc_adj_basis" in x for x in VD.validate(wa, "TEST")[0]))
+    sm = copy.deepcopy(R); sm["adjustments"] = {"start_margin": 0.20}
+    check("리서치 검증 거부: 근거 없는 출발 마진", any("start_margin" in x for x in VD.validate(sm, "TEST")[0]))
+    sm["adjustments"]["start_margin_basis"] = "TTM 영업이익에서 일회성 소송 충당금 5억 달러(매출의 5%)를 제외한 반복 가능 수준"
+    check("출발 마진 조정이 결과에 반영", not VD.validate(sm, "TEST")[0]
+          and V.evaluate(make(), None, rf, None, "x", sm)["fair_value"] > vr["fair_value"])
+    cmp_ = V.compact(vr)
+    check("발행 요약에 할인율 출처·민감도·안정기 할인율 포함", cmp_["research"]["rate_sensitivity"] and cmp_["wacc_stable"] and cmp_["erp"] and cmp_["g_term"])
     e3, _ = VD.validate(R, "TEST", direct_value_only=True)
     check("금융·REIT 는 직접 산출(value_per_share) 요구", any("value_per_share" in x for x in e3))
     with tempfile.TemporaryDirectory() as td:

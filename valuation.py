@@ -43,6 +43,13 @@ def _show(v: dict) -> None:
         for n, s in R["scenarios"].items():
             g = f"5년 CAGR {s['cagr5'] * 100:.0f}% · 목표마진 {s['target_margin'] * 100:.0f}%" if s.get("cagr5") is not None else s.get("how")
             print(f"  [{n:4}] {s['prob'] * 100:3.0f}%  {s['value']:>10,.2f}  ({g})")
+            if s.get("N"):
+                print(f"         예측 {s['N']}년 · 할인율 {s['wacc'] * 100:.1f}% → {s['wacc_T'] * 100:.1f}% · 영구성장 {s['g_T'] * 100:.1f}% · "
+                      + (f"잔존가치 비중 {s['tv_share'] * 100:.0f}% · " if s.get("tv_share") is not None else "")
+                      + (f"말년 ROIC {s['roic_T'] * 100:.0f}% · " if s.get("roic_T") is not None else "")
+                      + f"실패확률 {s['fail_prob'] * 100:.0f}%"
+                      + (f" · Exit 교차검증 {s['exit_multiple']:.1f}배 → 기업가치 {s['ev_exit'] / 1e9:,.1f}B (영구성장 {s['ev_growth'] / 1e9:,.1f}B)"
+                         if s.get("ev_exit") is not None else ""))
         for o in R.get("options") or []:
             print(f"  [옵션] {o['name']}: {o['prob'] * 100:.0f}% × {o['value_per_share']:,.2f} = {o['expected']:,.2f}")
         print("  분해(주당): " + " · ".join(f"{n} 본업 {s['core']:,.2f} + 옵션 {R.get('option_value') or 0:,.2f}"
@@ -50,12 +57,20 @@ def _show(v: dict) -> None:
                                           for n, s in R["scenarios"].items())
               + (f" · 주식수 {(R.get('adjustments') or {})['shares'] / 1e6:,.0f}M(리서치 지정; 엔진 {v['metrics']['shares'] / 1e6:,.0f}M)"
                  if (R.get("adjustments") or {}).get("shares") else f" · 주식수 {v['metrics']['shares'] / 1e6:,.0f}M(엔진)"))
+        rs = R.get("rate_sensitivity")
+        if rs:
+            print(f"  할인율 민감도: −1%p → {rs['minus_1pt']:,.2f} · +1%p → {rs['plus_1pt']:,.2f}"
+                  + ("" if R.get("verdict_robust", True) else "  (이 범위에서 판정이 바뀜)")
+                  + f" · 확률 대칭(25/50/25)이면 {R['fair_symmetric']:,.2f}")
+        for c in R.get("checks") or []:
+            print(f"  [{c['level']}] {c['text']}")
         m = v.get("mechanical") or {}
         print(f"  기계적 기준선: {m.get('fair_value') and round(m['fair_value'], 2)} — {m.get('summary')}")
     else:
         for r in a.get("reasons") or []:
             print(f"  · {r}")
-    print(f"  할인율: WACC {k['wacc'] * 100:.1f}% (자기자본비용 {k['ke'] * 100:.1f}%, 베타 {k['beta']:.2f}) · "
+    print(f"  할인율: WACC {k['wacc'] * 100:.1f}% → 안정기 {k['wacc_t10'] * 100:.1f}% (자기자본비용 {k['ke'] * 100:.1f}%, 베타 {k['beta']:.2f} → {k.get('beta_stable', 1):.2f}, "
+          f"rf {k['rf'] * 100:.2f}%, ERP {k['erp'] * 100:.2f}% [{k.get('erp_source')}], 영구성장 {p['gT'] * 100:.1f}%) · "
           f"기계적 가정: 성장 {p['g1'] * 100:+.0f}%/{p['g2'] * 100:+.0f}% · 영업이익률 {p['m0'] * 100:.0f}% → {p['mT'] * 100:.0f}%")
     print(f"  {'':2}{'기계적 모델':<26}{'보수':>10}{'기준':>10}{'낙관':>10}{'가중치':>8}")
     for m in v["models"]:
@@ -102,7 +117,7 @@ def main() -> int:
             print(f"리서치 파일을 읽을 수 없음: {e}", file=sys.stderr)
             return 2
         from smartmoney import fundamentals as FN
-        base = V.evaluate(FN.load(T, force=args.refresh), None, *V.market_rates())
+        base = V.evaluate(FN.load(T, force=args.refresh), None, *V.market_rates(), erp=V.market_erp())
         direct = base["archetype"]["code"] in ("BANK", "INSURANCE", "REIT")
         err, warn = VD.validate(R, T, direct)
         for w in warn:
@@ -116,6 +131,12 @@ def main() -> int:
         for w in VD._order_check(v):
             print(f"  경고: {w}")
         _show(v)
+        fatal = [c["text"] for c in (v.get("research") or {}).get("checks") or [] if c.get("level") == "ERROR"]
+        if fatal:
+            print(f"자체 점검 오류 {len(fatal)}건 — 발행하지 않음:", file=sys.stderr)
+            for x in fatal:
+                print(f"  ✗ {x}", file=sys.stderr)
+            return 2
         if args.dry_run:
             print("\n(dry-run: 발행하지 않음)")
             return 0

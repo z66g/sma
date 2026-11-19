@@ -5,15 +5,15 @@
  "fundamentals_asof": "2026-11-19",
  "currency": "USD",
  "price": 25.55,
- "fair_value": 13.51,
+ "fair_value": 13.92,
  "fair_low": 0.0,
- "fair_high": 49.21,
- "upside_pct": -47.13,
- "verdict": "DEEP_OVERVALUED",
- "verdict_ko": "크게 고평가",
+ "fair_high": 59.21,
+ "upside_pct": -45.5,
+ "verdict": "OVERVALUED",
+ "verdict_ko": "고평가",
  "mos_band_pct": 35.0,
  "n_models": 3,
- "summary": "리서치 기반 적정가 13.51 = 약세 0.00(30%) · 기본 7.33(50%) · 강세 49.21(20%)의 확률가중. 현재가 25.55 대비 -47.1% · 크게 고평가 (불확실성 매우 높음). 기계적 기준선 9.19.",
+ "summary": "리서치 기반 적정가 13.92 = 약세 0.00(30%) · 기본 4.16(50%) · 강세 59.21(20%)의 확률가중. 현재가 25.55 대비 -45.5% · 고평가 (불확실성 매우 높음). 할인율 ±1%p 범위 9.39~20.86 — 판정이 할인율에 민감. 기계적 기준선 8.82.",
  "archetype": {
   "code": "PRE_REVENUE",
   "label": "초기 단계·컨셉주 (매출 미미)",
@@ -25,17 +25,21 @@
  "uncertainty": {
   "level": "VERY_HIGH",
   "label": "매우 높음",
-  "score": 15
+  "score": 4
  },
- "wacc": 0.1431,
- "ke": 0.1431,
+ "wacc": 0.1172,
+ "ke": 0.1257,
+ "wacc_stable": 0.0864,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
  "models": [
   {
    "id": "ev_rev",
    "name": "EV/Revenue 멀티플",
-   "mid": 4.22,
-   "low": 1.34,
-   "high": 9.23,
+   "mid": 4.48,
+   "low": 1.52,
+   "high": 9.65,
    "weight": 0.557
   },
   {
@@ -49,18 +53,18 @@
   {
    "id": "dcf_ebitda_10y",
    "name": "10년 DCF · EBITDA Exit",
-   "mid": 14.92,
-   "low": 3.84,
-   "high": 33.47,
+   "mid": 12.02,
+   "low": 2.43,
+   "high": 28.45,
    "weight": 0.183
   }
  ],
- "implied_cagr_5y": null,
- "base_cagr_5y": 0.9404,
+ "implied_cagr_5y": 1.4256,
+ "base_cagr_5y": 0.945,
  "mc": {
   "p10": 0.0,
-  "p50": 11.75,
-  "p90": 978.45,
+  "p50": 14.81,
+  "p90": 1290.97,
   "prob_above_price": 0.49
  },
  "analyst_target": 63.35,
@@ -82,21 +86,28 @@
    },
    "base": {
     "prob": 0.5,
-    "value": 7.33,
+    "value": 4.16,
     "cagr5": 0.8477,
     "target_margin": 0.25
    },
    "bull": {
     "prob": 0.2,
-    "value": 49.21,
+    "value": 59.21,
     "cagr5": 1.1537,
     "target_margin": 0.35
    }
   },
   "n_sources": 15,
+  "rate_sensitivity": {
+   "minus_1pt": 20.86,
+   "plus_1pt": 9.39
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 16.88,
+  "n_warn": 3,
   "second_opinion": null
  },
- "mechanical_fair": 9.19,
+ "mechanical_fair": 8.82,
  "ticker": "ASTS",
  "name": "AST SpaceMobile, Inc.",
  "published": "2026-11-19"

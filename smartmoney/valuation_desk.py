@@ -95,8 +95,8 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append(f"scenarios.{k}: 금융·REIT 유형은 value_per_share + value_basis 로 직접 산출")
             continue
         g = s.get("rev_growth")
-        if not isinstance(g, list) or not 3 <= len(g) <= 10 or any(not V._ok(x) or not -0.6 <= x <= 4.0 for x in g):
-            err.append(f"scenarios.{k}.rev_growth: 연도별 성장률 3~10개 (소수, −0.6~4.0)")
+        if not isinstance(g, list) or not 3 <= len(g) <= V.MAX_EXPLICIT or any(not V._ok(x) or not -0.6 <= x <= 4.0 for x in g):
+            err.append(f"scenarios.{k}.rev_growth: 연도별 성장률 3~{V.MAX_EXPLICIT}개 (소수, −0.6~4.0)")
         if not V._ok(s.get("target_margin")) or not -0.2 <= s["target_margin"] <= 0.7:
             err.append(f"scenarios.{k}.target_margin: −0.2~0.7")
         my = s.get("margin_year")
@@ -104,30 +104,44 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append(f"scenarios.{k}.margin_year: 1~10 정수")
         if s.get("wacc_adj") is not None and (not V._ok(s["wacc_adj"]) or abs(s["wacc_adj"]) > 0.03):
             err.append(f"scenarios.{k}.wacc_adj: ±0.03 이내")
+        if s.get("wacc_adj") and len(str(s.get("wacc_adj_basis") or "").strip()) < 40:
+            err.append(f"scenarios.{k}.wacc_adj 를 쓰려면 wacc_adj_basis(40자 이상): 이 시나리오에서 '시장 전체와 함께 움직이는 위험'이 "
+                       "왜 달라지는지. 사업이 잘 안 될 위험은 이미 시나리오의 현금흐름과 확률에 들어 있다(이중 반영 금지)")
         if s.get("fail_prob") is not None and (not V._ok(s["fail_prob"]) or not 0 <= s["fail_prob"] <= 0.9):
             err.append(f"scenarios.{k}.fail_prob: 0~0.9")
         cx = s.get("capex_pct")
         if cx is not None:
             xs = cx if isinstance(cx, list) else [cx]
-            if not xs or len(xs) > 10 or any(not V._ok(x) or not 0 <= x <= 1.5 for x in xs):
-                err.append(f"scenarios.{k}.capex_pct: 매출 대비 CAPEX 비율(0~1.5), 숫자 또는 연도별 목록(최대 10)")
+            if not xs or len(xs) > V.MAX_HORIZON or any(not V._ok(x) or not 0 <= x <= 6.0 for x in xs):
+                err.append(f"scenarios.{k}.capex_pct: 매출 대비 CAPEX 비율(0~6.0), 숫자 또는 연도별 목록(최대 {V.MAX_HORIZON})")
             dl = s.get("da_pct")
             if dl is not None:
                 ds = dl if isinstance(dl, list) else [dl]
-                if not ds or len(ds) > 10 or any(not V._ok(x) or not 0 <= x <= 0.6 for x in ds):
-                    err.append(f"scenarios.{k}.da_pct: 0~0.6, 숫자 또는 연도별 목록(최대 10)")
+                if not ds or len(ds) > V.MAX_HORIZON or any(not V._ok(x) or not 0 <= x <= 0.6 for x in ds):
+                    err.append(f"scenarios.{k}.da_pct: 0~0.6, 숫자 또는 연도별 목록(최대 {V.MAX_HORIZON})")
             if s.get("nwc_pct") is not None and (not V._ok(s["nwc_pct"]) or not -0.5 <= s["nwc_pct"] <= 0.8):
                 err.append(f"scenarios.{k}.nwc_pct: −0.5~0.8")
             if s.get("extra_investment"):
                 err.append(f"scenarios.{k}: capex_pct(명시적 현금흐름)와 extra_investment 는 함께 쓰지 않는다 — CAPEX 계획은 capex_pct 에 모두 담을 것")
+        if s.get("terminal_growth") is not None and (not V._ok(s["terminal_growth"]) or not 0.01 <= s["terminal_growth"] <= 0.04):
+            err.append(f"scenarios.{k}.terminal_growth: 0.01~0.04 (기본은 엔진의 무위험금리 − 1%p)")
         if s.get("tax_rate") is not None and (not V._ok(s["tax_rate"]) or not 0.05 <= s["tax_rate"] <= 0.35):
             err.append(f"scenarios.{k}.tax_rate: 0.05~0.35")
         xi = s.get("extra_investment")
-        if xi is not None and (not isinstance(xi, list) or len(xi) > 10 or any(not V._ok(x) or x < 0 for x in xi)):
-            err.append(f"scenarios.{k}.extra_investment: 연도별 추가 투자 유출(달러, 0 이상) 최대 10개")
+        if xi is not None and (not isinstance(xi, list) or len(xi) > V.MAX_HORIZON or any(not V._ok(x) or x < 0 for x in xi)):
+            err.append(f"scenarios.{k}.extra_investment: 연도별 추가 투자 유출(달러, 0 이상) 최대 {V.MAX_HORIZON}개")
     if len(probs) == 3 and abs(sum(probs) - 1) > 0.011:
         err.append(f"시나리오 확률 합 = {sum(probs):.3f} (1.0 이어야 함)")
+    if len(probs) == 3 and abs(probs[0] - probs[2]) > 0.011 and len(str(R.get("prob_basis") or "").strip()) < 40:
+        warn.append(f"확률이 비대칭(약세 {probs[0]:.2f} · 강세 {probs[2]:.2f})인데 prob_basis(40자 이상)가 없음 — 기본은 25/50/25. "
+                    "한쪽이 더 일어나기 쉽다고 볼 증거(가이던스 달성 이력·업종 기저율 등)를 적거나 대칭으로 둘 것")
     adj = R.get("adjustments") or {}
+    if adj.get("start_margin") is not None:
+        if not V._ok(adj["start_margin"]) or not -3.0 <= adj["start_margin"] <= 0.7 or len(str(adj.get("start_margin_basis") or "").strip()) < 40:
+            err.append("adjustments.start_margin: 일회성 항목을 뺀 출발 GAAP 영업이익률(−3.0~0.7) + start_margin_basis(40자 이상: 어떤 항목을 얼마나 뺐는지)")
+    if adj.get("revenue_base") is not None:
+        if not V._ok(adj["revenue_base"]) or adj["revenue_base"] <= 0 or len(str(adj.get("revenue_base_basis") or "").strip()) < 40:
+            err.append("adjustments.revenue_base: 분할·매각·종결된 인수를 반영한 pro forma 매출(달러) + revenue_base_basis(40자 이상)")
     if adj.get("minority_economic_share") is not None:
         if not V._ok(adj["minority_economic_share"]) or not 0 < adj["minority_economic_share"] < 0.9:
             err.append("adjustments.minority_economic_share: 0~0.9 (연결 이익·가치 중 소수주주 몫)")
@@ -169,17 +183,36 @@ def load_research(ticker: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def load_anchor(ticker: str) -> Optional[Dict[str, Any]]:
+    """리서치를 발행할 때 함께 저장한 재무 스냅샷 (리서치 가정과 한 쌍인 재무 기준)."""
+    try:
+        v = json.loads((RESEARCH_DIR / f"{ticker.upper()}.fin.json").read_text(encoding="utf-8"))
+        return v if isinstance(v, dict) and v.get("ttm") else None
+    except (OSError, ValueError):
+        return None
+
+
 def compute(ticker: str, research: Optional[Dict[str, Any]] = None, refresh: bool = False,
             price: Optional[float] = None) -> Dict[str, Any]:
-    """재무 스냅샷(+리서치) → 전체 평가 결과. 리서치가 주어지지 않으면 저장된 리서치를 쓴다."""
+    """재무 스냅샷(+리서치) → 전체 평가 결과. 리서치가 주어지지 않으면 저장된 리서치를 쓴다.
+
+    저장된 리서치로 다시 계산할 때는 **리서치를 쓴 시점의 재무 스냅샷**을 쓴다. 리서치의 성장 경로("TTM 종료 후 12개월")와
+    재무 조정(달러 금액)은 그 재무제표와 한 쌍이므로, 새 분기 실적 위에 같은 경로를 다시 얹으면 한 분기 성장이 두 번 들어가고
+    이미 재무제표에 반영된 조정이 또 차감된다. 주가·금리·위험프리미엄만 최신으로 바꾸고, 새 재무제표가 나왔으면 '갱신 필요'로 표시한다."""
     T = ticker.upper()
     F = FN.load(T, force=refresh)
     if price is None:
         price = FN.last_price(T) or (F.get("market") or {}).get("price")
     r10, aaa = V.market_rates()
     R = research if research is not None else load_research(T)
+    if research is None and R:
+        Fa = load_anchor(T)
+        if Fa:
+            newer = str((F.get("ttm") or {}).get("end") or "") > str((Fa.get("ttm") or {}).get("end") or "")
+            R = {**R, "_new_financials": (F.get("ttm") or {}).get("end") if newer else None}
+            F = Fa
     today = datetime.now(timezone.utc).date().isoformat()
-    v = V.evaluate(F, price, r10, aaa, today, R)
+    v = V.evaluate(F, price, r10, aaa, today, R, V.market_erp())
     v["name"] = (F.get("profile") or {}).get("name")
     return v
 
@@ -196,7 +229,11 @@ def publish(ticker: str, v: Dict[str, Any], research: Optional[Dict[str, Any]] =
     _write(out["html"], page(v, v.get("name")))
     if research is not None:
         out["research"] = RESEARCH_DIR / f"{T}.json"
-        _write(out["research"], json.dumps(research, ensure_ascii=False, indent=1))
+        _write(out["research"], json.dumps({k: x for k, x in research.items() if not k.startswith("_")}, ensure_ascii=False, indent=1))
+        snap = FN.read_snapshot(T)                          # 리서치와 한 쌍인 재무 기준을 함께 보존 (compute 참고)
+        if snap:
+            out["anchor"] = RESEARCH_DIR / f"{T}.fin.json"
+            _write(out["anchor"], json.dumps(snap, ensure_ascii=False))
     return out
 
 
@@ -288,7 +325,8 @@ def template(ticker: str, direct: bool) -> Dict[str, Any]:
         "plans": [{"item": "", "timing": "", "impact": ""}],
         "news": [{"date": "", "headline": "", "impact": "POS|NEG|NEU", "why": ""}],
         "risks": [""], "catalysts": [""],
-        "scenarios": {k: dict(scen) for k in SCEN},
+        "scenarios": {k: {**scen, "prob": pr} for k, pr in zip(SCEN, (0.25, 0.50, 0.25))},
+        "prob_basis": "",
         "options": [], "adjustments": {"nonop_assets": 0, "extra_dilution_pct": 0.0, "note": ""},
         "valuation_notes": "", "sources": [{"title": "", "url": "", "date": ""}],
     }
@@ -299,7 +337,7 @@ def prepare(ticker: str, work_dir: str, refresh: bool = False) -> Path:
     F = FN.load(T, force=refresh)
     price = FN.last_price(T) or (F.get("market") or {}).get("price")
     r10, aaa = V.market_rates()
-    v = V.evaluate(F, price, r10, aaa, datetime.now(timezone.utc).date().isoformat(), None)
+    v = V.evaluate(F, price, r10, aaa, datetime.now(timezone.utc).date().isoformat(), None, V.market_erp())
     A, K, P, M = v["archetype"], v["wacc"], v["assumptions"], v["metrics"]
     direct = A["code"] in ("BANK", "INSURANCE", "REIT")
     try:
@@ -336,16 +374,13 @@ def prepare(ticker: str, work_dir: str, refresh: bool = False) -> Path:
                 rng = f"{_b(b['low'])}~{_b(b['high'])}" if key == "rev" else f"{b['low']:.2f}~{b['high']:.2f}"
                 L.append(f"- {lab} {per}: {val} (범위 {rng}, 성장 {_p(b.get('growth'))}, {int(b['n']) if b.get('n') else '?'}명)")
     an = v.get("analyst") or {}
-    L += [f"- 목표가 평균 {an.get('target_mean')} (하단 {an.get('target_low')} · 상단 {an.get('target_high')}, {an.get('n')}명) — 참고용, 근거로 쓰지 말 것", "",
+    L += ["",
           "## 3. 기계적 기준선 (재무제표만 본 결과 — 리서치가 고쳐야 할 출발점)", "",
           f"- 분류: **{A['label']}** — " + " / ".join(A.get("reasons") or []),
           f"- 할인율: WACC {_p(K['wacc'])} (자기자본비용 {_p(K['ke'])}, 베타 {K['beta']:.2f}, rf {_p(K['rf'])}, ERP {_p(K['erp'])}) → 10년차 {_p(K['wacc_t10'])}",
           f"- 기계적 가정: 매출 성장 1·2년차 {_p(P['g1'])} / {_p(P['g2'])} 후 영구성장 {_p(P['gT'])} 로 감쇠 · 영업이익률 {_p(P['m0'])} → {_p(P['mT'])} "
           f"({P['margin_how']}) · Sales-to-Capital {P['s2c']:.2f}",
           f"- 기계적 결과: {v.get('summary')}"]
-    rd = v.get("reverse_dcf") or {}
-    if rd.get("text"):
-        L.append(f"- 역DCF: {rd['text']}")
     L += ["", "| 모델 | 보수 | 기준 | 낙관 | 가중치 |", "|---|---|---|---|---|"]
     for m in v["models"]:
         if m.get("included"):
@@ -365,7 +400,8 @@ def prepare(ticker: str, work_dir: str, refresh: bool = False) -> Path:
     L += ["", "## 5. 결과물 템플릿", "",
           ("이 종목은 금융·REIT 유형이라 FCFF DCF 를 쓰지 않는다. 각 시나리오의 `value_per_share` 를 직접 산출하고 `value_basis` 에 방법과 입력값을 적는다."
            if direct else
-           "각 시나리오의 `rev_growth`(연도별 매출 성장률, 3~10개) · `target_margin`(GAAP 영업이익률) · `margin_year` 를 채우면 엔진이 위 할인율로 10년 DCF 를 계산한다."),
+           "각 시나리오의 `rev_growth`(연도별 매출 성장률, 3~15개) · `target_margin`(GAAP 영업이익률) · `margin_year` 를 채우면 엔진이 위 할인율로 DCF 를 계산한다 "
+           "(성장률이 영구성장률에 수렴할 때까지 10~20년). 확률의 기본값은 25/50/25 — 비대칭으로 두려면 `prob_basis` 에 증거를 적는다."),
           "", "```json", json.dumps(template(T, direct), ensure_ascii=False, indent=1), "```", "",
           "## 6. 검증·발행", "", "```bash",
           f"python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json --dry-run   # 검증 + 계산 결과 미리보기",

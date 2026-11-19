@@ -1688,7 +1688,9 @@ RESEARCH (Claude session, like the weekly narrative — no API billing)
           risk adjustment, probability) plus options for businesses with no revenue yet — all sourced
 
 COMPUTATION (deterministic engine)
-  scenario value = 10y DCF on the research assumptions, with the engine's cost of capital
+  scenario value = DCF (10-20y, until growth converges) on the research assumptions, with the engine's cost of capital
+                   (10y Treasury + beta x current market-implied ERP; stable-phase beta 0.8-1.2; terminal value from the
+                   value-driver formula only - exit multiples are a cross-check, never blended in)
   fair value     = probability-weighted scenario values; range = bear … bull
   cross-check    = mechanical baseline (18 statement-only models: DCF variants, DDM, EPV, residual
                    income, peer multiples, P/FFO, Lynch, Graham) + reverse DCF, Monte Carlo, sensitivity
@@ -1715,7 +1717,17 @@ COMPUTATION (deterministic engine)
 9. Mechanical baseline rules (classification first, mid-cycle margins for cyclicals, operating
    leverage for loss-makers, growth mean-reversion, converging discount rates, reliability-weighted
    blending) are specified in docs/VALUATION.md sections 1-7.
-10. Deterministic: same research + same financials -> same numbers (Monte Carlo seeded by ticker).
+10. Deterministic: same research + same financials + same market inputs (rf, implied ERP) -> same numbers
+    (Monte Carlo seeded by ticker).
+11. Count each risk once: market risk in the discount rate; business risk in scenario cash flows and probabilities;
+    financing failure in research-set `fail_prob` (the engine applies no default in research mode); margin of safety
+    in the verdict band. No `wacc_adj` without a systematic-risk basis. Default probabilities 25/50/25; asymmetry
+    needs evidence (`prob_basis`). Assumptions are best estimates - neither conservative nor optimistic.
+12. Research and its financial base are a pair: the snapshot used at publish time is stored and reused on refresh;
+    new statements mark the research stale instead of re-applying the old growth path on a new base.
+13. Every publish runs self-checks (terminal-value cross-check, incremental ROIC vs cost of capital, +/-1pt
+    discount-rate verdict stability, probability symmetry, missing failure risk). ERROR-level findings block
+    publishing; the rest are shown on the detail page.
 ```
 
 ### 14.3 Placement

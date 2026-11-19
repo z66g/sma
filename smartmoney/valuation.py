@@ -16,22 +16,32 @@
 """
 from __future__ import annotations
 
+import json
 import math
 import os
 import zlib
-from datetime import date
+from datetime import date, timedelta
 from statistics import median
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
 VERSION = 1
-ERP = float(os.environ.get("SMA_ERP", "0.045"))            # 주식위험프리미엄 (성숙 시장 내재 ERP 근사)
+ERP_DEFAULT = 0.042                                        # 내재 ERP 를 못 읽었을 때의 값 (2025-11~2026-11 월별 내재 ERP 평균)
+ERP = float(os.environ.get("SMA_ERP") or ERP_DEFAULT)      # 테스트·수집 실패 시 기본값. 실제 평가는 market_erp() 의 현재 내재 ERP
+ERP_URL = "https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx"
+ERP_TTL_DAYS = 10
+EXIT_BLEND = float(os.environ.get("SMA_VAL_EXIT_BLEND", "0.0"))   # 리서치 시나리오 잔존가치에서 Exit 멀티플 방식의 비중
 RF_FALLBACK = 0.0425
 TAX_MARGINAL = 0.24                                        # 미국 연방 21% + 주세 근사
 MC_SIMS = int(os.environ.get("SMA_VAL_MC", "4000"))
 GROWTH_DECAY = 0.65          # 초과 성장률(g − g∞)의 연간 잔존 비율: 고성장은 빠르게 평균회귀한다 (반감기 ≈ 1.6년)
 GROWTH_SOFT_CAP = 0.50
+STABLE_BETA = (0.8, 1.2)     # 안정 성장기 베타 범위 (성숙 기업의 베타는 시장 평균 부근으로 모인다)
+WACC_CONV_YEARS = 10         # 할인율이 안정기 수준에 도달하는 해
+TAX_CONV_YEARS = 5           # 실효세율이 장기 세율에 도달하는 해 (일회성 세금 효과는 오래가지 않는다)
+MAX_HORIZON = 20             # 리서치 시나리오의 최장 명시+감쇠 구간
+MAX_EXPLICIT = 15            # 리서치가 직접 줄 수 있는 연도별 성장률 개수
 AMORT_DECAY = 0.75           # 인수 무형자산 상각의 연간 잔존 비율
 
 # 섹터 기본값 (peer 통계가 없을 때만 사용): 성숙기 영업이익률 / Sales-to-Capital
@@ -284,10 +294,13 @@ def derive(F: Dict[str, Any], price: Optional[float], g_term: float) -> Dict[str
         "eps_core": eps_core, "eps_basis": eps_basis, "eps_note": eps_note, "eps_ntm": eps_ntm, "eps_g": eps_g,
         "ltg": est.get("ltg"), "tax_eff": tax_eff, "interest": interest,
         "coverage": _div(ebit, interest) if interest > 0 else None,
+        # 리스 부채: 리스료는 이미 영업이익에서 차감된다 → 주주가치 계산·자본구조에서는 리스를 뺀 금융부채를 쓴다 (EV 멀티플은 peer 와 같은 기준인 리스 포함)
+        "leases": min(max(ttm.get("lease_liabilities") or 0.0, 0.0), debt), "debt_fin": debt - min(max(ttm.get("lease_liabilities") or 0.0, 0.0), debt),
         "debt": debt, "cash": cash, "net_debt": debt - cash, "minority": minority, "preferred": preferred,
         "equity": equity, "bvps": _div(equity, shares), "ic": ic,
         "roic": _div(ebit * (1 - tax_eff), ic) if _ok(ebit) and ic else None, "roe": _div(ni, equity) if _ok(equity) and equity > 0 else None,
         "s2c_own": _div(rev, ic_tan) if ic_tan else (6.0 if asset_light else None),
+        "ic_tan": ic_tan, "ttm_end": ttm.get("end"),
         "roic_tan": (_div(ebit * (1 - tax_eff), ic_tan) if ic_tan else (9.9 if asset_light else None)) if _ok(ebit) else None, "capex": capex, "capex_pct": capex / rev,
         "amort_excess": amort_excess, "intangibles": intang, "m_ttm": m_ttm, "gross_m": _div(ttm.get("gross_profit"), rev), "m_med5": m_med5, "m_long": m_long, "m_std": m_std,
         "margin_hist": hist_m, "pos_years": pos_years, "g_hist": g_hist, "g_long": g_long, "g_yoy": g_yoy,
@@ -411,10 +424,11 @@ _SPREADS = [(8.5, .006), (6.5, .008), (5.5, .010), (4.25, .012), (3.0, .015), (2
             (1.75, .0375), (1.5, .045), (1.25, .055), (0.8, .075), (0.65, .10), (-1e9, .14)]
 
 
-def capital(F: Dict[str, Any], D: Dict[str, Any], PS: Dict[str, Any], rf: float) -> Dict[str, Any]:
+def capital(F: Dict[str, Any], D: Dict[str, Any], PS: Dict[str, Any], rf: float, erp: Optional[float] = None) -> Dict[str, Any]:
+    ERP = erp if _ok(erp) and 0.02 <= erp <= 0.09 else globals()["ERP"]   # noqa: N806
     beta_raw = (F.get("market") or {}).get("beta")
     blume = 0.67 * beta_raw + 0.33 if _ok(beta_raw) else None
-    de = D["debt"] / D["mcap"]
+    de = D["debt_fin"] / D["mcap"]
     bu = (PS.get("beta_unlevered") or {}).get("median")
     relev = bu * (1 + (1 - TAX_MARGINAL) * de) if _ok(bu) else None
     if _ok(blume, relev):
@@ -427,32 +441,41 @@ def capital(F: Dict[str, Any], D: Dict[str, Any], PS: Dict[str, Any], rf: float)
         beta, src = 1.0, "시장 베타(1.0) 가정 — 베타 데이터 없음"
     beta = _clip(beta, 0.5, 2.5)
     mc = D["mcap"]
-    size = 0.0 if mc >= 100e9 else 0.005 if mc >= 10e9 else 0.010 if mc >= 2e9 else 0.0175 if mc >= 0.3e9 else 0.03
+    # 규모 프리미엄: 대형·중형주에는 근거가 약하다(CRSP 상위 분위의 프리미엄 ≈ 0). 유동성이 얇은 소형주(시총 20억 달러 미만)에만,
+    # 시총에 따라 연속적으로(계단 없이) 부여하고 안정 성장기에는 두지 않는다
+    size = float(np.interp(math.log10(max(mc, 1.0)), [math.log10(5e7), math.log10(3e8), math.log10(2e9)], [0.03, 0.0175, 0.0]))
     ke = rf + beta * ERP + size
     cov = D["coverage"]
-    if D["debt"] <= 0:
+    loss = not (_ok(D["ebit"]) and D["ebit"] > 0)
+    obs = D["interest"] / D["debt_fin"] if D["debt_fin"] > 0 and (D.get("interest") or 0) > 0 else None   # 실효 차입금리
+    if D["debt_fin"] <= 0:
         spread = 0.012
+    elif loss:
+        # 영업적자 기업은 이자보상배율이 음수라 합성등급이 '부도'로 나오지만, 투자 단계의 적자는 부실과 다르다.
+        # 실제로 돈을 빌려준 금리(실효금리)를 쓰되 B~CCC 등급 범위(rf+4.5%~7.5%)로 제한한다 — 전환사채 표면금리는
+        # 전환권 가치만큼 낮게 찍히므로 하한을 두고, 자금조달 실패 위험은 할인율이 아니라 실패 확률·약세 시나리오가 담당한다(이중 반영 금지)
+        spread = _clip(obs - rf, 0.045, 0.075) if obs is not None else 0.06      # 이자 자료가 없으면 범위의 중간(최악값 아님)
     elif cov is None:
-        spread = 0.02 if _ok(D["ebit"]) and D["ebit"] > 0 else 0.075
+        spread = 0.02
     else:
         spread = next(s for th, s in _SPREADS if cov > th)
-    # 합성 신용등급은 이자보상배율로 정하므로 적자 기업은 부도 수준 스프레드를 받는다. 그러나 채권자는 주주보다 선순위이므로
-    # 타인자본비용이 자기자본비용을 넘을 수는 없다 (저금리 전환사채를 쓰는 적자 성장기업에서 WACC 가 ke 보다 높아지던 문제)
-    kd = min(rf + spread, ke)
+    kd = min(rf + spread, ke)                               # 채권자는 주주보다 선순위: 타인자본비용 ≤ 자기자본비용
     tax = max(D["tax_eff"], 0.0) if _ok(D["ebit"]) and D["ebit"] > 0 else 0.0
-    we = mc / (mc + D["debt"])
+    we = mc / (mc + D["debt_fin"])
     wacc = we * ke + (1 - we) * kd * (1 - tax)
 
-    def mature(share: float) -> float:
-        """성숙기 자본비용: 베타·규모 프리미엄이 share 만큼 시장 평균으로 수렴."""
-        b = beta + (1.0 - beta) * share
-        k = rf + b * ERP + size * (1 - share)
-        w = _clip(we + (0.85 - we) * share * 0.5, 0.5, 1.0)
-        return w * k + (1 - w) * (rf + min(spread, 0.02)) * (1 - TAX_MARGINAL)
+    beta_T = _clip(beta + (1.0 - beta) * 0.5, STABLE_BETA[0], STABLE_BETA[1])
+    ke_T = rf + beta_T * ERP
+
+    def mature() -> float:
+        """안정 성장기(잔존가치 구간) 자본비용. 잔존가치는 '성숙한 회사'의 가치이므로 그 구간의 베타는 성숙 기업 범위
+        (0.8~1.2)에 있어야 한다 — 고베타가 영구히 유지된다고 두면 성장기의 위험을 영구 구간에 한 번 더 깎는 셈이 된다."""
+        w = _clip(we + (0.85 - we) * 0.25, 0.5, 1.0)
+        return w * ke_T + (1 - w) * (rf + min(spread, 0.02)) * (1 - TAX_MARGINAL)
     return {"rf": rf, "erp": ERP, "beta_raw": beta_raw, "beta_blume": blume, "beta_peer_unlevered": bu,
             "beta_peer_relevered": relev, "beta": beta, "beta_source": src, "size_premium": size, "ke": ke,
             "kd": kd, "spread": spread, "coverage": cov, "tax": tax, "we": we, "wd": 1 - we, "wacc": wacc,
-            "wacc_t5": mature(0.25), "wacc_t10": mature(0.5), "ke_t": rf + (beta + (1 - beta) * 0.5) * ERP + size * 0.5}
+            "kd_observed": obs, "beta_stable": beta_T, "wacc_t5": mature(), "wacc_t10": mature(), "ke_t": ke_T}
 
 
 # ─── ④-a 전망 가정 ──────────────────────────────────────────────────────────
@@ -513,8 +536,9 @@ def assumptions(F: Dict[str, Any], D: Dict[str, Any], A: Dict[str, Any], K: Dict
             p_fail += 0.05
     tax0 = D["tax_eff"]
     return {"rev0": D["rev"], "g1": D["g1"], "g2": D["g2"], "gT": g_term, "m0": m0, "mT": mT, "conv": conv,
-            "margin_how": how, "tax0": tax0, "taxT": _clip(max(tax0, 0.21), 0.21, 0.28), "s2c": s2c,
-            "roic_prem": prem, "da_pct": da_T, "amort0": D["amort_excess"], "w0": K["wacc"], "wT5": K["wacc_t5"], "wT10": K["wacc_t10"],
+            "margin_how": how, "tax0": tax0, "taxT": _clip(max(tax0, TAX_MARGINAL), TAX_MARGINAL, 0.28), "s2c": s2c,
+            # 매출이 아직 작은 회사는 D&A/매출 비율이 의미 없이 크다 → 30% 상한 (Exit 교차검증의 EBITDA 왜곡 방지)
+            "roic_prem": prem, "da_pct": min(da_T, 0.30), "amort0": D["amort_excess"], "w0": K["wacc"], "wT5": K["wacc_t5"], "wT10": K["wacc_t10"],
             "p_fail": p_fail, "growth_source": D["g_src"],
             "scale_margin": m0 < 0 and code in ("PRE_REVENUE", "HYPERGROWTH_UNPROFITABLE", "TURNAROUND")}
 
@@ -550,12 +574,12 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
             g = g1 if t == 1 else g2 if t == 2 else gT + (g2c - gT) * GROWTH_DECAY ** (t - 2)
         rev = rev_prev * (1 + g)
         if scale_m:      # 적자 기업: 손실은 매출에 비례하지 않는다(고정비) → 규모가 커질수록 손실률이 줄고 N년차에 목표 도달
-            m = mT - (mT - m0) * np.minimum(rev0 / rev, 1.5) * math.sqrt(max(1 - t / conv, 0.0))
+            m = mT - (mT - m0) * np.minimum(rev0 / rev, 1.5) * max(1 - t / conv, 0.0)   # 목표 연차까지 끊김 없이 수렴
         else:
             m = m0 + (mT - m0) * min(t / conv, 1.0)
         ebit = rev * m
-        rate = tax0 + (taxT - tax0) * t / N
-        use = np.minimum(nol, np.maximum(ebit, 0))          # 이월결손금: 예측 기간 중 발생분만 (보수적)
+        rate = tax0 + (taxT - tax0) * min(t / min(N, TAX_CONV_YEARS), 1.0)
+        use = np.minimum(nol, 0.8 * np.maximum(ebit, 0))    # 이월결손금: 예측 기간 발생분, 과세소득의 80% 한도(미국 세법). 기존 누적분은 리서치가 nonop_assets 로
         taxes = (np.maximum(ebit, 0) - use) * rate
         nol = nol - use + np.maximum(-ebit, 0)
         if explicit:     # Finbox 식 명시적 현금흐름: NOPAT + D&A − CAPEX − 순운전자본 증가 (리서치가 CAPEX 계획을 직접 줄 때)
@@ -565,7 +589,7 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
         else:
             reinv = np.maximum(rev - rev_prev, 0) / s2c
             fcff = ebit - taxes - reinv + amort0 * AMORT_DECAY ** t
-        w = w0 + (wT - w0) * (t - 1) / max(N - 1, 1)
+        w = w0 + (wT - w0) * min((t - 1) / max(min(N, WACC_CONV_YEARS) - 1, 1), 1.0)
         df = df / (1 + w)
         pv = pv + fcff * df * np.sqrt(1 + w)                # 기중(mid-year) 할인
         if detail:
@@ -574,30 +598,39 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
         rev_prev = rev
     roicT = wT + f("roic_prem")
     rr = np.clip(gT / roicT, 0, 0.9)
-    fcff_t1 = rev_prev * (1 + gT) * m * (1 - taxT) * (1 - rr)
-    if explicit:         # 마지막 해의 자본집약도가 유지된다고 보고 영구성장 (Terminal FCF × (1+g) ÷ (WACC − g))
-        fcff_t1 = (rev_prev * m * (1 - taxT) + (dep - cap_list[-1]) * rev_prev) * (1 + gT) - nwc * rev_prev * gT
-    tv_g = fcff_t1 / np.maximum(wT - gT, 0.025)
+    nopat_T = rev_prev * m * (1 - taxT)
+    if explicit:         # D&A 가 유지 CAPEX 를 넘는 부분(인수 무형자산 상각 등)은 현금이 나가지 않는 비용 → 세후로 되돌린다
+        nopat_T = nopat_T + (1 - taxT) * max(dep - cap_list[-1], 0.0) * rev_prev
+    # 영구 구간의 성장에는 두 방식 모두 재투자가 든다: 재투자율 = g ÷ 신규투자수익률. (명시적 빌드에서 마지막 해의 CAPEX≈D&A 를
+    # 그대로 영구 적용하면 순투자 없이 영원히 성장하는 셈이 되어 신규투자수익률이 수백 % 로 계산된다)
+    fcff_t1 = nopat_T * (1 + gT) * (1 - rr)
+    # 예측 구간을 기중(mid-year) 할인했으므로 영구 구간의 현금흐름도 매년 중간에 들어온다 → 잔존가치에 (1+WACC)^0.5
+    # (Exit 멀티플 방식은 N년 말 시점의 거래가치이므로 보정하지 않는다)
+    mid = np.sqrt(1 + wT)
+    tv_g = fcff_t1 / np.maximum(wT - gT, 0.025) * mid
     if terminal == "growth":
         tv = tv_g
     elif terminal == "ebitda":
         tv = np.maximum(ebit + rev_prev * (dep if explicit else f("da_pct")), 0) * np.asarray(mult, float)
     else:
         tv = rev_prev * np.asarray(mult, float)
-    ev = pv + tv * df
+    roll = (1 + w0) ** float(p.get("stub") or 0.0)         # 재무제표 기준일 → 평가일까지의 경과분만큼 가치를 앞으로 굴린다
+    pv, tv_pv = pv * roll, tv * df * roll
+    ev = pv + tv_pv
     if not detail:
         return ev
-    ebitda_n = float(ebit + rev_prev * f("da_pct"))
-    return {"ev": float(ev), "pv_fcff": float(pv), "tv": float(tv), "pv_tv": float(tv * df),
-            "tv_share": float(tv * df / ev) if float(ev) > 0 else None, "rows": rows,
+    ebitda_n = float(ebit + rev_prev * (dep if explicit else f("da_pct")))
+    return {"ev": float(ev), "pv_fcff": float(pv), "tv": float(tv), "pv_tv": float(tv_pv),
+            "tv_share": float(tv_pv / ev) if float(ev) > 0 else None, "rows": rows, "nopat_T": float(nopat_T),
             "rev_n": float(rev_prev), "ebitda_n": ebitda_n, "fcff_n": float(fcff), "wT": float(wT),
             "tv_growth": float(tv_g), "fund_ev_ebitda": float(tv_g / ebitda_n) if ebitda_n > 0 else None,
             "fund_ev_rev": float(tv_g / rev_prev),
-            "implied_g": float((tv * wT - fcff_t1 / (1 + gT) * 1.0) / (tv + fcff_t1 / (1 + gT))) if float(tv) > 0 else None}
+            "implied_g": float((tv * wT - fcff_t1 / (1 + gT) * mid) / (tv + fcff_t1 / (1 + gT) * mid)) if float(tv) > 0 else None,
+            "N": N, "w0": float(w0), "nopat_n": float(ebit - taxes), "reinv_n": float(reinv)}
 
 
 def per_share(ev, D: Dict[str, Any], p_fail=0.0):
-    eq = ev - D["debt"] - D["preferred"] - D["minority"] + D["cash"]
+    eq = ev - D["debt_fin"] - D["preferred"] - D["minority"] + D["cash"]
     return eq * (1 - p_fail) / D["shares"]
 
 
@@ -687,6 +720,8 @@ def model_dcf(D, P, PS, K, N: int, kind: str, base: Dict[str, Any]) -> Dict[str,
     r["low"] = float(per_share(dcf(_scen(P, -1), N, term, lo_m), D, P["p_fail"]))
     r["high"] = float(per_share(dcf(_scen(P, +1), N, term, hi_m), D, P["p_fail"]))
     r["detail"] = {"ev": d["ev"], "tv_share": d["tv_share"], "exit_multiple": mult, "implied_g": d["implied_g"], "wacc": P["w0"], "wacc_T": d["wT"]}
+    if kind == "ebitda":
+        r["detail"]["exit_market"] = {"peer": peer if _ok(peer) else None, "own": own_cap}
     if _ok(d["tv_share"]):
         _check(r, "잔존가치 비중", d["tv_share"] <= 0.85, f"기업가치의 {d['tv_share'] * 100:.0f}%가 잔존가치"
                + ("" if d["tv_share"] <= 0.85 else " — 먼 미래 가정 의존도 높음"), 0.75)
@@ -1120,23 +1155,33 @@ def _uncertainty(agg, code: str, D, F, dcfs: List[Dict[str, Any]]) -> Dict[str, 
 # ─── 메인 ───────────────────────────────────────────────────────────────────
 def evaluate(F: Dict[str, Any], price: Optional[float] = None, rf: Optional[float] = None,
              aaa: Optional[float] = None, as_of: Optional[str] = None,
-             research: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+             research: Optional[Dict[str, Any]] = None, erp: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     warnings = list(F.get("warnings") or [])
     if not _ok(rf) or not 0.005 <= rf <= 0.12:
         rf = RF_FALLBACK
         warnings.append(f"10년 국채금리 수집 실패 → {RF_FALLBACK * 100:.2f}% 가정")
     aaa = aaa if _ok(aaa) and 0.01 <= aaa <= 0.15 else rf + 0.009
-    g_term = _clip(0.6 * rf, 0.02, 0.03)
+    # 영구성장률: 장기 명목 성장률은 무위험금리를 넘지 못한다. 내재 ERP 는 '영구성장률 = 무위험금리' 전제로 추정된 값이므로
+    # 영구성장률만 따로 낮게 잡으면(예: 금리와 무관하게 3%) 같은 시장을 두 번 보수적으로 보게 된다 → rf − 1%p, 2~4% 범위
+    g_term = _clip(rf - 0.01, 0.02, 0.04)
     D = derive(F, price, g_term)
     A = classify(F, D)
     PS = peer_stats(F.get("peers") or [])
-    K = capital(F, D, PS, rf)
+    K = capital(F, D, PS, rf, (erp or {}).get("erp"))
+    K["erp_source"] = (erp or {}).get("label") or ("환경변수 SMA_ERP" if os.environ.get("SMA_ERP") else f"기본값 {ERP * 100:.1f}% (내재 ERP 수집 안 됨)")
     code, scope = A["code"], F.get("peer_scope") or ""
     fin = code in ("BANK", "INSURANCE")
     P = assumptions(F, D, A, K, PS, g_term)
+    try:                                                    # 재무제표 기준일(TTM 종료) 이후 경과 기간
+        P["stub"] = _clip((date.fromisoformat(str(as_of)) - date.fromisoformat(str(D["ttm_end"]))).days / 365.0, 0.0, 0.75)
+    except (ValueError, TypeError):
+        P["stub"] = 0.0
+    for key, lab in (("capex", "CAPEX"), ("interest_expense", "이자비용"), ("da", "감가상각")):
+        if (F.get("ttm") or {}).get(key) is None:
+            warnings.append(f"TTM {lab} 자료 없음 — 0 으로 처리됨. 관련 가정(자본집약도·타인자본비용)은 리서치에서 직접 확인할 것")
     models: List[Dict[str, Any]] = []
     base5 = base10 = None
-    exit10 = None
+    exit10 = exitp = None
     if fin or code == "REIT":
         why = "금융업: 부채가 영업자산이라 FCFF·기업가치(EV) 개념 부적합" if fin else "REIT: 감가상각·자본구조 특성상 FFO·배당 모델 사용"
         models += [_na(f"dcf_{k}_{n}y", why) for n in (5, 10) for k in ("growth", "ebitda", "revenue")]
@@ -1155,6 +1200,7 @@ def evaluate(F: Dict[str, Any], price: Optional[float] = None, rf: Optional[floa
                 m = model_dcf(D, P, PS, K, n, kind, base)
                 if kind == "ebitda" and n == 10 and m["applicable"]:
                     exit10 = m["detail"]["exit_multiple"]
+                    exitp = m["detail"]["exit_market"]
                 models.append(m)
         models.append(model_epv(D, P, K, A) if code not in ("PRE_REVENUE", "HYPERGROWTH_UNPROFITABLE", "TURNAROUND")
                       else _na("epv", "현재 이익이 없어 '성장 0 수익력' 정의 불가"))
@@ -1194,7 +1240,7 @@ def evaluate(F: Dict[str, Any], price: Optional[float] = None, rf: Optional[floa
     if agg.get("fair") is None:
         out.update({"fair_value": None, "status": "NO_MODEL",
                     "summary": "적용 가능한 모델이 없어 적정가치를 산출하지 못했습니다."})
-        return apply_research(out, D, P, exit10, research, as_of) if research else out
+        return apply_research(out, D, P, exitp, research, as_of) if research else out
     unc = _uncertainty(agg, code, D, F, [m for m in models if m["id"].startswith("dcf_")])
     fair, band = agg["fair"], MOS_BAND[unc["level"]]
     up = fair / D["price"] - 1
@@ -1221,7 +1267,7 @@ def evaluate(F: Dict[str, Any], price: Optional[float] = None, rf: Optional[floa
     top = ", ".join(f"{m['name']}({m['weight'] * 100:.0f}%)" for m in inc[:3])
     out["summary"] = (f"'{A['label']}' 유형 → {agg['n']}개 모델 통합 적정가 {fair:,.2f} (범위 {agg['low']:,.2f}~{agg['high']:,.2f}), "
                       f"현재가 {D['price']:,.2f} 대비 {up * 100:+.1f}% · {VERDICT_KO[verdict]} (불확실성 {unc['label']}). 주요 모델: {top}")
-    return apply_research(out, D, P, exit10, research, as_of) if research else out
+    return apply_research(out, D, P, exitp, research, as_of) if research else out
 
 
 # ─── 리서치 기반 적정가 ──────────────────────────────────────────────────────
@@ -1237,56 +1283,118 @@ def _verdict(fair: float, price: float, band: float) -> str:
             "DEEP_OVERVALUED" if over > 2.5 * band else "OVERVALUED" if over > band else "FAIR")
 
 
-def scenario_value(D, P, exit10, s: Dict[str, Any]) -> Dict[str, Any]:
-    """시나리오 1개 → 주당 가치. `value_per_share` 가 직접 주어지면(금융·REIT 등) 그대로 쓴다."""
-    if _ok(s.get("value_per_share")):
-        return {"value": float(s["value_per_share"]), "how": "애널리스트 직접 산출", "rev5": None, "rev10": None, "cagr5": None}
-    gp = [float(g) for g in s["rev_growth"]][:10]
+def _growth_path(explicit: Sequence[float], gT: float) -> List[float]:
+    """리서치가 준 연도별 성장률 → 영구성장률에 수렴할 때까지 감쇠시킨 전체 경로.
+
+    잔존가치는 '안정 성장'을 전제한다. 그래서 성장률이 영구성장률 ±1%p 안에 들어올 때까지 예측 구간을 늘린다
+    (최소 10년, 최장 MAX_HORIZON 년). 10년에서 무조건 끊으면 아직 성장 중인 회사는 11년차에 성장률이 절벽처럼 떨어진다."""
+    gp = [float(g) for g in explicit][:MAX_EXPLICIT]
     last = gp[-1]
-    while len(gp) < 10:                                    # 명시 구간 이후는 영구성장률로 감쇠
-        last = P["gT"] + (min(last, GROWTH_SOFT_CAP) - P["gT"]) * GROWTH_DECAY
+    while len(gp) < MAX_HORIZON and (len(gp) < 10 or abs(last - gT) > 0.01):
+        last = gT + (min(last, GROWTH_SOFT_CAP) - gT) * GROWTH_DECAY
         gp.append(last)
+    return gp
+
+
+def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[str, Any]:
+    """시나리오 1개 → 주당 가치. `value_per_share` 가 직접 주어지면(금융·REIT 등) 그대로 쓴다.
+
+    exitp = Exit 멀티플의 시장 근거 {"peer": peer EV/EBITDA 중앙값, "own": 현재 자기 배수(상한 적용)}.
+    shift = 할인율 민감도 계산용 가감(모든 연도에 동일)."""
+    if _ok(s.get("value_per_share")):
+        return {"value": float(s["value_per_share"]), "how": "애널리스트 직접 산출", "rev5": None, "rev10": None,
+                "cagr5": None, "direct": True}
     q = dict(P)
     q["mT"], q["conv"] = float(s["target_margin"]), int(s.get("margin_year") or 5)
-    q["scale_margin"] = P["m0"] < 0
-    adj = float(s.get("wacc_adj") or 0.0)
+    q["scale_margin"] = q["m0"] < 0
+    adj = float(s.get("wacc_adj") or 0.0) + shift
     for k in ("w0", "wT5", "wT10"):
-        q[k] = P[k] + adj
+        q[k] = max(P[k] + adj, 0.04)
     if _ok(s.get("s2c")):
         q["s2c"] = float(s["s2c"])
     if _ok(s.get("terminal_growth")):
         q["gT"] = _clip(float(s["terminal_growth"]), 0.01, 0.04)
+    gp = _growth_path(s["rev_growth"], q["gT"])
+    N = len(gp)
     if s.get("capex_pct") is not None:                      # 명시적 현금흐름 빌드 (CAPEX·D&A·순운전자본을 매출 대비 비율로)
         q["capex_pct"] = s["capex_pct"]
         q["dep_pct"] = s["da_pct"] if s.get("da_pct") is not None else P["da_pct"]
         q["nwc_pct"] = float(s.get("nwc_pct") or 0.0)
     if _ok(s.get("tax_rate")):                              # 구조적으로 낮거나 높은 장기 세율의 근거가 있을 때
         q["taxT"] = _clip(float(s["tax_rate"]), 0.05, 0.35)
-    pf = float(s["fail_prob"]) if _ok(s.get("fail_prob")) else P["p_fail"]
-    ev = float(dcf(q, 10, "growth", gpath=gp))
-    if exit10 and q["mT"] > 0:
-        ev = 0.5 * ev + 0.5 * float(dcf(q, 10, "ebitda", exit10, gpath=gp))
+    # 실패 위험은 리서치가 정한다: 약세 시나리오가 이미 실패 경로를 그리고 있으면 엔진의 기계적 실패확률을 또 곱해서는 안 된다
+    pf = float(s["fail_prob"]) if _ok(s.get("fail_prob")) else 0.0
+    dg = dcf(q, N, "growth", gpath=gp, detail=True)
+    xi = [float(x) for x in (s.get("extra_investment") or [])][:N]
+    # 잔존가치의 재투자율(g ÷ 신규투자수익률)은 '이 시나리오가 그리는 성숙기'의 수익성에서 나와야 한다. 과거 실적의 ROIC 를 쓰면
+    # 지금 적자인 회사는 시나리오가 높은 수익성을 가정해도 영구 구간에서는 초과수익 0 으로 계산된다(적자·전환기 기업에 불리한 쏠림).
+    # 시나리오 말년 ROIC = 말년 세후영업이익 ÷ (현재 유형 투하자본 + 예측 기간 누적 순투자). 초과수익의 절반만 영구히 인정(상한 8%p)
+    roic_N = None
+    ic_N = max(D.get("ic_tan") or 0.0, 0.0) + sum(r["reinv"] for r in dg["rows"]) + sum(xi)
+    if ic_N > 0:
+        roic_N = dg["nopat_T"] / ic_N
+        q["roic_prem"] = _clip(0.5 * (roic_N - dg["wT"]), 0.0, 0.08)
+        dg = dcf(q, N, "growth", gpath=gp, detail=True)
+    ev, mult, ev_x = dg["ev"], None, None
+    if exitp and q["mT"] > 0 and dg["ebitda_n"] > 0:
+        # Exit 멀티플 = 시장 근거(peer·자기 배수) 45% + '이 시나리오'의 성숙기 이론 배수 55%. 이론 배수를 기계적 기준선에서
+        # 빌려오면 마진·자본집약도가 다른 시나리오에 맞지 않는 배수가 적용된다(자본집약적 사업에서 두 방식이 크게 어긋나던 원인)
+        mkt = [(v, w) for v, w in ((exitp.get("peer"), 0.35), (exitp.get("own"), 0.10)) if _ok(v) and v > 0]
+        if mkt:
+            parts = mkt + ([(dg["fund_ev_ebitda"], 0.55)] if _ok(dg["fund_ev_ebitda"]) and dg["fund_ev_ebitda"] > 0 else [])
+            mult = _clip(sum(v * w for v, w in parts) / sum(w for _, w in parts), 4.0, 25.0)
+            ev_x = float(dcf(q, N, "ebitda", mult, gpath=gp))
+            ev = (1 - EXIT_BLEND) * dg["ev"] + EXIT_BLEND * ev_x
     # 매출보다 앞서 집행되는 투자(위성망·공장·광산 등): Sales-to-Capital 방식은 재투자를 매출 증가 시점에 잡으므로
     # 리서치가 연도별 추가 유출을 명시하면 기중 할인해 차감한다
-    xi = [float(x) for x in (s.get("extra_investment") or [])][:10]
-    pv_x = sum(x / (1 + q["w0"]) ** (t + 0.5) for t, x in enumerate(xi))
+    pv_x, dfx = 0.0, 1.0
+    for t, x in enumerate(xi):
+        w = dg["rows"][t]["wacc"]
+        dfx /= (1 + w)
+        pv_x += x * dfx * math.sqrt(1 + w)
     ev -= pv_x
-    rev = [D["rev"]]
-    for g in gp:
-        rev.append(rev[-1] * (1 + g))
-    return {"extra_investment_pv": pv_x, "value": float(per_share(ev, D, pf)), "how": "10년 DCF (영구성장" + (" · EBITDA Exit 평균" if exit10 and q["mT"] > 0 else "") + ")",
-            "rev5": rev[5], "rev10": rev[10], "cagr5": _cagr(rev[0], rev[5], 5), "wacc": q["w0"], "fail_prob": pf}
+    rows = dg["rows"]
+    inv = sum(r["reinv"] for r in rows[1:]) + sum(xi[1:])
+    d_nopat = (rows[-1]["ebit"] - rows[-1]["tax"]) - (rows[0]["ebit"] - rows[0]["tax"])
+    rev = [float(q["rev0"])] + [r["rev"] for r in rows]
+    cap_T = dep_T = None
+    if s.get("capex_pct") is not None:
+        cx, dp = s["capex_pct"], q["dep_pct"]
+        cap_T = float(cx[-1] if isinstance(cx, (list, tuple)) else cx)
+        dep_T = float(dp[-1] if isinstance(dp, (list, tuple)) else dp)
+    return {"extra_investment_pv": pv_x, "value": float(per_share(ev, D, pf)),
+            "how": f"{N}년 DCF (영구성장" + (" · EBITDA Exit 평균" if ev_x is not None and EXIT_BLEND > 0 else "") + ")",
+            "rev5": rev[5], "rev10": rev[10], "cagr5": _cagr(rev[0], rev[5], 5), "wacc": q["w0"], "wacc_T": dg["wT"],
+            "fail_prob": pf, "N": N, "g_T": float(q["gT"]), "tv_share": dg["tv_share"], "ev_growth": dg["ev"] - pv_x,
+            "ev_exit": (ev_x - pv_x) if ev_x is not None else None, "exit_multiple": mult,
+            "fund_multiple": dg["fund_ev_ebitda"], "roic_incr": (d_nopat / inv) if inv > 0 else None,
+            "roic_T": roic_N, "roic_prem": float(q["roic_prem"]),
+            "margin_T": rows[-1]["margin"], "capex_T": cap_T, "dep_T": dep_T}
 
 
-def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: Optional[str]) -> Dict[str, Any]:
+SCEN_KO = {"bear": "약세", "base": "기본", "bull": "강세"}
+
+
+def _klass(verdict: str) -> str:
+    return "UNDER" if "UNDER" in verdict else "OVER" if "OVER" in verdict else "FAIR"
+
+
+def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: Optional[str]) -> Dict[str, Any]:
     price = D["price"]
     adjm = R.get("adjustments") or {}
+    p_fail_engine = P.get("p_fail") or 0.0
     if _ok(adjm.get("shares")) and 0.5 <= adjm["shares"] / D["shares"] <= 2.0:
         # 엔진 주식수(시가총액÷주가)가 미획득 성과주 등을 포함/누락하는 경우: 리서치가 공시 근거로 준 희석 주식수를 쓴다
         D = {**D, "shares": float(adjm["shares"])}
+    P = dict(P)
+    if _ok(adjm.get("start_margin")):                       # 일회성 항목을 걷어낸 출발 GAAP 영업이익률 (근거: start_margin_basis)
+        P["m0"] = float(adjm["start_margin"])
+    if _ok(adjm.get("revenue_base")) and 0.3 <= adjm["revenue_base"] / D["rev"] <= 3.0:
+        P["rev0"] = float(adjm["revenue_base"])             # 분할·매각·종결된 인수를 반영한 pro forma 매출 기준
     shares = D["shares"]
     # 엔진 부채에는 운용리스 부채가 들어 있다. 리스료는 이미 영업이익에서 차감되므로 리서치가 금액을 주면 이중 차감을 되돌린다
-    add = (float(adjm.get("nonop_assets") or 0.0) + float(adjm.get("operating_leases_in_debt") or 0.0)
+    lease_back = float(adjm.get("operating_leases_in_debt") or 0.0) if D.get("leases", 0.0) <= 0 else 0.0   # 엔진이 이미 뺐으면 중복 가산 금지
+    add = (float(adjm.get("nonop_assets") or 0.0) + lease_back
            - float(adjm.get("debt_like_liabilities") or 0.0)) / shares     # 연금 부족분 등 부채성 항목은 차감
     if adjm.get("minority_in_share_count"):                 # Up-C 구조: 비지배지분 보유자가 이미 주식수에 포함 → 차감분 복원
         add += D["minority"] / shares
@@ -1298,20 +1406,30 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
         opts.append({"name": o["name"], "prob": float(o["prob"]), "value_per_share": float(o["value_per_share"]),
                      "expected": ev_, "basis": o.get("basis")})
     opt_total = sum(o["expected"] for o in opts)
-    scen, fair = {}, 0.0
-    for name in ("bear", "base", "bull"):
-        s = R["scenarios"][name]
-        r = scenario_value(D, P, exit10, s)
-        raw = r["value"]
-        if ms is not None:      # 소수주주의 '경제적 몫': 장부 비지배지분 차감을 되돌리고, 전체 주주가치에서 그 비율을 뗀다
-            raw = (r["value"] + D["minority"] / shares) * (1 - ms)
-        core = max(raw + add, 0.0)                          # 영업 외 자산은 음(-)의 주주가치를 먼저 메운 뒤에 남는 만큼만 가치
-        val = core / dil + opt_total
-        scen[name] = {**r, "prob": float(s["prob"]), "core": core, "value": val, "story": s.get("story"),
-                      "target_margin": s.get("target_margin"), "margin_year": s.get("margin_year"),
-                      "rev_growth": s.get("rev_growth"), "wacc_adj": s.get("wacc_adj") or 0.0}
-        fair += float(s["prob"]) * val
+
+    def run(shift: float = 0.0) -> Tuple[Dict[str, Any], float]:
+        sc, fv = {}, 0.0
+        for name in ("bear", "base", "bull"):
+            s = R["scenarios"][name]
+            r = scenario_value(D, P, exitp, s, shift)
+            raw = r["value"]
+            if ms is not None:      # 소수주주의 '경제적 몫': 장부 비지배지분 차감을 되돌리고, 전체 주주가치에서 그 비율을 뗀다
+                raw = (r["value"] + D["minority"] / shares) * (1 - ms)
+            core = max(raw + add, 0.0)                      # 영업 외 자산은 음(-)의 주주가치를 먼저 메운 뒤에 남는 만큼만 가치
+            # 옵션가치도 주주의 몫이다: 회사가 자금조달에 실패하면 함께 사라지고, 추가 희석도 똑같이 받는다
+            val = (core + opt_total * (1 - (r.get("fail_prob") or 0.0))) / dil
+            sc[name] = {**r, "prob": float(s["prob"]), "core": core, "value": val, "story": s.get("story"),
+                        "target_margin": s.get("target_margin"), "margin_year": s.get("margin_year"),
+                        "rev_growth": s.get("rev_growth"), "wacc_adj": s.get("wacc_adj") or 0.0,
+                        "fail_prob_given": _ok(s.get("fail_prob"))}
+            fv += float(s["prob"]) * val
+        return sc, fv
+
+    scen, fair = run()
     lo, hi = min(v["value"] for v in scen.values()), max(v["value"] for v in scen.values())
+    modeled = [k for k, v in scen.items() if not v.get("direct")]
+    sens = {"minus_1pt": run(-0.01)[1], "plus_1pt": run(+0.01)[1]} if modeled else None
+    fair_sym = 0.25 * scen["bear"]["value"] + 0.5 * scen["base"]["value"] + 0.25 * scen["bull"]["value"]
     # 시나리오 분산: 확률가중 변동계수 (단순 범위는 '서로 다른 세계'를 제대로 쓴 리서치일수록 불리해진다)
     spread = math.sqrt(sum(v["prob"] * (v["value"] - fair) ** 2 for v in scen.values())) / fair if fair > 0 else 9.9
     conf = str(R.get("confidence") or "MEDIUM").upper()
@@ -1321,7 +1439,40 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
     except (ValueError, KeyError, TypeError):
         pass
     stale = age is not None and age > RESEARCH_STALE_DAYS
+    new_fin = R.get("_new_financials")                      # 리서치 이후 새 분기 재무제표가 나옴 (리서치는 작성 시점의 재무 기준으로 계산)
     code = out["archetype"]["code"]
+
+    # ── 자체 점검: 발행 전에 계산 결과의 내적 일관성을 기계적으로 확인한다 (사람이 증상을 보고 지적하기 전에 드러나도록) ──
+    checks: List[Dict[str, str]] = []
+    chk = lambda level, text: checks.append({"level": level, "text": text})  # noqa: E731
+    if p_fail_engine > 0 and any(not scen[k]["fail_prob_given"] for k in modeled):
+        chk("ERROR", f"현금 소진 구조(엔진 추정 자금조달 실패확률 {p_fail_engine * 100:.0f}%)인데 fail_prob 를 명시하지 않은 시나리오가 있음 — "
+                     "각 시나리오에 직접 정할 것 (약세 시나리오가 이미 실패 경로면 0)")
+    pb, pu = scen["bear"]["prob"], scen["bull"]["prob"]
+    if abs(pb - pu) > 0.011 and len(str(R.get("prob_basis") or "").strip()) < 40:
+        chk("WARN", f"확률이 비대칭(약세 {pb * 100:.0f}% · 강세 {pu * 100:.0f}%)인데 근거(prob_basis)가 없음 — "
+                    f"대칭(25/50/25)이면 적정가 {fair_sym:,.2f}")
+    if not scen["bear"]["value"] <= scen["base"]["value"] <= scen["bull"]["value"]:
+        chk("WARN", "시나리오 가치가 약세 ≤ 기본 ≤ 강세 순서가 아님")
+    tv_gap = False
+    for k in modeled:
+        v, ko = scen[k], SCEN_KO[k]
+        eg, ex = v["ev_growth"], v["ev_exit"]
+        if ex is not None and (eg <= 0 < ex or (eg > 0 and not 0.6 <= ex / eg <= 1 / 0.6)):
+            tv_gap = tv_gap or k == "base"
+            chk("WARN" if k == "base" else "INFO",
+                f"{ko}: Exit 멀티플 교차검증과 크게 다름 (적용한 영구성장 방식 기업가치 {eg / 1e9:,.1f}B · 시장 배수 {v['exit_multiple']:.1f}배 적용 시 {ex / 1e9:,.1f}B"
+                + (f"; 이 시나리오의 수익성·자본집약도가 설명하는 배수는 {v['fund_multiple']:.1f}배" if _ok(v.get("fund_multiple")) else "") + ")")
+        if _ok(v["tv_share"]) and v["tv_share"] > 0.9:
+            chk("INFO", f"{ko}: 기업가치의 {v['tv_share'] * 100:.0f}%가 {v['N']}년 뒤 잔존가치")
+        if _ok(v["roic_incr"]) and _ok(v["cagr5"]) and v["cagr5"] > 0.05 and v["roic_incr"] < v["wacc_T"] - 0.01:
+            chk("INFO", f"{ko}: 증분 투하자본수익률 {v['roic_incr'] * 100:.1f}% < 자본비용 {v['wacc_T'] * 100:.1f}% — "
+                        "이 가정에서는 성장할수록 주주가치가 줄어든다 (마진·자본집약도 가정 재확인)")
+        if v["capex_T"] is not None and v["capex_T"] < v["dep_T"] - 0.02:
+            chk("INFO", f"{ko}: 마지막 해 D&A({v['dep_T'] * 100:.1f}%)가 CAPEX({v['capex_T'] * 100:.1f}%)보다 2%p 이상 큼 — "
+                        "초과분을 비현금 상각으로 보고 영구 구간 이익에 세후 가산했다. 유지 CAPEX 를 낮게 잡은 것이 아닌지 확인")
+        if v["wacc"] > 0.15:
+            chk("INFO", f"{ko}: 시작 할인율 {v['wacc'] * 100:.1f}% (15% 초과) — 베타·자본구조 확인")
     score, why = 100.0, []
     score -= min(45.0, spread * 45)
     if spread > 0.4:
@@ -1338,19 +1489,42 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
     if stale:
         score -= 15
         why.append(f"리서치 {age}일 경과 — 갱신 필요")
+    if new_fin:
+        stale = True
+        score -= 10
+        why.append(f"리서치 이후 새 분기 실적({new_fin}) 발표 — 리서치 갱신 필요 (계산은 리서치 작성 시점의 재무 기준)")
+        chk("WARN", f"리서치 작성 이후 새 재무제표({new_fin} 기준)가 나왔다 — 성장 경로·재무 조정은 작성 시점 기준으로 유지했다. 리서치를 갱신할 것")
+    if tv_gap:
+        score -= 6
+        why.append("기본 시나리오의 잔존가치가 시장 배수 교차검증과 크게 어긋남")
     mech = out.get("fair_value")
     if _ok(mech) and mech > 0 and not 0.5 <= fair / mech <= 2.0:
         score -= 6
         why.append(f"기계적 기준선({mech:,.0f})과 {fair / mech:.1f}배 차이 — 리서치 가정이 과거 실적과 크게 다름")
+    rate_el = None
+    if sens and fair > 0:
+        rate_el = (sens["minus_1pt"] - sens["plus_1pt"]) / 2 / fair      # 할인율 1%p 당 적정가 변화율
+        if rate_el > 0.15:
+            score -= 5
+            why.append(f"할인율 1%p 에 적정가가 ±{rate_el * 100:.0f}% 움직임 (먼 미래 현금흐름 의존)")
     score = max(score, 0.0)
     level = "LOW" if score >= 78 else "MEDIUM" if score >= 58 else "HIGH" if score >= 38 else "VERY_HIGH"
     band = MOS_BAND[level]
     verdict = _verdict(fair, price, band)
+    robust = True
+    if sens:
+        robust = all(_klass(_verdict(f, price, band)) == _klass(verdict) for f in sens.values() if f > 0)
+        if not robust:
+            chk("WARN", f"판정이 할인율 ±1%p 에 따라 바뀜 (적정가 {sens['plus_1pt']:,.2f} ~ {sens['minus_1pt']:,.2f}) — "
+                        "'저평가/고평가' 결론보다 범위를 볼 것")
     out["mechanical"] = {k: out.get(k) for k in ("fair_value", "fair_low", "fair_high", "upside_pct", "verdict", "verdict_ko",
                                                  "n_models", "uncertainty", "summary", "status")}
     out["research"] = {**{k: R.get(k) for k in ("as_of", "analyst", "thesis", "business", "performance", "plans", "news", "risks",
-                                                "catalysts", "confidence", "sources", "adjustments", "valuation_notes", "second_opinion")},
-                       "scenarios": scen, "options": opts, "option_value": opt_total, "age_days": age, "stale": stale}
+                                                "catalysts", "confidence", "sources", "adjustments", "valuation_notes", "second_opinion",
+                                                "prob_basis")},
+                       "scenarios": scen, "options": opts, "option_value": opt_total, "age_days": age, "stale": stale,
+                       "anchor": {"ttm_end": D.get("ttm_end")}, "checks": checks, "rate_sensitivity": sens, "rate_elasticity": rate_el, "fair_symmetric": fair_sym,
+                       "verdict_robust": robust}
     out.update({"method": "RESEARCH", "status": "OK", "fair_value": fair, "fair_low": lo, "fair_high": hi,
                 "upside_pct": (fair / price - 1) * 100, "verdict": verdict, "verdict_ko": VERDICT_KO[verdict],
                 "mos_band_pct": band * 100, "model_gap": not 1 / 3 <= fair / price <= 3,
@@ -1359,6 +1533,8 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
                       f"기본 {scen['base']['value']:,.2f}({scen['base']['prob'] * 100:.0f}%) · 강세 {scen['bull']['value']:,.2f}({scen['bull']['prob'] * 100:.0f}%)의 확률가중"
                       + (f" (신사업 옵션 {opt_total:,.2f} 포함)" if opt_total > 0 else "")
                       + f". 현재가 {price:,.2f} 대비 {(fair / price - 1) * 100:+.1f}% · {VERDICT_KO[verdict]} (불확실성 {UNC_KO[level]})."
+                      + (f" 할인율 ±1%p 범위 {sens['plus_1pt']:,.2f}~{sens['minus_1pt']:,.2f}"
+                         + ("" if robust else " — 판정이 할인율에 민감") + "." if sens else "")
                       + (f" 기계적 기준선 {mech:,.2f}." if _ok(mech) else ""))
     return out
 
@@ -1375,6 +1551,7 @@ def compact(v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     out["archetype"] = {"code": a.get("code"), "label": a.get("label"), "traits": a.get("traits") or []}
     out["uncertainty"] = {"level": u.get("level"), "label": u.get("label"), "score": u.get("score")}
     out["wacc"], out["ke"] = r(k.get("wacc"), 4), r(k.get("ke"), 4)
+    out["wacc_stable"], out["erp"], out["rf"], out["g_term"] = r(k.get("wacc_t10"), 4), r(k.get("erp"), 4), r(k.get("rf"), 4), r((v.get("assumptions") or {}).get("gT"), 4)
     out["models"] = [{"id": m["id"], "name": m["name"], "mid": r(m["mid"]), "low": r(m["low"]), "high": r(m["high"]),
                       "weight": r(m["weight"], 3)} for m in v.get("models") or [] if m.get("included")]
     rd, mc, an = v.get("reverse_dcf") or {}, v.get("monte_carlo") or {}, v.get("analyst") or {}
@@ -1391,6 +1568,9 @@ def compact(v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
                            "scenarios": {k: {"prob": r(s["prob"], 3), "value": r(s["value"]), "cagr5": r(s.get("cagr5"), 4),
                                              "target_margin": s.get("target_margin")} for k, s in R["scenarios"].items()},
                            "n_sources": len(R.get("sources") or []),
+                           "rate_sensitivity": ({k2: r(x) for k2, x in R["rate_sensitivity"].items()} if R.get("rate_sensitivity") else None),
+                           "verdict_robust": R.get("verdict_robust", True), "fair_symmetric": r(R.get("fair_symmetric")),
+                           "n_warn": sum(1 for c in R.get("checks") or [] if c.get("level") in ("WARN", "ERROR")),
                            "second_opinion": ({k: (R["second_opinion"] or {}).get(k) for k in ("analyst", "fair_value")}
                                               if R.get("second_opinion") else None)}
         out["mechanical_fair"] = r((v.get("mechanical") or {}).get("fair_value"))
@@ -1409,6 +1589,82 @@ def market_rates() -> Tuple[Optional[float], Optional[float]]:
     return out[0], out[1]
 
 
+def _xlsx_numbers(blob: bytes, sheet: str) -> List[Dict[str, float]]:
+    """xlsx 시트의 숫자 셀만 읽는다 (zip + XML — 별도 라이브러리 불필요). 반환: 행별 {열문자: 값}."""
+    import io
+    import re
+    import zipfile
+    import xml.etree.ElementTree as ET
+    m = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+    rns = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
+    z = zipfile.ZipFile(io.BytesIO(blob))
+    wbx = z.read("xl/workbook.xml")
+    _xlsx_numbers.date1904 = b'date1904="1"' in wbx or b"date1904='1'" in wbx or b'date1904="true"' in wbx
+    rid = next(sh.get(rns + "id") for sh in ET.fromstring(z.read("xl/workbook.xml")).iter(m + "sheet")
+               if (sh.get("name") or "").strip().lower() == sheet.lower())
+    target = next(r.get("Target") for r in ET.fromstring(z.read("xl/_rels/workbook.xml.rels")) if r.get("Id") == rid)
+    rows = []
+    for row in ET.fromstring(z.read(target.lstrip("/") if target.startswith("/") else "xl/" + target)).iter(m + "row"):
+        vals: Dict[str, float] = {}
+        for c in row:
+            v = c.find(m + "v")
+            if v is not None and c.get("t") in (None, "n"):
+                try:
+                    vals[re.match(r"[A-Z]+", c.get("r")).group(0)] = float(v.text)
+                except (TypeError, ValueError, AttributeError):
+                    pass
+        rows.append(vals)
+    return rows
+
+
+def market_erp(force: bool = False) -> Dict[str, Any]:
+    """현재 시장의 내재 주식위험프리미엄 — Damodaran(NYU Stern)이 매월 초 S&P 500 가격·현금흐름으로 역산해 공개하는 값.
+
+    고정 상수(예: 4.5%)를 쓰면 '지금 시장 전체가 비싼가'에 대한 견해가 모든 종목의 적정가에 섞여 들어간다. 개별 종목 평가는
+    시장이 현재 위험에 매기는 가격을 그대로 받아들이고(시장 중립) 그 위에서 종목의 괴리를 봐야 한다.
+    월별 잡음으로 적정가가 출렁이지 않도록 최근 3개월 평균을 쓴다. 수집 실패 시 마지막 저장값 → 기본값."""
+    env = os.environ.get("SMA_ERP")
+    if env:
+        return {"erp": float(env), "label": f"환경변수 SMA_ERP {float(env) * 100:.2f}%", "source": "env"}
+    from .history import STATE_DIR
+    path = STATE_DIR / "valuation" / "erp.json"
+    saved = None
+    try:
+        saved = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    today = date.today()
+    if saved and not force:
+        try:
+            if (today - date.fromisoformat(saved["fetched"])).days < ERP_TTL_DAYS and \
+                    0 <= (today - date.fromisoformat(saved["as_of"])).days < 75:
+                return saved
+        except (KeyError, ValueError, TypeError):
+            pass
+    try:
+        from . import net
+        r = net.get(ERP_URL, ok_404=False, timeout=40)
+        rows = _xlsx_numbers(r.content, "Last 12 months data")
+        epoch = date(1904, 1, 1) if getattr(_xlsx_numbers, "date1904", False) else date(1899, 12, 30)
+        rd = [((epoch + timedelta(days=int(x["A"]))).isoformat(), x["D"], x.get("C"))
+              for x in rows if x.get("A", 0) > 30000 and 0.015 <= x.get("D", 0) <= 0.10]
+        rd = [x for x in rd if abs((today - date.fromisoformat(x[0])).days) < 500]
+        rd.sort()
+        if len(rd) < 3 or (today - date.fromisoformat(rd[-1][0])).days > 120:
+            raise ValueError("최근 월별 ERP 행을 찾지 못함")
+        erp = sum(x[1] for x in rd[-3:]) / 3
+        out = {"erp": round(erp, 5), "latest": rd[-1][1], "as_of": rd[-1][0], "fetched": today.isoformat(), "source": ERP_URL,
+               "readings": rd[-12:],
+               "label": f"Damodaran 내재 ERP 최근 3개월 평균 {erp * 100:.2f}% ({rd[-1][0][:7]} 현재 {rd[-1][1] * 100:.2f}%)"}
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+        return out
+    except Exception as e:  # noqa: BLE001
+        if saved:
+            return {**saved, "label": saved.get("label", "") + " · 갱신 실패(저장값 사용)"}
+        return {"erp": ERP_DEFAULT, "label": f"기본값 {ERP_DEFAULT * 100:.1f}% (내재 ERP 수집 실패: {str(e)[:60]})", "source": "default"}
+
+
 def run(symbol: str, price: Optional[float] = None, yft=None, rf: Optional[float] = None,
         as_of: Optional[date] = None, force: bool = False, research: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """수집 + 평가 (엔진·CLI 공용 진입점)."""
@@ -1417,4 +1673,4 @@ def run(symbol: str, price: Optional[float] = None, yft=None, rf: Optional[float
     if price is None and not _ok((F.get("market") or {}).get("price")):
         price = FN.last_price(symbol, yft)                  # 프로필 응답에 현재가가 빠진 경우 (호출 제한 등)
     r10, aaa = market_rates()
-    return evaluate(F, price, rf if _ok(rf) else r10, aaa, as_of.isoformat() if as_of else None, research)
+    return evaluate(F, price, rf if _ok(rf) else r10, aaa, as_of.isoformat() if as_of else None, research, market_erp())
