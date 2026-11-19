@@ -15,6 +15,8 @@
   `www.businesswire.com` · `www.globenewswire.com` · `www.fcc.gov` · `www.nhtsa.gov` · `www.miningweekly.com` · `www.datacenterdynamics.com` ·
   `www.energy-storage.news` · `www.fiercehealthcare.com` · `www.lme.com` · `www.theblock.co` — 다른 조회 도구나 다른 출처로 대체.
 - 불안정: `www.eetimes.com` · `www.coindesk.com` · `www.xylem.com`.
+- **원문은 `curl` 로 받는다** (브라우저형 User-Agent, 압축 응답은 `--compressed`). 세션 밖에서 도는 웹 조회 도구(WebFetch)는 이 환경의
+  허용 목록을 따르지 않아 새로 허용한 호스트에서도 실패한다 (`quartr.com`, 회사 IR 등에서 확인).
 
 ## 1. 2026-11-19 파일럿에서 실제로 막혔던 곳 (우선)
 
