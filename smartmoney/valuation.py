@@ -1240,10 +1240,15 @@ def scenario_value(D, P, exit10, s: Dict[str, Any]) -> Dict[str, Any]:
     ev = float(dcf(q, 10, "growth", gpath=gp))
     if exit10 and q["mT"] > 0:
         ev = 0.5 * ev + 0.5 * float(dcf(q, 10, "ebitda", exit10, gpath=gp))
+    # 매출보다 앞서 집행되는 투자(위성망·공장·광산 등): Sales-to-Capital 방식은 재투자를 매출 증가 시점에 잡으므로
+    # 리서치가 연도별 추가 유출을 명시하면 기중 할인해 차감한다
+    xi = [float(x) for x in (s.get("extra_investment") or [])][:10]
+    pv_x = sum(x / (1 + q["w0"]) ** (t + 0.5) for t, x in enumerate(xi))
+    ev -= pv_x
     rev = [D["rev"]]
     for g in gp:
         rev.append(rev[-1] * (1 + g))
-    return {"value": float(per_share(ev, D, pf)), "how": "10년 DCF (영구성장" + (" · EBITDA Exit 평균" if exit10 and q["mT"] > 0 else "") + ")",
+    return {"extra_investment_pv": pv_x, "value": float(per_share(ev, D, pf)), "how": "10년 DCF (영구성장" + (" · EBITDA Exit 평균" if exit10 and q["mT"] > 0 else "") + ")",
             "rev5": rev[5], "rev10": rev[10], "cagr5": _cagr(rev[0], rev[5], 5), "wacc": q["w0"], "fail_prob": pf}
 
 
@@ -1251,6 +1256,8 @@ def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: 
     price, shares = D["price"], D["shares"]
     adjm = R.get("adjustments") or {}
     add = float(adjm.get("nonop_assets") or 0.0) / shares
+    if adjm.get("minority_in_share_count"):                 # Up-C 구조: 비지배지분 보유자가 이미 주식수에 포함 → 차감분 복원
+        add += D["minority"] / shares
     dil = 1 + float(adjm.get("extra_dilution_pct") or 0.0)
     opts = []
     for o in R.get("options") or []:

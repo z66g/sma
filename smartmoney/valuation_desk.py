@@ -106,6 +106,9 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append(f"scenarios.{k}.wacc_adj: ±0.03 이내")
         if s.get("fail_prob") is not None and (not V._ok(s["fail_prob"]) or not 0 <= s["fail_prob"] <= 0.9):
             err.append(f"scenarios.{k}.fail_prob: 0~0.9")
+        xi = s.get("extra_investment")
+        if xi is not None and (not isinstance(xi, list) or len(xi) > 10 or any(not V._ok(x) or x < 0 for x in xi)):
+            err.append(f"scenarios.{k}.extra_investment: 연도별 추가 투자 유출(달러, 0 이상) 최대 10개")
     if len(probs) == 3 and abs(sum(probs) - 1) > 0.011:
         err.append(f"시나리오 확률 합 = {sum(probs):.3f} (1.0 이어야 함)")
     for i, o in enumerate(R.get("options") or []):

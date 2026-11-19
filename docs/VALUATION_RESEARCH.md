@@ -22,6 +22,7 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 | 5 | **산업 맥락** | 경쟁사 실적·산업 자료 | 시장 규모와 성장률, 점유율, 가격 추세, 경쟁사의 마진 수준(목표 마진의 상한 근거) |
 
 - 1차 자료(SEC 공시, 회사 IR)를 먼저 읽고, 뉴스·2차 자료는 보강용으로 쓴다. SEC 문서는 `curl -H "User-Agent: ..."` 로 직접 받을 수 있다.
+- 접속이 막힌 사이트가 있으면 다른 출처로 넘어간다. 원문을 열지 못하고 검색 요약으로만 확인한 사실은 그렇게 표시하고, 핵심 가정이 거기에 걸려 있으면 `confidence` 를 낮춘다.
 - **기억에 의존하지 않는다.** 모든 사실은 이번 조사에서 확인한 출처(URL·날짜)가 있어야 한다. 확인하지 못한 것은 "확인 불가"라고 쓴다.
 - 패키지의 '기계적 기준선'을 먼저 읽고, 그것이 **무엇을 놓쳤는지**를 찾는 것이 출발점이다 (예: 인수 효과로 왜곡된 과거 마진, 가동 전 설비, 아직 매출이 없는 사업).
 
@@ -38,7 +39,8 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 | `margin_year` | 목표 마진 도달 연차 (1~10) | 경영진 목표 시점 또는 설비·제품 램프 일정에 맞춘다 |
 | `wacc_adj` | 할인율 가감 (±3%p 이내) | 기본 0. 사업 위험이 기계적 베타에 반영되지 않았다고 판단할 근거가 있을 때만 |
 | `s2c` | Sales-to-Capital (선택) | 자본집약도가 과거와 달라질 명확한 이유가 있을 때만 |
-| `fail_prob` | 자금조달 실패 확률 (선택) | 현금 소진 기업: 조달 계획·현금 여력을 확인했으면 명시 |
+| `fail_prob` | 자금조달 실패 확률 (선택) | 현금 소진 기업: 조달 계획·현금 여력을 확인했으면 명시. 같은 위험을 `wacc_adj` 로 또 올리지 말 것(이중 반영) |
+| `extra_investment` | 연도별 추가 투자 유출 (달러, 선택) | 매출보다 **앞서** 집행되는 투자(위성망·공장·광산 증설). 엔진의 재투자는 매출 증가 시점에 잡히므로, 회사가 밝힌 CAPEX 계획 중 그 이상분을 연도별로 적는다 |
 | `value_per_share` + `value_basis` | 직접 산출 | **금융·REIT** 는 필수(P/B-ROE, 초과이익, P/FFO 등으로 계산해 방법·입력값 기재). 그 외에는 쓰지 않는다 |
 
 - **기본(base)은 컨센서스의 복사본이 아니다.** 컨센서스와 같게 두면 그 이유를, 다르게 두면 어디서 왜 다른지를 `valuation_notes` 에 쓴다.
@@ -63,7 +65,7 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 | `plans[]` | `{item, timing, impact}` — 가정에 반영한 경영 계획 |
 | `news[]` | `{date, headline, impact: POS/NEG/NEU, why}` — 가정을 바꾼 것만 |
 | `risks[]`, `catalysts[]` | 약세·강세 시나리오로 가는 구체적 사건 |
-| `scenarios`, `options`, `adjustments` | §2. `adjustments.nonop_assets`(달러, 영업 외 자산: 지분투자·보유 암호화폐 등), `extra_dilution_pct`(전환증권·예정 증자) |
+| `scenarios`, `options`, `adjustments` | §2. `adjustments.nonop_assets`(달러: 지분투자·보유 암호화폐·**제한현금** 등 엔진의 현금에 안 잡힌 자산), `extra_dilution_pct`(전환증권·예정 증자), `minority_in_share_count`(true: Up-C 구조처럼 비지배지분 보유자가 이미 주식수에 포함된 경우 — 엔진의 비지배지분 차감을 되돌린다), `note`(근거) |
 | `valuation_notes` | 컨센서스·기계적 기준선과 다른 지점과 이유, 확인하지 못한 것 |
 | `confidence` | HIGH(1차 자료로 대부분 검증) / MEDIUM / LOW(핵심 가정이 추정) |
 | `sources[]` | `{title, url, date}` 최소 6개, SEC 공시 포함 |
