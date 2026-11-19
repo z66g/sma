@@ -533,7 +533,9 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
     explicit = p.get("capex_pct") is not None
     if explicit:
         cap_list = [float(x) for x in (p["capex_pct"] if isinstance(p["capex_pct"], (list, tuple)) else [p["capex_pct"]])]
-        dep, nwc = float(p.get("dep_pct") if p.get("dep_pct") is not None else p["da_pct"]), float(p.get("nwc_pct") or 0.0)
+        dp = p.get("dep_pct") if p.get("dep_pct") is not None else p["da_pct"]
+        dep_list = [float(x) for x in (dp if isinstance(dp, (list, tuple)) else [dp])]   # 연도별 D&A 비율 (인수 상각 감소 경로 표현)
+        dep, nwc = dep_list[-1], float(p.get("nwc_pct") or 0.0)                          # 마지막 값 = 영구 수준
     nol = np.zeros_like(rev_prev)
     pv = np.zeros_like(rev_prev)
     df = np.ones_like(rev_prev)
@@ -556,7 +558,7 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
         nol = nol - use + np.maximum(-ebit, 0)
         if explicit:     # Finbox 식 명시적 현금흐름: NOPAT + D&A − CAPEX − 순운전자본 증가 (리서치가 CAPEX 계획을 직접 줄 때)
             cx = cap_list[min(t - 1, len(cap_list) - 1)]
-            reinv = (cx - dep) * rev + nwc * (rev - rev_prev)
+            reinv = (cx - dep_list[min(t - 1, len(dep_list) - 1)]) * rev + nwc * (rev - rev_prev)
             fcff = ebit - taxes - reinv
         else:
             reinv = np.maximum(rev - rev_prev, 0) / s2c
@@ -1254,7 +1256,7 @@ def scenario_value(D, P, exit10, s: Dict[str, Any]) -> Dict[str, Any]:
         q["gT"] = _clip(float(s["terminal_growth"]), 0.01, 0.04)
     if s.get("capex_pct") is not None:                      # 명시적 현금흐름 빌드 (CAPEX·D&A·순운전자본을 매출 대비 비율로)
         q["capex_pct"] = s["capex_pct"]
-        q["dep_pct"] = float(s["da_pct"]) if _ok(s.get("da_pct")) else P["da_pct"]
+        q["dep_pct"] = s["da_pct"] if s.get("da_pct") is not None else P["da_pct"]
         q["nwc_pct"] = float(s.get("nwc_pct") or 0.0)
     if _ok(s.get("tax_rate")):                              # 구조적으로 낮거나 높은 장기 세율의 근거가 있을 때
         q["taxT"] = _clip(float(s["tax_rate"]), 0.05, 0.35)

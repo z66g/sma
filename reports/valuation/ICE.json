@@ -1,0 +1,148 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-19",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 170.88,
+ "fair_value": 137.11,
+ "fair_low": 98.0,
+ "fair_high": 173.98,
+ "upside_pct": -19.76,
+ "verdict": "OVERVALUED",
+ "verdict_ko": "고평가",
+ "mos_band_pct": 10.0,
+ "n_models": 9,
+ "summary": "리서치 기반 적정가 137.11 = 약세 98.00(30%) · 기본 145.83(50%) · 강세 173.98(20%)의 확률가중. 현재가 170.88 대비 -19.8% · 고평가 (불확실성 낮음). 기계적 기준선 133.21.",
+ "archetype": {
+  "code": "MATURE_COMPOUNDER",
+  "label": "성숙·현금창출",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "LOW",
+  "label": "낮음",
+  "score": 79
+ },
+ "wacc": 0.0906,
+ "ke": 0.1018,
+ "models": [
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 91.92,
+   "low": 60.47,
+   "high": 139.13,
+   "weight": 0.161
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 140.91,
+   "low": 95.56,
+   "high": 197.6,
+   "weight": 0.161
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 185.63,
+   "low": 139.21,
+   "high": 203.97,
+   "weight": 0.161
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 190.66,
+   "low": 139.88,
+   "high": 246.94,
+   "weight": 0.161
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 98.69,
+   "low": 64.64,
+   "high": 150.17,
+   "weight": 0.097
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 124.82,
+   "low": 82.4,
+   "high": 180.82,
+   "weight": 0.097
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 47.55,
+   "low": 39.41,
+   "high": 56.32,
+   "weight": 0.081
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 92.93,
+   "low": 78.36,
+   "high": 107.5,
+   "weight": 0.048
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 165.72,
+   "low": 94.21,
+   "high": 259.17,
+   "weight": 0.032
+  }
+ ],
+ "implied_cagr_5y": 0.1261,
+ "base_cagr_5y": 0.0428,
+ "mc": {
+  "p10": 61.17,
+  "p50": 91.11,
+  "p90": 129.14,
+  "prob_above_price": 0.01
+ },
+ "analyst_target": 193.53,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude Opus (Valuation Desk)",
+  "thesis": "ICE의 가치는 (1) 에너지·금리 선물 거래(거래 수익)가 2026년 중동 사태로 만들어진 기록적 수준에서 얼마나 유지되는가, (2) 반복 수익(데이터·연결·모기지 소프트웨어, 순매출의 약 49%)이 중간 한 자릿수로 꾸준히 크는가, (3) 인수 무형자산 상각(연 9.5억 달러, 순매출의 8.7%)이 줄면서 GAAP 마진이 올라가는가에 달려 있다. 증거는 반복 수익의 꾸준한 성장(2026 가이던스 거래소 9%·채권데이터 8%)과 높은 실행력을 가리키지만, TTM 거래 수익은 1회성 성격의 변동성 급증을 포함하므로 1년차 성장은 낮게 잡았다. 진행 중인 MarketAxess 인수(현금 60억 달러, 2027년 1분기 종결 예상)는 종결 전이므로 반영하지 않고 단독 기준으로 평가했다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.3,
+    "value": 98.0,
+    "cagr5": 0.0157,
+    "target_margin": 0.395
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 145.83,
+    "cagr5": 0.054,
+    "target_margin": 0.45
+   },
+   "bull": {
+    "prob": 0.2,
+    "value": 173.98,
+    "cagr5": 0.072,
+    "target_margin": 0.475
+   }
+  },
+  "n_sources": 10,
+  "second_opinion": null
+ },
+ "mechanical_fair": 133.21,
+ "ticker": "ICE",
+ "name": "Intercontinental Exchange, Inc.",
+ "published": "2026-11-19"
+}
