@@ -7,6 +7,15 @@
 
 원문을 열지 못한 사실은 리서치에 `[검색 요약]`으로 표시되고, 핵심 가정이 거기에 걸리면 확신도가 LOW 로 내려간다.
 
+## 허용 현황 (2026-11-19 기준)
+
+§1~§4 의 호스트는 `sma` 환경에 추가됐다. 예외와 주의:
+- 추가 실패(서버 거절): `www.reuters.com` · `www.cnbc.com` · `apnews.com` · `www.marketwatch.com` — 설정 화면에서 직접 추가 시도 필요.
+- 허용됐지만 단순 호출에 403(사이트의 봇 차단): `www.tesla.com` · `ir.tesla.com` · `www.coinbase.com` · `www.hims.com` · `www.vertiv.com` ·
+  `www.businesswire.com` · `www.globenewswire.com` · `www.fcc.gov` · `www.nhtsa.gov` · `www.miningweekly.com` · `www.datacenterdynamics.com` ·
+  `www.energy-storage.news` · `www.fiercehealthcare.com` · `www.lme.com` · `www.theblock.co` — 다른 조회 도구나 다른 출처로 대체.
+- 불안정: `www.eetimes.com` · `www.coindesk.com` · `www.xylem.com`.
+
 ## 1. 2026-11-19 파일럿에서 실제로 막혔던 곳 (우선)
 
 | 호스트 | 용도 | 막혀서 못 한 것 |
