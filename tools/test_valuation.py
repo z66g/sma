@@ -182,6 +182,64 @@ def main() -> int:
     v1 = V.evaluate(one, None, rf, None, "x")
     check("일회성 이익으로 부푼 GAAP EPS → 핵심 EPS 사용", any("핵심" in w for w in v1["warnings"]))
 
+    # ── 5. 리서치 기반 적정가 · Valuation Desk (분리 구조) ──
+    import copy
+    import tempfile
+    from smartmoney import valuation_desk as VD
+    R = {"schema": 1, "ticker": "TEST", "as_of": "2026-11-01", "analyst": "test", "confidence": "MEDIUM",
+         "thesis": "핵심 변수는 신규 설비 가동률과 장기 공급계약의 갱신 여부이며 현재 증거는 기본 시나리오를 지지한다.",
+         "business": {"summary": "산업용 장비 제조·서비스", "moat": "설치 기반과 서비스 계약", "moat_rating": "NARROW", "segments": []},
+         "performance": {"summary": "최근 4개 분기 가이던스 상회", "guidance": "매출 +6~8%", "execution_rating": "STRONG"},
+         "plans": [{"item": "신규 공장", "timing": "2027", "impact": "생산능력 +20%"}],
+         "news": [{"date": "2026-10-20", "headline": "장기 공급계약 체결", "impact": "POS", "why": "기본 시나리오 성장률 상향"}],
+         "risks": ["수요 둔화", "원가 상승"], "catalysts": ["대형 수주"],
+         "scenarios": {
+             "bear": {"prob": 0.25, "story": "수요 둔화로 신규 공장 가동률이 60%에 머물고 가격 인하 압력이 지속되는 경우", "rev_growth": [0.0, 0.01, 0.02, 0.02, 0.02], "target_margin": 0.11, "margin_year": 3},
+             "base": {"prob": 0.50, "story": "가이던스대로 신규 공장이 2027년 가동되고 서비스 매출 비중이 완만히 상승하는 경우", "rev_growth": [0.07, 0.08, 0.07, 0.06, 0.05], "target_margin": 0.17, "margin_year": 4},
+             "bull": {"prob": 0.25, "story": "대형 수주가 이어져 증설이 조기에 채워지고 서비스 믹스 개선으로 마진이 구조적으로 오르는 경우", "rev_growth": [0.12, 0.14, 0.12, 0.10, 0.08], "target_margin": 0.21, "margin_year": 5}},
+         "options": [{"name": "신사업", "prob": 0.2, "value_per_share": 10.0, "basis": "시장 100억달러 × 점유율 10% × 마진 20% × 15배 ÷ 할인 1.6 ÷ 10억주"}],
+         "sources": [{"title": f"출처 {i}", "url": f"https://www.sec.gov/doc{i}", "date": "2026-11-01"} for i in range(6)]}
+    err, _w = VD.validate(R, "TEST")
+    check("리서치 검증 통과 (정상 입력)", not err, str(err))
+    vr = V.evaluate(make(), None, rf, None, "2026-11-18", R)
+    sc = vr["research"]["scenarios"]
+    check("리서치 방식으로 전환 + 기계적 기준선 보존", vr["method"] == "RESEARCH" and vr["mechanical"]["fair_value"] is not None)
+    check("시나리오 가치: 약세 < 기본 < 강세", sc["bear"]["value"] < sc["base"]["value"] < sc["bull"]["value"],
+          str([round(sc[k]["value"], 2) for k in sc]))
+    want = sum(sc[k]["prob"] * sc[k]["value"] for k in sc)
+    check("적정가 = 시나리오 확률가중", abs(vr["fair_value"] / want - 1) < 1e-9)
+    check("옵션 기대값(0.2 × 10 = 2.0)이 각 시나리오에 가산", abs(sc["base"]["value"] - sc["base"]["core"] - 2.0) < 1e-9)
+    check("범위 = 약세 ~ 강세", vr["fair_low"] == sc["bear"]["value"] and vr["fair_high"] == sc["bull"]["value"])
+    hi_m = copy.deepcopy(R); hi_m["scenarios"]["base"]["target_margin"] = 0.25
+    check("리서치 가정이 결과를 움직임 (기본 마진↑ → 적정가↑)", V.evaluate(make(), None, rf, None, "x", hi_m)["fair_value"] > vr["fair_value"])
+    old = V.evaluate(make(), None, rf, None, "2027-06-01", R)
+    check("오래된 리서치 → stale + 불확실성 사유", old["research"]["stale"] and any("경과" in x for x in old["uncertainty"]["reasons"]))
+    for name, mut, key in (
+        ("확률 합 ≠ 1", lambda r: r["scenarios"]["bull"].update(prob=0.5), "확률 합"),
+        ("출처 부족", lambda r: r.update(sources=r["sources"][:3]), "sources"),
+        ("시나리오 설명 누락", lambda r: r["scenarios"]["bear"].update(story="나쁨"), "story"),
+        ("범위 밖 마진", lambda r: r["scenarios"]["base"].update(target_margin=0.95), "target_margin"),
+        ("근거 없는 옵션", lambda r: r["options"][0].update(basis="감"), "options"),
+        ("논지 누락", lambda r: r.update(thesis="좋음"), "thesis")):
+        bad = copy.deepcopy(R); mut(bad)
+        e2, _ = VD.validate(bad, "TEST")
+        check(f"리서치 검증 거부: {name}", any(key in x for x in e2), str(e2))
+    e3, _ = VD.validate(R, "TEST", direct_value_only=True)
+    check("금융·REIT 는 직접 산출(value_per_share) 요구", any("value_per_share" in x for x in e3))
+    with tempfile.TemporaryDirectory() as td:
+        from pathlib import Path as _P
+        VD.PUB_DIR, VD.RESEARCH_DIR, VD.REPORTS_DIR = _P(td) / "reports" / "valuation", _P(td) / "state", _P(td) / "reports"
+        paths = VD.publish("TEST", vr, R)
+        check("발행: 수치 JSON · 상세 HTML · 리서치 원본", all(p.exists() for p in paths.values()) and "VALUATION 0" in paths["html"].read_text(encoding="utf-8"))
+        pub = VD.read_published("TEST", vr["fair_value"] * 2, "2026-11-18")
+        check("SMA 조회: 세션 종가로 괴리율·판정 재산정 (모델 재계산 없음)",
+              pub is not None and abs(pub["upside_pct"] + 50) < 0.01 and "OVER" in pub["verdict"] and pub["fair_value"] == round(vr["fair_value"], 2))
+        check("SMA 조회 요약에 시나리오·리서치 일자 포함", pub["method"] == "RESEARCH" and set(pub["research"]["scenarios"]) == {"bear", "base", "bull"}
+              and len(card(pub)) > 300)
+        VD.publish("MECH", V.evaluate(make(), None, rf, None, "x"))
+        check("기계적 기준선만 있는 종목은 SMA 에 적정가로 노출되지 않음", VD.read_published("MECH", 50.0) is None)
+        check("미발행 종목 → None", VD.read_published("NOPE", 10.0) is None)
+
     print(f"\n{FAILS} failure(s)")
     return 1 if FAILS else 0
 

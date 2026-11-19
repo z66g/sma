@@ -82,8 +82,19 @@ def card(vc: Optional[Dict[str, Any]], href: Optional[str] = None) -> str:
     bg, fg = KIND_COL[vk]
     pl = lambda t, k: (f'<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;'  # noqa: E731
                        f'white-space:nowrap;background:{KIND_COL[k][0]};color:{KIND_COL[k][1]};">{e(t)}</span>')
-    models = " · ".join(f"{e(m['name'])} {_px(m.get('mid'), ccy)}" for m in (vc.get("models") or [])[:3])
+    R = vc.get("research") or {}
+    is_r = vc.get("method") == "RESEARCH"
+    SK = {"bear": "약세", "base": "기본", "bull": "강세"}
+    if is_r and R.get("scenarios"):
+        models = " · ".join(f"{SK[k]} {_px(R['scenarios'][k]['value'], ccy)} ({R['scenarios'][k]['prob'] * 100:.0f}%)"
+                            for k in ("bear", "base", "bull") if k in R["scenarios"])
+        head = f"적정가치 · 리서치 기반 시나리오 확률가중 ({e(R.get('as_of'))}" + (" · 갱신 필요" if vc.get("stale") else "") + ")"
+    else:
+        models = " · ".join(f"{e(m['name'])} {_px(m.get('mid'), ccy)}" for m in (vc.get("models") or [])[:3])
+        head = "기계적 기준선 (재무제표만 반영 · 사업 내용 미반영 — 참고용)"
     extra = []
+    if is_r and vc.get("mechanical_fair") is not None:
+        extra.append(f"기계적 기준선 {_px(vc['mechanical_fair'], ccy)}")
     if vc.get("implied_cagr_5y") is not None and vc.get("base_cagr_5y") is not None:
         extra.append(f"시장 내재 5년 매출성장 <b>{vc['implied_cagr_5y'] * 100:.0f}%</b> vs 모델 가정 {vc['base_cagr_5y'] * 100:.0f}%")
     if vc.get("analyst_target") is not None:
@@ -94,7 +105,7 @@ def card(vc: Optional[Dict[str, Any]], href: Optional[str] = None) -> str:
         f'<div style="background:#FFFFFF;border:0.5px solid {BORDER};border-left:4px solid {fg};border-radius:0 6px 6px 0;'
         f'padding:10px 14px;font-family:{FONT};color:{TXT};">'
         f'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">'
-        f'<div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:{MUTED};">적정가치 (펀더멘털 모델 {e(vc.get("n_models"))}개 통합)</div>'
+        f'<div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:{MUTED};">{head}</div>'
         f'<div style="display:flex;gap:6px;flex-wrap:wrap;">{pl(a.get("label") or "N/A", "info")}'
         f'{pl("불확실성 " + (u.get("label") or "N/A"), UNC_KIND.get(u.get("level"), "warn"))}{pl(vc.get("verdict_ko") or "", vk)}</div></div>'
         f'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 2px;">'
@@ -103,7 +114,9 @@ def card(vc: Optional[Dict[str, Any]], href: Optional[str] = None) -> str:
         f'<span style="font-size:11.5px;color:{MUTED};">범위 {_px(vc.get("fair_low"), ccy)} ~ {_px(vc.get("fair_high"), ccy)}</span></div>'
         f'{range_bar(vc["fair_low"], vc["fair_value"], vc["fair_high"], vc["price"], ccy)}'
         f'<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11.5px;color:{MUTED};margin-top:4px;">'
-        f'<span>{models}{" · " if models and extra else ""}{" · ".join(extra)}</span>{link}</div></div>')
+        f'<span>{models}{" · " if models and extra else ""}{" · ".join(extra)}</span>{link}</div>'
+        + (f'<div style="font-size:12px;margin-top:6px;padding-top:6px;border-top:0.5px dashed {BORDER};">{e(R.get("thesis"))}</div>'
+           if is_r and R.get("thesis") else "") + '</div>')
 
 
 # ─── 상세 페이지 ─────────────────────────────────────────────────────────────
@@ -152,12 +165,15 @@ def page(v: Dict[str, Any], name: Optional[str] = None, home: str = "./", dash: 
     else:
         bg, fg = KIND_COL[vk]
         an = v.get("analyst") or {}
+        R_ = v.get("research")
+        hero_label = (f"적정가치 판정 · 리서치 기반 시나리오 확률가중 (리서치 {e(R_.get('as_of'))}" + (" · 갱신 필요" if R_.get("stale") else "") + ")") if R_ \
+            else "기계적 기준선 · 재무제표만 반영 (사업모델·계획·뉴스 미반영 — 리서치 전 참고용)"
         gap = alert("현 재무·컨센서스 기반 모델과 시장 가격의 괴리가 3배 이상입니다. 이 경우 적정가 수치 자체보다 "
                     "<b>시장이 어떤 가정을 가격에 넣고 있는지</b>(아래 VALUATION 4)가 핵심 정보입니다.", "warn", "모델로 설명되지 않는 가격") \
             if v.get("model_gap") else ""
         hero = f"""
 <div class="verdict" style="background:{bg};border-left-color:{fg};">
-  <div class="vl" style="color:{fg};">적정가치 판정 · 펀더멘털 모델 {v['n_models']}개 통합</div>
+  <div class="vl" style="color:{fg};">{hero_label}</div>
   <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
     <span style="font-size:30px;font-weight:700;">{_px(v['fair_value'], ccy)}</span>
     <span style="font-size:15px;">현재가 대비 {_updown(v['upside_pct'])}</span>
@@ -170,8 +186,11 @@ def page(v: Dict[str, Any], name: Optional[str] = None, home: str = "./", dash: 
   참고 — 애널리스트 평균 목표가 {_px(an.get('target_mean'), ccy)} ({'N/A' if an.get('upside_pct') is None else f"{an['upside_pct']:+.1f}%"}, {int(an['n']) if an.get('n') else 'N/A'}명) 는 통합에 포함하지 않는다.</div>
 </div>{gap}"""
 
+    research_html = _research_html(v, ccy) if v.get("research") else alert(
+        "이 종목은 아직 애널리스트 리서치(사업모델·성과·계획·뉴스 → 시나리오)가 발행되지 않았습니다. 아래 수치는 재무제표와 컨센서스만으로 계산한 "
+        "<b>기계적 기준선</b>이며 SMA 대시보드에는 적정가로 표시되지 않습니다.", "warn", "리서치 미발행")
     nav = ('<nav class="snav">' + "".join(f'<a href="#{h}">{t}</a>' for h, t in (
-        ("v1", "1 성격 분류"), ("v2", "2 모델별 적정가"), ("v3", "3 핵심 가정"), ("v4", "4 시장 내재 가정"),
+        ("v0", "0 리서치"), ("v1", "1 성격 분류"), ("v2", "2 모델별 적정가"), ("v3", "3 핵심 가정"), ("v4", "4 시장 내재 가정"),
         ("v5", "5 Peer"), ("v6", "6 방법·한계"))) + "</nav>")
 
     # ── V1 성격 분류 ──
@@ -193,14 +212,19 @@ def page(v: Dict[str, Any], name: Optional[str] = None, home: str = "./", dash: 
 <div class="tk-x"><b>속성</b> · {traits}</div></div>
 <div class="kpis">{kp}</div>"""
     if not ok:
-        return _wrap(T, v, header + body + nav + v1 + _foot(v), "{}")
+        return _wrap(T, v, header + body + nav + research_html + v1 + _foot(v), "{}")
 
     # ── V2 모델별 ──
     rows, hl, na = _model_rows(v, ccy)
     fam = v.get("family_values") or {}
     fam_txt = " · ".join(f"{e(k)} 평균 <b>{_px(val, ccy)}</b>" for k, val in fam.items())
-    v2 = _vsec("v2", 2, "모델별 적정가 — 범위와 가중치", [pill(f"통합 {v['n_models']}개", "info"),
-               pill(f"모델 간 편차 {v['dispersion_cv'] * 100:.0f}%", "warn" if v["dispersion_cv"] > 0.35 else "pos")]) + f"""
+    mech = v.get("mechanical") or v
+    v2_name = "기계적 모델 (교차검증) — 재무제표·컨센서스만으로 계산한 범위" if v.get("research") else "모델별 적정가 — 범위와 가중치"
+    v2_badges = [pill(f"통합 {v['n_models']}개", "info"),
+                 pill(f"모델 간 편차 {v['dispersion_cv'] * 100:.0f}%", "warn" if v["dispersion_cv"] > 0.35 else "pos")] if v.get("n_models") else []
+    if v.get("research") and mech.get("fair_value") is not None:
+        v2_badges.insert(0, pill(f"기계적 기준선 {_px(mech['fair_value'], ccy)}", "warn"))
+    v2 = _vsec("v2", 2, v2_name, v2_badges) + f"""
 <div class="card"><div class="ct">모델별 적정가 범위 (보수~낙관) · 세로선 = 현재가 / 통합 적정가</div>
 <div class="rg-l"><span class="rg-k"><i style="background:{BULL};opacity:.85;"></i>기준값이 현재가보다 높음</span>
 <span class="rg-k"><i style="background:{BEAR};opacity:.85;"></i>기준값이 현재가보다 낮음</span>
@@ -322,8 +346,66 @@ DCF 입력의 불확실성만 반영한 분포이며 통합 적정가(상대가�
        {len(prow5) - 2: PANEL, len(prow5) - 1: A_BG}, mode="ts")}
 <div class="muted" style="margin-top:6px;">멀티플은 peer 중앙값을 그대로 쓰지 않고 성장률·마진 차이만큼 보정해 적용한다 (보정 폭 0.6~1.8배 한도).</div></div>"""
 
-    body = header + hero + nav + v1 + v2 + v3 + v4 + v5 + _foot(v)
+    body = header + hero + nav + research_html + v1 + v2 + v3 + v4 + v5 + _foot(v)
     return _wrap(T, v, body, _payload(v))
+
+
+def _research_html(v: Dict[str, Any], ccy: str) -> str:
+    """리서치 섹션: 논지 → 시나리오(가정·확률·가치) → 신사업 옵션 → 사업·성과·계획·뉴스·리스크 → 출처."""
+    R, price = v["research"], v["price"]
+    SK = {"bear": ("약세", "neg"), "base": ("기본", "info"), "bull": ("강세", "pos")}
+    srows = []
+    for k in ("bear", "base", "bull"):
+        s = R["scenarios"][k]
+        g = s.get("rev_growth") or []
+        path = " → ".join(f"{x * 100:.0f}%" for x in g) if g else "—"
+        assume = (f"매출 성장 {path}" + (f" (5년 CAGR {_pc(s.get('cagr5'), 0)}, 10년 뒤 매출 {_big(s.get('rev10'), ccy)})" if s.get("rev10") else "")
+                  + f"<br>GAAP 영업이익률 {_pc(s.get('target_margin'), 0)} ({s.get('margin_year') or 5}년차 도달)"
+                  + (f" · 할인율 {s['wacc_adj'] * 100:+.1f}%p" if s.get("wacc_adj") else "")) if g else e(s.get("how"))
+        srows.append([pill(SK[k][0], SK[k][1]), f"<b>{s['prob'] * 100:.0f}%</b>", e(s.get("story")), assume,
+                      f"<b>{_px(s['value'], ccy)}</b>", _updown((s["value"] / price - 1) * 100)])
+    orows = [[f"<b>{e(o['name'])}</b>", f"{o['prob'] * 100:.0f}%", _px(o["value_per_share"], ccy), f"<b>{_px(o['expected'], ccy)}</b>", e(o.get("basis"))]
+             for o in R.get("options") or []]
+    opt_html = (f'<div class="card"><div class="ct">신사업 옵션가치 — 아직 매출이 없어 시나리오 매출에 넣지 않은 사업 (각 시나리오 가치에 기대값 {_px(R.get("option_value"), ccy)} 가산)</div>'
+                + table(["사업", "성공 확률", "성공 시 주당 가치(현재가치)", "기대값", "산출 근거"], orows, mode="card") + "</div>") if orows else ""
+    B, Pf = R.get("business") or {}, R.get("performance") or {}
+    seg = [[f"<b>{e(x.get('name'))}</b>", _pc(x.get("revenue_share"), 0) if isinstance(x.get("revenue_share"), (int, float)) else "—",
+            e(x.get("growth_view")), e(x.get("margin_view"))] for x in B.get("segments") or [] if x.get("name")]
+    li = lambda xs: "".join(f"<li>{e(x)}</li>" for x in xs or [])  # noqa: E731
+    plans = "".join(f"<li><b>{e(x.get('item'))}</b>" + (f" <span class='muted'>({e(x.get('timing'))})</span>" if x.get("timing") else "")
+                    + (f" — {e(x.get('impact'))}" if x.get("impact") else "") + "</li>" for x in R.get("plans") or [])
+    NK = {"POS": "pos", "NEG": "neg", "NEU": "muted"}
+    news = [[e(x.get("date")), e(x.get("headline")), pill({"POS": "긍정", "NEG": "부정"}.get(str(x.get("impact")).upper(), "중립"),
+             NK.get(str(x.get("impact")).upper(), "muted")), e(x.get("why"))] for x in R.get("news") or []]
+    src = "".join(f'<li><a href="{e(x.get("url"))}" target="_blank" rel="noopener nofollow">{e(x.get("title"))}</a>'
+                  f' <span class="muted">{e(x.get("date") or "")}</span></li>' for x in R.get("sources") or []
+                  if str(x.get("url", "")).startswith("http"))
+    mech = v.get("mechanical") or {}
+    gap = ""
+    if mech.get("fair_value"):
+        gap = (f'<div class="tk-x"><b>기계적 기준선과의 차이</b> · 재무제표만 본 결과는 {_px(mech["fair_value"], ccy)}'
+               f' — 리서치 적정가는 그 {v["fair_value"] / mech["fair_value"]:.1f}배. 차이의 근거는 아래 시나리오 가정과 옵션가치에 있다.</div>')
+    conf = str(R.get("confidence") or "").upper()
+    return _vsec("v0", 0, "리서치 — 사업·성과·계획·뉴스를 시나리오로", [
+        pill(f"리서치 {R.get('as_of')}", "warn" if R.get("stale") else "info"),
+        pill(f"확신도 {conf}", {"HIGH": "pos", "MEDIUM": "info", "LOW": "warn"}.get(conf, "info")),
+        pill(f"출처 {len(R.get('sources') or [])}건", "info")]) + f"""
+<div class="tk" style="border-left-color:{INFO};"><div class="tk-h" style="color:{INFO};">투자 논지</div>
+<div class="tk-t">{e(R.get('thesis'))}</div>{gap}</div>
+<div class="card"><div class="ct">시나리오 — 서로 다른 세계에 확률을 부여하고 같은 DCF 로 계산</div>
+{table(["시나리오", "확률", "실현 조건", "가정", "주당 가치", "현재가 대비"], srows, {1: B_BG}, mode="card")}</div>
+{opt_html}
+<div class="g2"><div class="card"><div class="ct">사업모델 · 경쟁 우위 ({e(B.get('moat_rating') or 'N/A')})</div>
+<div>{e(B.get('summary'))}</div><div style="margin-top:6px;"><b>우위</b> · {e(B.get('moat'))}</div>
+{table(["부문", "매출 비중", "성장 전망", "수익성"], seg, mode="card") if seg else ""}</div>
+<div class="card"><div class="ct">실제 성과 · 가이던스 (실행력 {e(Pf.get('execution_rating') or 'N/A')})</div>
+<div>{e(Pf.get('summary'))}</div>{f'<div style="margin-top:6px;"><b>가이던스</b> · {e(Pf.get("guidance"))}</div>' if Pf.get('guidance') else ''}
+<div class="ct" style="margin-top:10px;">경영 계획</div><ul class="risk">{plans}</ul></div></div>
+<div class="card"><div class="ct">가정을 바꾼 뉴스·이벤트</div>{table(["날짜", "내용", "영향", "가정에 미친 영향"], news, mode="card")}</div>
+<div class="g2"><div class="card"><div class="ct">리스크 (약세 시나리오로 가는 길)</div><ul class="risk">{li(R.get('risks'))}</ul></div>
+<div class="card"><div class="ct">촉매 (강세 시나리오로 가는 길)</div><ul class="risk">{li(R.get('catalysts'))}</ul></div></div>
+{f'<div class="interp"><div class="ih">가정에 대한 메모 · 확인하지 못한 것</div><div>{e(R.get("valuation_notes"))}</div></div>' if R.get('valuation_notes') else ''}
+<details class="dq"><summary>출처 {len(R.get('sources') or [])}건 · 작성 {e(R.get('analyst') or 'N/A')}</summary><ul class="risk">{src}</ul></details>"""
 
 
 def _foot(v: Dict[str, Any]) -> str:
@@ -342,8 +424,19 @@ def _foot(v: Dict[str, Any]) -> str:
 
 def _payload(v: Dict[str, Any]) -> str:
     inc = [m for m in v["models"] if m.get("included")]
-    ff = [{"name": "통합 적정가", "low": v["fair_low"], "mid": v["fair_value"], "high": v["fair_high"], "w": None, "agg": True}]
-    ff += [{"name": m["name"], "low": m["low"], "mid": m["mid"], "high": m["high"], "w": m["weight"]} for m in inc]
+    R = v.get("research")
+    ff = [{"name": "리서치 적정가 (약세~강세)" if R else "통합 적정가", "low": v["fair_low"], "mid": v["fair_value"],
+           "high": v["fair_high"], "w": None, "agg": True}]
+    if R:
+        for k, lab in (("bear", "약세"), ("base", "기본"), ("bull", "강세")):
+            sv = R["scenarios"][k]
+            ff.append({"name": f"시나리오 · {lab}", "low": sv["value"] * 0.985, "mid": sv["value"], "high": sv["value"] * 1.015,
+                       "w": sv["prob"]})
+        m_ = v.get("mechanical") or {}
+        if m_.get("fair_value") is not None:
+            ff.append({"name": "기계적 기준선 (통합)", "low": m_["fair_low"], "mid": m_["fair_value"], "high": m_["fair_high"], "w": None})
+    ff += [{"name": ("기계 · " if R else "") + m["name"], "low": m["low"], "mid": m["mid"], "high": m["high"],
+            "w": None if R else m["weight"]} for m in inc]
     out: Dict[str, Any] = {"price": v["price"], "fair": v["fair_value"], "ccy": _sym(v.get("currency")), "ff": ff}
     pj = (v.get("projection") or {}).get("rows")
     if pj:

@@ -5,7 +5,6 @@ import json
 from typing import Any, Dict, List, Optional
 
 from . import commentary as C
-from . import valuation as V
 
 
 def _r(x, d=4):
@@ -58,7 +57,7 @@ def render_json(a: Dict[str, Any]) -> str:
     if l3.get("pinning"):
         out["l3"]["pinning"] = l3["pinning"]
     if a.get("valuation"):
-        out["valuation"] = V.compact(a["valuation"])
+        out["valuation"] = a["valuation"]              # Valuation Desk 가 발행한 요약 수치 그대로 (세션 종가로 괴리율만 재산정)
     return json.dumps(out, ensure_ascii=False, indent=1, default=str)
 
 
@@ -90,12 +89,17 @@ def _z(x):
 def _md_valuation(v: Optional[Dict[str, Any]]) -> List[str]:
     if not v or v.get("fair_value") is None:
         return []
-    u, rd = v.get("uncertainty") or {}, v.get("reverse_dcf") or {}
-    rows = [f"| Fair Value (펀더멘털 {v.get('n_models')}개 모델) | ${v['fair_value']:,.2f} (${v['fair_low']:,.2f}~${v['fair_high']:,.2f}) · "
+    u, R = v.get("uncertainty") or {}, v.get("research") or {}
+    how = f"리서치 {R.get('as_of')}" + (" · 갱신 필요" if v.get("stale") else "") if v.get("method") == "RESEARCH" else "기계적 기준선(참고)"
+    rows = [f"| Fair Value (Valuation Desk · {how}) | ${v['fair_value']:,.2f} (${v['fair_low']:,.2f}~${v['fair_high']:,.2f}) · "
             f"{v['upside_pct']:+.1f}% · {v.get('verdict_ko')} |",
             f"| Valuation Archetype · Uncertainty | {(v.get('archetype') or {}).get('label')} · {u.get('label')} |"]
-    if rd.get("status") == "OK":
-        rows.append(f"| Market-implied 5y Revenue CAGR | {rd['implied_cagr_5y'] * 100:.1f}% (모델 가정 {rd['base_cagr_5y'] * 100:.1f}%) |")
+    sc = R.get("scenarios") or {}
+    if sc:
+        rows.append("| Scenarios (bear / base / bull) | " + " / ".join(
+            f"${sc[k]['value']:,.2f} ({sc[k]['prob'] * 100:.0f}%)" for k in ("bear", "base", "bull") if k in sc) + " |")
+    if v.get("implied_cagr_5y") is not None and v.get("base_cagr_5y") is not None:
+        rows.append(f"| Market-implied 5y Revenue CAGR | {v['implied_cagr_5y'] * 100:.1f}% (기계적 가정 {v['base_cagr_5y'] * 100:.1f}%) |")
     return rows
 
 

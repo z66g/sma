@@ -27,27 +27,24 @@ python3 sma.py --print-session-date      # 최근 완료 세션 날짜 (워크�
 종료 코드: `0` 성공 · `2` 유효하지 않은 티커 · `1` 기타 실패. 모든 수집 실패는 stderr 와 리포트의
 **데이터 품질 패널**(등급 A–F, 레이어별 커버리지·누락 필드·출처)에 기록됩니다 — 조용한 실패 없음.
 
-## 적정가치 (펀더멘털 Fair Value)
+## 적정가치 — Valuation Desk (SMA 와 분리된 별도 기능)
 
-워치리스트 종목마다 **종목 성격을 자동 분류**하고(성숙·고성장·적자 성장·초기 단계·경기순환·배당·턴어라운드·은행·보험·REIT),
-그 성격에 맞는 모델만 골라 적정 주가를 산출한다. 수급 분석과 독립된 축이며 매일 리포트와 함께 갱신된다.
+적정가치는 일일 수급 분석과 따로 돈다. **리서치(Claude 세션)** 가 10-K/10-Q·실적발표·가이던스·사업 계획·뉴스를 읽어
+약세/기본/강세 시나리오와 신사업 옵션가치를 근거와 함께 쓰고, **엔진**이 같은 DCF 코어로 확률가중 적정가를 계산해 발행한다.
+SMA(엔진·대시보드)는 `reports/valuation/{T}.json` 의 **수치만** 읽는다.
 
 ```bash
-python3 valuation.py MRVL                 # 단독 실행: 분류 근거 · 모델별 보수/기준/낙관 · 역DCF · 몬테카를로
-python3 valuation.py MRVL --html out/     # out/MRVL/valuation.html 상세 페이지
-python3 tools/test_valuation.py           # 네트워크 없는 회귀 테스트
+python3 valuation.py prepare MRVL --out WORK      # 리서치 패키지 (재무 다이제스트 · 기계적 기준선 · SEC 링크 · 템플릿)
+python3 valuation.py publish MRVL --research WORK/MRVL_research.json [--dry-run]   # 검증 → 계산 → 발행
+python3 valuation.py refresh --watchlist          # 저장된 리서치 + 최신 재무·주가로 재계산 (워크플로 valuation-refresh.yml)
+python3 valuation.py status                       # 발행 현황 (방식 · 리서치 경과일)
+python3 tools/test_valuation.py                   # 회귀 테스트 (네트워크 불필요)
 ```
 
-- 모델 18종: DCF 5Y/10Y × (영구성장 · EBITDA Exit · Revenue Exit) · DDM(안정/다단계) · EPV · 초과이익(RIM) ·
-  P/E · EV/EBITDA · EV/Revenue · P/S · P/B · P/FFO · 피터 린치 · 그레이엄
-- 통합: 성격별 가중치 × 검증 체크 신뢰도 → 적정가 + 범위 + 불확실성 등급 + 판정(저평가/적정/고평가)
-- 진단: 역DCF(현재가가 내포한 성장률) · 몬테카를로 분포 · 할인율×성장률 민감도
-- 표시: 대시보드 `적정가 (괴리)` 열 · 종목 페이지 카드와 가격 차트의 적정가 선 · 3-Layer 리포트 브리핑 카드 ·
-  `reports/tickers/{T}/valuation.html` 상세
-- 데이터: Yahoo 재무제표·컨센서스·동종업계 peer, SEC XBRL 장기 이력, FRED 금리 (전부 무료).
-  스냅샷은 `state/fundamentals/` 에 3~5일 재사용 (실적 발표 후 즉시 갱신)
-
-알고리즘 전체 명세: **`docs/VALUATION.md`**
+- 리서치가 발행된 종목만 SMA 에 적정가가 표시된다. 재무제표만 본 **기계적 기준선**(18개 모델)은 상세 페이지의 교차검증으로만 남는다.
+- 발행 관문: 출처 6건 이상 · 시나리오 확률 합 1 · 실현 조건 서술 · 범위 내 성장률/마진 · 옵션 산출 근거. 실패하면 발행되지 않는다.
+- 리서치는 실적 발표 후 갱신한다 (100일 경과 시 '갱신 필요' 표시).
+- 리서치 지침: **`docs/VALUATION_RESEARCH.md`** · 구조와 계산 명세: **`docs/VALUATION.md`**
 
 ## 날짜 규칙 (중요)
 
@@ -70,7 +67,7 @@ v2(2026-11 이전) 리포트는 파일명이 KST 실행일이라 실제 세션�
 | L4 차트 | Yahoo 일봉 2년 (미완성 당일 봉 자동 제거) | |
 | 거시 | FRED (DFF·RRP·SOFR·IORB·WALCL·TGA·HY OAS·10Y) + Yahoo (DXY·WTI·VIX) | |
 | 뉴스/공시 | Yahoo news · SEC `data.sec.gov` submissions + Form 4 XML | |
-| 적정가치 | Yahoo 재무제표·컨센서스·Industry peer · SEC XBRL companyfacts · FRED DGS10/DAAA | 수집 실패 시 직전 스냅샷 사용 |
+| 적정가치 (별도 기능) | 리서치: SEC 공시 원문·실적자료·뉴스 / 계산: Yahoo 재무제표·컨센서스·peer · SEC XBRL · FRED | 일일 분석은 발행 수치만 읽음 |
 
 같은 실행 안의 중복 다운로드(FINRA 일일 파일 등)는 `SMA_CACHE_DIR`(기본 `/tmp/sma_cache`)에 캐시됩니다.
 
@@ -84,11 +81,13 @@ smartmoney/
   analytics.py  L1–L4·패턴·거시·확률·Phase  quality.py   데이터 품질 등급
   events.py     30일 이벤트 캘린더         commentary.py 한국어 해석·교차검증·결론
   engine.py     수집→분석 오케스트레이션    render_html.py / render_data.py  출력
-  fundamentals.py 재무 스냅샷 수집·정규화  valuation.py  성격 분류·모델·통합 (docs/VALUATION.md)
-  render_valuation.py 적정가치 상세 페이지·카드
+  ── Valuation Desk (SMA 와 분리; 엔진은 발행 수치만 읽음) ──
+  valuation_desk.py 패키지·리서치 검증·발행·조회   valuation.py  DCF 코어·기계적 모델·시나리오 계산
+  fundamentals.py   재무 스냅샷 수집·정규화        render_valuation.py 상세 페이지·카드
 state/borrow/{T}.json   IBKR 대차 스냅샷 누적 (FTP 는 히스토리 미제공 → CTB Δ% 계산용)
 state/options/{T}.json  OI·Max Pain·플립 누적 (OI 추세 · 핀닝 사후검증)
 state/fundamentals/{T}.json  재무 스냅샷 (적정가치 입력, TTL 3~5일) · _peers.json peer 프로필 공유 캐시
+state/valuation/research/{T}.json  발행된 리서치 원본 (시나리오 가정·출처)
 ```
 
 확률 엔진: 레이어별 `score∈[-1,1] × confidence × weight(L1 .35 · L2 .20 · L3 .30 · L4 .15)` →
@@ -144,7 +143,7 @@ Actions 탭 → Run workflow 로 수동 실행 가능 (`ticker`, `force` 입력;
 ### 산출물 / 상태
 - `reports/{SESSION_DATE}/` — 종목별 HTML·MD·JSON(v3 스키마: `docs/SCHEMA_V3.md`)
 - `reports/data/{T}.json` — 종목별 시계열 (세션 날짜 기준, minified) · `reports/tickers/{T}/` — 종목 페이지
-- `reports/tickers/{T}/valuation.html` — 적정가치 상세 (종목당 1개, 매 세션 덮어씀)
+- `reports/valuation/{T}.json` — Valuation Desk 발행 수치 · `reports/tickers/{T}/valuation.html` — 적정가치 상세
 - `state/` — 엔진 누적 상태(예: 일별 대차 스냅샷 `state/borrow/{T}.json`). 커밋 단계에서 `reports/` 와 함께 add.
 - 출력이 결정적(실행 시각 미기록)이라 rebase 충돌이 적고, 충돌 시 원격 위로 rebase 후 인덱스를 재생성한다.
 

@@ -1670,54 +1670,63 @@ class SmartMoneyAnalyzer:
 
 ## 14. FUNDAMENTAL FAIR VALUE ENGINE
 
-> Full specification: `docs/VALUATION.md`. Code: `smartmoney/fundamentals.py`, `smartmoney/valuation.py`,
-> `smartmoney/render_valuation.py`, CLI `valuation.py`, tests `tools/test_valuation.py`.
+> Full specification: `docs/VALUATION.md`. Research procedure: `docs/VALUATION_RESEARCH.md`.
+> Code: `valuation.py` (CLI), `smartmoney/valuation_desk.py`, `smartmoney/valuation.py`,
+> `smartmoney/fundamentals.py`, `smartmoney/render_valuation.py`. Tests: `tools/test_valuation.py`.
 
-The fair value engine is an **independent axis** from the flow analysis (Sections 0–7). It never feeds the
-scenario probabilities, and flow signals never feed it. It answers one question: what is the stock worth on
-public fundamentals, and what does the current price assume?
+Fair value is a **separate function (Valuation Desk)**, not part of the flow analysis. It never feeds the
+scenario probabilities and flow signals never feed it. The SMA engine and dashboard only **read the published
+numbers** (`reports/valuation/{T}.json`) and re-mark upside at the session close — they compute nothing.
 
-### 14.1 Pipeline
+### 14.1 Two layers
 
 ```
-fundamentals snapshot → derive metrics → classify archetype → cost of capital
-  → run every model (with applicability rules + validation checks)
-  → blend (archetype weights × reliability, outlier down-weighting)
-  → uncertainty level + verdict
-  + diagnostics: reverse DCF, Monte Carlo, sensitivity grid
+RESEARCH (Claude session, like the weekly narrative — no API billing)
+  reads: 10-K/10-Q, earnings releases and guidance, management plans, recent news, industry context
+  writes: thesis, business model, actual performance, plans, news, risks, catalysts, and
+          bear/base/bull scenarios (year-by-year revenue growth, target GAAP operating margin,
+          risk adjustment, probability) plus options for businesses with no revenue yet — all sourced
+
+COMPUTATION (deterministic engine)
+  scenario value = 10y DCF on the research assumptions, with the engine's cost of capital
+  fair value     = probability-weighted scenario values; range = bear … bull
+  cross-check    = mechanical baseline (18 statement-only models: DCF variants, DDM, EPV, residual
+                   income, peer multiples, P/FFO, Lynch, Graham) + reverse DCF, Monte Carlo, sensitivity
 ```
 
 ### 14.2 Rules
 
 ```
-1. CLASSIFY FIRST. Never run one model on every stock. Archetypes:
-   MATURE_COMPOUNDER, HIGH_GROWTH, HYPERGROWTH_UNPROFITABLE, PRE_REVENUE, CYCLICAL,
-   DIVIDEND_DEFENSIVE, TURNAROUND, BANK, INSURANCE, REIT.
-2. A model that does not fit the archetype is EXCLUDED with a stated reason
-   (no dividend → no DDM; bank → no FCFF DCF or EV multiples; losses → no P/E, EPV, Graham).
-3. Every assumption is derived from data (consensus, history, peers) and shown in the output.
-   Missing inputs stay missing — never fabricate.
-4. Cyclicals are valued on mid-cycle (long-run median) margins, not current-year earnings.
-5. Loss-makers converge to a peer-based target margin with operating leverage, not linearly.
-6. High growth mean-reverts: excess growth decays 35% per year after the consensus window.
-7. Discount rates converge toward a mature-company cost of capital over the forecast horizon.
-8. Models are blended by archetype weight × reliability; a model more than 3× away from the
-   cross-model median keeps a quarter of its weight.
-9. Uncertainty widens the verdict band (10 / 15 / 25 / 35 %). Report the range, not only the point.
-10. When fair value and price differ by more than 3×, flag `model_gap` and lead with the
-    reverse DCF (what the price assumes) instead of the point estimate.
-11. Analyst price targets are shown for reference only and never enter the blend.
-12. Deterministic: Monte Carlo is seeded from the ticker.
+1. A fair value shown in SMA must be research-backed. A statements-only (mechanical) number is a
+   baseline and cross-check; it is never presented as the fair value on the dashboard.
+2. Research facts come from sources opened in that session (URL + date), never from memory.
+   Publishing is refused without >= 6 sources, scenario stories, probabilities summing to 1,
+   in-range growth and margins, and an explicit basis for every option value.
+3. Scenarios are written from evidence, not from the share price. Never tune assumptions toward the
+   current price; analyst price targets are never an input.
+4. Scenario margins are GAAP operating margins (stock compensation is an expense).
+5. A business with no meaningful revenue goes into `options` (probability x discounted value),
+   not into scenario revenue — no double counting.
+6. Banks, insurers and REITs: the research computes each scenario's per-share value directly
+   (P/B-ROE, residual income, P/FFO) and states the method and inputs.
+7. Research goes stale 100 days after `as_of` (or after an earnings release): flag it and widen
+   uncertainty. A refresh re-runs the same assumptions on new financials and prices.
+8. Uncertainty widens the verdict band (10 / 15 / 25 / 35 %). Always report the range.
+9. Mechanical baseline rules (classification first, mid-cycle margins for cyclicals, operating
+   leverage for loss-makers, growth mean-reversion, converging discount rates, reliability-weighted
+   blending) are specified in docs/VALUATION.md sections 1-7.
+10. Deterministic: same research + same financials -> same numbers (Monte Carlo seeded by ticker).
 ```
 
 ### 14.3 Placement
 
 ```
-- Report JSON: `valuation` key (summary). Markdown: three rows in Key Metrics.
-- 3-Layer report: a card inside the briefing block — NOT a numbered section
-  (Sections 0–7 and their order are unchanged; Section 7 stays last).
-- reports/tickers/{T}/valuation.html: one living detail page per ticker.
-- Dashboard: "적정가 (괴리)" column; ticker page: card + fair value line on the price chart.
+- reports/valuation/{T}.json            published numbers (the only interface SMA reads)
+- reports/tickers/{T}/valuation.html    detail page: research -> mechanical cross-check -> diagnostics
+- state/valuation/research/{T}.json     research as published (assumptions + sources)
+- Report JSON `valuation` key, Markdown Key Metrics rows, briefing card in the 3-Layer report
+  (NOT a numbered section — Sections 0-7 and their order are unchanged; Section 7 stays last),
+  dashboard "적정가 (괴리)" column, ticker page card + fair value line on the price chart.
 - Not attached to index reports or to re-runs of sessions older than 7 days.
 ```
 

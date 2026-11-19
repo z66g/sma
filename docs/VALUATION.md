@@ -1,23 +1,62 @@
-# 적정가치(Fair Value) 엔진 — 알고리즘 명세
+# 적정가치(Fair Value) — Valuation Desk 명세
 
-수급 분석(SECTION 0~7)과 **독립된 축**으로, 공개 재무 데이터만 가지고 종목의 적정 주가를 산출한다.
-핵심은 "모든 종목에 같은 모델을 돌리지 않는다"는 것이다: 종목 성격을 먼저 분류하고, 그 성격에 맞는 모델에만 가중치를 준다.
+적정가치는 SMA 수급 분석(SECTION 0~7)과 **분리된 별도 기능**이다. SMA 는 발행된 수치만 읽는다.
 
 ```
-재무 스냅샷 ─► ① 파생 지표 ─► ② 성격 분류 ─► ③ 자본비용 ─► ④ 모델별 가치 ─► ⑤ 통합 ─► ⑥ 불확실성·판정
-(fundamentals.py)              (valuation.py)                                    + 역DCF · 몬테카를로 · 민감도
+                    ┌──────────────── Valuation Desk (valuation.py) ────────────────┐
+ 재무·컨센서스·peer ─►│ prepare ─► 리서치(Claude 세션) ─► publish(검증 → 계산 → 발행) │─► reports/valuation/{T}.json ─► SMA
+ SEC 공시·실적·뉴스 ─►│   패키지      사업·성과·계획·뉴스       시나리오 확률가중 DCF      │   reports/tickers/{T}/valuation.html
+                    │                → 시나리오 가정        + 기계적 모델 교차검증      │   state/valuation/research/{T}.json
+                    └────────────────────────────────────────────────────────────────┘
+```
+
+**왜 두 층인가.** 재무제표만 보는 기계적 모델은 사업모델·경영 계획·뉴스·실행력을 읽지 못한다(가동 전 설비, 인수로 왜곡된 과거 마진,
+아직 매출이 없는 사업). 그래서 적정가의 **입력**은 애널리스트 리서치가 만들고, **계산**은 결정적 엔진이 한다.
+
+| 층 | 누가 | 무엇을 | 산출물 |
+|---|---|---|---|
+| 리서치 | Claude 세션 (`docs/VALUATION_RESEARCH.md` 지침, 주간 내러티브와 같은 방식·API 과금 없음) | 10-K/10-Q·실적발표·가이던스·계획·뉴스를 읽고 약세/기본/강세 시나리오(연도별 성장·목표 GAAP 마진·위험·확률)와 신사업 옵션가치를 근거와 함께 작성 | `{T}_research.json` |
+| 계산 | `smartmoney/valuation.py` | 시나리오별 10년 DCF → 확률가중 적정가, 범위 = 약세~강세. 기계적 18개 모델은 **교차검증용 기준선**으로 함께 계산 | 전체 평가 결과 |
+| 발행 | `smartmoney/valuation_desk.py` | 리서치 검증(출처 6건 이상·확률 합·범위·근거) 통과 시에만 발행 | `reports/valuation/{T}.json` 등 |
+| 소비 | SMA 엔진·대시보드 | `read_published()` 로 수치만 읽고 세션 종가로 괴리율·판정 재산정 | 리포트 JSON `valuation` 키 |
+
+- **리서치가 없는 종목은 SMA 에 적정가가 표시되지 않는다.** 기계적 기준선은 상세 페이지에서 '참고'로만 보인다 (`SMA_VALUATION_ALLOW_MECHANICAL=1` 로 변경 가능).
+- 리서치는 실적 발표 후 다시 써야 한다. 100일이 지나면 '갱신 필요'로 표시되고 불확실성이 올라간다.
+- 재무·주가가 바뀌면 `valuation.py refresh`(워크플로 `valuation-refresh.yml`)가 **같은 리서치 가정**으로 다시 계산해 재발행한다.
+
+```bash
+python3 valuation.py prepare MRVL --out WORK      # 리서치 패키지
+python3 valuation.py publish MRVL --research WORK/MRVL_research.json [--dry-run]
+python3 valuation.py refresh --watchlist          # 재계산·재발행
+python3 valuation.py status                       # 발행 현황
+python3 tools/test_valuation.py                   # 회귀 테스트 (네트워크 불필요)
 ```
 
 | 파일 | 역할 |
 |---|---|
-| `smartmoney/fundamentals.py` | Yahoo 재무제표·컨센서스·peer, SEC XBRL 장기 이력 수집 → `state/fundamentals/{T}.json` |
-| `smartmoney/valuation.py` | 분류 · WACC · 18개 모델 · 통합 · 진단 |
-| `smartmoney/render_valuation.py` | 상세 페이지(`reports/tickers/{T}/valuation.html`) + 요약 카드 |
-| `valuation.py` | 단독 CLI (`python3 valuation.py MRVL --html out/`) |
-| `tools/test_valuation.py` | 네트워크 없는 회귀 테스트 (합성 재무 데이터) |
+| `valuation.py` | Valuation Desk CLI |
+| `smartmoney/valuation_desk.py` | 패키지 생성 · 리서치 검증 · 발행 · SMA 조회 접점 |
+| `smartmoney/valuation.py` | 성격 분류 · 자본비용 · DCF 코어 · 기계적 모델 · 리서치 시나리오 계산 |
+| `smartmoney/fundamentals.py` | Yahoo 재무제표·컨센서스·peer, SEC XBRL 수집 → `state/fundamentals/{T}.json` |
+| `smartmoney/render_valuation.py` | 상세 페이지 + 요약 카드 |
+| `docs/VALUATION_RESEARCH.md` | 리서치 지침 (조사 순서 · 시나리오 규칙 · 결과물 필드) |
 
-Finbox(현 InvestingPro)의 공개된 방식 — *종목에 맞는 모델만 골라 평균, 검증에 실패한 모델은 제외, 모델 수로 불확실성 표시* — 을
-출발점으로 삼고, 아래를 더했다: 성격별 가중치, 검증 체크 기반 신뢰도, 이상치 축소, 편차 기반 불확실성, 역DCF, 몬테카를로.
+## 0. 리서치 기반 적정가 (발행되는 값)
+
+```
+시나리오 s ∈ {약세, 기본, 강세}:
+  매출 경로  = 리서치가 준 연도별 성장률(3~10년) → 이후 영구성장률로 감쇠
+  영업이익률 = 현재 → 리서치 목표 GAAP 마진 (지정 연차에 도달; 적자 기업은 영업 레버리지 경로)
+  할인율     = §3 의 WACC (+ 리서치 가감 ±3%p 이내)
+  가치_s     = 10년 DCF(영구성장 · EBITDA Exit 평균) → 주주가치 ÷ 주식수  + Σ(옵션 성공확률 × 옵션 주당가치)
+적정가 = Σ 확률_s × 가치_s        범위 = [약세 가치, 강세 가치]
+```
+금융·REIT 는 시나리오별 주당 가치를 리서치가 직접 산출한다(P/B-ROE·초과이익·P/FFO; 방법과 입력값 명시).
+
+불확실성(100 에서 차감): 시나리오 폭(강세−약세)÷적정가 ×35 (최대 −45) · 리서치 확신도(MEDIUM −12, LOW −25) · 성격 가산의 절반 ·
+옵션가치가 적정가의 25% 초과 −10 · 리서치 100일 경과 −15 · 기계적 기준선과 2배 이상 차이 −6. 등급·판정 밴드는 §6 과 같다.
+
+아래 §1~§7 은 **기계적 기준선**(리서치의 출발점이자 교차검증)과 공통 계산 코어의 명세다.
 
 ---
 
@@ -193,14 +232,16 @@ low  = min(Σ w·low_i , 가중 25분위),  high = max(Σ w·high_i , 가중 75�
 
 ## 8. 출력
 
-- 리포트 JSON `valuation` 키 (요약; `docs/SCHEMA_V3.md`), Markdown Key Metrics 3행, 3-Layer 리포트 브리핑 안의 카드.
-- `reports/tickers/{T}/valuation.html` — 종목당 1개, 매 세션 덮어씀. 이력은 리포트 JSON 으로 남아 종목 페이지 가격 차트에 '적정가' 선으로 그려진다.
-- 대시보드: `적정가 (괴리)` 열 + 한줄평 카드의 칩.
-- 과거 세션 재실행(7일 초과)에는 붙이지 않는다 — 재무·컨센서스는 '지금' 값이라 과거 주가와 시점이 어긋난다. `SMA_VALUATION=0` 으로 끌 수 있다.
+- `reports/valuation/{T}.json` — 발행 수치 (SMA 가 읽는 유일한 접점; 스키마는 `docs/SCHEMA_V3.md` 의 `valuation`).
+- `reports/tickers/{T}/valuation.html` — 상세: 리서치(논지·시나리오·옵션·사업·성과·계획·뉴스·출처) → 기계적 교차검증 → 가정 → 역DCF·분포·민감도 → peer.
+- `state/valuation/research/{T}.json` — 리서치 원본 (재계산·이력).
+- SMA: 리포트 JSON `valuation` 키, Markdown Key Metrics, 3-Layer 리포트 브리핑 카드, 대시보드 `적정가 (괴리)` 열, 종목 페이지 카드·가격 차트의 적정가 선.
+  SMA 는 계산하지 않는다 — 과거 세션 재실행(7일 초과)에는 붙이지 않으며 `SMA_VALUATION=0` 으로 끌 수 있다.
 
 ## 9. 한계 (출력에도 명시)
 
-- 재무제표와 컨센서스에 없는 것은 반영되지 않는다: 신사업 옵션가치, 규제·소송, 경영진 변화.
+- **기계적 기준선**은 재무제표와 컨센서스에 없는 것(사업 계획, 신사업 옵션가치, 규제·소송, 경영진 변화)을 반영하지 못한다 — 그래서 발행값은 리서치 기반이다.
+- **리서치**도 판단이다: 시나리오 확률과 옵션가치는 증거에 근거한 추정이며, 출처와 가정을 전부 노출해 반박 가능하게 둔다.
 - 과거 이월결손금, 비영업자산(지분투자·보유 암호화폐 등), 전환증권 희석은 단순화했다.
 - ERP·규모 프리미엄·합성등급 스프레드·섹터 기본값은 근사 상수다(`valuation.py` 상단, 환경변수로 조정).
 - 금리가 높은 국면에서는 내재가치 계열(DCF·DDM·EPV)이 시장 멀티플 계열보다 구조적으로 낮게 나온다. 두 계열의 평균을 따로 표시하는 이유다.

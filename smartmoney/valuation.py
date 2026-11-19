@@ -542,7 +542,7 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
             g = g1 if t == 1 else g2 if t == 2 else gT + (g2c - gT) * GROWTH_DECAY ** (t - 2)
         rev = rev_prev * (1 + g)
         if scale_m:      # 적자 기업: 손실은 매출에 비례하지 않는다(고정비) → 규모가 커질수록 손실률이 줄고 N년차에 목표 도달
-            m = mT - (mT - m0) * np.minimum(rev0 / rev, 1.5) * math.sqrt(max(1 - t / N, 0.0))
+            m = mT - (mT - m0) * np.minimum(rev0 / rev, 1.5) * math.sqrt(max(1 - t / conv, 0.0))
         else:
             m = m0 + (mT - m0) * min(t / conv, 1.0)
         ebit = rev * m
@@ -1099,7 +1099,8 @@ def _uncertainty(agg, code: str, D, F, dcfs: List[Dict[str, Any]]) -> Dict[str, 
 
 # ─── 메인 ───────────────────────────────────────────────────────────────────
 def evaluate(F: Dict[str, Any], price: Optional[float] = None, rf: Optional[float] = None,
-             aaa: Optional[float] = None, as_of: Optional[str] = None) -> Dict[str, Any]:
+             aaa: Optional[float] = None, as_of: Optional[str] = None,
+             research: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     warnings = list(F.get("warnings") or [])
     if not _ok(rf) or not 0.005 <= rf <= 0.12:
         rf = RF_FALLBACK
@@ -1169,10 +1170,11 @@ def evaluate(F: Dict[str, Any], price: Optional[float] = None, rf: Optional[floa
                                       "runway", "ps", "tax_eff", "shares", "coverage")},
         "sources": F.get("sources") or [], "warnings": warnings + D["notes"],
     }
+    out["method"] = "MECHANICAL"
     if agg.get("fair") is None:
         out.update({"fair_value": None, "status": "NO_MODEL",
                     "summary": "적용 가능한 모델이 없어 적정가치를 산출하지 못했습니다."})
-        return out
+        return apply_research(out, D, P, exit10, research, as_of) if research else out
     unc = _uncertainty(agg, code, D, F, [m for m in models if m["id"].startswith("dcf_")])
     fair, band = agg["fair"], MOS_BAND[unc["level"]]
     up = fair / D["price"] - 1
@@ -1199,6 +1201,122 @@ def evaluate(F: Dict[str, Any], price: Optional[float] = None, rf: Optional[floa
     top = ", ".join(f"{m['name']}({m['weight'] * 100:.0f}%)" for m in inc[:3])
     out["summary"] = (f"'{A['label']}' 유형 → {agg['n']}개 모델 통합 적정가 {fair:,.2f} (범위 {agg['low']:,.2f}~{agg['high']:,.2f}), "
                       f"현재가 {D['price']:,.2f} 대비 {up * 100:+.1f}% · {VERDICT_KO[verdict]} (불확실성 {unc['label']}). 주요 모델: {top}")
+    return apply_research(out, D, P, exit10, research, as_of) if research else out
+
+
+# ─── 리서치 기반 적정가 ──────────────────────────────────────────────────────
+# 기계적 모델은 재무제표 숫자만 본다. 사업모델·계획·뉴스·실행력은 애널리스트 리서치(docs/VALUATION_RESEARCH.md)가
+# 시나리오 가정(성장 경로·목표 마진·위험·확률)과 신사업 옵션가치로 번역하고, 이 함수는 그 가정을 같은 DCF 코어로 계산한다.
+RESEARCH_STALE_DAYS = 100
+CONF_PENALTY = {"HIGH": 0, "MEDIUM": 12, "LOW": 25}
+
+
+def _verdict(fair: float, price: float, band: float) -> str:
+    up, over = fair / price - 1, price / fair - 1
+    return ("DEEP_UNDERVALUED" if up > 2.5 * band else "UNDERVALUED" if up > band else
+            "DEEP_OVERVALUED" if over > 2.5 * band else "OVERVALUED" if over > band else "FAIR")
+
+
+def scenario_value(D, P, exit10, s: Dict[str, Any]) -> Dict[str, Any]:
+    """시나리오 1개 → 주당 가치. `value_per_share` 가 직접 주어지면(금융·REIT 등) 그대로 쓴다."""
+    if _ok(s.get("value_per_share")):
+        return {"value": float(s["value_per_share"]), "how": "애널리스트 직접 산출", "rev5": None, "rev10": None, "cagr5": None}
+    gp = [float(g) for g in s["rev_growth"]][:10]
+    last = gp[-1]
+    while len(gp) < 10:                                    # 명시 구간 이후는 영구성장률로 감쇠
+        last = P["gT"] + (min(last, GROWTH_SOFT_CAP) - P["gT"]) * GROWTH_DECAY
+        gp.append(last)
+    q = dict(P)
+    q["mT"], q["conv"] = float(s["target_margin"]), int(s.get("margin_year") or 5)
+    q["scale_margin"] = P["m0"] < 0
+    adj = float(s.get("wacc_adj") or 0.0)
+    for k in ("w0", "wT5", "wT10"):
+        q[k] = P[k] + adj
+    if _ok(s.get("s2c")):
+        q["s2c"] = float(s["s2c"])
+    if _ok(s.get("terminal_growth")):
+        q["gT"] = _clip(float(s["terminal_growth"]), 0.01, 0.04)
+    pf = float(s["fail_prob"]) if _ok(s.get("fail_prob")) else P["p_fail"]
+    ev = float(dcf(q, 10, "growth", gpath=gp))
+    if exit10 and q["mT"] > 0:
+        ev = 0.5 * ev + 0.5 * float(dcf(q, 10, "ebitda", exit10, gpath=gp))
+    rev = [D["rev"]]
+    for g in gp:
+        rev.append(rev[-1] * (1 + g))
+    return {"value": float(per_share(ev, D, pf)), "how": "10년 DCF (영구성장" + (" · EBITDA Exit 평균" if exit10 and q["mT"] > 0 else "") + ")",
+            "rev5": rev[5], "rev10": rev[10], "cagr5": _cagr(rev[0], rev[5], 5), "wacc": q["w0"], "fail_prob": pf}
+
+
+def apply_research(out: Dict[str, Any], D, P, exit10, R: Dict[str, Any], as_of: Optional[str]) -> Dict[str, Any]:
+    price, shares = D["price"], D["shares"]
+    adjm = R.get("adjustments") or {}
+    add = float(adjm.get("nonop_assets") or 0.0) / shares
+    dil = 1 + float(adjm.get("extra_dilution_pct") or 0.0)
+    opts = []
+    for o in R.get("options") or []:
+        ev_ = float(o["prob"]) * float(o["value_per_share"])
+        opts.append({"name": o["name"], "prob": float(o["prob"]), "value_per_share": float(o["value_per_share"]),
+                     "expected": ev_, "basis": o.get("basis")})
+    opt_total = sum(o["expected"] for o in opts)
+    scen, fair = {}, 0.0
+    for name in ("bear", "base", "bull"):
+        s = R["scenarios"][name]
+        r = scenario_value(D, P, exit10, s)
+        core = max(r["value"], 0.0)
+        val = (core + add) / dil + opt_total
+        scen[name] = {**r, "prob": float(s["prob"]), "core": core, "value": val, "story": s.get("story"),
+                      "target_margin": s.get("target_margin"), "margin_year": s.get("margin_year"),
+                      "rev_growth": s.get("rev_growth"), "wacc_adj": s.get("wacc_adj") or 0.0}
+        fair += float(s["prob"]) * val
+    lo, hi = min(v["value"] for v in scen.values()), max(v["value"] for v in scen.values())
+    spread = (hi - lo) / fair if fair > 0 else 9.9
+    conf = str(R.get("confidence") or "MEDIUM").upper()
+    age = None
+    try:
+        age = (date.fromisoformat(as_of) - date.fromisoformat(R["as_of"])).days if as_of else None
+    except (ValueError, KeyError, TypeError):
+        pass
+    stale = age is not None and age > RESEARCH_STALE_DAYS
+    code = out["archetype"]["code"]
+    score, why = 100.0, []
+    sp = min(45.0, spread * 35)
+    score -= sp
+    if spread > 0.6:
+        why.append(f"시나리오 폭이 적정가의 {spread * 100:.0f}% (약세 {lo:,.0f} ~ 강세 {hi:,.0f})")
+    if CONF_PENALTY.get(conf, 12):
+        score -= CONF_PENALTY.get(conf, 12)
+        why.append(f"리서치 확신도 {conf}")
+    if code in ARCH_UNCERTAINTY:
+        score -= ARCH_UNCERTAINTY[code] / 2
+        why.append(f"'{ARCH_KO[code]}' 유형")
+    if opt_total > 0.25 * fair:
+        score -= 10
+        why.append(f"적정가의 {opt_total / fair * 100:.0f}%가 아직 매출이 없는 신사업 옵션가치")
+    if stale:
+        score -= 15
+        why.append(f"리서치 {age}일 경과 — 갱신 필요")
+    mech = out.get("fair_value")
+    if _ok(mech) and mech > 0 and not 0.5 <= fair / mech <= 2.0:
+        score -= 6
+        why.append(f"기계적 기준선({mech:,.0f})과 {fair / mech:.1f}배 차이 — 리서치 가정이 과거 실적과 크게 다름")
+    score = max(score, 0.0)
+    level = "LOW" if score >= 78 else "MEDIUM" if score >= 58 else "HIGH" if score >= 38 else "VERY_HIGH"
+    band = MOS_BAND[level]
+    verdict = _verdict(fair, price, band)
+    out["mechanical"] = {k: out.get(k) for k in ("fair_value", "fair_low", "fair_high", "upside_pct", "verdict", "verdict_ko",
+                                                 "n_models", "uncertainty", "summary", "status")}
+    out["research"] = {**{k: R.get(k) for k in ("as_of", "analyst", "thesis", "business", "performance", "plans", "news", "risks",
+                                                "catalysts", "confidence", "sources", "adjustments", "valuation_notes")},
+                       "scenarios": scen, "options": opts, "option_value": opt_total, "age_days": age, "stale": stale}
+    out.update({"method": "RESEARCH", "status": "OK", "fair_value": fair, "fair_low": lo, "fair_high": hi,
+                "upside_pct": (fair / price - 1) * 100, "verdict": verdict, "verdict_ko": VERDICT_KO[verdict],
+                "mos_band_pct": band * 100, "model_gap": False,
+                "uncertainty": {"level": level, "label": UNC_KO[level], "score": round(score), "reasons": why}})
+    out["summary"] = (f"리서치 기반 적정가 {fair:,.2f} = 약세 {scen['bear']['value']:,.2f}({scen['bear']['prob'] * 100:.0f}%) · "
+                      f"기본 {scen['base']['value']:,.2f}({scen['base']['prob'] * 100:.0f}%) · 강세 {scen['bull']['value']:,.2f}({scen['bull']['prob'] * 100:.0f}%)의 확률가중"
+                      + (f" (신사업 옵션 {opt_total:,.2f} 포함)" if opt_total > 0 else "")
+                      + f". 현재가 {price:,.2f} 대비 {(fair / price - 1) * 100:+.1f}% · {VERDICT_KO[verdict]} (불확실성 {UNC_KO[level]})."
+                      + (f" 기계적 기준선 {mech:,.2f}." if _ok(mech) else ""))
     return out
 
 
@@ -1221,6 +1339,15 @@ def compact(v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     out["base_cagr_5y"] = r(rd.get("base_cagr_5y"), 4)
     out["mc"] = {k2: r(mc.get(k2)) for k2 in ("p10", "p50", "p90", "prob_above_price")} if mc else None
     out["analyst_target"] = r(an.get("target_mean"))
+    out["method"] = v.get("method") or "MECHANICAL"
+    R = v.get("research")
+    if R:
+        out["research"] = {"as_of": R.get("as_of"), "analyst": R.get("analyst"), "thesis": R.get("thesis"),
+                           "confidence": R.get("confidence"), "stale": R.get("stale"), "option_value": r(R.get("option_value")),
+                           "scenarios": {k: {"prob": r(s["prob"], 3), "value": r(s["value"]), "cagr5": r(s.get("cagr5"), 4),
+                                             "target_margin": s.get("target_margin")} for k, s in R["scenarios"].items()},
+                           "n_sources": len(R.get("sources") or [])}
+        out["mechanical_fair"] = r((v.get("mechanical") or {}).get("fair_value"))
     return out
 
 
@@ -1237,11 +1364,11 @@ def market_rates() -> Tuple[Optional[float], Optional[float]]:
 
 
 def run(symbol: str, price: Optional[float] = None, yft=None, rf: Optional[float] = None,
-        as_of: Optional[date] = None, force: bool = False) -> Dict[str, Any]:
+        as_of: Optional[date] = None, force: bool = False, research: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """수집 + 평가 (엔진·CLI 공용 진입점)."""
     from . import fundamentals as FN
     F = FN.load(symbol, yft, force=force)
     if price is None and not _ok((F.get("market") or {}).get("price")):
         price = FN.last_price(symbol, yft)                  # 프로필 응답에 현재가가 빠진 경우 (호출 제한 등)
     r10, aaa = market_rates()
-    return evaluate(F, price, rf if _ok(rf) else r10, aaa, as_of.isoformat() if as_of else None)
+    return evaluate(F, price, rf if _ok(rf) else r10, aaa, as_of.isoformat() if as_of else None, research)

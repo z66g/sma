@@ -289,10 +289,9 @@ def _valuation_block(a: Dict[str, Any], T: str) -> str:
     v = a.get("valuation")
     if not v or v.get("fair_value") is None:
         return ""
-    from . import valuation as V
     from .render_valuation import card
-    return ('<div class="eh2">펀더멘털 적정가치 · 수급과 독립된 축</div>'
-            + card(V.compact(v), f"../tickers/{e(T)}/valuation.html"))
+    return ('<div class="eh2">펀더멘털 적정가치 · 수급과 독립된 축 (Valuation Desk 발행 수치)</div>'
+            + card(v, f"../tickers/{e(T)}/valuation.html"))
 
 
 def _num(x: Optional[float], d: int = 2, prefix: str = "", suffix: str = "") -> str:

@@ -736,6 +736,9 @@ def _valuation_summary(t: str, latest: dict) -> dict:
         "fair_unc": (v.get("uncertainty") or {}).get("label") if fair is not None else None,
         "fair_type": (v.get("archetype") or {}).get("label") if fair is not None else None,
         "fair_models": v.get("n_models") if fair is not None else None,
+        "fair_method": v.get("method") if fair is not None else None,
+        "fair_research": (v.get("research") or {}).get("as_of") if fair is not None else None,
+        "fair_stale": bool(v.get("stale")) if fair is not None else None,
         "val_url": f"tickers/{t}/valuation.html" if fair is not None and (TICKERS_DIR / t / "valuation.html").exists() else None,
     }
 
@@ -945,8 +948,9 @@ function fairCell(r) {
   const col = v.indexOf('UNDER') >= 0 ? '#1A7F5A' : v.indexOf('OVER') >= 0 ? '#CF222B' : '#656D76';
   const title = [r.fair_type, r.fair_verdict_ko, r.fair_unc ? '불확실성 ' + r.fair_unc : '',
     (isNum(r.fair_low) && isNum(r.fair_high)) ? '범위 $' + r.fair_low.toFixed(2) + '~$' + r.fair_high.toFixed(2) : '',
-    r.fair_models ? r.fair_models + '개 모델' : ''].filter(Boolean).join(' · ');
-  const body = `${fmtDol(r.fair_value)} <span style="color:${col};font-weight:600;">${isNum(up) ? fmtSigned(up, 0) + '%' : ''}</span>`;
+    r.fair_method === 'RESEARCH' ? '리서치 ' + (r.fair_research || '') + (r.fair_stale ? ' (갱신 필요)' : '') : '기계적 기준선(참고)'].filter(Boolean).join(' · ');
+  const body = `${fmtDol(r.fair_value)} <span style="color:${col};font-weight:600;">${isNum(up) ? fmtSigned(up, 0) + '%' : ''}</span>`
+    + (r.fair_stale ? ' <span title="리서치 갱신 필요" style="color:#9A6700;">⏳</span>' : '');
   const url = safePath(r.val_url);
   return url ? `<a href="${esc(url)}" title="${esc(title)}" style="color:inherit;">${body}</a>` : `<span title="${esc(title)}">${body}</span>`;
 }

@@ -11,12 +11,11 @@ from . import analytics as A
 from . import calendar as cal
 from . import events as EV
 from . import flow as F
-from . import fundamentals as FN
 from . import history as H
 from . import regimes as R
 from . import quality as Q
 from . import sources as S
-from . import valuation as V
+from . import valuation_desk as VD
 from .net import log
 
 INDEX_ROOTS = {"SPX": {"SPX", "SPXW"}, "NDX": {"NDX", "NDXP"}, "RUT": {"RUT", "RUTW"}, "VIX": {"VIX", "VIXW"}}
@@ -112,28 +111,22 @@ class SmartMoneyAnalyzer:
         data["sec"] = self._try("news", "sec_edgar", S.fetch_sec, T, d, default={"filings": []})
         data["calendar"] = self._try("news", "yahoo_calendar", S.fetch_calendar, yft, default={}) or {}
         self.sources["news"] = ["Yahoo news", "SEC EDGAR (submissions + Form 4 XML)", "Yahoo calendar"]
-        # 적정가치용 재무 스냅샷 (state/fundamentals — TTL 안에서는 네트워크 호출 없음). 과거 세션 재실행에는 붙이지 않는다:
-        # 재무·컨센서스는 '지금' 값이라 과거 주가와 짝지으면 시점이 어긋난다.
-        if (date.today() - d).days <= 7 and os.environ.get("SMA_VALUATION", "1") != "0":
-            data["fundamentals"] = self._try("val", "fundamentals", FN.load, T, yft)
-            data["aaa"] = self._try("val", "fred_aaa", lambda: S.fred_series("DAAA", n=5)[-1][1] / 100)
         return data
 
-    def _valuation(self, data: Dict[str, Any], price: float) -> Optional[Dict[str, Any]]:
-        """펀더멘털 적정가치 — 수급 분석과 독립된 축. 실패해도 리포트는 계속 생성한다."""
-        fund = data.get("fundamentals")
-        if not fund:
+    def _valuation(self, price: float) -> Optional[Dict[str, Any]]:
+        """적정가치는 SMA 밖의 별도 기능(Valuation Desk)이 계산·발행한다. 여기서는 발행된 수치만 읽고
+        이번 세션 종가로 괴리율·판정을 다시 매긴다 — 재무 수집도 모델 계산도 하지 않는다.
+        과거 세션 재실행에는 붙이지 않는다(발행 수치는 '지금'의 리서치라 과거 주가와 시점이 어긋난다)."""
+        if (date.today() - self.session).days > 7 or os.environ.get("SMA_VALUATION", "1") == "0":
             return None
         try:
-            dgs = (data.get("macro_raw") or {}).get("dgs10") or []
-            rf = dgs[-1][1] / 100 if dgs else None
-            v = V.evaluate(fund, price, rf, data.get("aaa"), self.date_str)
-            self.sources["val"] = list(fund.get("sources") or [])
-            return v
+            v = VD.read_published(self.display_ticker, price, self.date_str)
         except Exception as e:  # noqa: BLE001
-            self.warnings.append(f"val/evaluate: {str(e)[:200]}")
-            log(f"{self.ticker} WARN val/evaluate: {e}")
+            self.warnings.append(f"val/read_published: {str(e)[:160]}")
             return None
+        if v:
+            self.sources["val"] = [f"Valuation Desk 발행 수치 ({v.get('method')}, 리서치 {((v.get('research') or {}).get('as_of')) or '없음'})"]
+        return v
 
     def _fetch_flow(self, T: str, d: date, days: int = 5) -> List[Dict[str, Any]]:
         """체결 단위 수급(최근 5세션). 누락된 날만 Alpaca 에서 받아 state/flow 에 누적."""
@@ -215,7 +208,7 @@ class SmartMoneyAnalyzer:
             self.warnings.append(f"phase/regime: {str(e)[:160]}")
         phase = A.build_phases(d, ohlcv, l1, l3, l4, scen, events, regime)
         levels = A.price_levels(price, l3, l4)
-        valuation = None if self.is_index else self._valuation(data, price)
+        valuation = None if self.is_index else self._valuation(price)
         quality = Q.assess({"l1": l1, "l2": l2, "l3": l3, "l4": l4}, macro,
                            bool(data.get("news")) or bool((data.get("sec") or {}).get("filings")),
                            self.sources, is_index=self.is_index)
