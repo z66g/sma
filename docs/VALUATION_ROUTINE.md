@@ -16,11 +16,14 @@
 
 ## 0. 준비
 ```bash
-git fetch origin main && git checkout main && git reset --hard origin/main      # 로컬 변경이 없을 때만
+git fetch origin main
+git checkout main
+git reset --hard origin/main            # 로컬 변경이 없을 때만
 pip install -q -r requirements.txt
-python3 tools/test_valuation.py | tail -n 1                                     # "0 failure(s)" 가 아니면 중단하고 보고
+python3 tools/test_valuation.py         # 마지막 줄이 "0 failure(s)" 가 아니면 중단하고 보고
 ```
 작업 폴더 `DESK` 는 세션 스크래치 디렉터리 아래에 만든다(저장소 밖). 시작 시각을 기록한다.
+이 문서의 명령은 `.claude/settings.json` 의 허용 목록과 글자 그대로 맞춰 두었다 — 한 줄에 한 명령씩, 적힌 형태로 실행한다.
 
 ## 1. 계획
 ```bash
@@ -62,7 +65,7 @@ python3 valuation.py refresh $(python3 -c "import json;print(' '.join(json.load(
 
 ## 4. 커밋·푸시
 ```bash
-python3 tools/test_valuation.py | tail -n 1
+python3 tools/test_valuation.py         # 마지막 줄 "0 failure(s)" 확인
 python3 build_index.py
 git add reports/valuation state/valuation state/fundamentals reports/tickers reports/index.html reports/app.js reports/data
 git commit -m "valuation: weekly desk run {DATE} ({요약: 재계산 N · 조사 A,B · 갱신 C})"
