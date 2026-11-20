@@ -553,6 +553,8 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
     # 컨센서스 구간(1~2년차) 이후: 50% 를 넘는 성장률은 초과분의 30% 만 인정한 수준에서 감쇠 시작 (초고성장의 복리 폭주 방지)
     g2c = np.where(g2 > GROWTH_SOFT_CAP, GROWTH_SOFT_CAP + 0.3 * (g2 - GROWTH_SOFT_CAP), g2)
     amort0 = float(p.get("amort0") or 0.0)
+    # 리서치가 연도별 비현금 상각(인수 무형자산·매수가격 배분 상각) 금액을 주면 그 금액을 그대로 되돌린다 (기본: 과거 초과 상각이 연 25%씩 소멸)
+    am_abs = [float(x) for x in p["amort_usd"]] if p.get("amort_usd") is not None else None
     rev0 = f("rev0")
     rev_prev = rev0 * np.ones(np.broadcast(g1, m0, mT, s2c, w0, gT).shape)
     scale_m = bool(p.get("scale_margin"))
@@ -598,10 +600,10 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
             else:
                 cx = cap_list[min(t - 1, len(cap_list) - 1)]
                 reinv = (cx - dep_list[min(t - 1, len(dep_list) - 1)]) * rev + nwc * (rev - rev_prev)
-            fcff = ebit - taxes - reinv
+            fcff = ebit - taxes - reinv + (am_abs[t - 1] if am_abs is not None and t <= len(am_abs) else 0.0)
         else:
             reinv = np.maximum(rev - rev_prev, 0) / s2c
-            fcff = ebit - taxes - reinv + amort0 * AMORT_DECAY ** t
+            fcff = ebit - taxes - reinv + ((am_abs[t - 1] if t <= len(am_abs) else 0.0) if am_abs is not None else amort0 * AMORT_DECAY ** t)
         w = w0 + (wT - w0) * min((t - 1) / max(min(N, WACC_CONV_YEARS) - 1, 1), 1.0)
         df = df / (1 + w)
         pv = pv + fcff * df * np.sqrt(1 + w)                # 기중(mid-year) 할인
@@ -1346,6 +1348,8 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
         q["nwc_pct"] = float(s.get("nwc_pct") or 0.0)
         if s.get("capex_usd"):
             q["capex_usd"], q["da_usd"] = s["capex_usd"], s["da_usd"]
+    if s.get("amort_usd") is not None:                      # 손익 경로에 비용으로 든 비현금 상각(인수 무형자산 등)의 연도별 금액
+        q["amort_usd"] = s["amort_usd"]
     if _ok(s.get("tax_rate")):                              # 구조적으로 낮거나 높은 장기 세율의 근거가 있을 때
         q["taxT"] = _clip(float(s["tax_rate"]), 0.05, 0.35)
     # 실패 위험은 리서치가 정한다: 약세 시나리오가 이미 실패 경로를 그리고 있으면 엔진의 기계적 실패확률을 또 곱해서는 안 된다

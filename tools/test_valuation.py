@@ -358,6 +358,19 @@ def main() -> int:
           pv1 * 0.99 <= drop <= pv1 * 1.5 and vup["roic_T"] < vud["roic_T"], str((drop, pv1, vup["roic_T"], vud["roic_T"])))
     bad = copy.deepcopy(R); bad["scenarios"]["base"].update(capex_usd=[1e8], da_usd=[1e7])
     check("capex_usd 는 이후 연도 비율(capex_pct·da_pct) 없이는 거부", any("capex_usd" in x for x in VD.validate(bad, "TEST")[0]))
+    # 비현금 상각(인수 무형자산) 금액 지정: 지정한 금액의 현재가치만큼 기업가치가 늘어난다 (자동 가산을 대체)
+    a0 = copy.deepcopy(R); a0["scenarios"]["base"].update(amort_usd=[0.0, 0.0], amort_usd_basis="비현금 상각을 0 으로 지정한 기준 입력 — 자동 가산을 끄고 지정 금액만 반영되는지 확인하는 테스트용")
+    a1 = copy.deepcopy(a0); a1["scenarios"]["base"]["amort_usd"] = [1e8, 1e8]
+    va0 = V.evaluate(make(), None, rf, None, "x", a0)["research"]["scenarios"]["base"]
+    va1 = V.evaluate(make(), None, rf, None, "x", a1)["research"]["scenarios"]["base"]
+    wq = va0["wacc"]
+    df1 = 1 / (1 + wq); w2 = wq + (va0["wacc_T"] - wq) * (1 / 9); df2 = df1 / (1 + w2)
+    want_pv = 1e8 * df1 * (1 + wq) ** 0.5 + 1e8 * df2 * (1 + w2) ** 0.5
+    check("amort_usd: 지정한 비현금 상각의 현재가치만큼 기업가치 증가 (독립 계산), 투하자본·ROIC 는 불변",
+          not VD.validate(a1, "TEST")[0] and abs((va1["ev_growth"] - va0["ev_growth"]) / want_pv - 1) < 1e-6 and abs(va1["roic_T"] - va0["roic_T"]) < 1e-12,
+          str((va1["ev_growth"] - va0["ev_growth"], want_pv)))
+    check("amort_usd 는 근거(amort_usd_basis) 없이는 거부",
+          any("amort_usd" in x for x in VD.validate({**R, "scenarios": {**R["scenarios"], "base": {**R["scenarios"]["base"], "amort_usd": [1e8]}}}, "TEST")[0]))
     check("영구성장률 ≤ 명시 구간 마지막 해 성장률 (약세 2% → 영구 2%, 강세 8% → 엔진 값)",
           abs(sc["bear"]["g_T"] - 0.02) < 1e-12 and abs(sc["bull"]["g_T"] - vr["assumptions"]["gT"]) < 1e-12, str([sc[k]["g_T"] for k in sc]))
     cmp_ = V.compact(vr)
