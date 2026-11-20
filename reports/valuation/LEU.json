@@ -1,0 +1,162 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 89.7,
+ "fair_value": 28.16,
+ "fair_low": 1.54,
+ "fair_high": 65.74,
+ "upside_pct": -68.6,
+ "verdict": "DEEP_OVERVALUED",
+ "verdict_ko": "크게 고평가",
+ "mos_band_pct": 35.0,
+ "n_models": 9,
+ "summary": "리서치 기반 적정가 28.16 = 약세 1.54(25%) · 기본 22.69(50%) · 강세 65.74(25%)의 확률가중 (신사업 옵션 1.54 포함). 현재가 89.70 대비 -68.6% · 크게 고평가 (불확실성 매우 높음). 할인율 ±1%p 범위 17.63~46.00. 기계적 기준선 66.56.",
+ "archetype": {
+  "code": "CYCLICAL",
+  "label": "경기순환",
+  "traits": [
+   "경기민감 업종",
+   "현금 소진(FCF<0)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 21
+ },
+ "wacc": 0.0914,
+ "ke": 0.0914,
+ "wacc_stable": 0.079,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 70.24,
+   "low": 64.61,
+   "high": 77.56,
+   "weight": 0.172
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 69.24,
+   "low": 63.13,
+   "high": 76.83,
+   "weight": 0.172
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 62.22,
+   "low": 56.21,
+   "high": 62.86,
+   "weight": 0.153
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 65.77,
+   "low": 64.11,
+   "high": 77.25,
+   "weight": 0.115
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 72.28,
+   "low": 65.68,
+   "high": 81.15,
+   "weight": 0.096
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 37.28,
+   "low": 20.44,
+   "high": 46.69,
+   "weight": 0.092
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 71.46,
+   "low": 64.54,
+   "high": 80.52,
+   "weight": 0.077
+  },
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 53.83,
+   "low": 40.7,
+   "high": 68.45,
+   "weight": 0.077
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 72.7,
+   "low": 60.54,
+   "high": 80.6,
+   "weight": 0.046
+  }
+ ],
+ "implied_cagr_5y": 0.1602,
+ "base_cagr_5y": 0.0588,
+ "mc": {
+  "p10": 44.79,
+  "p50": 68.4,
+  "p90": 109.51,
+  "prob_above_price": 0.23
+ },
+ "analyst_target": 180.0,
+ "method": "RESEARCH",
+ "model_gap": true,
+ "research": {
+  "as_of": "2026-11-20",
+  "analyst": "Claude (Valuation Desk)",
+  "thesis": "Centrus 의 가치는 '러시아산 농축우라늄을 되파는 중개 사업'이 2028년 수입 전면 금지로 줄어드는 동안, 오하이오 Piketon 에 짓는 자체 원심분리 농축 설비(첫 가동 2029년 목표)가 조건부 수주잔고 54억 달러를 실제 매출로 바꿀 수 있는가에 달려 있다. 현금 22.4억 달러는 여유자금이 아니라 수십억 달러 증설의 재원이고, 전환사채 원금 12.1억 달러와 2027-10-01 만료로 확정된 DOE 부지 임차(장기 연장 미체결)가 그 위에 얹혀 있다. 원심분리기 제조·공급망은 일정을 앞서가고 있지만 DOE HALEU 운영계약 종료, 기존 사업 마진 압박, 총투자비 미공개로 2027~2030년은 적자·대규모 현금유출 구간이며 가치는 대부분 2031년 이후에 걸려 있다.",
+  "confidence": "LOW",
+  "stale": false,
+  "option_value": 1.54,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 1.54,
+    "cagr5": -0.072,
+    "target_margin": 0.14
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 22.69,
+    "cagr5": -0.0033,
+    "target_margin": 0.27
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 65.74,
+    "cagr5": 0.0484,
+    "target_margin": 0.33
+   }
+  },
+  "n_sources": 21,
+  "rate_sensitivity": {
+   "minus_1pt": 46.0,
+   "plus_1pt": 17.63
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 28.16,
+  "n_warn": 0,
+  "second_opinion": null
+ },
+ "mechanical_fair": 66.56,
+ "ticker": "LEU",
+ "name": "Centrus Energy Corp.",
+ "published": "2026-11-20"
+}
