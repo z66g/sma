@@ -1403,7 +1403,8 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
             "fund_multiple": dg["fund_ev_ebitda"], "roic_incr": (d_nopat / inv) if inv > 0 else None,
             "roic_T": roic_N, "roic_prem": float(q["roic_prem"]),
             "margin_T": rows[-1]["margin"], "capex_T": cap_T, "dep_T": dep_T,
-            "ebit_path": ebits, "breakeven_year": be, "loss_cum": loss_cum, "margin_path_given": bool(mp)}
+            "ebit_path": ebits, "breakeven_year": be, "loss_cum": loss_cum, "margin_path_given": bool(mp),
+            "margin_0": float(q["m0"]), "margin_1": rows[0]["margin"]}
 
 
 SCEN_KO = {"bear": "약세", "base": "기본", "bull": "강세"}
@@ -1500,11 +1501,15 @@ def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: O
             chk("WARN" if k == "base" else "INFO",
                 f"{ko}: Exit 멀티플 교차검증과 크게 다름 (적용한 영구성장 방식 기업가치 {eg / 1e9:,.1f}B · 시장 배수 {v['exit_multiple']:.1f}배 적용 시 {ex / 1e9:,.1f}B"
                 + (f"; 이 시나리오의 수익성·자본집약도가 설명하는 배수는 {v['fund_multiple']:.1f}배" if _ok(v.get("fund_multiple")) else "") + ")")
-        if v.get("loss_cum") and not v.get("margin_path_given"):
-            chk("INFO", f"{ko}: 손실 경로는 엔진의 기본 가정(목표 연차까지 직선으로 축소) — "
-                        + (f"{v['breakeven_year']}년차 흑자 전환" if v.get("breakeven_year") else f"{v['N']}년 안에 흑자 전환 없음")
-                        + f", 그때까지 누적 영업손실 {v['loss_cum'] / 1e9:,.2f}B. 상용화 일정·비용 구조가 이와 다르면 margin_path 로 연도별 이익률을 지정할 것 "
-                          "(영업손실을 extra_investment 에 넣으면 말년 ROIC 가 낮아지고 결손금 절세가 빠진다)")
+        if not v.get("margin_path_given") and v.get("margin_0") is not None and v["margin_0"] < -0.05:
+            # 적자 출발 기업의 기본 경로: 비용을 고정비로 보고 매출이 커지는 만큼 손실률이 줄어든다(목표 연차까지). 비용이 용량·매출과
+            # 함께 느는 회사(감가상각·인건비)에서는 초기 손익을 크게 좋게 그린다 — 누적 손실이 없어 보여도 알린다
+            chk("INFO", f"{ko}: 손익 경로는 엔진의 기본 가정 — 출발 영업이익률 {v['margin_0'] * 100:,.0f}% → 1년차 {v['margin_1'] * 100:,.0f}% "
+                        f"(1년차 영업손익 {v['ebit_path'][0] / 1e6:,.0f}M), "
+                        + ((f"{v['breakeven_year']}년차 흑자 전환" if v.get("breakeven_year") else f"{v['N']}년 안에 흑자 전환 없음")
+                           + f"·누적 영업손실 {v['loss_cum'] / 1e9:,.2f}B" if v.get("loss_cum") else "예측 기간 내내 흑자")
+                        + ". 적자 기업은 비용을 고정비로 보고 매출이 커진 만큼 손실률을 줄인다 — 상향식 손익(감가상각·인건비가 규모와 함께 느는지)과 "
+                          "다르면 margin_path 로 연도별 이익률을 지정할 것 (영업손실을 extra_investment 에 넣으면 말년 ROIC 가 낮아지고 결손금 절세가 빠진다)")
         if v.get("nopat_T") is not None and v["nopat_T"] <= 0:
             chk("INFO", f"{ko}: 말년({v['N']}년차) 영업이익이 0 이하 — 잔존가치를 0 으로 계산했다(영원히 적자인 사업은 중단한다고 본다)")
         if _ok(v["tv_share"]) and v["tv_share"] > 0.9:
