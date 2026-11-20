@@ -1,0 +1,114 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 22.71,
+ "fair_value": 8.39,
+ "fair_low": 2.1,
+ "fair_high": 17.2,
+ "upside_pct": -63.04,
+ "verdict": "DEEP_OVERVALUED",
+ "verdict_ko": "크게 고평가",
+ "mos_band_pct": 35.0,
+ "n_models": 3,
+ "summary": "리서치 기반 적정가 8.39 = 약세 2.10(25%) · 기본 7.14(50%) · 강세 17.20(25%)의 확률가중 (신사업 옵션 1.92 포함). 현재가 22.71 대비 -63.0% · 크게 고평가 (불확실성 매우 높음). 할인율 ±1%p 범위 7.31~10.00. 기계적 기준선 8.83.",
+ "archetype": {
+  "code": "PRE_REVENUE",
+  "label": "초기 단계·컨셉주 (매출 미미)",
+  "traits": [
+   "현금 소진(FCF<0)",
+   "주식보상 비중 높음(매출의 138%)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 33
+ },
+ "wacc": 0.1427,
+ "ke": 0.1434,
+ "wacc_stable": 0.0952,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 8.02,
+   "low": 3.44,
+   "high": 14.84,
+   "weight": 0.815
+  },
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 41.74,
+   "low": 18.21,
+   "high": 89.39,
+   "weight": 0.096
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 0.28,
+   "low": 0.0,
+   "high": 3.5,
+   "weight": 0.089
+  }
+ ],
+ "implied_cagr_5y": 1.1011,
+ "base_cagr_5y": 0.4595,
+ "mc": {
+  "p10": 0.0,
+  "p50": 0.0,
+  "p90": 115.71,
+  "prob_above_price": 0.37
+ },
+ "analyst_target": 54.27,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-20",
+  "analyst": "Claude Opus (Valuation Desk)",
+  "thesis": "IonQ 의 가치는 (1) 2025~26년 연쇄 인수(SkyWater·Oxford Ionics·IDQ·Capella 등)로 커진 매출이 인수 효과를 걷어낸 뒤에도 유기적으로 성장하는지, (2) 트랩드이온 시스템(Tempo·Superion 256) 판매·센싱·네트워킹·보안 사업이 주식보상 포함 GAAP 흑자에 도달하는지, (3) 내결함성(FTQC) 양자컴퓨터라는 아직 시장이 없는 옵션에 달려 있다. 보고 매출은 336% 늘었지만 회사가 공시한 pro forma 매출은 3분기 2.158억달러로 전년 동기 2.173억달러와 같아, 성장의 대부분이 인수에서 왔다. 반면 현금·투자 37억달러(10월 증자 반영)로 자금 실패 위험은 낮고, 대신 워런트 1.79억주와 주식 대가 인수가 주당 가치를 희석한다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 1.92,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 2.1,
+    "cagr5": 0.0977,
+    "target_margin": 0.06
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 7.14,
+    "cagr5": 0.1792,
+    "target_margin": 0.17
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 17.2,
+    "cagr5": 0.272,
+    "target_margin": 0.25
+   }
+  },
+  "n_sources": 12,
+  "rate_sensitivity": {
+   "minus_1pt": 10.0,
+   "plus_1pt": 7.31
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 8.39,
+  "n_warn": 1,
+  "second_opinion": null
+ },
+ "mechanical_fair": 8.83,
+ "ticker": "IONQ",
+ "name": "IonQ, Inc.",
+ "published": "2026-11-20"
+}
