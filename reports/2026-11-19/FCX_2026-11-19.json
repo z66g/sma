@@ -1,0 +1,1431 @@
+{
+ "schema": 3,
+ "ticker": "FCX",
+ "date": "2026-11-19",
+ "price": 49.12,
+ "is_index": false,
+ "generated_at": "2026-11-20T02:02:24Z",
+ "prev_close": 51.45,
+ "change_pct": -4.5287,
+ "headline": "[C 하락 46%] · 음감마 구간 진입 · 감마 플립 $55.94 아래 · 풋월~콜월 $45–$55",
+ "one_liner": "기관이 5일간 7.52M주를 팔며 19% 하락을 주도했고, 음감마 구간이라 변동성이 커지기 쉬워 하락 우위(46%)입니다.",
+ "short_take": "기관 -7.52M 매도 · 음감마(변동성↑) · 하락 46%",
+ "flow_board": [
+  {
+   "actor": "기관 (대량 체결)",
+   "action": "순매도",
+   "evidence": "5일 -7.52M주 · ADV -54.6% · IAR 3.83",
+   "tag": "매도",
+   "kind": "neg",
+   "strength": -1.0
+  },
+  {
+   "actor": "리테일 (소량 체결)",
+   "action": "뚜렷한 방향 없음",
+   "evidence": "5일 +114.5K주 · 프로 -1.85M주 · 서브페니 불균형 -0.23",
+   "tag": "참고",
+   "kind": "muted",
+   "strength": null
+  },
+  {
+   "actor": "다크풀 (장외)",
+   "action": "종가보다 비싸게 매수",
+   "evidence": "비중 42.2% (20일 평균의 1.13배) · 장외 VWAP 종가 대비 +2.39%",
+   "tag": "상방",
+   "kind": "pos",
+   "strength": 1.0
+  },
+  {
+   "actor": "공매도",
+   "action": "숏커버링(공매도 축소)",
+   "evidence": "비중 13.0% (z -3.4) · 대차 수수료 0.25% (전일 대비 +0.0%)",
+   "tag": "상방",
+   "kind": "pos",
+   "strength": 0.25
+  },
+  {
+   "actor": "옵션 딜러 (감마)",
+   "action": "변동성 확대 쪽 헤지",
+   "evidence": "음감마 · Net GEX -$12.8M/1% · 플립 $55.94 · 콜월 $55.00 / 풋월 $45.00",
+   "tag": "변동성↑",
+   "kind": "warn",
+   "strength": null
+  },
+  {
+   "actor": "옵션 신규 포지션",
+   "action": "기존 포지션과 비슷한 구성",
+   "evidence": "풋/콜 거래량 1.02 vs OI 0.92 · 25델타 스큐 +7.2%p",
+   "tag": "중립",
+   "kind": "warn",
+   "strength": 0.0
+  },
+  {
+   "actor": "차트 추세 (후행)",
+   "action": "박스권",
+   "evidence": "이동평균 혼조 · RSI 24 · 거래량 30일 평균의 2.12배",
+   "tag": "하방",
+   "kind": "neg",
+   "strength": -0.412
+  }
+ ],
+ "watch_points": [
+  {
+   "kind": "pos",
+   "label": "위쪽 첫 관문",
+   "text": "콜월 $55.00 (+12.0%) — 종가로 넘어서면 딜러 헤지 매수로 상승이 빨라질 수 있습니다"
+  },
+  {
+   "kind": "neg",
+   "label": "아래쪽 첫 지지",
+   "text": "1차 지지 $49.00 (-0.2%) — 종가로 깨지면 다음 지지까지 열립니다"
+  },
+  {
+   "kind": "warn",
+   "label": "움직임 시작 신호",
+   "text": "거래량이 30일 평균의 150%를 넘고 볼린저밴드가 넓어지는지 (현재 2.12배)"
+  },
+  {
+   "kind": "info",
+   "label": "공매도 성격 변화",
+   "text": "대차 수수료(0.25%)가 전일 대비 5% 이상 오르면 공격적인 공매도 전환 신호"
+  }
+ ],
+ "quality": {
+  "layers": {
+   "l1": {
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
+    "sources": [
+     "FINRA RegSHO CNMS (off-exchange)",
+     "1분봉 (polygon_1m)",
+     "FINRA OTC Transparency (ATS 주간)",
+     "Alpaca SIP 체결 단위 (기관/프로/리테일 · 다크풀 VWAP)"
+    ]
+   },
+   "l2": {
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
+    "sources": [
+     "FINRA RegSHO (short volume)",
+     "대차: ibkr_ftp",
+     "SI: polygon"
+    ]
+   },
+   "l3": {
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
+    "sources": [
+     "Yahoo option_chain (폴백, Greeks=BS 근사)"
+    ]
+   },
+   "l4": {
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
+    "sources": [
+     "Yahoo Finance (일봉)",
+     "Polygon 일봉 (세션 봉 보강)"
+    ]
+   },
+   "macro": {
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
+    "sources": [
+     "FRED (DFF·RRP·SOFR·IORB·WALCL·TGA·HY OAS·10Y)",
+     "Yahoo (DXY·WTI·VIX)"
+    ]
+   },
+   "news": {
+    "status": "OK",
+    "coverage": 100,
+    "missing": [],
+    "sources": [
+     "Yahoo news",
+     "SEC EDGAR (submissions + Form 4 XML)",
+     "Yahoo calendar"
+    ]
+   }
+  },
+  "score": 100,
+  "grade": "A"
+ },
+ "warnings": [
+  "l3/cboe_chain: https://cdn.cboe.com/api/global/delayed_quotes/options/FCX.json: HTTP 403"
+ ],
+ "patterns": [
+  "FINAL_ABSORPTION",
+  "DARK_POOL_VOLUME_SPIKE"
+ ],
+ "pattern_detail": {
+  "theta_burn": {
+   "low_vol_days": 0,
+   "flat_inst_flow": false,
+   "daily_em": 1.93
+  },
+  "final_absorption": {
+   "c1_close_block_concentration": false,
+   "c2_no_price_slip": false,
+   "basis": "trade-level",
+   "c3_dp_over_40_2d": true,
+   "c4_ctb_stable_or_down": true,
+   "c5_short_pct_falling": true,
+   "met": 3,
+   "downtrend_context": true
+  }
+ },
+ "macro_env": "RESTRICTED",
+ "macro": {
+  "score": -2,
+  "rows": [
+   {
+    "name": "Net Liquidity (Fed BS−TGA−RRP)",
+    "value": 5824.434,
+    "unit": "$B",
+    "change": 23.069,
+    "status": "NEUTRAL"
+   },
+   {
+    "name": "SOFR − IORB",
+    "value": 0.0,
+    "unit": "bp",
+    "change": null,
+    "status": "NEUTRAL"
+   },
+   {
+    "name": "Fed Funds (eff.)",
+    "value": 3.88,
+    "unit": "%",
+    "change": 0.0,
+    "status": "NEUTRAL"
+   },
+   {
+    "name": "RRP",
+    "value": 0.405,
+    "unit": "$B",
+    "change": 0.168,
+    "status": null
+   },
+   {
+    "name": "DXY (20d)",
+    "value": 103.924,
+    "unit": "",
+    "change": 2.2773,
+    "status": "RESTRICTED"
+   },
+   {
+    "name": "VIX",
+    "value": 28.44,
+    "unit": "",
+    "change": null,
+    "status": "RESTRICTED"
+   },
+   {
+    "name": "HY OAS (20d)",
+    "value": 3.47,
+    "unit": "%",
+    "change": 20.0,
+    "status": "NEUTRAL"
+   },
+   {
+    "name": "WTI",
+    "value": 82.98,
+    "unit": "$",
+    "change": -16.5779,
+    "status": "NEUTRAL"
+   },
+   {
+    "name": "UST 10Y",
+    "value": 5.07,
+    "unit": "%",
+    "change": -5.0,
+    "status": null
+   }
+  ]
+ },
+ "scenarios": {
+  "A_bullish": 21.5,
+  "B_neutral": 32.8,
+  "C_bearish": 45.7,
+  "raw_score": -0.239,
+  "dispersion": 0.389,
+  "contributions": {
+   "L1": -0.256,
+   "L2": 0.05,
+   "L3": 0.016,
+   "L4": -0.049,
+   "macro": -0.05,
+   "patterns": 0.05
+  }
+ },
+ "phase": {
+  "p1_date": "2026-10-08 ~ 2026-10-28",
+  "p1_start": "2026-10-08",
+  "p1_end": "2026-10-28",
+  "p2_date": "2026-10-29 ~ 2026-11-20",
+  "p2_start": "2026-10-29",
+  "p2_end": "2026-11-20",
+  "p3_date": "2026-11-23 ~ 2026-12-07",
+  "p3_direction": "DOWNWARD",
+  "p3_target_hi": 55.0,
+  "p3_target_hi2": 58.19,
+  "p3_target_lo": 46.62,
+  "p3_target_lo2": 45.0,
+  "p3_bb_width": 30.9814,
+  "p1_return_pct": -7.3198,
+  "regime": {
+   "segments": [
+    {
+     "state": "ACCUMULATION",
+     "state_ko": "매집",
+     "start": "2026-07-17",
+     "end": "2026-07-23",
+     "days": 5,
+     "ret_pct": 8.435789806798223,
+     "flow_adv_pct": 212.57864199163544,
+     "flow_per_day": 42.515728398327084,
+     "dp_avg": 34.133005655252475,
+     "short_avg": 38.06976026527064,
+     "ctb_chg": null,
+     "inst_sum": null,
+     "inst_days": 0,
+     "l1_major": null,
+     "l1_major_n": 0,
+     "report_days": 0,
+     "evidence": [
+      "다크풀 평균 34.1% (전체 35.7%) ✗",
+      "공매도 평균 38.1% (전체 38.5%) ✓"
+     ],
+     "confirm": 0.5,
+     "confirm_n": "1/2"
+    },
+    {
+     "state": "MARKUP",
+     "state_ko": "매수 주도",
+     "start": "2026-07-24",
+     "end": "2026-08-27",
+     "days": 25,
+     "ret_pct": 23.4960601085753,
+     "flow_adv_pct": 406.2057827894923,
+     "flow_per_day": 16.24823131157969,
+     "dp_avg": 36.60261599458153,
+     "short_avg": 39.497743126277534,
+     "ctb_chg": null,
+     "inst_sum": null,
+     "inst_days": 0,
+     "l1_major": null,
+     "l1_major_n": 0,
+     "report_days": 0,
+     "evidence": [
+      "다크풀 평균 36.6% (전체 35.7%) ✓",
+      "공매도 평균 39.5% (전체 38.5%) ✗"
+     ],
+     "confirm": 0.5,
+     "confirm_n": "1/2"
+    },
+    {
+     "state": "DISTRIBUTION",
+     "state_ko": "분산",
+     "start": "2026-08-28",
+     "end": "2026-09-02",
+     "days": 4,
+     "ret_pct": -5.725577618729904,
+     "flow_adv_pct": -199.47281209094876,
+     "flow_per_day": -49.86820302273719,
+     "dp_avg": 35.00669245475851,
+     "short_avg": 45.72970112660943,
+     "ctb_chg": null,
+     "inst_sum": null,
+     "inst_days": 0,
+     "l1_major": null,
+     "l1_major_n": 0,
+     "report_days": 0,
+     "evidence": [
+      "다크풀 평균 35.0% (전체 35.7%) ✗",
+      "공매도 평균 45.7% (전체 38.5%) ✓"
+     ],
+     "confirm": 0.5,
+     "confirm_n": "1/2"
+    },
+    {
+     "state": "MARKDOWN",
+     "state_ko": "매도 주도",
+     "start": "2026-09-03",
+     "end": "2026-09-11",
+     "days": 6,
+     "ret_pct": -3.8685250893355394,
+     "flow_adv_pct": -48.46325972949724,
+     "flow_per_day": -8.077209954916206,
+     "dp_avg": 37.96574533588457,
+     "short_avg": 47.10826318437393,
+     "ctb_chg": null,
+     "inst_sum": null,
+     "inst_days": 0,
+     "l1_major": null,
+     "l1_major_n": 0,
+     "report_days": 0,
+     "evidence": [
+      "다크풀 평균 38.0% (전체 35.7%) ✓",
+      "공매도 평균 47.1% (전체 38.5%) ✓"
+     ],
+     "confirm": 1.0,
+     "confirm_n": "2/2"
+    },
+    {
+     "state": "ACCUMULATION",
+     "state_ko": "매집",
+     "start": "2026-09-14",
+     "end": "2026-09-25",
+     "days": 10,
+     "ret_pct": 1.7447556902970396,
+     "flow_adv_pct": 251.297805519752,
+     "flow_per_day": 25.129780551975198,
+     "dp_avg": 34.19139538106556,
+     "short_avg": 47.64915671122006,
+     "ctb_chg": null,
+     "inst_sum": null,
+     "inst_days": 0,
+     "l1_major": null,
+     "l1_major_n": 0,
+     "report_days": 0,
+     "evidence": [
+      "다크풀 평균 34.2% (전체 35.7%) ✗",
+      "공매도 평균 47.6% (전체 38.5%) ✗"
+     ],
+     "confirm": 0.0,
+     "confirm_n": "0/2"
+    },
+    {
+     "state": "NEUTRAL",
+     "state_ko": "관망",
+     "start": "2026-09-28",
+     "end": "2026-10-07",
+     "days": 8,
+     "ret_pct": -0.6223163648671814,
+     "flow_adv_pct": 69.85827726212827,
+     "flow_per_day": 8.732284657766034,
+     "dp_avg": 32.728752818980055,
+     "short_avg": 50.28811498037585,
+     "ctb_chg": null,
+     "inst_sum": null,
+     "inst_days": 0,
+     "l1_major": null,
+     "l1_major_n": 0,
+     "report_days": 0,
+     "evidence": [],
+     "confirm": null,
+     "confirm_n": "근거 없음"
+    },
+    {
+     "state": "ACCUMULATION",
+     "state_ko": "매집",
+     "start": "2026-10-08",
+     "end": "2026-10-28",
+     "days": 15,
+     "ret_pct": -7.319791388190932,
+     "flow_adv_pct": 307.01390244278394,
+     "flow_per_day": 20.467593496185597,
+     "dp_avg": 32.23930921443301,
+     "short_avg": 41.92743474659461,
+     "ctb_chg": null,
+     "inst_sum": null,
+     "inst_days": 0,
+     "l1_major": null,
+     "l1_major_n": 0,
+     "report_days": 0,
+     "evidence": [
+      "다크풀 평균 32.2% (전체 35.7%) ✗",
+      "공매도 평균 41.9% (전체 38.5%) ✗"
+     ],
+     "confirm": 0.0,
+     "confirm_n": "0/2"
+    },
+    {
+     "state": "MARKDOWN",
+     "state_ko": "매도 주도",
+     "start": "2026-10-29",
+     "end": "2026-11-19",
+     "days": 16,
+     "ret_pct": -26.24624455646698,
+     "flow_adv_pct": -811.0595241507348,
+     "flow_per_day": -50.69122025942092,
+     "dp_avg": 38.636721453588756,
+     "short_avg": 29.972100366829878,
+     "ctb_chg": -0.15810000000000002,
+     "inst_sum": -9956553.0,
+     "inst_days": 9,
+     "l1_major": "DISTRIBUTION",
+     "l1_major_n": 5,
+     "report_days": 5,
+     "evidence": [
+      "리포트 L1 판정 분산 5/5일 ✓",
+      "기관 체결 -9.96M주(9일) ✓",
+      "다크풀 평균 38.6% (전체 35.7%) ✓",
+      "공매도 평균 30.0% (전체 38.5%) ✗"
+     ],
+     "confirm": 0.75,
+     "confirm_n": "3/4"
+    }
+   ],
+   "timeline": [
+    {
+     "start": "2026-03-26",
+     "end": "2026-04-16",
+     "state": "MARKUP"
+    },
+    {
+     "start": "2026-04-17",
+     "end": "2026-04-30",
+     "state": "MARKDOWN"
+    },
+    {
+     "start": "2026-05-01",
+     "end": "2026-05-05",
+     "state": "DISTRIBUTION"
+    },
+    {
+     "start": "2026-05-06",
+     "end": "2026-05-14",
+     "state": "MARKUP"
+    },
+    {
+     "start": "2026-05-15",
+     "end": "2026-05-22",
+     "state": "ACCUMULATION"
+    },
+    {
+     "start": "2026-05-26",
+     "end": "2026-06-01",
+     "state": "MARKUP"
+    },
+    {
+     "start": "2026-06-02",
+     "end": "2026-06-09",
+     "state": "NEUTRAL"
+    },
+    {
+     "start": "2026-06-10",
+     "end": "2026-06-18",
+     "state": "DISTRIBUTION"
+    },
+    {
+     "start": "2026-06-22",
+     "end": "2026-07-01",
+     "state": "MARKDOWN"
+    },
+    {
+     "start": "2026-07-02",
+     "end": "2026-07-16",
+     "state": "NEUTRAL"
+    },
+    {
+     "start": "2026-07-17",
+     "end": "2026-07-23",
+     "state": "ACCUMULATION"
+    },
+    {
+     "start": "2026-07-24",
+     "end": "2026-08-27",
+     "state": "MARKUP"
+    },
+    {
+     "start": "2026-08-28",
+     "end": "2026-09-02",
+     "state": "DISTRIBUTION"
+    },
+    {
+     "start": "2026-09-03",
+     "end": "2026-09-11",
+     "state": "MARKDOWN"
+    },
+    {
+     "start": "2026-09-14",
+     "end": "2026-09-25",
+     "state": "ACCUMULATION"
+    },
+    {
+     "start": "2026-09-28",
+     "end": "2026-10-07",
+     "state": "NEUTRAL"
+    },
+    {
+     "start": "2026-10-08",
+     "end": "2026-10-28",
+     "state": "ACCUMULATION"
+    },
+    {
+     "start": "2026-10-29",
+     "end": "2026-11-19",
+     "state": "MARKDOWN"
+    }
+   ],
+   "current": {
+    "state": "MARKDOWN",
+    "state_ko": "매도 주도",
+    "start": "2026-10-29",
+    "end": "2026-11-19",
+    "days": 16,
+    "ret_pct": -26.24624455646698,
+    "flow_adv_pct": -811.0595241507348,
+    "flow_per_day": -50.69122025942092,
+    "dp_avg": 38.636721453588756,
+    "short_avg": 29.972100366829878,
+    "ctb_chg": -0.15810000000000002,
+    "inst_sum": -9956553.0,
+    "inst_days": 9,
+    "l1_major": "DISTRIBUTION",
+    "l1_major_n": 5,
+    "report_days": 5,
+    "evidence": [
+     "리포트 L1 판정 분산 5/5일 ✓",
+     "기관 체결 -9.96M주(9일) ✓",
+     "다크풀 평균 38.6% (전체 35.7%) ✓",
+     "공매도 평균 30.0% (전체 38.5%) ✗"
+    ],
+    "confirm": 0.75,
+    "confirm_n": "3/4",
+    "median_days": 10,
+    "overdue": true,
+    "tentative": false,
+    "samples": 7,
+    "contradicted": false,
+    "emerging": null
+   },
+   "previous": {
+    "state": "ACCUMULATION",
+    "state_ko": "매집",
+    "start": "2026-10-08",
+    "end": "2026-10-28",
+    "days": 15,
+    "ret_pct": -7.319791388190932,
+    "flow_adv_pct": 307.01390244278394,
+    "flow_per_day": 20.467593496185597,
+    "dp_avg": 32.23930921443301,
+    "short_avg": 41.92743474659461,
+    "ctb_chg": null,
+    "inst_sum": null,
+    "inst_days": 0,
+    "l1_major": null,
+    "l1_major_n": 0,
+    "report_days": 0,
+    "evidence": [
+     "다크풀 평균 32.2% (전체 35.7%) ✗",
+     "공매도 평균 41.9% (전체 38.5%) ✗"
+    ],
+    "confirm": 0.0,
+    "confirm_n": "0/2"
+   },
+   "next": {
+    "state": "MARKUP",
+    "state_ko": "매수 주도",
+    "prob": 35.4,
+    "probs": {
+     "MARKUP": 35.4,
+     "DISTRIBUTION": 23.3,
+     "ACCUMULATION": 22.2,
+     "NEUTRAL": 19.2
+    },
+    "emp_n": 7,
+    "emp_top": [
+     "MARKUP",
+     4
+    ],
+    "emp_hits": 4,
+    "median_days": 10
+   },
+   "p2_end": "2026-11-20",
+   "p3_start": "2026-11-23",
+   "p3_end": "2026-12-07",
+   "base": {
+    "dp": 35.73649396876163,
+    "short": 38.47657966938988
+   },
+   "n_segments": 43
+  },
+  "catalysts": [
+   {
+    "date": "2026-11-20",
+    "event": "월간 옵션 만기 (OPEX)",
+    "significance": "MED",
+    "kind": "opex",
+    "days_until": 1,
+    "trading_days_until": 1
+   },
+   {
+    "date": "2026-11-26",
+    "event": "미국 증시 휴장",
+    "significance": "MED",
+    "kind": "holiday",
+    "days_until": 7,
+    "trading_days_until": 4
+   },
+   {
+    "date": "2026-11-27",
+    "event": "조기 폐장 (13:00 ET)",
+    "significance": "LOW",
+    "kind": "holiday",
+    "days_until": 8,
+    "trading_days_until": 5
+   }
+  ]
+ },
+ "levels": [
+  {
+   "type": "52W High",
+   "price": 80.24,
+   "dist_pct": 63.355,
+   "significance": "LOW"
+  },
+  {
+   "type": "Volume POC (60d)",
+   "price": 71.0793,
+   "dist_pct": 44.7055,
+   "significance": "MED"
+  },
+  {
+   "type": "BB Upper",
+   "price": 69.9683,
+   "dist_pct": 42.4436,
+   "significance": "LOW"
+  },
+  {
+   "type": "SMA 50",
+   "price": 66.7906,
+   "dist_pct": 35.9743,
+   "significance": "MED"
+  },
+  {
+   "type": "SMA 200",
+   "price": 65.0171,
+   "dist_pct": 32.3638,
+   "significance": "MED"
+  },
+  {
+   "type": "Max Pain",
+   "price": 60.0,
+   "dist_pct": 22.1498,
+   "significance": "HIGH"
+  },
+  {
+   "type": "Monthly Max Pain",
+   "price": 60.0,
+   "dist_pct": 22.1498,
+   "significance": "MED"
+  },
+  {
+   "type": "Key Resistance",
+   "price": 58.19,
+   "dist_pct": 18.465,
+   "significance": "MED"
+  },
+  {
+   "type": "Immediate Resistance",
+   "price": 56.75,
+   "dist_pct": 15.5334,
+   "significance": "HIGH"
+  },
+  {
+   "type": "GEX Flip",
+   "price": 55.9409,
+   "dist_pct": 13.8862,
+   "significance": "HIGH"
+  },
+  {
+   "type": "Call Wall",
+   "price": 55.0,
+   "dist_pct": 11.9707,
+   "significance": "HIGH"
+  },
+  {
+   "type": "BB Lower",
+   "price": 51.1987,
+   "dist_pct": 4.2318,
+   "significance": "LOW"
+  },
+  {
+   "type": "Expected Move ↑",
+   "price": 51.05,
+   "dist_pct": 3.9292,
+   "significance": "MED"
+  },
+  {
+   "type": "Current Price",
+   "price": 49.12,
+   "dist_pct": 0.0,
+   "significance": "—"
+  },
+  {
+   "type": "Immediate Support",
+   "price": 49.0,
+   "dist_pct": -0.2443,
+   "significance": "HIGH"
+  },
+  {
+   "type": "Expected Move ↓",
+   "price": 47.19,
+   "dist_pct": -3.9292,
+   "significance": "MED"
+  },
+  {
+   "type": "Key Support",
+   "price": 46.62,
+   "dist_pct": -5.0896,
+   "significance": "MED"
+  },
+  {
+   "type": "Put Wall",
+   "price": 45.0,
+   "dist_pct": -8.3876,
+   "significance": "HIGH"
+  },
+  {
+   "type": "52W Low",
+   "price": 38.85,
+   "dist_pct": -20.908,
+   "significance": "LOW"
+  }
+ ],
+ "l1": {
+  "scenario": "DISTRIBUTION",
+  "signal": "BEARISH",
+  "confidence": 1.0,
+  "score": -0.7304,
+  "dp_pct": 42.212,
+  "dp_avg20": 37.4116,
+  "dp_ratio": 1.1283,
+  "dp_class": "ELEVATED",
+  "delta_total": -9254435.0,
+  "obv_strength": -0.6719,
+  "divergence": "CONVERGENCE",
+  "obv_source": "alpaca_trades,polygon_1m",
+  "window_days": 5,
+  "acc20": -66900965.6744,
+  "vwap5": 53.3391,
+  "vwap_dist_pct": -7.9099,
+  "delta_inst": -7519789.0,
+  "delta_pro": -1849184.0,
+  "delta_retail": 114538.0,
+  "iar": 3.8294,
+  "dp_vwap": 50.2936,
+  "dp_vwap_dist_pct": 2.3893,
+  "off_vol_ratio": 2.155,
+  "cumulative_daily": [
+   {
+    "date": "2026-11-13",
+    "cum": -2040985.0,
+    "day": -2040985.0,
+    "inst_cum": -1478930.0,
+    "inst": -1478930.0,
+    "pro": -557945.0,
+    "ret": -4110.0
+   },
+   {
+    "date": "2026-11-16",
+    "cum": -6345775.0,
+    "day": -4304790.0,
+    "inst_cum": -4858320.0,
+    "inst": -3379390.0,
+    "pro": -947552.0,
+    "ret": 22152.0
+   },
+   {
+    "date": "2026-11-17",
+    "cum": -8494432.0,
+    "day": -2148657.0,
+    "inst_cum": -7115972.0,
+    "inst": -2257652.0,
+    "pro": 54501.0,
+    "ret": 54494.0
+   },
+   {
+    "date": "2026-11-18",
+    "cum": -11314406.0,
+    "day": -2819974.0,
+    "inst_cum": -10207132.0,
+    "inst": -3091160.0,
+    "pro": 81845.0,
+    "ret": 189341.0
+   },
+   {
+    "date": "2026-11-19",
+    "cum": -9254435.0,
+    "day": 2059971.0,
+    "inst_cum": -7519789.0,
+    "inst": 2687343.0,
+    "pro": -480033.0,
+    "ret": -147339.0
+   }
+  ],
+  "dp_series": [
+   {
+    "date": "2026-10-23",
+    "off_exchange_volume": 3203750.384279,
+    "market_volume": 11193400.0,
+    "dp_pct": 28.62178055174478,
+    "vol_ratio": 0.611406595940412,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-10-26",
+    "off_exchange_volume": 3262868.306518,
+    "market_volume": 9159600.0,
+    "dp_pct": 35.622388603410634,
+    "vol_ratio": 0.6226887132278833,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-10-27",
+    "off_exchange_volume": 4138401.651473,
+    "market_volume": 11855900.0,
+    "dp_pct": 34.90584140784757,
+    "vol_ratio": 0.7897762818156369,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-10-28",
+    "off_exchange_volume": 3443550.480285,
+    "market_volume": 9647000.0,
+    "dp_pct": 35.69555800025915,
+    "vol_ratio": 0.6571702612760958,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-10-29",
+    "off_exchange_volume": 4098927.057375,
+    "market_volume": 11200900.0,
+    "dp_pct": 36.59462237297896,
+    "vol_ratio": 0.7822429148835501,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-10-30",
+    "off_exchange_volume": 6878953.781753,
+    "market_volume": 17931100.0,
+    "dp_pct": 38.36325591711049,
+    "vol_ratio": 1.3127857076416845,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-02",
+    "off_exchange_volume": 4871325.067837,
+    "market_volume": 11323600.0,
+    "dp_pct": 43.01922593377548,
+    "vol_ratio": 0.9296480437615907,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-03",
+    "off_exchange_volume": 2779719.511146,
+    "market_volume": 8361500.0,
+    "dp_pct": 33.24426850620104,
+    "vol_ratio": 0.5304841639094805,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-04",
+    "off_exchange_volume": 4852072.613677,
+    "market_volume": 11321400.0,
+    "dp_pct": 42.85753187482996,
+    "vol_ratio": 0.9259738881472127,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-05",
+    "off_exchange_volume": 10269910.928963,
+    "market_volume": 27279300.0,
+    "dp_pct": 37.647267081497695,
+    "vol_ratio": 1.959919010076562,
+    "anomaly": "MODERATE"
+   },
+   {
+    "date": "2026-11-06",
+    "off_exchange_volume": 7552672.649135,
+    "market_volume": 16247500.0,
+    "dp_pct": 46.48513709269118,
+    "vol_ratio": 1.4413588203748602,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-09",
+    "off_exchange_volume": 4034052.281851,
+    "market_volume": 10432900.0,
+    "dp_pct": 38.66664380805912,
+    "vol_ratio": 0.7698621545533555,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-10",
+    "off_exchange_volume": 4469787.4029,
+    "market_volume": 11707700.0,
+    "dp_pct": 38.17818532162594,
+    "vol_ratio": 0.853018235751051,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-11",
+    "off_exchange_volume": 3536855.155307,
+    "market_volume": 10241300.0,
+    "dp_pct": 34.535216772353124,
+    "vol_ratio": 0.6749766091178194,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-12",
+    "off_exchange_volume": 3835020.344986,
+    "market_volume": 11591300.0,
+    "dp_pct": 33.0853342160586,
+    "vol_ratio": 0.7318787212624243,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-13",
+    "off_exchange_volume": 3227468.100007,
+    "market_volume": 9385300.0,
+    "dp_pct": 34.38854485213046,
+    "vol_ratio": 0.6159329060761507,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-16",
+    "off_exchange_volume": 7680079.40584,
+    "market_volume": 19599600.0,
+    "dp_pct": 39.18487829261822,
+    "vol_ratio": 1.4656732400621926,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-17",
+    "off_exchange_volume": 5839336.062458,
+    "market_volume": 14955300.0,
+    "dp_pct": 39.04526196370517,
+    "vol_ratio": 1.1143841299305863,
+    "anomaly": ""
+   },
+   {
+    "date": "2026-11-18",
+    "off_exchange_volume": 11584621.751092,
+    "market_volume": 28477300.0,
+    "dp_pct": 40.68019703796357,
+    "vol_ratio": 2.2108196021914535,
+    "anomaly": "HIGH"
+   },
+   {
+    "date": "2026-11-19",
+    "off_exchange_volume": 11292090.443006,
+    "market_volume": 26750918.876301,
+    "dp_pct": 42.211972213821085,
+    "vol_ratio": 2.1549926650616094,
+    "anomaly": "HIGH"
+   }
+  ],
+  "ats": {
+   "week_start": "2026-10-26",
+   "ats_shares": 13295751.0,
+   "otc_non_ats_shares": 10743243.238071,
+   "week_volume": 59794500.0,
+   "ats_share_pct": 22.235742417780898,
+   "otc_share_pct": 17.966942173730025,
+   "lit_share_pct": 59.79731540848908,
+   "ats_share_prev_pct": 20.545829432227322,
+   "ats_trades_avg_size": 74.12761271834214,
+   "otc_trades_avg_size": 102.87309673348207
+  },
+  "flow": {
+   "days": [
+    "2026-11-13",
+    "2026-11-16",
+    "2026-11-17",
+    "2026-11-18",
+    "2026-11-19"
+   ],
+   "delta_inst": -7519789.0,
+   "delta_pro": -1849184.0,
+   "delta_retail": 114538.0,
+   "delta_total": -9254435.0,
+   "iar": 3.829355173491971,
+   "iar_class": "INSTITUTIONAL_LEAD",
+   "inst_strength": -0.5459852260384175,
+   "dp_vwap": 50.29362325356621,
+   "dp_vwap_dist_pct": 2.3892981546543415,
+   "divergence": "CONVERGENCE",
+   "inst_slope_pct": -12.6556900227113,
+   "sessions": [
+    {
+     "session": "프리마켓",
+     "volume": 74731.0,
+     "dark": 35527.0,
+     "dark_pct": 47.53984290321286,
+     "avg20_dark": 268365.125,
+     "ratio": 0.1323830732476882,
+     "flag": ""
+    },
+    {
+     "session": "정규장",
+     "volume": 23561911.0,
+     "dark": 11297028.0,
+     "dark_pct": 47.94614494554368,
+     "avg20_dark": 5528614.0,
+     "ratio": 2.043374343008935,
+     "flag": "HIGH"
+    },
+    {
+     "session": "애프터마켓",
+     "volume": 14390419.0,
+     "dark": 528816.0,
+     "dark_pct": 3.674778336892067,
+     "avg20_dark": 652570.0,
+     "ratio": 0.8103590419418606,
+     "flag": ""
+    }
+   ],
+   "blocks": 208,
+   "dark_blocks": 154,
+   "last30_block_share": [
+    0.22615168132334992,
+    0.08709224304399384,
+    0.05271373297291567,
+    0.14460517442101417,
+    0.07136760796543458
+   ],
+   "last30_move_pct": [
+    -0.01839324073714619,
+    -0.17033064396555908,
+    0.635564324747013,
+    0.1557329180455624,
+    -0.04073319755601451
+   ],
+   "bjzz_imbalance": -0.2256345150473007,
+   "dark_pct_trades": 31.19192145824785,
+   "trades": 239643,
+   "cohort_vol_share": {
+    "inst": 20.409314924491458,
+    "pro": 54.40410259070394,
+    "ret": 25.18658248480461
+   }
+  }
+ },
+ "l2": {
+  "scenario": "SHORT_COVERING",
+  "signal": "BULLISH",
+  "confidence": 1.0,
+  "score": 0.25,
+  "case": "SHORT_COVERING",
+  "short_pct_latest": 13.0073,
+  "short_avg_14d": 31.0716,
+  "short_slope": -0.4703,
+  "slope_dir": "FALLING",
+  "anomaly_z": -3.3643,
+  "short_shares": 1468798.6141,
+  "est_short_total": 3479578.2737,
+  "ctb_fee": 0.25,
+  "ctb_delta_pct": 0.0,
+  "shares_available": 10000000.0,
+  "available_capped": true,
+  "avail_delta_pct": null,
+  "borrow_source": "ibkr_ftp",
+  "htb_class": "ETB",
+  "low_ctb_paradox": false,
+  "short_series": [
+   {
+    "date": "2026-10-23",
+    "short_pct": 31.045356824602834,
+    "short_vol": 994615.738569,
+    "total_vol": 3203750.384279,
+    "est_short_total": 3475030.9708050936
+   },
+   {
+    "date": "2026-10-26",
+    "short_pct": 29.489131648920626,
+    "short_vol": 962191.53044,
+    "total_vol": 3262868.306518,
+    "est_short_total": 2701086.5025145337
+   },
+   {
+    "date": "2026-10-27",
+    "short_pct": 41.326948782297485,
+    "short_vol": 1710275.13091,
+    "total_vol": 4138401.651473,
+    "est_short_total": 4899681.720680407
+   },
+   {
+    "date": "2026-10-28",
+    "short_pct": 46.51429629721689,
+    "short_vol": 1601743.273544,
+    "total_vol": 3443550.480285,
+    "est_short_total": 4487234.163792513
+   },
+   {
+    "date": "2026-10-29",
+    "short_pct": 31.544450228471298,
+    "short_vol": 1292984.005515,
+    "total_vol": 4098927.057375,
+    "est_short_total": 3533262.325640842
+   },
+   {
+    "date": "2026-10-30",
+    "short_pct": 36.96975288625824,
+    "short_vol": 2543132.214274,
+    "total_vol": 6878953.781753,
+    "est_short_total": 6629083.359787852
+   },
+   {
+    "date": "2026-11-02",
+    "short_pct": 32.46956557551838,
+    "short_vol": 1581698.087298,
+    "total_vol": 4871325.067837,
+    "est_short_total": 3676723.7275093994
+   },
+   {
+    "date": "2026-11-03",
+    "short_pct": 30.672364740264552,
+    "short_vol": 852605.707215,
+    "total_vol": 2779719.511146,
+    "est_short_total": 2564669.7777572204
+   },
+   {
+    "date": "2026-11-04",
+    "short_pct": 33.1627998668306,
+    "short_vol": 1609083.130267,
+    "total_vol": 4852072.613677,
+    "est_short_total": 3754493.22412336
+   },
+   {
+    "date": "2026-11-05",
+    "short_pct": 26.168645098710403,
+    "short_vol": 2687496.542954,
+    "total_vol": 10269910.928963,
+    "est_short_total": 7138623.202412507
+   },
+   {
+    "date": "2026-11-06",
+    "short_pct": 37.678274996029614,
+    "short_vol": 2845716.770291,
+    "total_vol": 7552672.649135,
+    "est_short_total": 6121777.729979912
+   },
+   {
+    "date": "2026-11-09",
+    "short_pct": 27.41324658575274,
+    "short_vol": 1105864.699422,
+    "total_vol": 4034052.281851,
+    "est_short_total": 2859996.603044998
+   },
+   {
+    "date": "2026-11-10",
+    "short_pct": 18.885452930609674,
+    "short_vol": 844139.596073,
+    "total_vol": 4469787.4029,
+    "est_short_total": 2211052.1727569886
+   },
+   {
+    "date": "2026-11-11",
+    "short_pct": 31.65607486628374,
+    "short_vol": 1119629.515876,
+    "total_vol": 3536855.155307,
+    "est_short_total": 3241993.5952807167
+   },
+   {
+    "date": "2026-11-12",
+    "short_pct": 27.521598508986607,
+    "short_vol": 1055458.902085,
+    "total_vol": 3835020.344986,
+    "est_short_total": 3190111.0479721646
+   },
+   {
+    "date": "2026-11-13",
+    "short_pct": 38.89674786595961,
+    "short_vol": 1255380.129314,
+    "total_vol": 3227468.100007,
+    "est_short_total": 3650576.4774639076
+   },
+   {
+    "date": "2026-11-16",
+    "short_pct": 28.73959011878976,
+    "short_vol": 2207223.342036,
+    "total_vol": 7680079.40584,
+    "est_short_total": 5632844.7049223175
+   },
+   {
+    "date": "2026-11-17",
+    "short_pct": 37.370260894120186,
+    "short_vol": 2182175.121025,
+    "total_vol": 5839336.062458,
+    "est_short_total": 5588834.627498357
+   },
+   {
+    "date": "2026-11-18",
+    "short_pct": 27.397458267429574,
+    "short_vol": 3173891.909695,
+    "total_vol": 11584621.751092,
+    "est_short_total": 7802056.383190722
+   },
+   {
+    "date": "2026-11-19",
+    "short_pct": 13.007322439263069,
+    "short_vol": 1468798.614055,
+    "total_vol": 11292090.443006,
+    "est_short_total": 3479578.2737061605
+   }
+  ],
+  "borrow_series": [
+   {
+    "date": "2026-11-13",
+    "fee": 0.4081,
+    "available": 10000000.0,
+    "capped": true,
+    "source": "ibkr_ftp"
+   },
+   {
+    "date": "2026-11-16",
+    "fee": 0.3276,
+    "available": 10000000.0,
+    "capped": true,
+    "source": "ibkr_ftp"
+   },
+   {
+    "date": "2026-11-17",
+    "fee": 0.2832,
+    "available": 10000000.0,
+    "capped": true,
+    "source": "ibkr_ftp"
+   },
+   {
+    "date": "2026-11-18",
+    "fee": 0.25,
+    "available": 10000000.0,
+    "capped": true,
+    "source": "ibkr_ftp"
+   },
+   {
+    "date": "2026-11-19",
+    "fee": 0.25,
+    "available": 10000000.0,
+    "capped": true,
+    "source": "ibkr_ftp"
+   }
+  ],
+  "short_interest": {
+   "settlement_date": "2026-10-30",
+   "shares": 29757797.0,
+   "prev_shares": 26153581.0,
+   "change_pct": 13.780965597024744,
+   "days_to_cover": 2.63,
+   "pct_float": 2.089182903710312,
+   "source": "polygon"
+  }
+ },
+ "l3": {
+  "scenario": "VOLATILITY_EXPANSION",
+  "signal": "NEUTRAL",
+  "confidence": 0.7,
+  "score": 0.0748,
+  "expiry": "2026-11-20",
+  "dte": 1,
+  "max_pain": 60.0,
+  "max_pain_dist_pct": -18.1333,
+  "monthly_expiry": "2026-11-20",
+  "monthly_max_pain": 60.0,
+  "pc_oi": 0.922,
+  "pc_vol": 1.0195,
+  "pc_vol_adj": 0.7369,
+  "skew": 0.3203,
+  "skew_25d": 7.2265,
+  "atm_iv": 0.5537,
+  "iv30": null,
+  "term_structure": "BACKWARDATION",
+  "expected_move": 1.93,
+  "expected_move_pct": 3.9292,
+  "net_gex": -12807598.6241,
+  "net_gex_weighted": -10205376.2416,
+  "flip_zone": 55.9409,
+  "flip_status": "FOUND",
+  "gamma_regime": "NEGATIVE",
+  "call_wall": 55.0,
+  "put_wall": 45.0,
+  "oi_total": 686073.0,
+  "oi_trend_pct": 127.0194,
+  "binary_event": false,
+  "source": "yahoo_fallback"
+ },
+ "l4": {
+  "scenario": "RANGE_BOUND",
+  "signal": "BEARISH",
+  "confidence": 0.8,
+  "score": -0.4124,
+  "ma_alignment": "MIXED",
+  "sma20": 60.5835,
+  "sma50": 66.7906,
+  "sma200": 65.0171,
+  "ema9": 55.8386,
+  "ema21": 60.0662,
+  "rsi14": 23.7138,
+  "atr14": 3.0225,
+  "atr_pct": 6.1534,
+  "bb_upper": 69.9683,
+  "bb_lower": 51.1987,
+  "bb_width_pct": 30.9814,
+  "bb_width_pctile": 92.0635,
+  "bb_position": -0.1107,
+  "immediate_resistance": 56.75,
+  "immediate_support": 49.0,
+  "key_resistance": 58.19,
+  "key_support": 46.62,
+  "support_source": [
+   "1y 스윙",
+   "1y 스윙"
+  ],
+  "resistance_source": [
+   "90d 스윙",
+   "90d 스윙"
+  ],
+  "below_all_swing_lows": false,
+  "vol_ratio30": 2.1184,
+  "high_52w": 80.24,
+  "low_52w": 38.85
+ },
+ "events": [
+  {
+   "date": "2026-11-20",
+   "event": "월간 옵션 만기 (OPEX)",
+   "significance": "MED",
+   "kind": "opex",
+   "days_until": 1,
+   "trading_days_until": 1
+  },
+  {
+   "date": "2026-11-26",
+   "event": "미국 증시 휴장",
+   "significance": "MED",
+   "kind": "holiday",
+   "days_until": 7,
+   "trading_days_until": 4
+  },
+  {
+   "date": "2026-11-27",
+   "event": "조기 폐장 (13:00 ET)",
+   "significance": "LOW",
+   "kind": "holiday",
+   "days_until": 8,
+   "trading_days_until": 5
+  },
+  {
+   "date": "2026-12-09",
+   "event": "FOMC 금리 결정",
+   "significance": "HIGH",
+   "kind": "macro",
+   "days_until": 20,
+   "trading_days_until": 13
+  },
+  {
+   "date": "2026-12-18",
+   "event": "쿼드러플 위칭 (분기 만기)",
+   "significance": "HIGH",
+   "kind": "opex",
+   "days_until": 29,
+   "trading_days_until": 20
+  }
+ ]
+}
