@@ -615,6 +615,9 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
     # (Exit 멀티플 방식은 N년 말 시점의 거래가치이므로 보정하지 않는다)
     mid = np.sqrt(1 + wT)
     tv_g = fcff_t1 / np.maximum(wT - gT, 0.025) * mid
+    # 말년 영업이익이 0 이하인 경로에 영구가치 공식을 쓰면 '재투자율'이 손실을 줄여 주는 무의미한 값이 나온다.
+    # 영원히 적자인 사업은 계속하지 않는다(중단 선택권) → 잔존가치 0
+    tv_g = np.where(nopat_T > 0, tv_g, 0.0)
     if terminal == "growth":
         tv = tv_g
     elif terminal == "ebitda":
@@ -1383,7 +1386,8 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
         cx, dp = s["capex_pct"], q["dep_pct"]
         cap_T = float(cx[-1] if isinstance(cx, (list, tuple)) else cx)
         dep_T = float(dp[-1] if isinstance(dp, (list, tuple)) else dp)
-    return {"extra_investment_pv": pv_x, "value": float(per_share(ev, D, pf)),
+    # 실패확률은 여기서 곱하지 않는다: 영업 외 자산·부채성 항목까지 더한 '전체 주주가치'에 한 번만 적용한다(apply_research)
+    return {"extra_investment_pv": pv_x, "value": float(per_share(ev, D)), "nopat_T": dg["nopat_T"],
             "how": f"{N}년 DCF (영구성장" + (" · EBITDA Exit 평균" if ev_x is not None and EXIT_BLEND > 0 else "") + ")",
             "rev5": rev[5], "rev10": rev[10], "cagr5": _cagr(rev[0], rev[5], 5), "wacc": q["w0"], "wacc_T": dg["wT"],
             "fail_prob": pf, "N": N, "g_T": float(q["gT"]), "tv_share": dg["tv_share"], "ev_growth": dg["ev"] - pv_x,
@@ -1437,9 +1441,12 @@ def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: O
             raw = r["value"]
             if ms is not None:      # 소수주주의 '경제적 몫': 장부 비지배지분 차감을 되돌리고, 전체 주주가치에서 그 비율을 뗀다
                 raw = (r["value"] + D["minority"] / shares) * (1 - ms)
-            core = max(raw + add, 0.0)                      # 영업 외 자산은 음(-)의 주주가치를 먼저 메운 뒤에 남는 만큼만 가치
+            # 영업 외 자산은 음(-)의 주주가치를 먼저 메운 뒤에 남는 만큼만 가치. 자금조달 실패(주주가치 0)는 그 합계 전체에 적용한다 —
+            # DCF 주주가치에만 곱하면 음수 가치가 '덜 음수'가 되고, 실패해도 영업 외 자산은 남는다는 계산이 된다
+            pf_ = r.get("fail_prob") or 0.0
+            core = max(raw + add, 0.0) * (1 - pf_)
             # 옵션가치도 주주의 몫이다: 회사가 자금조달에 실패하면 함께 사라지고, 추가 희석도 똑같이 받는다
-            val = (core + opt_total * (1 - (r.get("fail_prob") or 0.0))) / dil
+            val = (core + opt_total * (1 - pf_)) / dil
             sc[name] = {**r, "prob": float(s["prob"]), "core": core, "value": val, "story": s.get("story"),
                         "target_margin": s.get("target_margin"), "margin_year": s.get("margin_year"),
                         "rev_growth": s.get("rev_growth"), "margin_path": s.get("margin_path"), "wacc_adj": s.get("wacc_adj") or 0.0,
@@ -1490,6 +1497,8 @@ def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: O
                         + (f"{v['breakeven_year']}년차 흑자 전환" if v.get("breakeven_year") else f"{v['N']}년 안에 흑자 전환 없음")
                         + f", 그때까지 누적 영업손실 {v['loss_cum'] / 1e9:,.2f}B. 상용화 일정·비용 구조가 이와 다르면 margin_path 로 연도별 이익률을 지정할 것 "
                           "(영업손실을 extra_investment 에 넣으면 말년 ROIC 가 낮아지고 결손금 절세가 빠진다)")
+        if v.get("nopat_T") is not None and v["nopat_T"] <= 0:
+            chk("INFO", f"{ko}: 말년({v['N']}년차) 영업이익이 0 이하 — 잔존가치를 0 으로 계산했다(영원히 적자인 사업은 중단한다고 본다)")
         if _ok(v["tv_share"]) and v["tv_share"] > 0.9:
             chk("INFO", f"{ko}: 기업가치의 {v['tv_share'] * 100:.0f}%가 {v['N']}년 뒤 잔존가치")
         if _ok(v["roic_incr"]) and _ok(v["cagr5"]) and v["cagr5"] > 0.05 and v["roic_incr"] < v["wacc_T"] - 0.01:

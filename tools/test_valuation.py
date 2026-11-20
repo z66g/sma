@@ -321,6 +321,27 @@ def main() -> int:
     vl = V.evaluate(make(), None, rf, None, "x", ml)["research"]["scenarios"]["base"]
     check("같은 지출: 투자(extra_investment)로 넣으면 투하자본이 늘어 말년 ROIC 가 낮고, 손익(margin_path)으로 넣으면 세금이 줄어 가치가 더 높다",
           vx["roic_T"] < vl["roic_T"] and vl["value"] > vx["value"], str((vx["roic_T"], vl["roic_T"], vx["value"], vl["value"])))
+    # 실패확률은 영업 외 자산까지 더한 전체 주주가치에 적용 (실패 = 주주가치 0)
+    fo = copy.deepcopy(R); fo["adjustments"] = {"nonop_assets": 5e8}
+    for k2 in fo["scenarios"]:
+        fo["scenarios"][k2]["fail_prob"] = 0.2
+    vfo = V.evaluate(make(), None, rf, None, "x", fo)
+    nf = copy.deepcopy(fo)
+    for k2 in nf["scenarios"]:
+        nf["scenarios"][k2]["fail_prob"] = 0.0
+    vnf = V.evaluate(make(), None, rf, None, "x", nf)
+    check("실패확률: (DCF 주주가치 + 영업 외 자산 + 옵션) 전체에 (1 − 실패확률)",
+          all(abs(vfo["research"]["scenarios"][k2]["value"] - 0.8 * vnf["research"]["scenarios"][k2]["value"]) < 1e-9 for k2 in sc),
+          str([(vfo["research"]["scenarios"][k2]["value"], vnf["research"]["scenarios"][k2]["value"]) for k2 in sc]))
+    # 말년 영업이익이 음수인 경로: 잔존가치 0
+    ng = copy.deepcopy(R); ng["scenarios"]["bear"].update(target_margin=-0.05, margin_year=3)
+    vng = V.evaluate(make(), None, rf, None, "x", ng)["research"]
+    check("말년 영업이익 ≤ 0 → 잔존가치 0 + 자체 점검 표시",
+          not vng["scenarios"]["bear"]["tv_share"] and any("잔존가치를 0" in c["text"] for c in vng["checks"]),
+          str(vng["scenarios"]["bear"].get("tv_share")))
+    nc = copy.deepcopy(R); nc["scenarios"]["base"].update(capex_pct=[0.05, -0.03, 0.04], da_pct=0.03)
+    check("capex_pct: 순유입 연도(음수) 허용, 마지막 값은 0 이상", not VD.validate(nc, "TEST")[0]
+          and any("capex_pct" in x for x in VD.validate({**nc, "scenarios": {**nc["scenarios"], "base": {**nc["scenarios"]["base"], "capex_pct": [0.05, -0.03]}}}, "TEST")[0]))
     check("영구성장률 ≤ 명시 구간 마지막 해 성장률 (약세 2% → 영구 2%, 강세 8% → 엔진 값)",
           abs(sc["bear"]["g_T"] - 0.02) < 1e-12 and abs(sc["bull"]["g_T"] - vr["assumptions"]["gT"]) < 1e-12, str([sc[k]["g_T"] for k in sc]))
     cmp_ = V.compact(vr)

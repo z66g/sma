@@ -118,8 +118,9 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
         cx = s.get("capex_pct")
         if cx is not None:
             xs = cx if isinstance(cx, list) else [cx]
-            if not xs or len(xs) > V.MAX_HORIZON or any(not V._ok(x) or not 0 <= x <= 6.0 for x in xs):
-                err.append(f"scenarios.{k}.capex_pct: 매출 대비 CAPEX 비율(0~6.0), 숫자 또는 연도별 목록(최대 {V.MAX_HORIZON})")
+            if not xs or len(xs) > V.MAX_HORIZON or any(not V._ok(x) or not -2.0 <= x <= 6.0 for x in xs) or xs[-1] < 0:
+                err.append(f"scenarios.{k}.capex_pct: 매출 대비 CAPEX 비율(−2.0~6.0; 음수는 투자세액공제·보조금 수령 등 순유입 연도, 마지막 값은 0 이상), "
+                           f"숫자 또는 연도별 목록(최대 {V.MAX_HORIZON})")
             dl = s.get("da_pct")
             if dl is not None:
                 ds = dl if isinstance(dl, list) else [dl]
