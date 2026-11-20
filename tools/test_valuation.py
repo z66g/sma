@@ -342,6 +342,22 @@ def main() -> int:
     nc = copy.deepcopy(R); nc["scenarios"]["base"].update(capex_pct=[0.05, -0.03, 0.04], da_pct=0.03)
     check("capex_pct: 순유입 연도(음수) 허용, 마지막 값은 0 이상", not VD.validate(nc, "TEST")[0]
           and any("capex_pct" in x for x in VD.validate({**nc, "scenarios": {**nc["scenarios"], "base": {**nc["scenarios"]["base"], "capex_pct": [0.05, -0.03]}}}, "TEST")[0]))
+    # 달러 금액 빌드: 같은 금액을 비율로 준 것과 결과가 같아야 한다 (비율 × 그해 매출 = 금액)
+    pc = copy.deepcopy(R); pc["scenarios"]["base"].update(capex_pct=0.05, da_pct=0.03, nwc_pct=0.1)
+    vpc = V.evaluate(make(), None, rf, None, "x", pc)["research"]["scenarios"]["base"]
+    ud = copy.deepcopy(pc); ud["scenarios"]["base"].update(capex_usd=[0.05 * x for x in revs[:3]], da_usd=[0.03 * x for x in revs[:3]])
+    vud = V.evaluate(make(), None, rf, None, "x", ud)["research"]["scenarios"]["base"]
+    check("capex_usd·da_usd(달러) = 같은 금액의 비율 입력과 동일한 가치", not VD.validate(ud, "TEST")[0] and abs(vud["value"] / vpc["value"] - 1) < 1e-9,
+          str((vud["value"], vpc["value"])))
+    up = copy.deepcopy(ud); up["scenarios"]["base"]["capex_usd"][0] += 2e8
+    vup = V.evaluate(make(), None, rf, None, "x", up)["research"]["scenarios"]["base"]
+    w1 = vup["wacc"]
+    pv1 = 2e8 / (1 + w1) ** 0.5
+    drop = vud["ev_growth"] - vup["ev_growth"]
+    check("capex_usd: 1년차 선투자 2억 달러 → 기업가치가 그 현재가치 이상 감소하고(투하자본↑ → 말년 ROIC↓) 과도하지 않다",
+          pv1 * 0.99 <= drop <= pv1 * 1.5 and vup["roic_T"] < vud["roic_T"], str((drop, pv1, vup["roic_T"], vud["roic_T"])))
+    bad = copy.deepcopy(R); bad["scenarios"]["base"].update(capex_usd=[1e8], da_usd=[1e7])
+    check("capex_usd 는 이후 연도 비율(capex_pct·da_pct) 없이는 거부", any("capex_usd" in x for x in VD.validate(bad, "TEST")[0]))
     check("영구성장률 ≤ 명시 구간 마지막 해 성장률 (약세 2% → 영구 2%, 강세 8% → 엔진 값)",
           abs(sc["bear"]["g_T"] - 0.02) < 1e-12 and abs(sc["bull"]["g_T"] - vr["assumptions"]["gT"]) < 1e-12, str([sc[k]["g_T"] for k in sc]))
     cmp_ = V.compact(vr)

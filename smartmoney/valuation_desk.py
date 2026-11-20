@@ -126,10 +126,18 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
                 ds = dl if isinstance(dl, list) else [dl]
                 if not ds or len(ds) > V.MAX_HORIZON or any(not V._ok(x) or not 0 <= x <= 0.6 for x in ds):
                     err.append(f"scenarios.{k}.da_pct: 0~0.6, 숫자 또는 연도별 목록(최대 {V.MAX_HORIZON})")
+            cu, du = s.get("capex_usd"), s.get("da_usd")
+            if cu is not None or du is not None:
+                if (not isinstance(cu, list) or not isinstance(du, list) or not 1 <= len(cu) <= V.MAX_HORIZON or len(cu) != len(du)
+                        or any(not V._ok(x) or abs(x) > 1e12 for x in cu) or any(not V._ok(x) or not 0 <= x <= 1e12 for x in du)):
+                    err.append(f"scenarios.{k}.capex_usd / da_usd: 연도별 CAPEX·D&A 금액(달러) — 같은 길이의 목록(1~{V.MAX_HORIZON}개), "
+                               "CAPEX 는 순유입 연도에 음수 가능, D&A 는 0 이상")
             if s.get("nwc_pct") is not None and (not V._ok(s["nwc_pct"]) or not -0.5 <= s["nwc_pct"] <= 0.8):
                 err.append(f"scenarios.{k}.nwc_pct: −0.5~0.8")
             if s.get("extra_investment"):
                 err.append(f"scenarios.{k}: capex_pct(명시적 현금흐름)와 extra_investment 는 함께 쓰지 않는다 — CAPEX 계획은 capex_pct 에 모두 담을 것")
+        if cx is None and (s.get("capex_usd") is not None or s.get("da_usd") is not None):
+            err.append(f"scenarios.{k}: capex_usd / da_usd 를 쓰려면 그 이후 연도에 적용할 비율 capex_pct · da_pct 도 함께 줄 것(유지 수준)")
         if s.get("terminal_growth") is not None and (not V._ok(s["terminal_growth"]) or not 0.01 <= s["terminal_growth"] <= 0.04):
             err.append(f"scenarios.{k}.terminal_growth: 0.01~0.04 (기본은 엔진의 무위험금리 − 1%p)")
         if s.get("tax_rate") is not None and (not V._ok(s["tax_rate"]) or not 0.05 <= s["tax_rate"] <= 0.35):

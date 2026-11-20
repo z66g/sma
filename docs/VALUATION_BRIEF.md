@@ -62,7 +62,10 @@ package header), find out why from filings and news.
   (see the NTM bridge in the package).
 - Cash-flow build: default is reinvestment = revenue growth ÷ Sales-to-Capital. If the company disclosed capex plans or its
   capital intensity is changing, use the explicit build per scenario (`capex_pct`, `da_pct`, `nwc_pct`) instead; do not mix it
-  with `extra_investment`.
+  with `extra_investment`. For a build-out phase where capex is a multiple of revenue, give the yearly dollar amounts
+  (`capex_usd`, `da_usd`) for those years and maintenance-level ratios for the years after. The engine treats depreciation
+  inside operating profit as a cash cost (maintenance capex); the explicit build adds it back and charges actual capex, so an
+  asset paid for up front is not charged a second time through its depreciation.
 - Check and correct via `adjustments` when the filings support it: `shares` (diluted count), `operating_leases_in_debt`,
   `debt_like_liabilities`, `nonop_assets` (investments, restricted cash, crypto holdings), `minority_economic_share` or
   `minority_in_share_count`, `extra_dilution_pct`. Use `tax_rate` / `terminal_growth` only with evidence.
