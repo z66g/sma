@@ -1,0 +1,130 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-20",
+ "currency": "USD",
+ "price": 9.7,
+ "fair_value": 4.55,
+ "fair_low": 0.87,
+ "fair_high": 15.16,
+ "upside_pct": -53.09,
+ "verdict": "DEEP_OVERVALUED",
+ "verdict_ko": "크게 고평가",
+ "mos_band_pct": 35.0,
+ "n_models": 5,
+ "summary": "리서치 기반 적정가 4.55 = 약세 0.87(25%) · 기본 1.08(50%) · 강세 15.16(25%)의 확률가중 (신사업 옵션 0.87 포함). 현재가 9.70 대비 -53.1% · 크게 고평가 (불확실성 매우 높음). 할인율 ±1%p 범위 3.38~6.46. 기계적 기준선 8.44.",
+ "archetype": {
+  "code": "PRE_REVENUE",
+  "label": "초기 단계·컨셉주 (매출 미미)",
+  "traits": [
+   "현금 소진(FCF<0)",
+   "주식보상 비중 높음(매출의 42%)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 10
+ },
+ "wacc": 0.0882,
+ "ke": 0.0882,
+ "wacc_stable": 0.0872,
+ "erp": 0.0386,
+ "rf": 0.0507,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 8.58,
+   "low": 3.71,
+   "high": 16.99,
+   "weight": 0.328
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 9.3,
+   "low": 8.07,
+   "high": 12.66,
+   "weight": 0.279
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 6.77,
+   "low": 2.21,
+   "high": 16.74,
+   "weight": 0.229
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 9.06,
+   "low": 3.26,
+   "high": 20.02,
+   "weight": 0.131
+  },
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 0.0,
+   "low": 0.0,
+   "high": 0.0,
+   "weight": 0.033
+  }
+ ],
+ "implied_cagr_5y": 0.7833,
+ "base_cagr_5y": 0.916,
+ "mc": {
+  "p10": 0.0,
+  "p50": 7.27,
+  "p90": 62.56,
+  "prob_above_price": 0.48
+ },
+ "analyst_target": 25.72,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-20",
+  "analyst": "Claude 주간 Valuation Desk",
+  "thesis": "X-energy의 가치는 (1) 첫 Xe-100 플랜트(다우 Long Mott, 4기 320MWe)가 최종투자결정을 받아 2030년대 초에 실제로 가동되는지, (2) 그 뒤 아마존·유틸리티 물량이 연 몇 개 플랜트 속도로 이어지는지, (3) 아직 한 건도 체결되지 않은 기술료·연료공급 계약의 가격이 경영진 예시 단가(플랜트당 생애 24억~47억달러)에 얼마나 가까운지로 결정된다. 현재 매출은 DOE 비용분담 환급이 83%인 개발 단계 매출이고 연 4억달러대 영업손실이 이어지고 있어, 상용 매출 전까지의 누적 소진(약 20억~25억달러 + 연료공장 투자)이 보유 유동성 18억달러를 넘어선다. 규제 진척(건설허가·연료공장 인허가)은 계획보다 빠르지만 고객 최종투자결정은 아직 0건이라, 가치는 '상위 4분의 1' 결과에 크게 쏠린 벤처형 분포다.",
+  "confidence": "LOW",
+  "stale": false,
+  "option_value": 0.87,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 0.87,
+    "cagr5": -0.1823,
+    "target_margin": 0.02
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 1.08,
+    "cagr5": -0.0352,
+    "target_margin": 0.24
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 15.16,
+    "cagr5": 0.2805,
+    "target_margin": 0.36
+   }
+  },
+  "n_sources": 10,
+  "rate_sensitivity": {
+   "minus_1pt": 6.46,
+   "plus_1pt": 3.38
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 4.55,
+  "n_warn": 0,
+  "second_opinion": null
+ },
+ "mechanical_fair": 8.44,
+ "ticker": "XE",
+ "name": "X-Energy, Inc.",
+ "published": "2026-11-20"
+}
