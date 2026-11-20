@@ -1458,12 +1458,16 @@ def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: O
             # DCF 주주가치에만 곱하면 음수 가치가 '덜 음수'가 되고, 실패해도 영업 외 자산은 남는다는 계산이 된다
             pf_ = r.get("fail_prob") or 0.0
             core = max(raw + add, 0.0) * (1 - pf_)
+            # 전환사채·워런트의 희석은 주당 가치에 따라 달라진다(가치가 높은 시나리오일수록 더 많이 전환된다) →
+            # 시나리오가 자기 희석률(dilution_pct)을 주면 그 값을, 없으면 공통 값(adjustments.extra_dilution_pct)을 쓴다
+            dil_s = 1 + float(s["dilution_pct"]) if _ok(s.get("dilution_pct")) else dil
             # 옵션가치도 주주의 몫이다: 회사가 자금조달에 실패하면 함께 사라지고, 추가 희석도 똑같이 받는다
-            val = (core + opt_total * (1 - pf_)) / dil
+            val = (core + opt_total * (1 - pf_)) / dil_s
             sc[name] = {**r, "prob": float(s["prob"]), "core": core, "value": val, "story": s.get("story"),
                         "target_margin": s.get("target_margin"), "margin_year": s.get("margin_year"),
                         "rev_growth": s.get("rev_growth"), "margin_path": s.get("margin_path"), "wacc_adj": s.get("wacc_adj") or 0.0,
-                        "fail_prob_given": _ok(s.get("fail_prob"))}
+                        "fail_prob_given": _ok(s.get("fail_prob")),
+                        "dilution_pct": dil_s - 1}
             fv += float(s["prob"]) * val
         return sc, fv
 

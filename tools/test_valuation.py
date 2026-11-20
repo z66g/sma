@@ -371,6 +371,11 @@ def main() -> int:
           str((va1["ev_growth"] - va0["ev_growth"], want_pv)))
     check("amort_usd 는 근거(amort_usd_basis) 없이는 거부",
           any("amort_usd" in x for x in VD.validate({**R, "scenarios": {**R["scenarios"], "base": {**R["scenarios"]["base"], "amort_usd": [1e8]}}}, "TEST")[0]))
+    # 시나리오별 희석률: 가치에 따라 전환 주식수가 달라지는 증권
+    dl = copy.deepcopy(R); dl["scenarios"]["bull"].update(dilution_pct=0.10, dilution_basis="강세 가치에서는 전환사채가 전량 전환된다고 보고 순증 주식수를 계산한 테스트 입력(전환가·캡드콜 반영)")
+    vdl = V.evaluate(make(), None, rf, None, "x", dl)["research"]["scenarios"]
+    check("dilution_pct: 지정한 시나리오만 희석 (강세 ÷ 1.10, 기본은 그대로)", not VD.validate(dl, "TEST")[0]
+          and abs(vdl["bull"]["value"] * 1.10 / sc["bull"]["value"] - 1) < 1e-9 and abs(vdl["base"]["value"] / sc["base"]["value"] - 1) < 1e-12)
     check("영구성장률 ≤ 명시 구간 마지막 해 성장률 (약세 2% → 영구 2%, 강세 8% → 엔진 값)",
           abs(sc["bear"]["g_T"] - 0.02) < 1e-12 and abs(sc["bull"]["g_T"] - vr["assumptions"]["gT"]) < 1e-12, str([sc[k]["g_T"] for k in sc]))
     cmp_ = V.compact(vr)
