@@ -1748,7 +1748,8 @@ COMPUTATION (deterministic engine)
 ### 14.4 Operation
 
 ```
-- Weekly Claude scheduled task (Saturday 10:23 KST, two hours before the weekly narrative) follows
+- Weekly Claude scheduled task (Saturday 08:32 KST; all pushes done by 10:40 KST, before the 11:00 daily run
+  and the 12:23 weekly narrative) follows
   docs/VALUATION_ROUTINE.md: `valuation.py plan` decides per watchlist ticker — NEW (no research),
   EARNINGS / EVENT / STALE (update), DEPENDENCY (recompute from another ticker's values), OK (re-price) —
   within a workload budget; analysts follow docs/VALUATION_BRIEF.md; results are pushed to main.
