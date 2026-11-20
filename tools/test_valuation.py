@@ -282,6 +282,8 @@ def main() -> int:
     sm["adjustments"]["start_margin_basis"] = "TTM 영업이익에서 일회성 소송 충당금 5억 달러(매출의 5%)를 제외한 반복 가능 수준"
     check("출발 마진 조정이 결과에 반영", not VD.validate(sm, "TEST")[0]
           and V.evaluate(make(), None, rf, None, "x", sm)["fair_value"] > vr["fair_value"])
+    check("영구성장률 ≤ 명시 구간 마지막 해 성장률 (약세 2% → 영구 2%, 강세 8% → 엔진 값)",
+          abs(sc["bear"]["g_T"] - 0.02) < 1e-12 and abs(sc["bull"]["g_T"] - vr["assumptions"]["gT"]) < 1e-12, str([sc[k]["g_T"] for k in sc]))
     cmp_ = V.compact(vr)
     check("발행 요약에 할인율 출처·민감도·안정기 할인율 포함", cmp_["research"]["rate_sensitivity"] and cmp_["wacc_stable"] and cmp_["erp"] and cmp_["g_term"])
     e3, _ = VD.validate(R, "TEST", direct_value_only=True)

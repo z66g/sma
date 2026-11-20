@@ -1314,6 +1314,10 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
         q["s2c"] = float(s["s2c"])
     if _ok(s.get("terminal_growth")):
         q["gT"] = _clip(float(s["terminal_growth"]), 0.01, 0.04)
+    else:
+        # 영구 구간이 명시 구간의 마지막 해보다 빨리 성장할 수는 없다: 리서치가 말년 성장률을 엔진의 영구성장률보다 낮게 봤다면
+        # 그 성장률이 그 시나리오의 안정 성장률이다 (하한 2% — 물가 수준의 명목 성장)
+        q["gT"] = _clip(min(float(P["gT"]), float(s["rev_growth"][-1])), 0.02, float(P["gT"]))
     gp = _growth_path(s["rev_growth"], q["gT"])
     N = len(gp)
     if s.get("capex_pct") is not None:                      # 명시적 현금흐름 빌드 (CAPEX·D&A·순운전자본을 매출 대비 비율로)
