@@ -47,10 +47,15 @@ package header), find out why from filings and news.
   final-year return on capital). Do not add risk again through `wacc_adj` (needs `wacc_adj_basis`; systematic risk only).
   Failure risk: the engine applies NO default failure probability — set `fail_prob` yourself in each scenario of a cash-burning
   company (0 where the bear story already is the failure path).
-- `rev_growth` may have 3–15 years; write the years the evidence covers and let the engine fade the rest (it extends the
+- `rev_growth` may have 3–20 years; write the years the evidence covers and let the engine fade the rest (it extends the
   horizon to 10–20 years until growth converges). Do not cut growth early to fit ten years.
 - Read the "자체 점검" lines of the dry-run: fix input errors they reveal; explain in `valuation_notes` the ones that reflect the
   real business. If the ±1pt discount-rate range flips the verdict, describe the conclusion as a range.
+- Margin path: by default the engine moves the margin in a straight line from the start margin to `target_margin` (for
+  loss-makers the loss shrinks linearly as revenue scales). The dry-run prints the yearly operating profit it actually used
+  ("영업손익(백만)"). If your bottom-up view differs — pre-commercial companies whose losses persist or grow, ramps that dip
+  before they recover — give `margin_path` (yearly GAAP operating margins) with `margin_path_basis`. Never put operating
+  losses into `extra_investment` or `capex_pct`: that inflates invested capital (lower terminal ROIC) and drops the tax shield.
 - One-offs in the trailing margin → `adjustments.start_margin` (+ `start_margin_basis`). Spin-off / closed acquisition →
   `adjustments.revenue_base` (+ `revenue_base_basis`). Existing tax-loss carryforwards → present value in `nonop_assets`.
 - Scenario margins are GAAP operating margins. `rev_growth` year 1 = next twelve months from the trailing-twelve-month base

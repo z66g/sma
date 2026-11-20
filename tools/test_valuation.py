@@ -282,6 +282,45 @@ def main() -> int:
     sm["adjustments"]["start_margin_basis"] = "TTM 영업이익에서 일회성 소송 충당금 5억 달러(매출의 5%)를 제외한 반복 가능 수준"
     check("출발 마진 조정이 결과에 반영", not VD.validate(sm, "TEST")[0]
           and V.evaluate(make(), None, rf, None, "x", sm)["fair_value"] > vr["fair_value"])
+    # 연도별 이익률 경로(margin_path): 상용화 전 적자가 이어지는 회사의 손익을 직선 가정 대신 그대로 넣는다
+    mp = copy.deepcopy(R); mp["scenarios"]["base"]["margin_path"] = [-0.10, -0.05, 0.02]
+    check("리서치 검증 거부: 근거 없는 margin_path", any("margin_path" in x for x in VD.validate(mp, "TEST")[0]))
+    mp["scenarios"]["base"]["margin_path_basis"] = "신규 공장 가동 전 2년간 준비비로 영업적자, 3년차 손익분기 — 회사 가이던스의 비용 계획을 연도별로 환산"
+    mp["scenarios"]["base"]["margin_year"] = 6
+    vm = V.evaluate(make(), None, rf, None, "2026-11-18", mp)
+    bm = vm["research"]["scenarios"]["base"]
+    P0 = vm["assumptions"]
+    rev, want_e = P0["rev0"], []
+    for t, g in enumerate(_gp := V._growth_path(mp["scenarios"]["base"]["rev_growth"], bm["g_T"], 6), 1):
+        rev *= 1 + g
+        m = [-0.10, -0.05, 0.02][t - 1] if t <= 3 else 0.02 + (0.17 - 0.02) * min((t - 3) / 3, 1.0)
+        want_e.append(rev * m)
+    check("margin_path: 준 연차는 그대로, 이후 목표 마진으로 직선 수렴 (독립 계산 일치)",
+          not VD.validate(mp, "TEST")[0] and len(bm["ebit_path"]) == len(want_e)
+          and all(abs(a - b) <= 1e-6 * max(1.0, abs(b)) for a, b in zip(bm["ebit_path"], want_e)), str(bm["ebit_path"][:6]))
+    check("margin_path: 흑자 전환 연차·누적 영업손실 산출 + 손실만큼 적정가 하락",
+          bm["breakeven_year"] == 3 and abs(bm["loss_cum"] + want_e[0] + want_e[1]) < 1e-3 and bm["margin_path_given"]
+          and bm["value"] < sc["base"]["value"], str((bm["breakeven_year"], bm["loss_cum"], bm["value"], sc["base"]["value"])))
+    lp = copy.deepcopy(R); lp["scenarios"]["base"].update(margin_path=[0.10] * 14, margin_year=4,
+                                                          margin_path_basis="14년간 10% 마진이 유지된다는 가정 — 예측 구간이 경로 길이만큼 늘어나는지 확인용 테스트 입력")
+    check("margin_path 가 예측 구간보다 길면 구간을 경로 길이까지 연장",
+          V.evaluate(make(), None, rf, None, "x", lp)["research"]["scenarios"]["base"]["N"] >= 14)
+    ly = copy.deepcopy(R); ly["scenarios"]["base"]["margin_year"] = 14
+    check("목표 마진 도달 연차(14년)가 지난 뒤에 잔존가치 계산", not VD.validate(ly, "TEST")[0]
+          and V.evaluate(make(), None, rf, None, "x", ly)["research"]["scenarios"]["base"]["N"] >= 14)
+    xl = copy.deepcopy(R); xl["scenarios"]["base"]["extra_investment"] = [3e8, 3e8]
+    vx = V.evaluate(make(), None, rf, None, "x", xl)["research"]["scenarios"]["base"]
+    ml = copy.deepcopy(R)
+    revs, r_ = [], P0["rev0"]
+    for g in mp["scenarios"]["base"]["rev_growth"][:4]:
+        r_ *= 1 + g
+        revs.append(r_)
+    om = [sc["base"]["ebit_path"][i] / revs[i] for i in range(4)]       # 원래 경로의 1~4년차 마진 (4년차 = 목표 마진 도달)
+    ml["scenarios"]["base"].update(margin_path=[om[0] - 3e8 / revs[0], om[1] - 3e8 / revs[1], om[2], om[3]],
+                                   margin_path_basis="같은 3억 달러 지출을 투자가 아니라 영업손실로 넣는 경우 — 말년 ROIC 와 절세 효과 차이 확인용 테스트 입력")
+    vl = V.evaluate(make(), None, rf, None, "x", ml)["research"]["scenarios"]["base"]
+    check("같은 지출: 투자(extra_investment)로 넣으면 투하자본이 늘어 말년 ROIC 가 낮고, 손익(margin_path)으로 넣으면 세금이 줄어 가치가 더 높다",
+          vx["roic_T"] < vl["roic_T"] and vl["value"] > vx["value"], str((vx["roic_T"], vl["roic_T"], vx["value"], vl["value"])))
     check("영구성장률 ≤ 명시 구간 마지막 해 성장률 (약세 2% → 영구 2%, 강세 8% → 엔진 값)",
           abs(sc["bear"]["g_T"] - 0.02) < 1e-12 and abs(sc["bull"]["g_T"] - vr["assumptions"]["gT"]) < 1e-12, str([sc[k]["g_T"] for k in sc]))
     cmp_ = V.compact(vr)

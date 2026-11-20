@@ -100,8 +100,14 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
         if not V._ok(s.get("target_margin")) or not -0.2 <= s["target_margin"] <= 0.7:
             err.append(f"scenarios.{k}.target_margin: −0.2~0.7")
         my = s.get("margin_year")
-        if my is not None and (not isinstance(my, int) or not 1 <= my <= 10):
-            err.append(f"scenarios.{k}.margin_year: 1~10 정수")
+        if my is not None and (not isinstance(my, int) or not 1 <= my <= V.MAX_HORIZON):
+            err.append(f"scenarios.{k}.margin_year: 1~{V.MAX_HORIZON} 정수")
+        mp = s.get("margin_path")
+        if mp is not None:
+            if not isinstance(mp, list) or not 1 <= len(mp) <= V.MAX_HORIZON or any(not V._ok(x) or not -500.0 <= x <= 0.7 for x in mp):
+                err.append(f"scenarios.{k}.margin_path: 연도별 GAAP 영업이익률 1~{V.MAX_HORIZON}개 (소수, −500~0.7)")
+            if len(str(s.get("margin_path_basis") or "").strip()) < 40:
+                err.append(f"scenarios.{k}.margin_path 를 쓰려면 margin_path_basis(40자 이상): 연도별 영업손익을 어떤 비용·매출 가정에서 계산했는지")
         if s.get("wacc_adj") is not None and (not V._ok(s["wacc_adj"]) or abs(s["wacc_adj"]) > 0.03):
             err.append(f"scenarios.{k}.wacc_adj: ±0.03 이내")
         if s.get("wacc_adj") and len(str(s.get("wacc_adj_basis") or "").strip()) < 40:
@@ -483,7 +489,7 @@ def prepare(ticker: str, work_dir: str, refresh: bool = False) -> Path:
     L += ["", "## 5. 결과물 템플릿", "",
           ("이 종목은 금융·REIT 유형이라 FCFF DCF 를 쓰지 않는다. 각 시나리오의 `value_per_share` 를 직접 산출하고 `value_basis` 에 방법과 입력값을 적는다."
            if direct else
-           "각 시나리오의 `rev_growth`(연도별 매출 성장률, 3~15개) · `target_margin`(GAAP 영업이익률) · `margin_year` 를 채우면 엔진이 위 할인율로 DCF 를 계산한다 "
+           "각 시나리오의 `rev_growth`(연도별 매출 성장률, 3~20개) · `target_margin`(GAAP 영업이익률) · `margin_year` 를 채우면 엔진이 위 할인율로 DCF 를 계산한다. 손익이 직선으로 움직이지 않으면(상용화 전 적자 지속 등) `margin_path`(연도별 영업이익률) + `margin_path_basis` 를 준다 "
            "(성장률이 영구성장률에 수렴할 때까지 10~20년). 확률의 기본값은 25/50/25 — 비대칭으로 두려면 `prob_basis` 에 증거를 적는다."),
           "", "```json", json.dumps(template(T, direct), ensure_ascii=False, indent=1), "```", "",
           "## 6. 검증·발행", "", "```bash",

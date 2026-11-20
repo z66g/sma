@@ -50,6 +50,11 @@ def _show(v: dict) -> None:
                       + f"실패확률 {s['fail_prob'] * 100:.0f}%"
                       + (f" · Exit 교차검증 {s['exit_multiple']:.1f}배 → 기업가치 {s['ev_exit'] / 1e9:,.1f}B (영구성장 {s['ev_growth'] / 1e9:,.1f}B)"
                          if s.get("ev_exit") is not None else ""))
+                if s.get("ebit_path") and (s["ebit_path"][0] < 0 or s.get("margin_path_given")):
+                    print(f"         영업손익(백만) {'[margin_path 지정]' if s.get('margin_path_given') else '[엔진 기본 경로]'}: "
+                          + " ".join(f"{x / 1e6:,.0f}" for x in s["ebit_path"])
+                          + (f" · 흑자 전환 {s['breakeven_year']}년차" if s.get("breakeven_year") else " · 예측 기간 내 흑자 전환 없음")
+                          + f" · 누적 영업손실 {s['loss_cum'] / 1e9:,.2f}B")
         for o in R.get("options") or []:
             print(f"  [옵션] {o['name']}: {o['prob'] * 100:.0f}% × {o['value_per_share']:,.2f} = {o['expected']:,.2f}")
         print("  분해(주당): " + " · ".join(f"{n} 본업 {s['core']:,.2f} + 옵션 {R.get('option_value') or 0:,.2f}"
