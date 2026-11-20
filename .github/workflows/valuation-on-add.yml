@@ -5,7 +5,7 @@ name: Valuation Desk — research newly added tickers
 # 이 워크플로는 호출만 한다 — 저장소에 쓰지 않는다.
 #
 # 필요한 설정 (없으면 아무것도 하지 않고 안내만 남긴다):
-#   Secrets  VALUATION_ROUTINE_FIRE_URL  예약 작업 편집 화면의 API 트리거 Fire URL
+#   Secrets  VALUATION_ROUTINE_FIRE_URL  예약 작업 편집 화면의 API 트리거 Fire URL (Variables 에 넣어도 된다)
 #            VALUATION_ROUTINE_TOKEN     같은 화면에서 생성한 토큰 (한 번만 표시됨)
 #   Variables (선택) VALUATION_ROUTINE_BETA  anthropic-beta 헤더 값이 바뀌면 덮어쓴다
 on:
@@ -62,12 +62,18 @@ jobs:
       - name: Fire the Valuation Desk routine
         if: steps.new.outputs.tickers != '' || inputs.connectivity_test
         env:
-          FIRE_URL: ${{ secrets.VALUATION_ROUTINE_FIRE_URL }}
+          # Fire URL 은 비밀값이 아니므로(토큰 없이는 호출 불가) Secrets 와 Variables 어느 쪽에 넣어도 읽는다
+          FIRE_URL: ${{ secrets.VALUATION_ROUTINE_FIRE_URL || vars.VALUATION_ROUTINE_FIRE_URL }}
           TOKEN: ${{ secrets.VALUATION_ROUTINE_TOKEN }}
+          HAS_URL_SECRET: ${{ secrets.VALUATION_ROUTINE_FIRE_URL != '' }}
+          HAS_URL_VAR: ${{ vars.VALUATION_ROUTINE_FIRE_URL != '' }}
+          HAS_TOKEN: ${{ secrets.VALUATION_ROUTINE_TOKEN != '' }}
           BETA: ${{ vars.VALUATION_ROUTINE_BETA }}
           TICKERS: ${{ steps.new.outputs.tickers }}
         run: |
           set -euo pipefail
+          echo "설정 상태 — Fire URL: Secret=${HAS_URL_SECRET} · Variable=${HAS_URL_VAR} / 토큰: Secret=${HAS_TOKEN}" | tee -a "$GITHUB_STEP_SUMMARY"
+          FIRE_URL="$(printf '%s' "${FIRE_URL:-}" | tr -d '[:space:]')"      # 붙여 넣을 때 섞인 공백·줄바꿈 제거
           if [ -z "${FIRE_URL:-}" ] || [ -z "${TOKEN:-}" ]; then
             echo "::notice::VALUATION_ROUTINE_FIRE_URL / VALUATION_ROUTINE_TOKEN 이 설정되지 않아 호출하지 않았습니다. 이 종목들은 다음 토요일 주간 작업에서 조사됩니다."
             echo "API 트리거 미설정 — 다음 토요일 주간 작업에서 조사됩니다." >> "$GITHUB_STEP_SUMMARY"
