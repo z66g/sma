@@ -134,6 +134,15 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append(f"scenarios.{k}.extra_investment: 연도별 추가 투자 유출(달러, 0 이상) 최대 {V.MAX_HORIZON}개")
     if len(probs) == 3 and abs(sum(probs) - 1) > 0.011:
         err.append(f"시나리오 확률 합 = {sum(probs):.3f} (1.0 이어야 함)")
+    dep = R.get("depends_on")
+    if dep is not None and (not isinstance(dep, list) or any(not isinstance(x, str) or not x.strip() for x in dep)):
+        err.append("depends_on: 이 리서치의 값이 의존하는 다른 종목 티커 목록 (예: [\"MRVL\"])")
+    ra = R.get("refresh_after")
+    if ra is not None:
+        try:
+            date.fromisoformat(str(ra))
+        except ValueError:
+            err.append("refresh_after: YYYY-MM-DD (가정을 바꿀 예정 이벤트 — 실적 발표 외의 인베스터데이·규제 결정 등 — 다음 날짜)")
     if len(probs) == 3 and abs(probs[0] - probs[2]) > 0.011 and len(str(R.get("prob_basis") or "").strip()) < 40:
         warn.append(f"확률이 비대칭(약세 {probs[0]:.2f} · 강세 {probs[2]:.2f})인데 prob_basis(40자 이상)가 없음 — 기본은 25/50/25. "
                     "한쪽이 더 일어나기 쉽다고 볼 증거(가이던스 달성 이력·업종 기저율 등)를 적거나 대칭으로 둘 것")
@@ -239,6 +248,78 @@ def publish(ticker: str, v: Dict[str, Any], research: Optional[Dict[str, Any]] =
     return out
 
 
+PLAN_ORDER = {"NEW": 0, "EARNINGS": 1, "EVENT": 1, "DEPENDENCY": 2, "STALE": 3, "OK": 9}
+PLAN_KO = {"NEW": "신규 — 리서치 없음", "EARNINGS": "실적 발표 이후 — 갱신", "EVENT": "예정된 이벤트 경과 — 갱신",
+           "DEPENDENCY": "의존 종목 값 변경 — 재계산", "STALE": "100일 경과 — 갱신", "OK": "유효 — 주가·금리만 재계산"}
+PLAN_COST = {"NEW": 2, "EARNINGS": 1, "EVENT": 1, "DEPENDENCY": 1, "STALE": 1}      # 신규 조사는 갱신의 약 2배 작업량
+
+
+def plan(tickers: List[str], today: Optional[str] = None, fetch: bool = True) -> List[Dict[str, Any]]:
+    """관심종목마다 이번 주에 할 일을 정한다 (주간 예약 작업의 입력).
+
+    NEW        발행된 리서치가 없다 → 조사·발행
+    EARNINGS   리서치 이후 새 분기 재무제표가 나왔거나, 예정돼 있던 실적 발표일이 지났다 → 리서치 갱신
+    EVENT      리서치가 적어 둔 `refresh_after`(인베스터데이·규제 결정 등 가정을 바꿀 예정 이벤트 날짜)가 지났다 → 리서치 갱신
+    DEPENDENCY 이 리서치가 값에 쓰는 다른 종목(`depends_on`)이 이후에 다시 발행됐다 → 같은 식으로 재계산
+    STALE      리서치 100일 경과 → 갱신
+    OK         유효 → 주가·금리·ERP 만 반영해 재계산
+    반환은 우선순위(NEW → EARNINGS → DEPENDENCY → STALE, 같은 등급 안에서는 오래된 리서치부터) 순."""
+    day = date.fromisoformat(today) if today else datetime.now(timezone.utc).date()
+    out = []
+    for t in tickers:
+        T = t.upper()
+        R, pub = load_research(T), None
+        try:
+            pub = json.loads((PUB_DIR / f"{T}.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            pass
+        if not R or not pub or pub.get("method") != "RESEARCH":
+            out.append({"ticker": T, "action": "NEW", "why": PLAN_KO["NEW"], "research_as_of": None, "age_days": None})
+            continue
+        as_of = str(R.get("as_of") or pub.get("published") or "")
+        try:
+            age = (day - date.fromisoformat(as_of)).days
+        except ValueError:
+            age = None
+        Fa = load_anchor(T) or {}
+        anchor_end = str((Fa.get("ttm") or {}).get("end") or "")
+        why, action = "", "OK"
+        latest_end = anchor_end
+        dates = [str(Fa.get("next_earnings") or "")[:10]]
+        if fetch:
+            try:
+                Fl = FN.load(T)
+                latest_end = str((Fl.get("ttm") or {}).get("end") or "")
+                dates.append(str(Fl.get("next_earnings") or "")[:10])
+            except Exception as e:  # noqa: BLE001
+                why = f"최신 재무 조회 실패({str(e)[:60]}) — 실적 여부는 예정일로만 판단"
+        passed = sorted(d for d in dates if d and as_of and as_of <= d < day.isoformat())
+        ne = passed[-1] if passed else (max([d for d in dates if d] or [""]))
+        ra = str(R.get("refresh_after") or "")[:10]
+        if latest_end and anchor_end and latest_end > anchor_end:
+            action, why = "EARNINGS", f"새 분기 재무제표 {latest_end} (리서치 기준 {anchor_end})"
+        elif passed:
+            action, why = "EARNINGS", f"예정된 실적 발표일 {passed[-1]} 경과"
+        elif ra and as_of and as_of < ra < day.isoformat():
+            action, why = "EVENT", f"리서치가 지정한 갱신 시점 {ra} 경과"
+        else:
+            for d in R.get("depends_on") or []:
+                try:
+                    dp = json.loads((PUB_DIR / f"{str(d).upper()}.json").read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    continue
+                if str(dp.get("published") or "") > str(pub.get("published") or "") or \
+                        str((dp.get("research") or {}).get("as_of") or "") > as_of:
+                    action, why = "DEPENDENCY", f"{str(d).upper()} 가 이후에 다시 발행됨"
+                    break
+            if action == "OK" and age is not None and age > V.RESEARCH_STALE_DAYS:
+                action, why = "STALE", f"리서치 {age}일 경과"
+        out.append({"ticker": T, "action": action, "why": why or PLAN_KO[action], "research_as_of": as_of or None, "age_days": age,
+                    "next_earnings": ne or None, "depends_on": R.get("depends_on") or None})
+    out.sort(key=lambda x: (PLAN_ORDER[x["action"]], -(x["age_days"] or 0), x["ticker"]))
+    return out
+
+
 def read_published(ticker: str, price: Optional[float] = None, as_of: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """SMA 용 접점: 발행된 수치만 읽고, 주어진 가격으로 괴리율·판정을 다시 매긴다 (모델 재계산 없음).
 
@@ -262,7 +343,7 @@ def read_published(ticker: str, price: Optional[float] = None, as_of: Optional[s
         ref = (pub.get("research") or {}).get("as_of") or pub.get("published")
         base = date.fromisoformat(as_of) if as_of else datetime.now(timezone.utc).date()
         pub["age_days"] = max((base - date.fromisoformat(ref)).days, 0)
-        pub["stale"] = pub["age_days"] > V.RESEARCH_STALE_DAYS
+        pub["stale"] = pub["age_days"] > V.RESEARCH_STALE_DAYS or bool((pub.get("research") or {}).get("stale"))
     except (ValueError, TypeError):
         pass
     return pub
@@ -328,7 +409,7 @@ def template(ticker: str, direct: bool) -> Dict[str, Any]:
         "news": [{"date": "", "headline": "", "impact": "POS|NEG|NEU", "why": ""}],
         "risks": [""], "catalysts": [""],
         "scenarios": {k: {**scen, "prob": pr} for k, pr in zip(SCEN, (0.25, 0.50, 0.25))},
-        "prob_basis": "",
+        "prob_basis": "", "refresh_after": None, "depends_on": None,
         "options": [], "adjustments": {"nonop_assets": 0, "extra_dilution_pct": 0.0, "note": ""},
         "valuation_notes": "", "sources": [{"title": "", "url": "", "date": ""}],
     }

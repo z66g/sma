@@ -298,6 +298,18 @@ def main() -> int:
               pub is not None and abs(pub["upside_pct"] + 50) < 0.01 and "OVER" in pub["verdict"] and pub["fair_value"] == round(vr["fair_value"], 2))
         check("SMA 조회 요약에 시나리오·리서치 일자 포함", pub["method"] == "RESEARCH" and set(pub["research"]["scenarios"]) == {"bear", "base", "bull"}
               and len(card(pub)) > 300)
+        # 주간 계획: 신규 · 실적 이후 · 예정 이벤트 · 의존 종목 · 유효
+        (VD.RESEARCH_DIR / "TEST.fin.json").write_text(json.dumps({"ttm": {"end": "2026-09-30"}, "next_earnings": "2026-11-10"}), encoding="utf-8")
+        pl = {r["ticker"]: r["action"] for r in VD.plan(["TEST", "NEWT"], today="2026-11-05", fetch=False)}
+        check("주간 계획: 리서치 없는 종목 = NEW, 유효한 리서치 = OK", pl == {"TEST": "OK", "NEWT": "NEW"}, str(pl))
+        check("주간 계획: 예정 실적일 경과 → EARNINGS", VD.plan(["TEST"], today="2026-11-12", fetch=False)[0]["action"] == "EARNINGS")
+        (VD.RESEARCH_DIR / "TEST.fin.json").write_text(json.dumps({"ttm": {"end": "2026-09-30"}}), encoding="utf-8")
+        check("주간 계획: 100일 경과 → STALE", VD.plan(["TEST"], today="2027-03-01", fetch=False)[0]["action"] == "STALE")
+        Rv = copy.deepcopy(R); Rv["refresh_after"] = "2026-12-07"
+        VD.publish("TEST", vr, Rv)
+        (VD.RESEARCH_DIR / "TEST.fin.json").write_text(json.dumps({"ttm": {"end": "2026-09-30"}}), encoding="utf-8")
+        check("주간 계획: refresh_after 경과 → EVENT", VD.plan(["TEST"], today="2026-12-10", fetch=False)[0]["action"] == "EVENT"
+              and VD.plan(["TEST"], today="2026-12-05", fetch=False)[0]["action"] == "OK")
         VD.publish("MECH", V.evaluate(make(), None, rf, None, "x"))
         check("기계적 기준선만 있는 종목은 SMA 에 적정가로 노출되지 않음", VD.read_published("MECH", 50.0) is None)
         check("미발행 종목 → None", VD.read_published("NOPE", 10.0) is None)

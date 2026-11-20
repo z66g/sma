@@ -99,6 +99,9 @@ def main() -> int:
     s = sub.add_parser("show", help="발행 없이 출력")
     s.add_argument("tickers", nargs="+"); s.add_argument("--json", action="store_true"); s.add_argument("--refresh", action="store_true")
     sub.add_parser("status", help="워치리스트 발행 현황")
+    s = sub.add_parser("plan", help="관심종목별 이번 주 할 일 (주간 예약 작업용)")
+    s.add_argument("--budget", type=int, default=8, help="이번 실행의 작업량 상한 (신규 조사 = 2, 갱신 = 1)")
+    s.add_argument("--json", action="store_true"); s.add_argument("--no-fetch", action="store_true", help="최신 재무 조회 없이 저장된 정보로만 판단")
     args = ap.parse_args()
 
     from smartmoney import valuation as V
@@ -177,6 +180,28 @@ def main() -> int:
             print(json.dumps(out, ensure_ascii=False, indent=1))
         return rc
 
+    if args.cmd == "plan":
+        rows = VD.plan(watchlist(), fetch=not args.no_fetch)
+        todo = [r for r in rows if r["action"] != "OK"]
+        queue, later, left = [], [], max(args.budget, 0)
+        for r in todo:                                      # 우선순위 순으로 예산이 허락하는 만큼
+            cost = VD.PLAN_COST.get(r["action"], 1)
+            if cost <= left:
+                queue.append(r)
+                left -= cost
+            else:
+                later.append(r)
+        res = {"research_queue": queue, "deferred": later, "recompute": [r["ticker"] for r in rows if r["action"] == "OK"] +
+               [r["ticker"] for r in later if r["action"] != "NEW"], "budget": args.budget}
+        if args.json:
+            print(json.dumps(res, ensure_ascii=False, indent=1))
+            return 0
+        print(f"{'종목':<7}{'할 일':<12}{'리서치일':>12}{'경과':>6}  사유")
+        for r in rows:
+            mark = "→ 이번 실행" if r in queue else "→ 다음 주로" if r in later else ""
+            print(f"{r['ticker']:<7}{r['action']:<12}{r['research_as_of'] or '-':>12}{r['age_days'] if r['age_days'] is not None else '-':>6}  {r['why']} {mark}")
+        print(f"\n조사·갱신 {len(queue)}종목 (작업량 상한 {args.budget}: 신규 2 · 갱신 1) · 다음 주로 {len(later)}종목 · 재계산 {len(res['recompute'])}종목")
+        return 0
     if args.cmd == "status":
         print(f"{'종목':<7}{'방식':<12}{'적정가':>10}{'리서치일':>12}{'경과':>6}  비고")
         for t in watchlist():

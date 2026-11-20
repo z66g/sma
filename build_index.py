@@ -475,9 +475,12 @@ def render_ticker_page(ticker: str, series: list) -> str:
     if any(v is not None for v in put_wall):
         price_ds.append({"label": "Put Wall", "data": put_wall, "borderColor": "#E5534B", "borderDash": [6, 3]})
     fair_hist = [_num((s.get("valuation") or {}).get("fair_value")) if isinstance(s.get("valuation"), dict) else None for s in series]
+    val = _current_valuation(ticker, latest)
+    if val and val.get("fair_value") is not None and fair_hist:
+        fair_hist[-1] = _num(val.get("fair_value"))        # 최신 세션에는 발행된 최신 적정가
     if any(v is not None for v in fair_hist):
-        price_ds.append({"label": "적정가 (펀더멘털)", "data": fair_hist, "borderColor": "#1F2328", "borderWidth": 2, "borderDash": [1, 3]})
-    val = latest.get("valuation") if isinstance(latest.get("valuation"), dict) else None
+        price_ds.append({"label": "적정가 (펀더멘털)", "data": fair_hist, "borderColor": "#1F2328", "borderWidth": 2, "borderDash": [1, 3],
+                         "pointRadius": 2, "spanGaps": False})
     val_html = ""
     if val and val.get("fair_value") is not None:
         href = "valuation.html" if (TICKERS_DIR / ticker / "valuation.html").exists() else None
@@ -723,9 +726,25 @@ def summarize(t: str, series: list, watchlist: set) -> dict:
     }
 
 
+def _current_valuation(t: str, latest: dict):
+    """표시할 적정가: Valuation Desk 가 발행한 최신 수치를 최신 세션 종가로 다시 매긴 것.
+
+    리포트 JSON 의 `valuation` 키는 그 세션을 분석한 시점의 값이다. 적정가는 수급 분석과 따로 갱신되므로(주간 예약 작업),
+    발행 파일이 있으면 그쪽이 최신이다. 없으면 리포트에 붙어 있던 값을 쓴다. 계산은 하지 않는다 — 읽고 괴리율만 다시 매긴다."""
+    try:
+        from smartmoney import valuation_desk as VD
+        pub = VD.read_published(t, _num(latest.get("price")), latest.get("date")) if not str(t).startswith("^") else None
+    except Exception:  # noqa: BLE001
+        pub = None
+    if isinstance(pub, dict) and pub.get("fair_value") is not None:
+        return pub
+    v = latest.get("valuation")
+    return v if isinstance(v, dict) else None
+
+
 def _valuation_summary(t: str, latest: dict) -> dict:
-    """대시보드용 적정가치 요약 (v3 리포트 JSON 의 `valuation` 키 — 없으면 전부 None)."""
-    v = latest.get("valuation") if isinstance(latest.get("valuation"), dict) else {}
+    """대시보드용 적정가치 요약 (발행된 최신 수치 → 없으면 리포트의 `valuation` 키 → 없으면 전부 None)."""
+    v = _current_valuation(t, latest) or {}
     fair = _num(v.get("fair_value"))
     return {
         "fair_value": fair,

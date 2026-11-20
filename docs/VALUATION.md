@@ -27,7 +27,8 @@
 ```bash
 python3 valuation.py prepare MRVL --out WORK      # 리서치 패키지
 python3 valuation.py publish MRVL --research WORK/MRVL_research.json [--dry-run]
-python3 valuation.py refresh --watchlist          # 재계산·재발행
+python3 valuation.py refresh --watchlist          # 재계산·재발행 (주가·금리·ERP 만 최신)
+python3 valuation.py plan                         # 관심종목별 이번 주 할 일 — 주간 예약 작업(docs/VALUATION_ROUTINE.md)의 입력
 python3 valuation.py status                       # 발행 현황
 python3 tools/test_valuation.py                   # 회귀 테스트 (네트워크 불필요)
 ```

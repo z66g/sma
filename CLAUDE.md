@@ -1712,7 +1712,8 @@ COMPUTATION (deterministic engine)
 6. Banks, insurers and REITs: the research computes each scenario's per-share value directly
    (P/B-ROE, residual income, P/FFO) and states the method and inputs.
 7. Research goes stale 100 days after `as_of` (or after an earnings release): flag it and widen
-   uncertainty. A refresh re-runs the same assumptions on new financials and prices.
+   uncertainty. A refresh only re-prices (latest price, risk-free rate, implied ERP) on the financial
+   base the research was written on; new statements call for a research update, not a re-run.
 8. Uncertainty widens the verdict band (10 / 15 / 25 / 35 %). Always report the range.
 9. Mechanical baseline rules (classification first, mid-cycle margins for cyclicals, operating
    leverage for loss-makers, growth mean-reversion, converging discount rates, reliability-weighted
@@ -1740,6 +1741,20 @@ COMPUTATION (deterministic engine)
   (NOT a numbered section — Sections 0-7 and their order are unchanged; Section 7 stays last),
   dashboard "적정가 (괴리)" column, ticker page card + fair value line on the price chart.
 - Not attached to index reports or to re-runs of sessions older than 7 days.
+- The dashboard, ticker pages and the weekly narrative prompt read the latest published file directly
+  (re-marked at the session close), so a valuation update shows without waiting for the next daily run.
+```
+
+### 14.4 Operation
+
+```
+- Weekly Claude scheduled task (Saturday 10:23 KST, two hours before the weekly narrative) follows
+  docs/VALUATION_ROUTINE.md: `valuation.py plan` decides per watchlist ticker — NEW (no research),
+  EARNINGS / EVENT / STALE (update), DEPENDENCY (recompute from another ticker's values), OK (re-price) —
+  within a workload budget; analysts follow docs/VALUATION_BRIEF.md; results are pushed to main.
+- The routine never edits engine code, docs or the watchlist. A ticker that fails verification keeps
+  its previous published value.
+- .github/workflows/valuation-refresh.yml re-prices on demand (no research).
 ```
 
 ---
