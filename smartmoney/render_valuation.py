@@ -377,8 +377,8 @@ def _research_html(v: Dict[str, Any], ccy: str) -> str:
         assume = (f"매출 성장 {path}" + (f" (5년 CAGR {_pc(s.get('cagr5'), 0)}, 10년 뒤 매출 {_big(s.get('rev10'), ccy)})" if s.get("rev10") else "")
                   + f"<br>GAAP 영업이익률 {_pc(s.get('target_margin'), 0)} ({s.get('margin_year') or 5}년차 도달)"
                   + (f" · 할인율 {s['wacc_adj'] * 100:+.1f}%p" if s.get("wacc_adj") else "")
-                  + ((f"<br>영업손익: " + (f"{s['breakeven_year']}년차 흑자 전환" if s.get("breakeven_year") else "예측 기간 내 흑자 전환 없음")
-                      + f" · 그때까지 누적 영업손실 {_big(s['loss_cum'], ccy)}"
+                  + ((f"<br>영업손익: " + (f"{s['breakeven_year']}년차 흑자 전환 · 그때까지 누적 영업손실 " if s.get("breakeven_year")
+                                          else "예측 기간 내 흑자 전환 없음 · 누적 영업손실 ") + f"{_big(s['loss_cum'], ccy)}"
                       + (" <span class='muted'>(리서치가 연도별 이익률 경로를 지정)</span>" if s.get("margin_path_given")
                          else " <span class='muted'>(엔진 기본 경로: 목표 연차까지 직선 축소)</span>"))
                      if s.get("loss_cum") else "")
