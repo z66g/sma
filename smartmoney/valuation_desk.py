@@ -143,6 +143,10 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
                                or len(str(s.get("amort_usd_basis") or "").strip()) < 40):
             err.append(f"scenarios.{k}.amort_usd: 연도별 비현금 상각 금액(달러, 0 이상, 최대 {V.MAX_HORIZON}개) + amort_usd_basis(40자 이상: "
                        "어떤 인수의 무형자산·매수가격 배분 상각이고 공시된 상각 일정이 무엇인지). 교체가 필요한 설비의 감가상각은 넣지 않는다")
+        if s.get("dilution_pct") is not None and (not V._ok(s["dilution_pct"]) or not -0.3 <= s["dilution_pct"] <= 1.0
+                                                 or len(str(s.get("dilution_basis") or "").strip()) < 40):
+            err.append(f"scenarios.{k}.dilution_pct: 이 시나리오의 주당 가치에서 생기는 순희석률(−0.3~1.0; 자사주 선도매입 등 주식수 감소는 음수) + "
+                       "dilution_basis(40자 이상: 어떤 증권이 어떤 전환가·상한에서 몇 주로 바뀌는지)")
         if s.get("terminal_growth") is not None and (not V._ok(s["terminal_growth"]) or not 0.01 <= s["terminal_growth"] <= 0.04):
             err.append(f"scenarios.{k}.terminal_growth: 0.01~0.04 (기본은 엔진의 무위험금리 − 1%p)")
         if s.get("tax_rate") is not None and (not V._ok(s["tax_rate"]) or not 0.05 <= s["tax_rate"] <= 0.35):
