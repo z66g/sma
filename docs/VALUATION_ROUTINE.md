@@ -20,10 +20,11 @@
 ```bash
 git fetch origin main
 git checkout main
-git reset --hard origin/main            # 로컬 변경이 없을 때만
-pip install -q -r requirements.txt
+git merge --ff-only origin/main         # 빨리감기가 안 되면(로컬 변경·분기) 고치지 말고 중단하고 보고
+python3 -m pip install -q -r requirements.txt   # `pip` 단독은 다른 파이썬에 설치될 수 있다 — 반드시 python3 -m pip
 python3 tools/test_valuation.py         # 마지막 줄이 "0 failure(s)" 가 아니면 중단하고 보고
 ```
+명령은 `&&` 로 묶지 말고 하나씩 실행한다(묶으면 권한 판정에서 통째로 거부될 수 있다).
 작업 폴더 `DESK` 는 세션 스크래치 디렉터리 아래에 만든다(저장소 밖). 시작 시각을 기록한다.
 이 문서의 명령은 `.claude/settings.json` 의 허용 목록과 글자 그대로 맞춰 두었다 — 한 줄에 한 명령씩, 적힌 형태로 실행한다.
 
