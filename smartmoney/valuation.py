@@ -1261,7 +1261,7 @@ def evaluate(F: Dict[str, Any], price: Optional[float] = None, rf: Optional[floa
         out["sensitivity"] = sensitivity(D, P, primary)
     if not 1 / 3 <= fair / D["price"] <= 3:
         out["model_gap"] = True                             # 모델과 시장의 괴리가 3배 이상: 적정가보다 '시장이 내포한 가정'이 핵심 정보
-        out["warnings"].append("적정가와 현재가의 괴리가 3배 이상 — 현 재무·컨센서스 기반 모델로 설명되지 않는 가격. "
+        out["warnings"].append("[기계적 기준선] 적정가와 현재가의 괴리가 3배 이상 — 현 재무·컨센서스 기반 모델로 설명되지 않는 가격. "
                                "적정가 수치보다 역DCF(시장 내재 가정)를 우선 참고")
     inc = [m for m in models if m.get("included")]
     top = ", ".join(f"{m['name']}({m['weight'] * 100:.0f}%)" for m in inc[:3])

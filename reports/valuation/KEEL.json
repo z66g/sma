@@ -1,0 +1,106 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 1.71,
+ "fair_value": 1.27,
+ "fair_low": 0.0,
+ "fair_high": 5.09,
+ "upside_pct": -25.64,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 35.0,
+ "n_models": 2,
+ "summary": "리서치 기반 적정가 1.27 = 약세 0.00(25%) · 기본 0.00(50%) · 강세 5.09(25%)의 확률가중. 현재가 1.71 대비 -25.6% · 적정 범위 (불확실성 매우 높음). 할인율 ±1%p 범위 0.76~2.43 — 판정이 할인율에 민감. 기계적 기준선 0.46.",
+ "archetype": {
+  "code": "TURNAROUND",
+  "label": "턴어라운드·저성장 적자",
+  "traits": [
+   "현금 소진(FCF<0)",
+   "주식보상 비중 높음(매출의 18%)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 9
+ },
+ "wacc": 0.1223,
+ "ke": 0.148,
+ "wacc_stable": 0.0796,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 0.57,
+   "low": 0.3,
+   "high": 1.24,
+   "weight": 0.769
+  },
+  {
+   "id": "ps",
+   "name": "P/S 멀티플",
+   "mid": 0.09,
+   "low": 0.07,
+   "high": 0.29,
+   "weight": 0.231
+  }
+ ],
+ "implied_cagr_5y": null,
+ "base_cagr_5y": -0.1745,
+ "mc": {
+  "p10": 0.0,
+  "p50": 0.0,
+  "p90": 0.0,
+  "prob_above_price": 0.0
+ },
+ "analyst_target": 5.23,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-20",
+  "analyst": "Claude (Valuation Desk)",
+  "thesis": "Keel Infrastructure(옛 Bitfarms, 2026-04-01 미국 재편·사명 변경)는 비트코인 채굴을 접고 AI/HPC 데이터센터 임대 개발사로 바뀌는 중이며, 가치는 과거 매출이 아니라 '전력 계약이 확보된 478MW(Moses Lake 18 · Sharon 110 · Panther Creek 350)를 언제, 어떤 임대료와 건설비로 임대하느냐'가 결정한다. 2026-11 현재 체결된 임대 계약은 0건이고 회사는 '연내 3건' 목표를 철회했다. 현금 7.8억 달러로 2028년까지는 버티지만 전환사채 10.46억 달러가 순현금을 넘고, 업계 평균 임대 조건(수익률 약 15%)에서는 확보 용량만 지어서는 기업가치가 순차입을 넘지 못해 주주 몫이 거의 남지 않는다 — 가치는 일정 준수와 확장 용량(강세)에 달려 있다.",
+  "confidence": "LOW",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 0.0,
+    "cagr5": 0.0563,
+    "target_margin": 0.22
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 0.0,
+    "cagr5": 0.3566,
+    "target_margin": 0.46
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 5.09,
+    "cagr5": 0.5408,
+    "target_margin": 0.57
+   }
+  },
+  "n_sources": 16,
+  "rate_sensitivity": {
+   "minus_1pt": 2.43,
+   "plus_1pt": 0.76
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 1.27,
+  "n_warn": 1,
+  "second_opinion": null
+ },
+ "mechanical_fair": 0.46,
+ "ticker": "KEEL",
+ "name": "Keel Infrastructure Corp.",
+ "published": "2026-11-20"
+}
