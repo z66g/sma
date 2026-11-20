@@ -13,6 +13,12 @@ on:
     branches: [main]
     paths: ["tickers.txt"]
   workflow_dispatch:
+    inputs:
+      connectivity_test:
+        description: "연결 시험: 리서치 없는 종목이 없어도 예약 작업을 호출한다 (조사·발행 없이 저장소 접근과 계획만 확인)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -50,11 +56,11 @@ jobs:
 
       # 종목을 연달아 추가하는 동안 기다렸다가 한 번만 호출한다 (그 사이 새 푸시가 오면 이 실행은 취소된다)
       - name: Debounce
-        if: steps.new.outputs.tickers != ''
+        if: steps.new.outputs.tickers != '' && github.event_name == 'push'
         run: sleep 90
 
       - name: Fire the Valuation Desk routine
-        if: steps.new.outputs.tickers != ''
+        if: steps.new.outputs.tickers != '' || inputs.connectivity_test
         env:
           FIRE_URL: ${{ secrets.VALUATION_ROUTINE_FIRE_URL }}
           TOKEN: ${{ secrets.VALUATION_ROUTINE_TOKEN }}
@@ -71,7 +77,12 @@ jobs:
             https://api.anthropic.com/v1/claude_code/routines/*/fire) ;;
             *) echo "::error::VALUATION_ROUTINE_FIRE_URL 형식이 예상과 다릅니다"; exit 1 ;;
           esac
-          BODY="$(jq -n --arg t "관심종목 변경 감지 — 발행된 리서치가 없는 종목(참고용, 실제 대상은 저장소의 tickers.txt 와 valuation.py plan 으로 확인): ${TICKERS}" '{text: $t}')"
+          if [ -n "${TICKERS}" ]; then
+            NOTE="관심종목 변경 감지 — 발행된 리서치가 없는 종목(참고용, 실제 대상은 저장소의 tickers.txt 와 valuation.py plan 으로 확인): ${TICKERS}"
+          else
+            NOTE="연결 시험 — 리서치가 없는 종목은 없음 (참고용)"
+          fi
+          BODY="$(jq -n --arg t "${NOTE}" '{text: $t}')"
           CODE="$(curl -sS -o /tmp/resp.json -w '%{http_code}' -X POST "${FIRE_URL}" \
             -H "Authorization: Bearer ${TOKEN}" \
             -H "anthropic-beta: ${BETA:-experimental-cc-routine-2026-04-01}" \
@@ -79,7 +90,8 @@ jobs:
             -H "Content-Type: application/json" \
             --data "${BODY}")"
           if [ "${CODE}" -ge 200 ] && [ "${CODE}" -lt 300 ]; then
-            echo "호출 성공 (HTTP ${CODE}) — 대상: ${TICKERS}" >> "$GITHUB_STEP_SUMMARY"
+            echo "호출 성공 (HTTP ${CODE}) — 대상: ${TICKERS:-없음(연결 시험)}" >> "$GITHUB_STEP_SUMMARY"
+            echo "routine fired: HTTP ${CODE}"
           else
             echo "::error::예약 작업 호출 실패 (HTTP ${CODE})"
             jq -r '.error.message // .message // empty' /tmp/resp.json 2>/dev/null | head -c 300 || true
