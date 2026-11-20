@@ -128,6 +128,7 @@ Cloudflare Worker)가 `workflow_dispatch` API 를 호출한다.
 | **주간 AI 내러티브** | 토 KST 12:23 (Claude Code 예약 작업) | 클라우드 세션의 **Claude Opus 5.5**가 종목별 내러티브 작성 → `reports/tickers/{T}/narratives/{SESSION_DATE}-weekly.html` → main 푸시 (**Anthropic API 과금 없음**, 구독 사용량으로 처리) |
 | **weekly-narrative.yml** | narrative 푸시 시 자동 | 텔레그램 알림만 (API 호출 없음) |
 | **주간 적정가 (Valuation Desk)** | 토 KST 08:32 (Claude Code 예약 작업, 10:40 까지 푸시 완료) | `docs/VALUATION_ROUTINE.md` 절차: 관심종목별로 신규 조사·실적 이후 갱신·재계산을 정해(`valuation.py plan`) 발행 → main 푸시. 같은 날 일일 분석·주간 내러티브가 이 수치를 읽는다 |
+| **valuation-on-add.yml** | `tickers.txt` 푸시 시 자동 | 리서치가 없는 관심종목이 있으면 Claude 예약 작업의 API 트리거를 호출 → 그 종목만 바로 조사·발행 (`docs/VALUATION_ROUTINE.md` §6). Secrets `VALUATION_ROUTINE_FIRE_URL`·`VALUATION_ROUTINE_TOKEN` 이 없으면 아무것도 하지 않는다 |
 | **valuation-refresh.yml** | 수동 | 저장된 리서치에 최신 주가·금리만 반영해 재계산 (조사 없음) |
 
 두 워크플로는 같은 concurrency 그룹(`sma-repo-write`)을 써서 저장소 쓰기가 겹치지 않는다.

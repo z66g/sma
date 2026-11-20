@@ -1,0 +1,87 @@
+name: Valuation Desk — research newly added tickers
+
+# 관심종목(tickers.txt)이 바뀌면, 발행된 리서치가 없는 종목이 있는지 확인하고 Claude 예약 작업(API 트리거)을 호출한다.
+# 조사는 Claude 세션이 docs/VALUATION_ROUTINE.md 의 '수시 실행' 절차로 수행한다 (Anthropic API 과금 없음).
+# 이 워크플로는 호출만 한다 — 저장소에 쓰지 않는다.
+#
+# 필요한 설정 (없으면 아무것도 하지 않고 안내만 남긴다):
+#   Secrets  VALUATION_ROUTINE_FIRE_URL  예약 작업 편집 화면의 API 트리거 Fire URL
+#            VALUATION_ROUTINE_TOKEN     같은 화면에서 생성한 토큰 (한 번만 표시됨)
+#   Variables (선택) VALUATION_ROUTINE_BETA  anthropic-beta 헤더 값이 바뀌면 덮어쓴다
+on:
+  push:
+    branches: [main]
+    paths: ["tickers.txt"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 연속으로 여러 종목을 추가하면 마지막 한 번만 호출한다 (대기 중이던 실행은 취소)
+concurrency:
+  group: valuation-on-add
+  cancel-in-progress: true
+
+jobs:
+  fire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Watchlist tickers without published research
+        id: new
+        run: |
+          set -euo pipefail
+          NEW=""
+          for T in $(grep -v '^#' tickers.txt | tr -d '\r\t ' | grep -E '^[A-Z.-]{1,10}$' || true); do
+            F="reports/valuation/${T}.json"
+            if [ ! -f "${F}" ] || ! jq -e '.method == "RESEARCH"' "${F}" >/dev/null 2>&1; then
+              NEW="${NEW} ${T}"
+            fi
+          done
+          NEW="$(echo ${NEW} | xargs || true)"
+          echo "tickers=${NEW}" >> "$GITHUB_OUTPUT"
+          if [ -z "${NEW}" ]; then
+            echo "모든 관심종목에 발행된 리서치가 있습니다 — 호출하지 않습니다." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "리서치가 없는 종목: ${NEW}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # 종목을 연달아 추가하는 동안 기다렸다가 한 번만 호출한다 (그 사이 새 푸시가 오면 이 실행은 취소된다)
+      - name: Debounce
+        if: steps.new.outputs.tickers != ''
+        run: sleep 90
+
+      - name: Fire the Valuation Desk routine
+        if: steps.new.outputs.tickers != ''
+        env:
+          FIRE_URL: ${{ secrets.VALUATION_ROUTINE_FIRE_URL }}
+          TOKEN: ${{ secrets.VALUATION_ROUTINE_TOKEN }}
+          BETA: ${{ vars.VALUATION_ROUTINE_BETA }}
+          TICKERS: ${{ steps.new.outputs.tickers }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FIRE_URL:-}" ] || [ -z "${TOKEN:-}" ]; then
+            echo "::notice::VALUATION_ROUTINE_FIRE_URL / VALUATION_ROUTINE_TOKEN 이 설정되지 않아 호출하지 않았습니다. 이 종목들은 다음 토요일 주간 작업에서 조사됩니다."
+            echo "API 트리거 미설정 — 다음 토요일 주간 작업에서 조사됩니다." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          case "${FIRE_URL}" in
+            https://api.anthropic.com/v1/claude_code/routines/*/fire) ;;
+            *) echo "::error::VALUATION_ROUTINE_FIRE_URL 형식이 예상과 다릅니다"; exit 1 ;;
+          esac
+          BODY="$(jq -n --arg t "관심종목 변경 감지 — 발행된 리서치가 없는 종목(참고용, 실제 대상은 저장소의 tickers.txt 와 valuation.py plan 으로 확인): ${TICKERS}" '{text: $t}')"
+          CODE="$(curl -sS -o /tmp/resp.json -w '%{http_code}' -X POST "${FIRE_URL}" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "anthropic-beta: ${BETA:-experimental-cc-routine-2026-04-01}" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "Content-Type: application/json" \
+            --data "${BODY}")"
+          if [ "${CODE}" -ge 200 ] && [ "${CODE}" -lt 300 ]; then
+            echo "호출 성공 (HTTP ${CODE}) — 대상: ${TICKERS}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::예약 작업 호출 실패 (HTTP ${CODE})"
+            jq -r '.error.message // .message // empty' /tmp/resp.json 2>/dev/null | head -c 300 || true
+            exit 1
+          fi
