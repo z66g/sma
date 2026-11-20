@@ -1330,7 +1330,9 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
     # 지금 적자인 회사는 시나리오가 높은 수익성을 가정해도 영구 구간에서는 초과수익 0 으로 계산된다(적자·전환기 기업에 불리한 쏠림).
     # 시나리오 말년 ROIC = 말년 세후영업이익 ÷ (현재 유형 투하자본 + 예측 기간 누적 순투자). 초과수익의 절반만 영구히 인정(상한 8%p)
     roic_N = None
-    ic_N = max(D.get("ic_tan") or 0.0, 0.0) + sum(r["reinv"] for r in dg["rows"]) + sum(xi)
+    # 신사업(옵션)용 선투자는 본업의 투하자본이 아니다 — 그 수익은 옵션가치에 있으므로 본업 ROIC 의 분모에서 뺀다
+    xi_core = [] if s.get("extra_investment_noncore") else xi
+    ic_N = max(D.get("ic_tan") or 0.0, 0.0) + sum(r["reinv"] for r in dg["rows"]) + sum(xi_core)
     if ic_N > 0:
         roic_N = dg["nopat_T"] / ic_N
         q["roic_prem"] = _clip(0.5 * (roic_N - dg["wT"]), 0.0, 0.08)

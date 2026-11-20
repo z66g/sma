@@ -95,6 +95,8 @@ python3 valuation.py publish {T} --research WORK_DIR/{T}_research.json          
 - 옵션의 `value_per_share` 는 `adjustments.shares`(지정했다면)와 **같은 주식수**로 나눈다. `basis` 에는 [사실]과 [가정]을 구분해 적고,
   '명백히 성공한 경우'의 가치(천장)도 함께 적는다.
 - 신사업 투자는 성공 여부와 무관하게 집행된다 → 투자는 모든 시나리오의 `extra_investment` 에, 옵션에는 성공 시 **추가로** 필요한 자본만 뺀다.
+  `extra_investment` 가 **전부 신사업용**이면 그 시나리오에 `extra_investment_noncore: true` 를 준다 — 엔진이 본업의 말년 ROIC(잔존가치 재투자율의 근거)를 계산할 때
+  이 투자를 본업 투하자본에서 뺀다(수익은 옵션 쪽에 있으므로). 본업 설비의 선투자(위성망·공장·광산)면 주지 않는다.
 - 옵션가치가 적정가의 25% 를 넘으면 불확실성 등급이 자동으로 내려간다 — 숨기지 말고 그대로 둔다.
 
 ## 3. 결과물 필드

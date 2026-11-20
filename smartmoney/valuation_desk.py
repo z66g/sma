@@ -127,6 +127,8 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
             err.append(f"scenarios.{k}.terminal_growth: 0.01~0.04 (기본은 엔진의 무위험금리 − 1%p)")
         if s.get("tax_rate") is not None and (not V._ok(s["tax_rate"]) or not 0.05 <= s["tax_rate"] <= 0.35):
             err.append(f"scenarios.{k}.tax_rate: 0.05~0.35")
+        if s.get("extra_investment_noncore") not in (None, True, False):
+            err.append(f"scenarios.{k}.extra_investment_noncore: true/false")
         xi = s.get("extra_investment")
         if xi is not None and (not isinstance(xi, list) or len(xi) > V.MAX_HORIZON or any(not V._ok(x) or x < 0 for x in xi)):
             err.append(f"scenarios.{k}.extra_investment: 연도별 추가 투자 유출(달러, 0 이상) 최대 {V.MAX_HORIZON}개")
