@@ -1,0 +1,164 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 535.15,
+ "fair_value": 678.7,
+ "fair_low": 130.53,
+ "fair_high": 1342.25,
+ "upside_pct": 26.82,
+ "verdict": "UNDERVALUED",
+ "verdict_ko": "저평가",
+ "mos_band_pct": 25.0,
+ "n_models": 10,
+ "summary": "리서치 기반 적정가 678.70 = 약세 130.53(25%) · 기본 621.01(50%) · 강세 1,342.25(25%)의 확률가중. 현재가 535.15 대비 +26.8% · 저평가 (불확실성 높음). 기계적 기준선 588.31.",
+ "archetype": {
+  "code": "HIGH_GROWTH",
+  "label": "고성장 흑자",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "HIGH",
+  "label": "높음",
+  "score": 52
+ },
+ "wacc": 0.1017,
+ "ke": 0.1032,
+ "wacc_stable": 0.0934,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 463.64,
+   "low": 272.27,
+   "high": 788.76,
+   "weight": 0.188
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 625.2,
+   "low": 464.22,
+   "high": 921.48,
+   "weight": 0.169
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 707.91,
+   "low": 420.07,
+   "high": 1118.27,
+   "weight": 0.141
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 385.39,
+   "low": 286.46,
+   "high": 571.39,
+   "weight": 0.132
+  },
+  {
+   "id": "lynch",
+   "name": "피터 린치 공정가(PEG)",
+   "mid": 1005.85,
+   "low": 754.39,
+   "high": 1005.85,
+   "weight": 0.113
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 364.89,
+   "low": 229.59,
+   "high": 505.04,
+   "weight": 0.075
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 803.95,
+   "low": 503.42,
+   "high": 1207.77,
+   "weight": 0.059
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 400.98,
+   "low": 244.18,
+   "high": 665.54,
+   "weight": 0.056
+  },
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 636.2,
+   "low": 404.9,
+   "high": 941.06,
+   "weight": 0.056
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 182.18,
+   "low": 139.59,
+   "high": 210.57,
+   "weight": 0.009
+  }
+ ],
+ "implied_cagr_5y": 0.3887,
+ "base_cagr_5y": 0.4376,
+ "mc": {
+  "p10": 173.49,
+  "p50": 518.61,
+  "p90": 1110.58,
+  "prob_above_price": 0.48
+ },
+ "analyst_target": 1064.75,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude (Valuation Desk)",
+  "thesis": "Lumentum 주식은 이제 두 가지의 가중평균이다: (1) 2026-11-01 체결된 전량 주식 합병이 종결되면(2028년 상반기 예정) 받게 될 Marvell 주식 4.500주 — 합산 회사 지분 약 33% — 와 (2) 무산될 경우의 단독 사업. 단독 사업은 AI 데이터센터용 InP 레이저·광모듈·광회로스위치(OCS) 공급 부족 덕에 매출이 1년 새 2.4배($534M→$1,263M/분기), GAAP 영업이익률이 1%→28.5%(일회성 주식보상 제외 약 36%)로 뛰었고 12월 분기 가이던스($1.6B, Non-GAAP 영업이익률 45~46%)도 강하다. 그러나 이 이익은 부족기 가격과 소수 하이퍼스케일러(상위 2개 고객 48%)의 설비투자에 걸려 있고, 같은 사이클이 Marvell 주식 가치도 좌우한다. 그래서 세 시나리오를 'AI 광·반도체 투자 사이클'의 세 세계로 두고, 각 세계에서 합병 종결(확률 70% 가정)과 무산을 가중했다. 결과는 종결 확률보다 두 회사에 공통인 사이클 가정과 할인율에 훨씬 민감하다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 130.53,
+    "cagr5": null,
+    "target_margin": 0.17
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 621.01,
+    "cagr5": null,
+    "target_margin": 0.34
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 1342.25,
+    "cagr5": null,
+    "target_margin": 0.41
+   }
+  },
+  "n_sources": 23,
+  "rate_sensitivity": null,
+  "verdict_robust": true,
+  "fair_symmetric": 678.7,
+  "n_warn": 0,
+  "second_opinion": null
+ },
+ "mechanical_fair": 588.31,
+ "ticker": "LITE",
+ "name": "Lumentum Holdings Inc.",
+ "published": "2026-11-20"
+}
