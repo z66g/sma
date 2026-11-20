@@ -80,12 +80,16 @@ def main() -> int:
         hpath = out_dir / f"{tag}_3Layer_Forensic_{an.date_str}.html"
         hpath.write_text(render(a, md), encoding="utf-8")
     jpath.write_text(render_json(a), encoding="utf-8")
+
     q = a["quality"]
     log(f"done {tag} in {a['meta']['elapsed_s']}s · quality {q['grade']}({q['score']}) · warnings {len(a['meta']['warnings'])}")
     print(f"HTML: {hpath}")
     if mpath:
         print(f"MD:   {mpath}")
     print(f"JSON: {jpath}")
+    if a.get("valuation"):
+        v = a["valuation"]
+        log(f"valuation {tag}: {v.get('method')} 적정가 {v.get('fair_value')} ({v.get('upside_pct'):+.1f}%) — Valuation Desk 발행 수치")
     return 0
 
 

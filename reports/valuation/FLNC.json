@@ -1,0 +1,145 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 3.83,
+ "fair_value": 7.43,
+ "fair_low": 0.03,
+ "fair_high": 19.49,
+ "upside_pct": 93.93,
+ "verdict": "DEEP_UNDERVALUED",
+ "verdict_ko": "크게 저평가",
+ "mos_band_pct": 35.0,
+ "n_models": 7,
+ "summary": "리서치 기반 적정가 7.43 = 약세 0.03(30%) · 기본 7.04(50%) · 강세 19.49(20%)의 확률가중. 현재가 3.83 대비 +93.9% · 크게 저평가 (불확실성 매우 높음). 할인율 ±1%p 범위 5.66~10.26. 기계적 기준선 9.84.",
+ "archetype": {
+  "code": "TURNAROUND",
+  "label": "턴어라운드·저성장 적자",
+  "traits": [
+   "현금 소진(FCF<0)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 32
+ },
+ "wacc": 0.1217,
+ "ke": 0.1273,
+ "wacc_stable": 0.0845,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 12.21,
+   "low": 9.77,
+   "high": 19.69,
+   "weight": 0.247
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 7.85,
+   "low": 4.27,
+   "high": 13.05,
+   "weight": 0.148
+  },
+  {
+   "id": "ps",
+   "name": "P/S 멀티플",
+   "mid": 10.71,
+   "low": 6.64,
+   "high": 22.99,
+   "weight": 0.148
+  },
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 9.27,
+   "low": 5.74,
+   "high": 13.93,
+   "weight": 0.13
+  },
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 3.57,
+   "low": 2.76,
+   "high": 3.87,
+   "weight": 0.123
+  },
+  {
+   "id": "dcf_revenue_5y",
+   "name": "5년 DCF · Revenue Exit",
+   "mid": 12.0,
+   "low": 8.6,
+   "high": 16.12,
+   "weight": 0.111
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 9.56,
+   "low": 5.07,
+   "high": 16.07,
+   "weight": 0.093
+  }
+ ],
+ "implied_cagr_5y": 0.0156,
+ "base_cagr_5y": 0.1412,
+ "mc": {
+  "p10": 0.0,
+  "p50": 7.52,
+  "p90": 25.16,
+  "prob_above_price": 0.65
+ },
+ "analyst_target": 7.95,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-20",
+  "analyst": "Claude Opus (Valuation Desk)",
+  "thesis": "Fluence의 가치는 수요가 아니라 실행에 달려 있다. 6.4B 달러 사상 최대 수주잔고(2026-06)와 데이터센터 신규 수요는 매출 성장을 뒷받침하지만, 휴스턴 위탁생산 램프 지연·신제품 원가 초과·지체상금으로 FY26 가이던스가 3.4B→3.0B→2.4B 로 두 번 깎였고(조정 EBITDA +50M → 약 -200M), CEO·CFO가 교체됐다. 핵심 변수는 (1) FY27에 생산이 정상화돼 수주잔고가 매출·현금으로 전환되는지, (2) 매출총이익률이 경영진 목표 10~15%로 돌아와 GAAP 영업이익률이 흑자로 전환되는지, (3) 2027-01 시작되는 리볼버 레버리지 약정과 운전자본 3~5억 달러 수요를 대주주(Siemens·AES) 지원 하에 희석 없이 넘기는지이다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.3,
+    "value": 0.03,
+    "cagr5": 0.0516,
+    "target_margin": 0.015
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 7.04,
+    "cagr5": 0.1385,
+    "target_margin": 0.045
+   },
+   "bull": {
+    "prob": 0.2,
+    "value": 19.49,
+    "cagr5": 0.1878,
+    "target_margin": 0.07
+   }
+  },
+  "n_sources": 13,
+  "rate_sensitivity": {
+   "minus_1pt": 10.26,
+   "plus_1pt": 5.66
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 8.4,
+  "n_warn": 0,
+  "second_opinion": null
+ },
+ "mechanical_fair": 9.84,
+ "ticker": "FLNC",
+ "name": "Fluence Energy, Inc.",
+ "published": "2026-11-20"
+}

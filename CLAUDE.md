@@ -22,6 +22,7 @@
 11. [Design System](#11-design-system)
 12. [File Output Rules](#12-file-output-rules)
 13. [API Source Map](#13-api-source-map)
+14. [Fundamental Fair Value Engine](#14-fundamental-fair-value-engine)
 
 ---
 
@@ -1663,6 +1664,97 @@ class SmartMoneyAnalyzer:
         html = self.render_html(analysis)
         md   = self.render_markdown(analysis)
         return html, md
+```
+
+---
+
+## 14. FUNDAMENTAL FAIR VALUE ENGINE
+
+> Full specification: `docs/VALUATION.md`. Research procedure: `docs/VALUATION_RESEARCH.md`.
+> Code: `valuation.py` (CLI), `smartmoney/valuation_desk.py`, `smartmoney/valuation.py`,
+> `smartmoney/fundamentals.py`, `smartmoney/render_valuation.py`. Tests: `tools/test_valuation.py`.
+
+Fair value is a **separate function (Valuation Desk)**, not part of the flow analysis. It never feeds the
+scenario probabilities and flow signals never feed it. The SMA engine and dashboard only **read the published
+numbers** (`reports/valuation/{T}.json`) and re-mark upside at the session close — they compute nothing.
+
+### 14.1 Two layers
+
+```
+RESEARCH (Claude session, like the weekly narrative — no API billing)
+  reads: 10-K/10-Q, earnings releases and guidance, management plans, recent news, industry context
+  writes: thesis, business model, actual performance, plans, news, risks, catalysts, and
+          bear/base/bull scenarios (year-by-year revenue growth, target GAAP operating margin,
+          risk adjustment, probability) plus options for businesses with no revenue yet — all sourced
+
+COMPUTATION (deterministic engine)
+  scenario value = DCF (10-20y, until growth converges) on the research assumptions, with the engine's cost of capital
+                   (10y Treasury + beta x current market-implied ERP; stable-phase beta 0.8-1.2; terminal value from the
+                   value-driver formula only - exit multiples are a cross-check, never blended in)
+  fair value     = probability-weighted scenario values; range = bear … bull
+  cross-check    = mechanical baseline (18 statement-only models: DCF variants, DDM, EPV, residual
+                   income, peer multiples, P/FFO, Lynch, Graham) + reverse DCF, Monte Carlo, sensitivity
+```
+
+### 14.2 Rules
+
+```
+1. A fair value shown in SMA must be research-backed. A statements-only (mechanical) number is a
+   baseline and cross-check; it is never presented as the fair value on the dashboard.
+2. Research facts come from sources opened in that session (URL + date), never from memory.
+   Publishing is refused without >= 6 sources, scenario stories, probabilities summing to 1,
+   in-range growth and margins, and an explicit basis for every option value.
+3. Scenarios are written from evidence, not from the share price. Never tune assumptions toward the
+   current price; analyst price targets are never an input.
+4. Scenario margins are GAAP operating margins (stock compensation is an expense).
+5. A business with no meaningful revenue goes into `options` (probability x discounted value),
+   not into scenario revenue — no double counting.
+6. Banks, insurers and REITs: the research computes each scenario's per-share value directly
+   (P/B-ROE, residual income, P/FFO) and states the method and inputs.
+7. Research goes stale 100 days after `as_of` (or after an earnings release): flag it and widen
+   uncertainty. A refresh only re-prices (latest price, risk-free rate, implied ERP) on the financial
+   base the research was written on; new statements call for a research update, not a re-run.
+8. Uncertainty widens the verdict band (10 / 15 / 25 / 35 %). Always report the range.
+9. Mechanical baseline rules (classification first, mid-cycle margins for cyclicals, operating
+   leverage for loss-makers, growth mean-reversion, converging discount rates, reliability-weighted
+   blending) are specified in docs/VALUATION.md sections 1-7.
+10. Deterministic: same research + same financials + same market inputs (rf, implied ERP) -> same numbers
+    (Monte Carlo seeded by ticker).
+11. Count each risk once: market risk in the discount rate; business risk in scenario cash flows and probabilities;
+    financing failure in research-set `fail_prob` (the engine applies no default in research mode); margin of safety
+    in the verdict band. No `wacc_adj` without a systematic-risk basis. Default probabilities 25/50/25; asymmetry
+    needs evidence (`prob_basis`). Assumptions are best estimates - neither conservative nor optimistic.
+12. Research and its financial base are a pair: the snapshot used at publish time is stored and reused on refresh;
+    new statements mark the research stale instead of re-applying the old growth path on a new base.
+13. Every publish runs self-checks (terminal-value cross-check, incremental ROIC vs cost of capital, +/-1pt
+    discount-rate verdict stability, probability symmetry, missing failure risk). ERROR-level findings block
+    publishing; the rest are shown on the detail page.
+```
+
+### 14.3 Placement
+
+```
+- reports/valuation/{T}.json            published numbers (the only interface SMA reads)
+- reports/tickers/{T}/valuation.html    detail page: research -> mechanical cross-check -> diagnostics
+- state/valuation/research/{T}.json     research as published (assumptions + sources)
+- Report JSON `valuation` key, Markdown Key Metrics rows, briefing card in the 3-Layer report
+  (NOT a numbered section — Sections 0-7 and their order are unchanged; Section 7 stays last),
+  dashboard "적정가 (괴리)" column, ticker page card + fair value line on the price chart.
+- Not attached to index reports or to re-runs of sessions older than 7 days.
+- The dashboard, ticker pages and the weekly narrative prompt read the latest published file directly
+  (re-marked at the session close), so a valuation update shows without waiting for the next daily run.
+```
+
+### 14.4 Operation
+
+```
+- Weekly Claude scheduled task (Saturday 10:23 KST, two hours before the weekly narrative) follows
+  docs/VALUATION_ROUTINE.md: `valuation.py plan` decides per watchlist ticker — NEW (no research),
+  EARNINGS / EVENT / STALE (update), DEPENDENCY (recompute from another ticker's values), OK (re-price) —
+  within a workload budget; analysts follow docs/VALUATION_BRIEF.md; results are pushed to main.
+- The routine never edits engine code, docs or the watchlist. A ticker that fails verification keeps
+  its previous published value.
+- .github/workflows/valuation-refresh.yml re-prices on demand (no research).
 ```
 
 ---

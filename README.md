@@ -27,6 +27,26 @@ python3 sma.py --print-session-date      # 최근 완료 세션 날짜 (워크�
 종료 코드: `0` 성공 · `2` 유효하지 않은 티커 · `1` 기타 실패. 모든 수집 실패는 stderr 와 리포트의
 **데이터 품질 패널**(등급 A–F, 레이어별 커버리지·누락 필드·출처)에 기록됩니다 — 조용한 실패 없음.
 
+## 적정가치 — Valuation Desk (SMA 와 분리된 별도 기능)
+
+적정가치는 일일 수급 분석과 따로 돈다. **리서치(Claude 세션)** 가 10-K/10-Q·실적발표·가이던스·사업 계획·뉴스를 읽어
+약세/기본/강세 시나리오와 신사업 옵션가치를 근거와 함께 쓰고, **엔진**이 같은 DCF 코어로 확률가중 적정가를 계산해 발행한다.
+SMA(엔진·대시보드)는 `reports/valuation/{T}.json` 의 **수치만** 읽는다.
+
+```bash
+python3 valuation.py prepare MRVL --out WORK      # 리서치 패키지 (재무 다이제스트 · 기계적 기준선 · SEC 링크 · 템플릿)
+python3 valuation.py publish MRVL --research WORK/MRVL_research.json [--dry-run]   # 검증 → 계산 → 발행
+python3 valuation.py refresh --watchlist          # 저장된 리서치에 최신 주가·금리·ERP 반영 (워크플로 valuation-refresh.yml)
+python3 valuation.py plan                         # 관심종목별 이번 주 할 일: 신규 조사 / 실적 이후 갱신 / 재계산 (주간 예약 작업의 입력)
+python3 valuation.py status                       # 발행 현황 (방식 · 리서치 경과일)
+python3 tools/test_valuation.py                   # 회귀 테스트 (네트워크 불필요)
+```
+
+- 리서치가 발행된 종목만 SMA 에 적정가가 표시된다. 재무제표만 본 **기계적 기준선**(18개 모델)은 상세 페이지의 교차검증으로만 남는다.
+- 발행 관문: 출처 6건 이상 · 시나리오 확률 합 1 · 실현 조건 서술 · 범위 내 성장률/마진 · 옵션 산출 근거. 실패하면 발행되지 않는다.
+- 리서치는 실적 발표 후 갱신한다 (100일 경과 시 '갱신 필요' 표시).
+- 리서치 지침: **`docs/VALUATION_RESEARCH.md`** · 구조와 계산 명세: **`docs/VALUATION.md`**
+
 ## 날짜 규칙 (중요)
 
 리포트 날짜 = **데이터가 속한 미국 정규장 세션 날짜**(ET, NYSE 거래일). 실행일(KST/UTC)이 아닙니다.
@@ -48,6 +68,7 @@ v2(2026-11 이전) 리포트는 파일명이 KST 실행일이라 실제 세션�
 | L4 차트 | Yahoo 일봉 2년 (미완성 당일 봉 자동 제거) | |
 | 거시 | FRED (DFF·RRP·SOFR·IORB·WALCL·TGA·HY OAS·10Y) + Yahoo (DXY·WTI·VIX) | |
 | 뉴스/공시 | Yahoo news · SEC `data.sec.gov` submissions + Form 4 XML | |
+| 적정가치 (별도 기능) | 리서치: SEC 공시 원문·실적자료·뉴스 / 계산: Yahoo 재무제표·컨센서스·peer · SEC XBRL · FRED | 일일 분석은 발행 수치만 읽음 |
 
 같은 실행 안의 중복 다운로드(FINRA 일일 파일 등)는 `SMA_CACHE_DIR`(기본 `/tmp/sma_cache`)에 캐시됩니다.
 
@@ -61,8 +82,13 @@ smartmoney/
   analytics.py  L1–L4·패턴·거시·확률·Phase  quality.py   데이터 품질 등급
   events.py     30일 이벤트 캘린더         commentary.py 한국어 해석·교차검증·결론
   engine.py     수집→분석 오케스트레이션    render_html.py / render_data.py  출력
+  ── Valuation Desk (SMA 와 분리; 엔진은 발행 수치만 읽음) ──
+  valuation_desk.py 패키지·리서치 검증·발행·조회   valuation.py  DCF 코어·기계적 모델·시나리오 계산
+  fundamentals.py   재무 스냅샷 수집·정규화        render_valuation.py 상세 페이지·카드
 state/borrow/{T}.json   IBKR 대차 스냅샷 누적 (FTP 는 히스토리 미제공 → CTB Δ% 계산용)
 state/options/{T}.json  OI·Max Pain·플립 누적 (OI 추세 · 핀닝 사후검증)
+state/fundamentals/{T}.json  재무 스냅샷 (적정가치 입력, TTL 3~5일) · _peers.json peer 프로필 공유 캐시
+state/valuation/research/{T}.json  발행된 리서치 원본 (시나리오 가정·출처)
 ```
 
 확률 엔진: 레이어별 `score∈[-1,1] × confidence × weight(L1 .35 · L2 .20 · L3 .30 · L4 .15)` →
@@ -101,6 +127,8 @@ Cloudflare Worker)가 `workflow_dispatch` API 를 호출한다.
 | **daily-analysis.yml** | 화~토 02:00 UTC (= KST 11:00) | 직전 미국 정규장 세션 분석 → `reports/{SESSION_DATE}/` 커밋 → 텔레그램 |
 | **주간 AI 내러티브** | 토 KST 12:23 (Claude Code 예약 작업) | 클라우드 세션의 **Claude Opus 5.5**가 종목별 내러티브 작성 → `reports/tickers/{T}/narratives/{SESSION_DATE}-weekly.html` → main 푸시 (**Anthropic API 과금 없음**, 구독 사용량으로 처리) |
 | **weekly-narrative.yml** | narrative 푸시 시 자동 | 텔레그램 알림만 (API 호출 없음) |
+| **주간 적정가 (Valuation Desk)** | 토 KST 10:23 (Claude Code 예약 작업) | `docs/VALUATION_ROUTINE.md` 절차: 관심종목별로 신규 조사·실적 이후 갱신·재계산을 정해(`valuation.py plan`) 발행 → main 푸시. 같은 날 일일 분석·주간 내러티브가 이 수치를 읽는다 |
+| **valuation-refresh.yml** | 수동 | 저장된 리서치에 최신 주가·금리만 반영해 재계산 (조사 없음) |
 
 두 워크플로는 같은 concurrency 그룹(`sma-repo-write`)을 써서 저장소 쓰기가 겹치지 않는다.
 Actions 탭 → Run workflow 로 수동 실행 가능 (`ticker`, `force` 입력; weekly 는 `mode` 도).
@@ -118,6 +146,7 @@ Actions 탭 → Run workflow 로 수동 실행 가능 (`ticker`, `force` 입력;
 ### 산출물 / 상태
 - `reports/{SESSION_DATE}/` — 종목별 HTML·MD·JSON(v3 스키마: `docs/SCHEMA_V3.md`)
 - `reports/data/{T}.json` — 종목별 시계열 (세션 날짜 기준, minified) · `reports/tickers/{T}/` — 종목 페이지
+- `reports/valuation/{T}.json` — Valuation Desk 발행 수치 · `reports/tickers/{T}/valuation.html` — 적정가치 상세
 - `state/` — 엔진 누적 상태(예: 일별 대차 스냅샷 `state/borrow/{T}.json`). 커밋 단계에서 `reports/` 와 함께 add.
 - 출력이 결정적(실행 시각 미기록)이라 rebase 충돌이 적고, 충돌 시 원격 위로 rebase 후 인덱스를 재생성한다.
 
@@ -157,6 +186,7 @@ Actions 탭 → Run workflow 로 수동 실행 가능 (`ticker`, `force` 입력;
 ### 감시 종목 수정 (파일 직접 편집)
 
 `tickers.txt` 편집 후 커밋하면 다음 실행부터 반영 (한 줄에 티커 하나, `#` 주석).
+펀더멘털 적정가는 추가된 종목을 **다음 토요일 주간 작업**이 조사해 발행한다 — 그 전까지 적정가 칸은 비어 있다.
 
 ### 로컬에서 수동 인덱스 재생성
 

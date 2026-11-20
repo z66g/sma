@@ -15,6 +15,7 @@ from . import history as H
 from . import regimes as R
 from . import quality as Q
 from . import sources as S
+from . import valuation_desk as VD
 from .net import log
 
 INDEX_ROOTS = {"SPX": {"SPX", "SPXW"}, "NDX": {"NDX", "NDXP"}, "RUT": {"RUT", "RUTW"}, "VIX": {"VIX", "VIXW"}}
@@ -112,6 +113,21 @@ class SmartMoneyAnalyzer:
         self.sources["news"] = ["Yahoo news", "SEC EDGAR (submissions + Form 4 XML)", "Yahoo calendar"]
         return data
 
+    def _valuation(self, price: float) -> Optional[Dict[str, Any]]:
+        """적정가치는 SMA 밖의 별도 기능(Valuation Desk)이 계산·발행한다. 여기서는 발행된 수치만 읽고
+        이번 세션 종가로 괴리율·판정을 다시 매긴다 — 재무 수집도 모델 계산도 하지 않는다.
+        과거 세션 재실행에는 붙이지 않는다(발행 수치는 '지금'의 리서치라 과거 주가와 시점이 어긋난다)."""
+        if (date.today() - self.session).days > 7 or os.environ.get("SMA_VALUATION", "1") == "0":
+            return None
+        try:
+            v = VD.read_published(self.display_ticker, price, self.date_str)
+        except Exception as e:  # noqa: BLE001
+            self.warnings.append(f"val/read_published: {str(e)[:160]}")
+            return None
+        if v:
+            self.sources["val"] = [f"Valuation Desk 발행 수치 ({v.get('method')}, 리서치 {((v.get('research') or {}).get('as_of')) or '없음'})"]
+        return v
+
     def _fetch_flow(self, T: str, d: date, days: int = 5) -> List[Dict[str, Any]]:
         """체결 단위 수급(최근 5세션). 누락된 날만 Alpaca 에서 받아 state/flow 에 누적."""
         if not F.available():
@@ -192,6 +208,7 @@ class SmartMoneyAnalyzer:
             self.warnings.append(f"phase/regime: {str(e)[:160]}")
         phase = A.build_phases(d, ohlcv, l1, l3, l4, scen, events, regime)
         levels = A.price_levels(price, l3, l4)
+        valuation = None if self.is_index else self._valuation(price)
         quality = Q.assess({"l1": l1, "l2": l2, "l3": l3, "l4": l4}, macro,
                            bool(data.get("news")) or bool((data.get("sec") or {}).get("filings")),
                            self.sources, is_index=self.is_index)
@@ -205,7 +222,7 @@ class SmartMoneyAnalyzer:
             "l1": l1, "l2": l2, "l3": l3, "l4": l4, "macro": macro, "patterns": pat["patterns"],
             "pattern_detail": pat["detail"], "scenarios": scen, "phase": phase, "levels": levels,
             "events": events, "news": data.get("news") or [], "filings": (data.get("sec") or {}).get("filings") or [],
-            "quality": quality, "history": history, "ohlcv": ohlcv[-160:],
+            "quality": quality, "history": history, "ohlcv": ohlcv[-160:], "valuation": valuation,
             "calendar": {k: (v.isoformat() if isinstance(v, date) else v) for k, v in calx.items()},
         }
 

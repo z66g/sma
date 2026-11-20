@@ -1,0 +1,167 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 95.24,
+ "fair_value": 98.54,
+ "fair_low": 69.95,
+ "fair_high": 121.2,
+ "upside_pct": 3.47,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 15.0,
+ "n_models": 10,
+ "summary": "리서치 기반 적정가 98.54 = 약세 69.95(25%) · 기본 101.52(50%) · 강세 121.20(25%)의 확률가중. 현재가 95.24 대비 +3.5% · 적정 범위 (불확실성 보통). 할인율 ±1%p 범위 79.66~127.42 — 판정이 할인율에 민감. 기계적 기준선 88.30.",
+ "archetype": {
+  "code": "MATURE_COMPOUNDER",
+  "label": "성숙·현금창출",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "MEDIUM",
+  "label": "보통",
+  "score": 75
+ },
+ "wacc": 0.0854,
+ "ke": 0.0907,
+ "wacc_stable": 0.0842,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 71.97,
+   "low": 49.51,
+   "high": 110.96,
+   "weight": 0.155
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 90.81,
+   "low": 65.63,
+   "high": 122.19,
+   "weight": 0.155
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 117.64,
+   "low": 93.41,
+   "high": 142.3,
+   "weight": 0.155
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 133.83,
+   "low": 109.1,
+   "high": 149.77,
+   "weight": 0.155
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 73.69,
+   "low": 50.35,
+   "high": 114.16,
+   "weight": 0.093
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 85.25,
+   "low": 60.11,
+   "high": 118.5,
+   "weight": 0.093
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 32.27,
+   "low": 26.49,
+   "high": 44.65,
+   "weight": 0.078
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 37.4,
+   "low": 34.61,
+   "high": 40.19,
+   "weight": 0.047
+  },
+  {
+   "id": "ddm_multi",
+   "name": "배당할인(DDM) · 다단계",
+   "mid": 59.17,
+   "low": 48.23,
+   "high": 74.24,
+   "weight": 0.037
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 123.04,
+   "low": 86.43,
+   "high": 140.21,
+   "weight": 0.031
+  }
+ ],
+ "implied_cagr_5y": 0.0816,
+ "base_cagr_5y": 0.0338,
+ "mc": {
+  "p10": 48.36,
+  "p50": 69.74,
+  "p90": 98.85,
+  "prob_above_price": 0.13
+ },
+ "analyst_target": 125.44,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude (Valuation Desk)",
+  "thesis": "Xylem의 가치는 ① 유틸리티의 지불여력(affordability) 압박으로 멈춘 유기적 성장(2026년 가이던스 +2~4% → 0%)이 수주잔고 $5.47B(+13%)의 매출 전환과 함께 언제 3~4%대로 돌아오는가, ② 매출이 정체된 해에도 연 100bp씩 올린 조정 EBITDA 마진(2026E 23.2%)이 인수 무형자산 상각 소멸과 겹쳐 GAAP 영업이익률을 15%대에서 19~20%로 끌어올리는가로 결정된다. 현재 증거는 마진 실행은 강하고 성장은 약한 쪽이다: 계량기(M&CS)는 2027년 상반기까지 정체, WSS 대형 프로젝트는 지연, 반면 데이터센터·반도체향 수주와 80/20 구조조정 효과는 진행 중이다. 11월 9일 종결된 $1.46B Cornell/Roper 인수와 연초 이후 $1.58B 자사주 매입으로 순차입이 크게 늘어, 재무제표 스냅샷(9월 26일 기준)보다 주주 몫이 줄어든 점을 반영했다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 69.95,
+    "cagr5": 0.0176,
+    "target_margin": 0.172
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 101.52,
+    "cagr5": 0.0337,
+    "target_margin": 0.2
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 121.2,
+    "cagr5": 0.0501,
+    "target_margin": 0.217
+   }
+  },
+  "n_sources": 17,
+  "rate_sensitivity": {
+   "minus_1pt": 127.42,
+   "plus_1pt": 79.66
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 98.54,
+  "n_warn": 1,
+  "second_opinion": null
+ },
+ "mechanical_fair": 88.3,
+ "ticker": "XYL",
+ "name": "Xylem Inc.",
+ "published": "2026-11-20"
+}

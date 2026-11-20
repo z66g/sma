@@ -1,0 +1,175 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 138.47,
+ "fair_value": 178.25,
+ "fair_low": 38.3,
+ "fair_high": 354.32,
+ "upside_pct": 28.73,
+ "verdict": "UNDERVALUED",
+ "verdict_ko": "저평가",
+ "mos_band_pct": 25.0,
+ "n_models": 11,
+ "summary": "리서치 기반 적정가 178.25 = 약세 38.30(25%) · 기본 160.19(50%) · 강세 354.32(25%)의 확률가중. 현재가 138.47 대비 +28.7% · 저평가 (불확실성 높음). 할인율 ±1%p 범위 149.21~219.73 — 판정이 할인율에 민감. 기계적 기준선 128.75.",
+ "archetype": {
+  "code": "HIGH_GROWTH",
+  "label": "고성장 흑자",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "HIGH",
+  "label": "높음",
+  "score": 47
+ },
+ "wacc": 0.1185,
+ "ke": 0.121,
+ "wacc_stable": 0.0941,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 115.27,
+   "low": 71.42,
+   "high": 188.51,
+   "weight": 0.175
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 162.3,
+   "low": 100.82,
+   "high": 250.06,
+   "weight": 0.175
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 129.37,
+   "low": 72.07,
+   "high": 167.64,
+   "weight": 0.158
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 74.5,
+   "low": 56.87,
+   "high": 109.99,
+   "weight": 0.123
+  },
+  {
+   "id": "lynch",
+   "name": "피터 린치 공정가(PEG)",
+   "mid": 202.84,
+   "low": 153.13,
+   "high": 202.84,
+   "weight": 0.105
+  },
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 142.86,
+   "low": 94.97,
+   "high": 206.28,
+   "weight": 0.07
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 59.86,
+   "low": 45.24,
+   "high": 138.66,
+   "weight": 0.07
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 181.53,
+   "low": 117.45,
+   "high": 267.89,
+   "weight": 0.055
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 100.7,
+   "low": 64.0,
+   "high": 161.58,
+   "weight": 0.053
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 29.5,
+   "low": 22.61,
+   "high": 34.1,
+   "weight": 0.009
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 2.53,
+   "low": 0.0,
+   "high": 10.01,
+   "weight": 0.007
+  }
+ ],
+ "implied_cagr_5y": 0.3586,
+ "base_cagr_5y": 0.3852,
+ "mc": {
+  "p10": 71.28,
+  "p50": 131.78,
+  "p90": 215.88,
+  "prob_above_price": 0.45
+ },
+ "analyst_target": 310.89,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude (Valuation Desk 파일럿 세션)",
+  "thesis": "Marvell의 가치는 (1) 하이퍼스케일러 AI 설비투자가 FY28 이후에도 이어지는지, (2) 커스텀 실리콘(XPU·XPU-attach)과 인터커넥트·스위칭에서 소수 고객의 차세대 소켓을 지키는지, (3) 매출이 커질 때 GAAP 영업이익률이 Non-GAAP(약 37%)과의 20%p 격차를 얼마나 좁히는지로 결정된다. 현재 증거는 단기적으로 강하다 — 6개 분기 연속 가이던스 중간값 상회, FY27 3분기 잠정 매출이 가이던스($3.15B, +52% YoY) 부합, FY28 전망이 5개월 새 $16.5B→$18B→$20B로 상향(회사 자료), Non-GAAP 영업이익률은 FY27 4분기에 38~40% 구간 진입 예고, Google(워런트가 커스텀 매출 최대 $120B에 연동)·NVIDIA($2B 우선주) 계약. 그러나 경영진 장기 목표(FY31 매출 $70~90B, 연 55~60% 성장)는 상위 10개 고객이 매출의 82%인 구조에서 5년 연속 50%대 성장을 요구하므로, 기본 시나리오는 이를 약 절반만 인정했다. 11월 2일 발표된 Lumentum 전량 주식 합병(지분 33% 발행, 2028년 상반기 종결 예정)은 종결 전이므로 본 평가는 Marvell 단독 기준이며 합병은 위험·촉매로만 반영했다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 38.3,
+    "cagr5": 0.1129,
+    "target_margin": 0.22
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 160.19,
+    "cagr5": 0.346,
+    "target_margin": 0.35
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 354.32,
+    "cagr5": 0.5261,
+    "target_margin": 0.39
+   }
+  },
+  "n_sources": 39,
+  "rate_sensitivity": {
+   "minus_1pt": 219.73,
+   "plus_1pt": 149.21
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 178.25,
+  "n_warn": 1,
+  "second_opinion": null
+ },
+ "mechanical_fair": 128.75,
+ "ticker": "MRVL",
+ "name": "Marvell Technology, Inc.",
+ "published": "2026-11-20"
+}

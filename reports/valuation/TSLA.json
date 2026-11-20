@@ -1,0 +1,173 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 374.41,
+ "fair_value": 47.52,
+ "fair_low": 26.99,
+ "fair_high": 88.52,
+ "upside_pct": -87.31,
+ "verdict": "DEEP_OVERVALUED",
+ "verdict_ko": "크게 고평가",
+ "mos_band_pct": 25.0,
+ "n_models": 10,
+ "summary": "리서치 기반 적정가 47.52 = 약세 26.99(25%) · 기본 37.29(50%) · 강세 88.52(25%)의 확률가중 (신사업 옵션 8.63 포함). 현재가 374.41 대비 -87.3% · 크게 고평가 (불확실성 높음). 할인율 ±1%p 범위 41.12~56.87. 기계적 기준선 38.95.",
+ "archetype": {
+  "code": "CYCLICAL",
+  "label": "경기순환",
+  "traits": [
+   "경기민감 업종",
+   "서사 프리미엄(선행 P/E 60배 초과 · 성장률은 25% 미만)"
+  ]
+ },
+ "uncertainty": {
+  "level": "HIGH",
+  "label": "높음",
+  "score": 48
+ },
+ "wacc": 0.099,
+ "ke": 0.0996,
+ "wacc_stable": 0.0922,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 63.97,
+   "low": 58.32,
+   "high": 90.38,
+   "weight": 0.193
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 19.14,
+   "low": 15.05,
+   "high": 24.7,
+   "weight": 0.163
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 18.63,
+   "low": 16.69,
+   "high": 27.13,
+   "weight": 0.144
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 41.91,
+   "low": 33.35,
+   "high": 53.85,
+   "weight": 0.116
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 52.32,
+   "low": 38.72,
+   "high": 69.7,
+   "weight": 0.114
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 18.44,
+   "low": 14.02,
+   "high": 24.77,
+   "weight": 0.09
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 65.74,
+   "low": 43.65,
+   "high": 113.66,
+   "weight": 0.058
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 35.88,
+   "low": 25.76,
+   "high": 49.81,
+   "weight": 0.051
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 17.7,
+   "low": 13.56,
+   "high": 20.46,
+   "weight": 0.048
+  },
+  {
+   "id": "pb",
+   "name": "P/B 멀티플 (ROE 보정)",
+   "mid": 196.48,
+   "low": 138.71,
+   "high": 229.78,
+   "weight": 0.024
+  }
+ ],
+ "implied_cagr_5y": null,
+ "base_cagr_5y": 0.0985,
+ "mc": {
+  "p10": 1.21,
+  "p50": 18.51,
+  "p90": 38.62,
+  "prob_above_price": 0.0
+ },
+ "analyst_target": 412.48,
+ "method": "RESEARCH",
+ "model_gap": true,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude Opus (Valuation Desk 독립 2차 의견)",
+  "thesis": "테슬라의 오늘 가치는 두 층으로 나뉜다. (1) 이미 매출을 내는 자동차·FSD(감독형) 구독·에너지저장·서비스 사업은 TTM 매출 1,036억 달러, GAAP 영업이익률 3.3%(규제크레딧 소멸·SI R&D·SBC 급증 탓)로 수익성이 4년 연속 하락했고, 2026년 CAPEX 200억 달러+ 가 매출보다 앞서 집행되고 있다. (2) 로보택시 네트워크와 Optimus는 생산·운행이 시작됐지만 아직 의미 있는 매출이 없다. 증거는 핵심 사업의 '바닥 통과(배터리 제약 속 수주잔고·FSD 구독 67% 증가·에너지 RPO 107억 달러)'를 가리키지만, 현재 주가는 신사업의 대규모 성공을 거의 확정적으로 반영하고 있어 확률가중 가치와의 괴리가 크다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 8.63,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 26.99,
+    "cagr5": 0.044,
+    "target_margin": 0.05
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 37.29,
+    "cagr5": 0.1079,
+    "target_margin": 0.08
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 88.52,
+    "cagr5": 0.1558,
+    "target_margin": 0.14
+   }
+  },
+  "n_sources": 22,
+  "rate_sensitivity": {
+   "minus_1pt": 56.87,
+   "plus_1pt": 41.12
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 47.52,
+  "n_warn": 1,
+  "second_opinion": {
+   "analyst": "Claude (Valuation Desk 파일럿 세션)",
+   "fair_value": 45.79
+  }
+ },
+ "mechanical_fair": 38.95,
+ "ticker": "TSLA",
+ "name": "Tesla, Inc.",
+ "published": "2026-11-20"
+}

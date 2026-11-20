@@ -1,0 +1,122 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-20",
+ "fundamentals_asof": "2026-11-19",
+ "currency": "USD",
+ "price": 14.41,
+ "fair_value": 23.48,
+ "fair_low": 0.0,
+ "fair_high": 117.38,
+ "upside_pct": 62.92,
+ "verdict": "UNDERVALUED",
+ "verdict_ko": "저평가",
+ "mos_band_pct": 35.0,
+ "n_models": 4,
+ "summary": "리서치 기반 적정가 23.48 = 약세 0.00(30%) · 기본 0.00(50%) · 강세 117.38(20%)의 확률가중. 현재가 14.41 대비 +62.9% · 저평가 (불확실성 매우 높음). 할인율 ±1%p 범위 15.10~45.00 — 판정이 할인율에 민감. 기계적 기준선 23.94.",
+ "archetype": {
+  "code": "HYPERGROWTH_UNPROFITABLE",
+  "label": "고성장 적자",
+  "traits": [
+   "현금 소진(FCF<0)",
+   "주식보상 비중 높음(매출의 34%)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 22
+ },
+ "wacc": 0.1153,
+ "ke": 0.1474,
+ "wacc_stable": 0.0756,
+ "erp": 0.0386,
+ "rf": 0.051,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 18.1,
+   "low": 0.0,
+   "high": 54.98,
+   "weight": 0.441
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 35.85,
+   "low": 5.45,
+   "high": 91.51,
+   "weight": 0.265
+  },
+  {
+   "id": "dcf_revenue_5y",
+   "name": "5년 DCF · Revenue Exit",
+   "mid": 27.57,
+   "low": 7.6,
+   "high": 58.63,
+   "weight": 0.221
+  },
+  {
+   "id": "ps",
+   "name": "P/S 멀티플",
+   "mid": 2.84,
+   "low": 1.18,
+   "high": 7.79,
+   "weight": 0.074
+  }
+ ],
+ "implied_cagr_5y": 0.8725,
+ "base_cagr_5y": 0.9375,
+ "mc": {
+  "p10": 0.0,
+  "p50": 15.76,
+  "p90": 87.32,
+  "prob_above_price": 0.51
+ },
+ "analyst_target": 56.69,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-19",
+  "analyst": "Claude Opus (Valuation Desk)",
+  "thesis": "IREN은 비트코인 채굴을 접고 자체 소유 토지·전력·데이터센터 위에서 GPU 클라우드를 파는 회사로 바뀌는 중이며, 가치는 (1) 계약된 4억달러+ ARR(0.3GW IT)이 2027년 1~2월에 실제 매출로 전환되는지, (2) 미계약·미조달 상태인 2027년 0.8GW 확장 단계가 MW당 매출 1,700만~2,200만달러로 계약·조달되는지, (3) GPU 5년 감가상각을 견디는 GAAP 마진이 나오는지에 달려 있다. 매출잔고 203억달러(3분의 2가 Microsoft·NVIDIA 투자등급)와 AI 클라우드 매출총이익률 86%는 강한 증거지만, 남은 FY27 CAPEX 150억달러 중 60억달러가 미조달이고 순차입금이 한 분기 만에 2억달러에서 44억달러로 늘어 자금시장 의존도가 극단적으로 높다. 최근 3개월 66% 주가 하락은 사업 실패가 아니라 납기 지연(연말→1~2월)·Microsoft의 네오클라우드 감독 강화 보도·AI 인프라 자금조달 우려가 겹친 결과로 판단한다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.3,
+    "value": 0.0,
+    "cagr5": 0.5742,
+    "target_margin": 0.12
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 0.0,
+    "cagr5": 0.8195,
+    "target_margin": 0.27
+   },
+   "bull": {
+    "prob": 0.2,
+    "value": 117.38,
+    "cagr5": 1.0389,
+    "target_margin": 0.36
+   }
+  },
+  "n_sources": 14,
+  "rate_sensitivity": {
+   "minus_1pt": 45.0,
+   "plus_1pt": 15.1
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 29.35,
+  "n_warn": 2,
+  "second_opinion": null
+ },
+ "mechanical_fair": 23.94,
+ "ticker": "IREN",
+ "name": "IREN Limited",
+ "published": "2026-11-20"
+}

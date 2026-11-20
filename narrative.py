@@ -540,6 +540,37 @@ def upcoming_trading_days(session_date: str, n: int = 15) -> List[str]:
     return [next_trading_day(d, k).isoformat() for k in range(1, n + 1)]
 
 
+def valuation_block(ticker: str, today: dict) -> List[str]:
+    """Valuation Desk 가 발행한 펀더멘털 적정가 요약 (없으면 빈 목록). 수급 분석과 독립된 축으로만 전달한다."""
+    try:
+        from smartmoney import valuation_desk as VD
+        v = VD.read_published(ticker, today.get("price"), today.get("date"))
+    except Exception:  # noqa: BLE001
+        v = None
+    if not v or v.get("fair_value") is None:
+        return ["", "FAIR_VALUE: no — 발행된 펀더멘털 적정가 없음. 적정가·저평가·고평가 언급 금지"]
+    R = v.get("research") or {}
+    sc = R.get("scenarios") or {}
+    rs = R.get("rate_sensitivity") or {}
+    digest = {
+        "fair_value": v.get("fair_value"), "range_bear_bull": [v.get("fair_low"), v.get("fair_high")],
+        "price_at_session_close": v.get("price"), "gap_pct": v.get("upside_pct"), "verdict": v.get("verdict_ko"),
+        "uncertainty": (v.get("uncertainty") or {}).get("label"),
+        "scenarios": {k: {"prob": s.get("prob"), "value": s.get("value")} for k, s in sc.items()},
+        "discount_rate_pm_1pt": [rs.get("plus_1pt"), rs.get("minus_1pt")] if rs else None,
+        "verdict_changes_within_pm_1pt": (not R.get("verdict_robust", True)) if rs else None,
+        "research_date": R.get("as_of"), "research_confidence": R.get("confidence"),
+        "needs_refresh": bool(v.get("stale")), "thesis": (str(R.get("thesis") or "")[:320] or None),
+    }
+    return ["", "## 펀더멘털 적정가 (Valuation Desk 발행 — 수급 분석과 독립된 축)",
+            ("FAIR_VALUE: yes — 아래는 사업·재무 리서치로 산출한 적정가다. 규칙: (1) 수급 시나리오 확률과 Phase 판단에는 쓰지 않는다 — "
+             "다크풀·공매도·옵션 신호와 섞지 말 것. (2) 가격 레벨 맥락과 핵심 결론에서 '현재가가 적정가 범위의 어디에 있는가'를 한두 문장으로만 언급한다. "
+             "(3) 적정가는 점이 아니라 범위로 쓴다: 약세~강세 범위와 할인율 ±1%p 범위를 함께 적고, verdict_changes_within_pm_1pt 가 true 면 "
+             "'저평가/고평가'로 단정하지 않는다. (4) 불확실성 등급과 리서치 날짜를 밝히고, needs_refresh 가 true 면 '갱신 필요'라고 적는다. "
+             "(5) 목표가·매수/매도 권유로 쓰지 않는다."),
+            "```json", json.dumps(_prune(digest), ensure_ascii=False, indent=1), "```"]
+
+
 def build_user_text(ticker: str, mode: str, series: List[dict]) -> Tuple[str, str]:
     today = series[-1]
     n_days = len(series)
@@ -573,6 +604,7 @@ def build_user_text(ticker: str, mode: str, series: List[dict]) -> Tuple[str, st
         json.dumps(snap, ensure_ascii=False, indent=1),
         "```",
     ]
+    parts += valuation_block(ticker, today)
     if n_days > 1:
         parts += ["", f"## 시계열 ({n_days}개 세션, CSV — 빈 칸 = 데이터 없음, net_gex_m = 백만 단위)",
                   "```csv", to_csv(series), "```"]

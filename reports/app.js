@@ -2,7 +2,7 @@
 // Dashboard logic — operates on window.__DB__ (array of ticker summaries)
 const DB = window.__DB__ || [];
 const KO = window.__KO__ || {};
-const COLS = 20;
+const COLS = 21;
 const bodyActive  = document.getElementById('tbody-active');
 const bodyArchive = document.getElementById('tbody-archive');
 const archiveWrap = document.getElementById('archive-wrap');
@@ -34,6 +34,27 @@ function qualityPill(r) {
   const warn = r.warnings_count ? ` · ⚠${r.warnings_count}` : '';
   return `<span class="pill ${cls}" title="${esc(title)}">${esc(r.quality_grade)}${isNum(r.quality_score) ? ' ' + r.quality_score.toFixed(0) : ''}${esc(warn)}</span>`;
 }
+function fairCell(r) {
+  if (!isNum(r.fair_value)) return NA;
+  const up = r.fair_upside, v = r.fair_verdict || '';
+  const col = v.indexOf('UNDER') >= 0 ? '#1A7F5A' : v.indexOf('OVER') >= 0 ? '#CF222B' : '#656D76';
+  const title = [r.fair_type, r.fair_verdict_ko, r.fair_unc ? '불확실성 ' + r.fair_unc : '',
+    (isNum(r.fair_low) && isNum(r.fair_high)) ? '범위 $' + r.fair_low.toFixed(2) + '~$' + r.fair_high.toFixed(2) : '',
+    r.fair_method === 'RESEARCH' ? '리서치 ' + (r.fair_research || '') + (r.fair_stale ? ' (갱신 필요)' : '') : '기계적 기준선(참고)'].filter(Boolean).join(' · ');
+  const body = `${fmtDol(r.fair_value)} <span style="color:${col};font-weight:600;">${isNum(up) ? fmtSigned(up, 0) + '%' : ''}</span>`
+    + (r.fair_stale ? ' <span title="리서치 갱신 필요" style="color:#9A6700;">⏳</span>' : '')
+    + (r.fair_gap ? ' <span title="시장 가격과 3배 이상 괴리 — 상세 페이지의 전제 조건 참고" style="color:#9A6700;">⚠</span>' : '');
+  const url = safePath(r.val_url);
+  return url ? `<a href="${esc(url)}" title="${esc(title)}" style="color:inherit;">${body}</a>` : `<span title="${esc(title)}">${body}</span>`;
+}
+function fairChip(r) {
+  if (!isNum(r.fair_value) || !isNum(r.fair_upside)) return '';
+  const v = r.fair_verdict || '';
+  const col = v.indexOf('UNDER') >= 0 ? '#1A7F5A' : v.indexOf('OVER') >= 0 ? '#CF222B' : '#656D76';
+  const px = '$' + (r.fair_value >= 100 ? r.fair_value.toFixed(0) : r.fair_value.toFixed(2));
+  return `<span class="olp" style="font-size:10.5px;color:#656D76;" title="펀더멘털 적정가 ${esc(fmtDol(r.fair_value))} · ${esc(r.fair_verdict_ko || '')}">적정 ${px} `
+    + `<b style="color:${col};font-size:10.5px;">${fmtSigned(r.fair_upside, 0)}%</b></span>`;
+}
 function casePretty(c) { return c ? esc(KO[c] || String(c).replace(/^CASE_\d+_/, '').replace(/^CASE_/, '')) : NA; }
 function txt(v) { return v ? esc(KO[v] || v) : NA; }
 
@@ -56,6 +77,7 @@ function rowHTML(r, mode) {
     <td>${dateCell}</td>
     <td>${qualityPill(r)}</td>
     <td>${fmtDol(r.price)}</td>
+    <td>${fairCell(r)}</td>
     <td>${scenarioPill(r.scenario, r.scenario_pct)}</td>
     <td>${isNum(r.raw_score) ? r.raw_score.toFixed(2) : NA}</td>
     <td>${txt(r.macro_env)}</td>
@@ -94,7 +116,7 @@ function render() {
   olList.innerHTML = ols.map(r => {
     const u = safePath(r.report_url);
     return `<a class="ol" href="${u ? esc(u) : 'tickers/' + encodeURIComponent(r.ticker) + '/'}"><div><b>${esc(r.ticker)}</b>`
-      + `<span class="olp">${scenarioPill(r.scenario, r.scenario_pct)}</span></div><div>${esc(r.one_liner)}</div></a>`;
+      + `<span class="olp">${scenarioPill(r.scenario, r.scenario_pct)}</span>${fairChip(r)}</div><div>${esc(r.one_liner)}</div></a>`;
   }).join('');
   olHead.style.display = olList.style.display = ols.length ? '' : 'none';
 }

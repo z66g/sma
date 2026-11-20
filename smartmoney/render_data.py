@@ -56,6 +56,8 @@ def render_json(a: Dict[str, Any]) -> str:
     }
     if l3.get("pinning"):
         out["l3"]["pinning"] = l3["pinning"]
+    if a.get("valuation"):
+        out["valuation"] = a["valuation"]              # Valuation Desk 가 발행한 요약 수치 그대로 (세션 종가로 괴리율만 재산정)
     return json.dumps(out, ensure_ascii=False, indent=1, default=str)
 
 
@@ -82,6 +84,23 @@ def _hist_row(h: Dict[str, Any]) -> str:
 
 def _z(x):
     return None if x is None else (0.0 if abs(x) < 0.5 else x)
+
+
+def _md_valuation(v: Optional[Dict[str, Any]]) -> List[str]:
+    if not v or v.get("fair_value") is None:
+        return []
+    u, R = v.get("uncertainty") or {}, v.get("research") or {}
+    how = f"리서치 {R.get('as_of')}" + (" · 갱신 필요" if v.get("stale") else "") if v.get("method") == "RESEARCH" else "기계적 기준선(참고)"
+    rows = [f"| Fair Value (Valuation Desk · {how}) | ${v['fair_value']:,.2f} (${v['fair_low']:,.2f}~${v['fair_high']:,.2f}) · "
+            f"{v['upside_pct']:+.1f}% · {v.get('verdict_ko')} |",
+            f"| Valuation Archetype · Uncertainty | {(v.get('archetype') or {}).get('label')} · {u.get('label')} |"]
+    sc = R.get("scenarios") or {}
+    if sc:
+        rows.append("| Scenarios (bear / base / bull) | " + " / ".join(
+            f"${sc[k]['value']:,.2f} ({sc[k]['prob'] * 100:.0f}%)" for k in ("bear", "base", "bull") if k in sc) + " |")
+    if v.get("implied_cagr_5y") is not None and v.get("base_cagr_5y") is not None:
+        rows.append(f"| Market-implied 5y Revenue CAGR | {v['implied_cagr_5y'] * 100:.1f}% (기계적 가정 {v['base_cagr_5y'] * 100:.1f}%) |")
+    return rows
 
 
 def _md_phase(a: Dict[str, Any]) -> List[str]:
@@ -150,7 +169,8 @@ def render_markdown(a: Dict[str, Any]) -> str:
         f"| Scenario [A] Bullish | {s['A_bullish']}% |", f"| Scenario [B] Neutral | {s['B_neutral']}% |",
         f"| Scenario [C] Bearish | {s['C_bearish']}% |",
         f"| Raw Score · Macro | {s['raw_score']:+.3f} · {s.get('macro')} |",
-        f"| Patterns | {', '.join(C.KO_PAT.get(p, p) for p in a['patterns']) or 'none'} |", "",
+        f"| Patterns | {', '.join(C.KO_PAT.get(p, p) for p in a['patterns']) or 'none'} |",
+        *_md_valuation(a.get("valuation")), "",
         "---", "", "## Architect Phase Structure",
         *_md_phase(a), "",
         "---", "", "## 3-Line Summary",

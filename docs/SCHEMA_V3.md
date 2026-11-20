@@ -51,7 +51,33 @@ narrative.py, narrative.js)는 새 키가 없을 수도 있다고 가정하고 `
 추가: `ema9, ema21, rsi14, atr14, atr_pct, bb_upper, bb_lower, bb_position, bb_width_pctile` (1y 백분위),
 `key_resistance, key_support, vol_ratio30, high_52w, low_52w`
 
+## valuation (펀더멘털 적정가치 · 선택)
+Valuation Desk(별도 기능)가 발행한 `reports/valuation/{T}.json` 을 엔진이 **읽기만** 해서 붙인다 (세션 종가로 `upside_pct`·`verdict` 만 재산정).
+리서치가 발행되지 않은 종목·과거 세션 재실행(7일 초과)·`SMA_VALUATION=0` 이면 키 자체가 없다. 소비자는 누락을 N/A 로 표시한다.
+구조: `docs/VALUATION.md` · 리서치 지침: `docs/VALUATION_RESEARCH.md`.
+
+| key | type | 비고 |
+|---|---|---|
+| `method` | str | `RESEARCH` (시나리오 확률가중) / `MECHANICAL` (재무제표만 — 기본 설정에서는 SMA 에 전달되지 않음) |
+| `status` | str | `OK` / `NO_MODEL` |
+| `published`, `fundamentals_asof`, `priced_at` | str | 발행일 / 재무 스냅샷 수집일 / 괴리율을 매긴 세션 |
+| `price`, `fair_value`, `fair_low`, `fair_high` | float | 주당. RESEARCH 는 범위 = 약세~강세 시나리오 가치 |
+| `upside_pct`, `verdict`, `verdict_ko`, `mos_band_pct` | | `DEEP_UNDERVALUED` / `UNDERVALUED` / `FAIR` / `OVERVALUED` / `DEEP_OVERVALUED`, 밴드 10/15/25/35 |
+| `research` | obj | `{as_of, analyst, thesis, confidence, stale, option_value, n_sources, scenarios:{bear,base,bull:{prob, value, cagr5, target_margin}}}` |
+| `age_days`, `stale` | int, bool | 리서치 경과일 · 100일 초과 여부 |
+| `mechanical_fair` | float\|null | 기계적 기준선 (교차검증용) |
+| `archetype` | obj | `{code, label, traits:[str]}` |
+| `uncertainty` | obj | `{level:"LOW"/"MEDIUM"/"HIGH"/"VERY_HIGH", label, score:0-100}` |
+| `n_models`, `models` | int, [obj] | 기계적 모델 `{id, name, low, mid, high, weight}` |
+| `wacc`, `ke` | float | 소수 (0.09 = 9%) |
+| `implied_cagr_5y`, `base_cagr_5y` | float\|null | 역DCF 내재 5년 매출 CAGR / 기계적 가정 |
+| `mc` | obj\|null | 몬테카를로 `{p10, p50, p90, prob_above_price}` (기계적 가정 기준) |
+| `analyst_target` | float\|null | 참고용 (입력으로 쓰지 않음) |
+| `summary` | str | 한 문장 요약 (한국어) |
+
 ## 상태 저장소 (`state/`)
 - `state/flow/{T}.json` — 일별 체결 단위 집계 (Alpaca)
 - `state/borrow/{T}.json` — 일별 대차 스냅샷 `[{date, fee, available}]` (IBKR FTP 는 히스토리가 없어 직접 누적)
+- `state/fundamentals/{T}.json` — 재무 스냅샷 (적정가치 입력) · `state/fundamentals/_peers.json` — peer 프로필 공유 캐시
+- `state/valuation/research/{T}.json` — 발행된 리서치 원본 (시나리오 가정·출처; Valuation Desk 전용)
 - 워크플로 커밋 단계는 `reports/` 와 함께 `state/` 도 add 해야 한다.
