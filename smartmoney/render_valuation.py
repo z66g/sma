@@ -381,7 +381,7 @@ def _research_html(v: Dict[str, Any], ccy: str) -> str:
                       + f" · 그때까지 누적 영업손실 {_big(s['loss_cum'], ccy)}"
                       + (" <span class='muted'>(리서치가 연도별 이익률 경로를 지정)</span>" if s.get("margin_path_given")
                          else " <span class='muted'>(엔진 기본 경로: 목표 연차까지 직선 축소)</span>"))
-                     if s.get("loss_cum") and (s.get("ebit_path") or [0])[0] < 0 else "")
+                     if s.get("loss_cum") else "")
                   + (f"<br><span class='muted'>예측 {s['N']}년 · 할인율 {_pc(s.get('wacc'), 1)} → {_pc(s.get('wacc_T'), 1)} · 영구성장 {_pc(s.get('g_T'), 1)}"
                      + (f" · 잔존가치 비중 {_pc(s['tv_share'], 0)}" if s.get('tv_share') is not None else "")
                      + (f" · 실패확률 {_pc(s['fail_prob'], 0)}" if s.get('fail_prob') else "") + "</span>" if s.get("N") else "")) if g else e(s.get("how"))

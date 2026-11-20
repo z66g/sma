@@ -1372,7 +1372,8 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
     ev -= pv_x
     rows = dg["rows"]
     ebits = [r["ebit"] for r in rows]
-    be = next((r["t"] for r in rows if r["ebit"] > 0), None)            # 흑자 전환 연차 (예측 기간 내 없으면 None)
+    last_loss = max((r["t"] for r in rows if r["ebit"] <= 0), default=0)
+    be = last_loss + 1 if 0 < last_loss < len(rows) else None           # 흑자 전환 = 마지막 적자 연도의 다음 해 (흑자→적자→흑자 경로 포함)
     loss_cum = -sum(x for x in ebits if x < 0)                          # 예측 기간 누적 영업손실
     inv = sum(r["reinv"] for r in rows[1:]) + sum(xi[1:])
     d_nopat = (rows[-1]["ebit"] - rows[-1]["tax"]) - (rows[0]["ebit"] - rows[0]["tax"])
@@ -1484,7 +1485,7 @@ def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: O
             chk("WARN" if k == "base" else "INFO",
                 f"{ko}: Exit 멀티플 교차검증과 크게 다름 (적용한 영구성장 방식 기업가치 {eg / 1e9:,.1f}B · 시장 배수 {v['exit_multiple']:.1f}배 적용 시 {ex / 1e9:,.1f}B"
                 + (f"; 이 시나리오의 수익성·자본집약도가 설명하는 배수는 {v['fund_multiple']:.1f}배" if _ok(v.get("fund_multiple")) else "") + ")")
-        if v.get("loss_cum") and v["ebit_path"][0] < 0 and not v.get("margin_path_given"):
+        if v.get("loss_cum") and not v.get("margin_path_given"):
             chk("INFO", f"{ko}: 손실 경로는 엔진의 기본 가정(목표 연차까지 직선으로 축소) — "
                         + (f"{v['breakeven_year']}년차 흑자 전환" if v.get("breakeven_year") else f"{v['N']}년 안에 흑자 전환 없음")
                         + f", 그때까지 누적 영업손실 {v['loss_cum'] / 1e9:,.2f}B. 상용화 일정·비용 구조가 이와 다르면 margin_path 로 연도별 이익률을 지정할 것 "
