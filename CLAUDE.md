@@ -1756,6 +1756,9 @@ COMPUTATION (deterministic engine)
 - The routine never edits engine code, docs or the watchlist. A ticker that fails verification keeps
   its previous published value.
 - .github/workflows/valuation-refresh.yml re-prices on demand (no research).
+- .github/workflows/valuation-on-add.yml: when tickers.txt changes and a watchlist ticker has no published
+  research, it calls the routine's API trigger; that run researches NEW tickers only (routine doc section 6).
+  Without the two secrets it does nothing and the ticker waits for the Saturday run.
 ```
 
 ---
