@@ -1729,6 +1729,11 @@ COMPUTATION (deterministic engine)
 13. Every publish runs self-checks (terminal-value cross-check, incremental ROIC vs cost of capital, +/-1pt
     discount-rate verdict stability, probability symmetry, missing failure risk). ERROR-level findings block
     publishing; the rest are shown on the detail page.
+14. One cash flow, one place: operating losses go through the profit path (`margin_path` when the default straight-line
+    path does not describe the business), capital spending through the investment build (`capex_usd`/`da_usd` during a
+    build-out, so depreciation of assets already paid for is not charged again as maintenance capex), non-cash
+    purchase-accounting amortization through `amort_usd`. A funding failure (`fail_prob`) wipes out the whole equity value
+    including non-operating assets and options; a scenario that ends loss-making gets no terminal value.
 ```
 
 ### 14.3 Placement

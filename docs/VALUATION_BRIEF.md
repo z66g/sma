@@ -47,17 +47,25 @@ package header), find out why from filings and news.
   final-year return on capital). Do not add risk again through `wacc_adj` (needs `wacc_adj_basis`; systematic risk only).
   Failure risk: the engine applies NO default failure probability — set `fail_prob` yourself in each scenario of a cash-burning
   company (0 where the bear story already is the failure path).
-- `rev_growth` may have 3–15 years; write the years the evidence covers and let the engine fade the rest (it extends the
+- `rev_growth` may have 3–20 years; write the years the evidence covers and let the engine fade the rest (it extends the
   horizon to 10–20 years until growth converges). Do not cut growth early to fit ten years.
 - Read the "자체 점검" lines of the dry-run: fix input errors they reveal; explain in `valuation_notes` the ones that reflect the
   real business. If the ±1pt discount-rate range flips the verdict, describe the conclusion as a range.
+- Margin path: by default the engine moves the margin in a straight line from the start margin to `target_margin` (for
+  loss-makers the loss shrinks linearly as revenue scales). The dry-run prints the yearly operating profit it actually used
+  ("영업손익(백만)"). If your bottom-up view differs — pre-commercial companies whose losses persist or grow, ramps that dip
+  before they recover — give `margin_path` (yearly GAAP operating margins) with `margin_path_basis`. Never put operating
+  losses into `extra_investment` or `capex_pct`: that inflates invested capital (lower terminal ROIC) and drops the tax shield.
 - One-offs in the trailing margin → `adjustments.start_margin` (+ `start_margin_basis`). Spin-off / closed acquisition →
   `adjustments.revenue_base` (+ `revenue_base_basis`). Existing tax-loss carryforwards → present value in `nonop_assets`.
 - Scenario margins are GAAP operating margins. `rev_growth` year 1 = next twelve months from the trailing-twelve-month base
   (see the NTM bridge in the package).
 - Cash-flow build: default is reinvestment = revenue growth ÷ Sales-to-Capital. If the company disclosed capex plans or its
   capital intensity is changing, use the explicit build per scenario (`capex_pct`, `da_pct`, `nwc_pct`) instead; do not mix it
-  with `extra_investment`.
+  with `extra_investment`. For a build-out phase where capex is a multiple of revenue, give the yearly dollar amounts
+  (`capex_usd`, `da_usd`) for those years and maintenance-level ratios for the years after. The engine treats depreciation
+  inside operating profit as a cash cost (maintenance capex); the explicit build adds it back and charges actual capex, so an
+  asset paid for up front is not charged a second time through its depreciation.
 - Check and correct via `adjustments` when the filings support it: `shares` (diluted count), `operating_leases_in_debt`,
   `debt_like_liabilities`, `nonop_assets` (investments, restricted cash, crypto holdings), `minority_economic_share` or
   `minority_in_share_count`, `extra_dilution_pct`. Use `tax_rate` / `terminal_growth` only with evidence.

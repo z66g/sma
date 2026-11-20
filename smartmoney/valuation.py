@@ -41,7 +41,7 @@ STABLE_BETA = (0.8, 1.2)     # 안정 성장기 베타 범위 (성숙 기업의 
 WACC_CONV_YEARS = 10         # 할인율이 안정기 수준에 도달하는 해
 TAX_CONV_YEARS = 5           # 실효세율이 장기 세율에 도달하는 해 (일회성 세금 효과는 오래가지 않는다)
 MAX_HORIZON = 20             # 리서치 시나리오의 최장 명시+감쇠 구간
-MAX_EXPLICIT = 15            # 리서치가 직접 줄 수 있는 연도별 성장률 개수
+MAX_EXPLICIT = 20            # 리서치가 직접 줄 수 있는 연도별 성장률 개수
 AMORT_DECAY = 0.75           # 인수 무형자산 상각의 연간 잔존 비율
 
 # 섹터 기본값 (peer 통계가 없을 때만 사용): 성숙기 영업이익률 / Sales-to-Capital
@@ -553,15 +553,21 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
     # 컨센서스 구간(1~2년차) 이후: 50% 를 넘는 성장률은 초과분의 30% 만 인정한 수준에서 감쇠 시작 (초고성장의 복리 폭주 방지)
     g2c = np.where(g2 > GROWTH_SOFT_CAP, GROWTH_SOFT_CAP + 0.3 * (g2 - GROWTH_SOFT_CAP), g2)
     amort0 = float(p.get("amort0") or 0.0)
+    # 리서치가 연도별 비현금 상각(인수 무형자산·매수가격 배분 상각) 금액을 주면 그 금액을 그대로 되돌린다 (기본: 과거 초과 상각이 연 25%씩 소멸)
+    am_abs = [float(x) for x in p["amort_usd"]] if p.get("amort_usd") is not None else None
     rev0 = f("rev0")
     rev_prev = rev0 * np.ones(np.broadcast(g1, m0, mT, s2c, w0, gT).shape)
     scale_m = bool(p.get("scale_margin"))
+    mpath = [float(x) for x in (p.get("margin_path") or [])]   # 리서치가 준 연도별 GAAP 영업이익률 (상용화 전 적자가 여러 해 이어지는 경우 등)
     explicit = p.get("capex_pct") is not None
     if explicit:
         cap_list = [float(x) for x in (p["capex_pct"] if isinstance(p["capex_pct"], (list, tuple)) else [p["capex_pct"]])]
         dp = p.get("dep_pct") if p.get("dep_pct") is not None else p["da_pct"]
         dep_list = [float(x) for x in (dp if isinstance(dp, (list, tuple)) else [dp])]   # 연도별 D&A 비율 (인수 상각 감소 경로 표현)
         dep, nwc = dep_list[-1], float(p.get("nwc_pct") or 0.0)                          # 마지막 값 = 영구 수준
+        # 달러 금액 경로(선택): 매출이 아직 작아 '매출 대비 비율'이 의미 없는 건설기 — 준 연차는 금액 그대로, 이후는 비율
+        cap_abs = [float(x) for x in (p.get("capex_usd") or [])]
+        dep_abs = [float(x) for x in (p.get("da_usd") or [])]
     nol = np.zeros_like(rev_prev)
     pv = np.zeros_like(rev_prev)
     df = np.ones_like(rev_prev)
@@ -573,7 +579,13 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
         else:
             g = g1 if t == 1 else g2 if t == 2 else gT + (g2c - gT) * GROWTH_DECAY ** (t - 2)
         rev = rev_prev * (1 + g)
-        if scale_m:      # 적자 기업: 손실은 매출에 비례하지 않는다(고정비) → 규모가 커질수록 손실률이 줄고 N년차에 목표 도달
+        if mpath:        # 명시 경로: 준 연차까지는 그대로, 그 뒤는 마지막 값에서 목표 마진으로 직선 수렴(목표 연차가 이미 지났으면 바로 목표)
+            L = len(mpath)
+            if t <= L:
+                m = np.asarray(mpath[t - 1], float)
+            else:
+                m = mpath[-1] + (mT - mpath[-1]) * (min((t - L) / (conv - L), 1.0) if conv > L else 1.0)
+        elif scale_m:    # 적자 기업: 손실은 매출에 비례하지 않는다(고정비) → 규모가 커질수록 손실률이 줄고 N년차에 목표 도달
             m = mT - (mT - m0) * np.minimum(rev0 / rev, 1.5) * max(1 - t / conv, 0.0)   # 목표 연차까지 끊김 없이 수렴
         else:
             m = m0 + (mT - m0) * min(t / conv, 1.0)
@@ -583,12 +595,15 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
         taxes = (np.maximum(ebit, 0) - use) * rate
         nol = nol - use + np.maximum(-ebit, 0)
         if explicit:     # Finbox 식 명시적 현금흐름: NOPAT + D&A − CAPEX − 순운전자본 증가 (리서치가 CAPEX 계획을 직접 줄 때)
-            cx = cap_list[min(t - 1, len(cap_list) - 1)]
-            reinv = (cx - dep_list[min(t - 1, len(dep_list) - 1)]) * rev + nwc * (rev - rev_prev)
-            fcff = ebit - taxes - reinv
+            if t <= len(cap_abs):
+                reinv = cap_abs[t - 1] - dep_abs[t - 1] + nwc * (rev - rev_prev)
+            else:
+                cx = cap_list[min(t - 1, len(cap_list) - 1)]
+                reinv = (cx - dep_list[min(t - 1, len(dep_list) - 1)]) * rev + nwc * (rev - rev_prev)
+            fcff = ebit - taxes - reinv + (am_abs[t - 1] if am_abs is not None and t <= len(am_abs) else 0.0)
         else:
             reinv = np.maximum(rev - rev_prev, 0) / s2c
-            fcff = ebit - taxes - reinv + amort0 * AMORT_DECAY ** t
+            fcff = ebit - taxes - reinv + ((am_abs[t - 1] if t <= len(am_abs) else 0.0) if am_abs is not None else amort0 * AMORT_DECAY ** t)
         w = w0 + (wT - w0) * min((t - 1) / max(min(N, WACC_CONV_YEARS) - 1, 1), 1.0)
         df = df / (1 + w)
         pv = pv + fcff * df * np.sqrt(1 + w)                # 기중(mid-year) 할인
@@ -608,6 +623,9 @@ def dcf(p: Dict[str, Any], N: int, terminal: str = "growth", mult=None, gpath=No
     # (Exit 멀티플 방식은 N년 말 시점의 거래가치이므로 보정하지 않는다)
     mid = np.sqrt(1 + wT)
     tv_g = fcff_t1 / np.maximum(wT - gT, 0.025) * mid
+    # 말년 영업이익이 0 이하인 경로에 영구가치 공식을 쓰면 '재투자율'이 손실을 줄여 주는 무의미한 값이 나온다.
+    # 영원히 적자인 사업은 계속하지 않는다(중단 선택권) → 잔존가치 0
+    tv_g = np.where(nopat_T > 0, tv_g, 0.0)
     if terminal == "growth":
         tv = tv_g
     elif terminal == "ebitda":
@@ -1283,14 +1301,15 @@ def _verdict(fair: float, price: float, band: float) -> str:
             "DEEP_OVERVALUED" if over > 2.5 * band else "OVERVALUED" if over > band else "FAIR")
 
 
-def _growth_path(explicit: Sequence[float], gT: float) -> List[float]:
+def _growth_path(explicit: Sequence[float], gT: float, min_len: int = 0) -> List[float]:
     """리서치가 준 연도별 성장률 → 영구성장률에 수렴할 때까지 감쇠시킨 전체 경로.
 
     잔존가치는 '안정 성장'을 전제한다. 그래서 성장률이 영구성장률 ±1%p 안에 들어올 때까지 예측 구간을 늘린다
-    (최소 10년, 최장 MAX_HORIZON 년). 10년에서 무조건 끊으면 아직 성장 중인 회사는 11년차에 성장률이 절벽처럼 떨어진다."""
+    (최소 10년, 최장 MAX_HORIZON 년). 10년에서 무조건 끊으면 아직 성장 중인 회사는 11년차에 성장률이 절벽처럼 떨어진다.
+    min_len = 이익률 경로·목표 마진 도달 연차가 요구하는 최소 길이 (잔존가치는 목표 마진에 도달한 뒤에 계산해야 한다)."""
     gp = [float(g) for g in explicit][:MAX_EXPLICIT]
     last = gp[-1]
-    while len(gp) < MAX_HORIZON and (len(gp) < 10 or abs(last - gT) > 0.01):
+    while len(gp) < MAX_HORIZON and (len(gp) < max(10, min_len) or abs(last - gT) > 0.01):
         last = gT + (min(last, GROWTH_SOFT_CAP) - gT) * GROWTH_DECAY
         gp.append(last)
     return gp
@@ -1318,12 +1337,19 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
         # 영구 구간이 명시 구간의 마지막 해보다 빨리 성장할 수는 없다: 리서치가 말년 성장률을 엔진의 영구성장률보다 낮게 봤다면
         # 그 성장률이 그 시나리오의 안정 성장률이다 (하한 2% — 물가 수준의 명목 성장)
         q["gT"] = _clip(min(float(P["gT"]), float(s["rev_growth"][-1])), 0.02, float(P["gT"]))
-    gp = _growth_path(s["rev_growth"], q["gT"])
+    mp = [float(x) for x in (s.get("margin_path") or [])][:MAX_HORIZON]
+    if mp:
+        q["margin_path"] = mp
+    gp = _growth_path(s["rev_growth"], q["gT"], max(len(mp), min(q["conv"], MAX_HORIZON)))
     N = len(gp)
     if s.get("capex_pct") is not None:                      # 명시적 현금흐름 빌드 (CAPEX·D&A·순운전자본을 매출 대비 비율로)
         q["capex_pct"] = s["capex_pct"]
         q["dep_pct"] = s["da_pct"] if s.get("da_pct") is not None else P["da_pct"]
         q["nwc_pct"] = float(s.get("nwc_pct") or 0.0)
+        if s.get("capex_usd"):
+            q["capex_usd"], q["da_usd"] = s["capex_usd"], s["da_usd"]
+    if s.get("amort_usd") is not None:                      # 손익 경로에 비용으로 든 비현금 상각(인수 무형자산 등)의 연도별 금액
+        q["amort_usd"] = s["amort_usd"]
     if _ok(s.get("tax_rate")):                              # 구조적으로 낮거나 높은 장기 세율의 근거가 있을 때
         q["taxT"] = _clip(float(s["tax_rate"]), 0.05, 0.35)
     # 실패 위험은 리서치가 정한다: 약세 시나리오가 이미 실패 경로를 그리고 있으면 엔진의 기계적 실패확률을 또 곱해서는 안 된다
@@ -1360,6 +1386,10 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
         pv_x += x * dfx * math.sqrt(1 + w)
     ev -= pv_x
     rows = dg["rows"]
+    ebits = [r["ebit"] for r in rows]
+    last_loss = max((r["t"] for r in rows if r["ebit"] <= 0), default=0)
+    be = last_loss + 1 if 0 < last_loss < len(rows) else None           # 흑자 전환 = 마지막 적자 연도의 다음 해 (흑자→적자→흑자 경로 포함)
+    loss_cum = -sum(x for x in ebits if x < 0)                          # 예측 기간 누적 영업손실
     inv = sum(r["reinv"] for r in rows[1:]) + sum(xi[1:])
     d_nopat = (rows[-1]["ebit"] - rows[-1]["tax"]) - (rows[0]["ebit"] - rows[0]["tax"])
     rev = [float(q["rev0"])] + [r["rev"] for r in rows]
@@ -1368,14 +1398,17 @@ def scenario_value(D, P, exitp, s: Dict[str, Any], shift: float = 0.0) -> Dict[s
         cx, dp = s["capex_pct"], q["dep_pct"]
         cap_T = float(cx[-1] if isinstance(cx, (list, tuple)) else cx)
         dep_T = float(dp[-1] if isinstance(dp, (list, tuple)) else dp)
-    return {"extra_investment_pv": pv_x, "value": float(per_share(ev, D, pf)),
+    # 실패확률은 여기서 곱하지 않는다: 영업 외 자산·부채성 항목까지 더한 '전체 주주가치'에 한 번만 적용한다(apply_research)
+    return {"extra_investment_pv": pv_x, "value": float(per_share(ev, D)), "nopat_T": dg["nopat_T"],
             "how": f"{N}년 DCF (영구성장" + (" · EBITDA Exit 평균" if ev_x is not None and EXIT_BLEND > 0 else "") + ")",
             "rev5": rev[5], "rev10": rev[10], "cagr5": _cagr(rev[0], rev[5], 5), "wacc": q["w0"], "wacc_T": dg["wT"],
             "fail_prob": pf, "N": N, "g_T": float(q["gT"]), "tv_share": dg["tv_share"], "ev_growth": dg["ev"] - pv_x,
             "ev_exit": (ev_x - pv_x) if ev_x is not None else None, "exit_multiple": mult,
             "fund_multiple": dg["fund_ev_ebitda"], "roic_incr": (d_nopat / inv) if inv > 0 else None,
             "roic_T": roic_N, "roic_prem": float(q["roic_prem"]),
-            "margin_T": rows[-1]["margin"], "capex_T": cap_T, "dep_T": dep_T}
+            "margin_T": rows[-1]["margin"], "capex_T": cap_T, "dep_T": dep_T,
+            "ebit_path": ebits, "breakeven_year": be, "loss_cum": loss_cum, "margin_path_given": bool(mp),
+            "margin_0": float(q["m0"]), "margin_1": rows[0]["margin"]}
 
 
 SCEN_KO = {"bear": "약세", "base": "기본", "bull": "강세"}
@@ -1421,12 +1454,15 @@ def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: O
             raw = r["value"]
             if ms is not None:      # 소수주주의 '경제적 몫': 장부 비지배지분 차감을 되돌리고, 전체 주주가치에서 그 비율을 뗀다
                 raw = (r["value"] + D["minority"] / shares) * (1 - ms)
-            core = max(raw + add, 0.0)                      # 영업 외 자산은 음(-)의 주주가치를 먼저 메운 뒤에 남는 만큼만 가치
+            # 영업 외 자산은 음(-)의 주주가치를 먼저 메운 뒤에 남는 만큼만 가치. 자금조달 실패(주주가치 0)는 그 합계 전체에 적용한다 —
+            # DCF 주주가치에만 곱하면 음수 가치가 '덜 음수'가 되고, 실패해도 영업 외 자산은 남는다는 계산이 된다
+            pf_ = r.get("fail_prob") or 0.0
+            core = max(raw + add, 0.0) * (1 - pf_)
             # 옵션가치도 주주의 몫이다: 회사가 자금조달에 실패하면 함께 사라지고, 추가 희석도 똑같이 받는다
-            val = (core + opt_total * (1 - (r.get("fail_prob") or 0.0))) / dil
+            val = (core + opt_total * (1 - pf_)) / dil
             sc[name] = {**r, "prob": float(s["prob"]), "core": core, "value": val, "story": s.get("story"),
                         "target_margin": s.get("target_margin"), "margin_year": s.get("margin_year"),
-                        "rev_growth": s.get("rev_growth"), "wacc_adj": s.get("wacc_adj") or 0.0,
+                        "rev_growth": s.get("rev_growth"), "margin_path": s.get("margin_path"), "wacc_adj": s.get("wacc_adj") or 0.0,
                         "fail_prob_given": _ok(s.get("fail_prob"))}
             fv += float(s["prob"]) * val
         return sc, fv
@@ -1469,6 +1505,17 @@ def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: O
             chk("WARN" if k == "base" else "INFO",
                 f"{ko}: Exit 멀티플 교차검증과 크게 다름 (적용한 영구성장 방식 기업가치 {eg / 1e9:,.1f}B · 시장 배수 {v['exit_multiple']:.1f}배 적용 시 {ex / 1e9:,.1f}B"
                 + (f"; 이 시나리오의 수익성·자본집약도가 설명하는 배수는 {v['fund_multiple']:.1f}배" if _ok(v.get("fund_multiple")) else "") + ")")
+        if not v.get("margin_path_given") and v.get("margin_0") is not None and v["margin_0"] < -0.05:
+            # 적자 출발 기업의 기본 경로: 비용을 고정비로 보고 매출이 커지는 만큼 손실률이 줄어든다(목표 연차까지). 비용이 용량·매출과
+            # 함께 느는 회사(감가상각·인건비)에서는 초기 손익을 크게 좋게 그린다 — 누적 손실이 없어 보여도 알린다
+            chk("INFO", f"{ko}: 손익 경로는 엔진의 기본 가정 — 출발 영업이익률 {v['margin_0'] * 100:,.0f}% → 1년차 {v['margin_1'] * 100:,.0f}% "
+                        f"(1년차 영업손익 {v['ebit_path'][0] / 1e6:,.0f}M), "
+                        + ((f"{v['breakeven_year']}년차 흑자 전환" if v.get("breakeven_year") else f"{v['N']}년 안에 흑자 전환 없음")
+                           + f"·누적 영업손실 {v['loss_cum'] / 1e9:,.2f}B" if v.get("loss_cum") else "예측 기간 내내 흑자")
+                        + ". 적자 기업은 비용을 고정비로 보고 매출이 커진 만큼 손실률을 줄인다 — 상향식 손익(감가상각·인건비가 규모와 함께 느는지)과 "
+                          "다르면 margin_path 로 연도별 이익률을 지정할 것 (영업손실을 extra_investment 에 넣으면 말년 ROIC 가 낮아지고 결손금 절세가 빠진다)")
+        if v.get("nopat_T") is not None and v["nopat_T"] <= 0:
+            chk("INFO", f"{ko}: 말년({v['N']}년차) 영업이익이 0 이하 — 잔존가치를 0 으로 계산했다(영원히 적자인 사업은 중단한다고 본다)")
         if _ok(v["tv_share"]) and v["tv_share"] > 0.9:
             chk("INFO", f"{ko}: 기업가치의 {v['tv_share'] * 100:.0f}%가 {v['N']}년 뒤 잔존가치")
         if _ok(v["roic_incr"]) and _ok(v["cagr5"]) and v["cagr5"] > 0.05 and v["roic_incr"] < v["wacc_T"] - 0.01:

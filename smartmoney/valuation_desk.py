@@ -100,8 +100,14 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
         if not V._ok(s.get("target_margin")) or not -0.2 <= s["target_margin"] <= 0.7:
             err.append(f"scenarios.{k}.target_margin: −0.2~0.7")
         my = s.get("margin_year")
-        if my is not None and (not isinstance(my, int) or not 1 <= my <= 10):
-            err.append(f"scenarios.{k}.margin_year: 1~10 정수")
+        if my is not None and (not isinstance(my, int) or not 1 <= my <= V.MAX_HORIZON):
+            err.append(f"scenarios.{k}.margin_year: 1~{V.MAX_HORIZON} 정수")
+        mp = s.get("margin_path")
+        if mp is not None:
+            if not isinstance(mp, list) or not 1 <= len(mp) <= V.MAX_HORIZON or any(not V._ok(x) or not -500.0 <= x <= 0.7 for x in mp):
+                err.append(f"scenarios.{k}.margin_path: 연도별 GAAP 영업이익률 1~{V.MAX_HORIZON}개 (소수, −500~0.7)")
+            if len(str(s.get("margin_path_basis") or "").strip()) < 40:
+                err.append(f"scenarios.{k}.margin_path 를 쓰려면 margin_path_basis(40자 이상): 연도별 영업손익을 어떤 비용·매출 가정에서 계산했는지")
         if s.get("wacc_adj") is not None and (not V._ok(s["wacc_adj"]) or abs(s["wacc_adj"]) > 0.03):
             err.append(f"scenarios.{k}.wacc_adj: ±0.03 이내")
         if s.get("wacc_adj") and len(str(s.get("wacc_adj_basis") or "").strip()) < 40:
@@ -112,17 +118,31 @@ def validate(R: Any, ticker: str, direct_value_only: bool = False) -> Tuple[List
         cx = s.get("capex_pct")
         if cx is not None:
             xs = cx if isinstance(cx, list) else [cx]
-            if not xs or len(xs) > V.MAX_HORIZON or any(not V._ok(x) or not 0 <= x <= 6.0 for x in xs):
-                err.append(f"scenarios.{k}.capex_pct: 매출 대비 CAPEX 비율(0~6.0), 숫자 또는 연도별 목록(최대 {V.MAX_HORIZON})")
+            if not xs or len(xs) > V.MAX_HORIZON or any(not V._ok(x) or not -2.0 <= x <= 6.0 for x in xs) or xs[-1] < 0:
+                err.append(f"scenarios.{k}.capex_pct: 매출 대비 CAPEX 비율(−2.0~6.0; 음수는 투자세액공제·보조금 수령 등 순유입 연도, 마지막 값은 0 이상), "
+                           f"숫자 또는 연도별 목록(최대 {V.MAX_HORIZON})")
             dl = s.get("da_pct")
             if dl is not None:
                 ds = dl if isinstance(dl, list) else [dl]
                 if not ds or len(ds) > V.MAX_HORIZON or any(not V._ok(x) or not 0 <= x <= 0.6 for x in ds):
                     err.append(f"scenarios.{k}.da_pct: 0~0.6, 숫자 또는 연도별 목록(최대 {V.MAX_HORIZON})")
+            cu, du = s.get("capex_usd"), s.get("da_usd")
+            if cu is not None or du is not None:
+                if (not isinstance(cu, list) or not isinstance(du, list) or not 1 <= len(cu) <= V.MAX_HORIZON or len(cu) != len(du)
+                        or any(not V._ok(x) or abs(x) > 1e12 for x in cu) or any(not V._ok(x) or not 0 <= x <= 1e12 for x in du)):
+                    err.append(f"scenarios.{k}.capex_usd / da_usd: 연도별 CAPEX·D&A 금액(달러) — 같은 길이의 목록(1~{V.MAX_HORIZON}개), "
+                               "CAPEX 는 순유입 연도에 음수 가능, D&A 는 0 이상")
             if s.get("nwc_pct") is not None and (not V._ok(s["nwc_pct"]) or not -0.5 <= s["nwc_pct"] <= 0.8):
                 err.append(f"scenarios.{k}.nwc_pct: −0.5~0.8")
             if s.get("extra_investment"):
                 err.append(f"scenarios.{k}: capex_pct(명시적 현금흐름)와 extra_investment 는 함께 쓰지 않는다 — CAPEX 계획은 capex_pct 에 모두 담을 것")
+        if cx is None and (s.get("capex_usd") is not None or s.get("da_usd") is not None):
+            err.append(f"scenarios.{k}: capex_usd / da_usd 를 쓰려면 그 이후 연도에 적용할 비율 capex_pct · da_pct 도 함께 줄 것(유지 수준)")
+        au = s.get("amort_usd")
+        if au is not None and (not isinstance(au, list) or len(au) > V.MAX_HORIZON or any(not V._ok(x) or not 0 <= x <= 1e12 for x in au)
+                               or len(str(s.get("amort_usd_basis") or "").strip()) < 40):
+            err.append(f"scenarios.{k}.amort_usd: 연도별 비현금 상각 금액(달러, 0 이상, 최대 {V.MAX_HORIZON}개) + amort_usd_basis(40자 이상: "
+                       "어떤 인수의 무형자산·매수가격 배분 상각이고 공시된 상각 일정이 무엇인지). 교체가 필요한 설비의 감가상각은 넣지 않는다")
         if s.get("terminal_growth") is not None and (not V._ok(s["terminal_growth"]) or not 0.01 <= s["terminal_growth"] <= 0.04):
             err.append(f"scenarios.{k}.terminal_growth: 0.01~0.04 (기본은 엔진의 무위험금리 − 1%p)")
         if s.get("tax_rate") is not None and (not V._ok(s["tax_rate"]) or not 0.05 <= s["tax_rate"] <= 0.35):
@@ -483,7 +503,7 @@ def prepare(ticker: str, work_dir: str, refresh: bool = False) -> Path:
     L += ["", "## 5. 결과물 템플릿", "",
           ("이 종목은 금융·REIT 유형이라 FCFF DCF 를 쓰지 않는다. 각 시나리오의 `value_per_share` 를 직접 산출하고 `value_basis` 에 방법과 입력값을 적는다."
            if direct else
-           "각 시나리오의 `rev_growth`(연도별 매출 성장률, 3~15개) · `target_margin`(GAAP 영업이익률) · `margin_year` 를 채우면 엔진이 위 할인율로 DCF 를 계산한다 "
+           "각 시나리오의 `rev_growth`(연도별 매출 성장률, 3~20개) · `target_margin`(GAAP 영업이익률) · `margin_year` 를 채우면 엔진이 위 할인율로 DCF 를 계산한다. 손익이 직선으로 움직이지 않으면(상용화 전 적자 지속 등) `margin_path`(연도별 영업이익률) + `margin_path_basis` 를 준다 "
            "(성장률이 영구성장률에 수렴할 때까지 10~20년). 확률의 기본값은 25/50/25 — 비대칭으로 두려면 `prob_basis` 에 증거를 적는다."),
           "", "```json", json.dumps(template(T, direct), ensure_ascii=False, indent=1), "```", "",
           "## 6. 검증·발행", "", "```bash",
