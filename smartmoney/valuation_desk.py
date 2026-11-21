@@ -259,9 +259,12 @@ def publish(ticker: str, v: Dict[str, Any], research: Optional[Dict[str, Any]] =
     out = {"numbers": PUB_DIR / f"{T}.json", "html": REPORTS_DIR / "tickers" / T / "valuation.html"}
     pub = V.compact(v)
     pub["ticker"], pub["name"] = T, v.get("name")
-    pub["published"] = datetime.now(timezone.utc).date().isoformat()
+    now = datetime.now(timezone.utc)
+    pub["published"] = now.date().isoformat()
+    pub["published_at"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")          # 검토 종목의 '분석 요청' 해소 판단에 쓴다 (review_list)
     _write(out["numbers"], json.dumps(pub, ensure_ascii=False, indent=1))
-    _write(out["html"], page(v, v.get("name")))
+    from .site_tone import tone
+    _write(out["html"], tone(page(v, v.get("name"))))
     if research is not None:
         out["research"] = RESEARCH_DIR / f"{T}.json"
         _write(out["research"], json.dumps({k: x for k, x in research.items() if not k.startswith("_")}, ensure_ascii=False, indent=1))
@@ -272,13 +275,68 @@ def publish(ticker: str, v: Dict[str, Any], research: Optional[Dict[str, Any]] =
     return out
 
 
-PLAN_ORDER = {"NEW": 0, "EARNINGS": 1, "EVENT": 1, "DEPENDENCY": 2, "STALE": 3, "OK": 9}
+AUDIT_RATIO = 3.0          # 적정가가 현재가의 3배 초과 또는 1/3 미만
+AUDIT_LOSS_MARGIN = -0.05  # 출발 영업이익률이 −5% 미만인 적자 기업(상용화 전·대규모 선투자)
+AUDIT_MOVE = 0.30          # 갱신일 때: 이전 발행값 대비 ±30% 넘게 움직였을 때만
+
+
+def audit_reasons(v: Dict[str, Any], prev: Optional[Dict[str, Any]] = None) -> List[str]:
+    """독립 감사가 필요한 이유 (없으면 빈 목록).
+
+    신규 리서치: 적정가가 현재가의 3배 초과·1/3 미만이거나, 출발 영업이익률이 −5% 미만인 적자 기업.
+    갱신(이전 리서치 발행값이 있음): 위 조건에 더해 적정가가 이전 발행값에서 ±30% 넘게 움직였거나 판정 방향이 바뀐 경우만."""
+    if (v or {}).get("method") != "RESEARCH":
+        return []
+    fair, price = v.get("fair_value"), v.get("price")
+    R = v.get("research") or {}
+    adj = R.get("adjustments") or {}
+    m0 = adj.get("start_margin") if V._ok(adj.get("start_margin")) else (v.get("assumptions") or {}).get("m0")
+    base = []
+    if V._ok(fair) and V._ok(price) and price > 0 and fair > 0:
+        r = fair / price
+        if r > AUDIT_RATIO or r < 1 / AUDIT_RATIO:
+            base.append(f"적정가가 현재가의 {r:.2f}배")
+    elif V._ok(price) and price > 0:
+        base.append("적정가 0 이하")
+    if V._ok(m0) and m0 < AUDIT_LOSS_MARGIN:
+        base.append(f"적자 출발 기업 (출발 영업이익률 {m0 * 100:.0f}%)")
+    if not base:
+        return []
+    if prev and prev.get("method") == "RESEARCH" and V._ok(prev.get("fair_value")) and prev["fair_value"] > 0 and V._ok(fair):
+        moved = abs(fair / prev["fair_value"] - 1)
+        flipped = V._klass(str(prev.get("verdict") or "")) != V._klass(str(v.get("verdict") or ""))
+        if moved <= AUDIT_MOVE and not flipped:
+            return []
+        base.append(f"이전 발행값 {prev['fair_value']:,.2f} → {fair:,.2f}" + (" · 판정 방향 변경" if flipped else ""))
+    return base
+
+
+def audit_record_ok(R: Dict[str, Any]) -> Tuple[bool, str]:
+    """리서치에 독립 감사 기록이 있고 발행 가능한 판정인지."""
+    a = (R or {}).get("audit")
+    if not isinstance(a, dict):
+        return False, "리서치에 audit 기록이 없음"
+    if str(a.get("verdict") or "") not in ("발행 가능", "수정 후 발행"):
+        return False, f"감사 판정이 발행 가능/수정 후 발행이 아님: {a.get('verdict')}"
+    if len(str(a.get("summary") or "").strip()) < 40:
+        return False, "audit.summary 40자 이상 (무엇을 확인했고 어떤 지적을 어떻게 반영했는지)"
+    try:
+        date.fromisoformat(str(a.get("date") or ""))
+    except ValueError:
+        return False, "audit.date (YYYY-MM-DD)"
+    return True, ""
+
+
+PLAN_ORDER = {"NEW": 0, "REQUEST": 1, "EARNINGS": 1, "EVENT": 1, "DEPENDENCY": 2, "STALE": 3, "OK": 9, "REVIEW_OK": 9, "REVIEW_EXPIRED": 10}
 PLAN_KO = {"NEW": "신규 — 리서치 없음", "EARNINGS": "실적 발표 이후 — 갱신", "EVENT": "예정된 이벤트 경과 — 갱신",
-           "DEPENDENCY": "의존 종목 값 변경 — 재계산", "STALE": "100일 경과 — 갱신", "OK": "유효 — 주가·금리만 재계산"}
-PLAN_COST = {"NEW": 2, "EARNINGS": 1, "EVENT": 1, "DEPENDENCY": 1, "STALE": 1}      # 신규 조사는 갱신의 약 2배 작업량
+           "DEPENDENCY": "의존 종목 값 변경 — 재계산", "STALE": "100일 경과 — 갱신", "OK": "유효 — 주가·금리만 재계산",
+           "REQUEST": "검토 종목 — 분석 요청", "REVIEW_OK": "검토 종목 — 주가·금리만 재계산 (분석 후 4주까지)",
+           "REVIEW_EXPIRED": "검토 종목 — 분석 후 4주 경과, 재계산 중단 (다시 보려면 분석 요청)"}
+PLAN_COST = {"NEW": 2, "EARNINGS": 1, "EVENT": 1, "DEPENDENCY": 1, "STALE": 1, "REQUEST": 2}      # 신규 조사는 갱신의 약 2배 작업량
 
 
-def plan(tickers: List[str], today: Optional[str] = None, fetch: bool = True) -> List[Dict[str, Any]]:
+def plan(tickers: List[str], today: Optional[str] = None, fetch: bool = True,
+         review: Optional[List[Dict[str, Optional[str]]]] = None) -> List[Dict[str, Any]]:
     """관심종목마다 이번 주에 할 일을 정한다 (주간 예약 작업의 입력).
 
     NEW        발행된 리서치가 없다 → 조사·발행
@@ -287,9 +345,27 @@ def plan(tickers: List[str], today: Optional[str] = None, fetch: bool = True) ->
     DEPENDENCY 이 리서치가 값에 쓰는 다른 종목(`depends_on`)이 이후에 다시 발행됐다 → 같은 식으로 재계산
     STALE      리서치 100일 경과 → 갱신
     OK         유효 → 주가·금리·ERP 만 반영해 재계산
-    반환은 우선순위(NEW → EARNINGS → DEPENDENCY → STALE, 같은 등급 안에서는 오래된 리서치부터) 순."""
+    검토 종목(review — review.txt, 관심종목에 없는 것만):
+    REQUEST        리서치가 없거나 분석 요청이 마지막 발행보다 늦다 → 조사(리서치가 있으면 갱신)·발행
+    REVIEW_OK      분석 후 4주 이내 → 주가·금리·ERP 만 재계산 (실적·이벤트 갱신은 하지 않는다)
+    REVIEW_EXPIRED 4주 경과 → 아무것도 하지 않는다 (대시보드에 '오래됨')
+    반환은 우선순위(NEW → REQUEST·EARNINGS → DEPENDENCY → STALE, 같은 등급 안에서는 오래된 리서치부터) 순."""
+    from . import review_list as RL
     day = date.fromisoformat(today) if today else datetime.now(timezone.utc).date()
     out = []
+    wl = {t.upper() for t in tickers}
+    for e in review or []:
+        if e["ticker"] in wl:
+            continue
+        st = RL.status(e, day)
+        action = {"PENDING": "REQUEST", "FRESH": "REVIEW_OK", "EXPIRED": "REVIEW_EXPIRED"}[st["status"]]
+        why = PLAN_KO[action]
+        if action == "REQUEST":
+            why = ("검토 종목 — 리서치 없음, 신규 조사" if not st["has_research"]
+                   else f"검토 종목 — 분석 요청({st['requested_at']}), 리서치 갱신")
+        out.append({"ticker": e["ticker"], "action": action, "why": why, "research_as_of": st["research_as_of"],
+                    "age_days": st["age_days"], "review": True, "requested_at": st["requested_at"],
+                    "mode": "NEW" if action == "REQUEST" and not st["has_research"] else ("UPDATE" if action == "REQUEST" else None)})
     for t in tickers:
         T = t.upper()
         R, pub = load_research(T), None
@@ -358,6 +434,13 @@ def read_published(ticker: str, price: Optional[float] = None, as_of: Optional[s
     if pub.get("method") != "RESEARCH" and os.environ.get("SMA_VALUATION_ALLOW_MECHANICAL", "0") != "1":
         return None
     fair = pub["fair_value"]
+    # 세션 가격이 발행(재계산) 시점보다 7일 넘게 오래됐으면 그 가격으로 다시 매기지 않는다 — 발행 시점의 주가가 더 최신이다
+    # (예: 새로 편입해 수급 리포트가 아직 몇 달 전 것뿐인 종목)
+    try:
+        if as_of and pub.get("published") and (date.fromisoformat(str(pub["published"])[:10]) - date.fromisoformat(str(as_of)[:10])).days > 7:
+            price, as_of = None, None
+    except ValueError:
+        pass
     if V._ok(price) and price > 0:
         band = (pub.get("mos_band_pct") or 25) / 100
         verdict = V._verdict(fair, price, band)

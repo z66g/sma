@@ -12,30 +12,30 @@
 <title>BSY · Smart Money History</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1F2328; margin:0; padding:24px; font-size:13px;
+  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1C1B19; margin:0; padding:24px; font-size:13px;
          -webkit-tap-highlight-color:transparent; }
   .wrap { max-width:1200px; margin:0 auto; }
   h1 { font-size:22px; margin:0 0 4px 0; }
-  h2 { font-size:14px; color:#9A6700; border-bottom:0.5px solid #9A6700; padding-bottom:4px; margin-top:24px; }
-  .meta { color:#656D76; font-size:12px; margin-bottom:12px; }
-  .oneliner { background:#FFF8C5; border-left:4px solid #9A6700; border-radius:0 6px 6px 0; padding:10px 14px; font-size:15px; font-weight:700; line-height:1.55; margin-bottom:8px; }
-  .oneliner span { display:block; font-size:11px; color:#9A6700; letter-spacing:.06em; margin-bottom:2px; }
-  .headline { background:#DDF4FF; color:#1F2328; border-radius:6px; padding:8px 12px; font-size:13px; margin-bottom:12px; }
+  h2 { font-size:15px; color:#1C1B19; border-bottom:1px solid #CFCCC5; padding-bottom:6px; margin-top:26px; letter-spacing:-0.01em; }
+  .meta { color:#6E6A63; font-size:12px; margin-bottom:12px; }
+  .oneliner { background:#F6F0E2; border-left:4px solid #94630F; border-radius:0 6px 6px 0; padding:10px 14px; font-size:15px; font-weight:700; line-height:1.55; margin-bottom:8px; }
+  .oneliner span { display:block; font-size:11px; color:#94630F; letter-spacing:.06em; margin-bottom:2px; }
+  .headline { background:#EDF1F8; color:#1C1B19; border-radius:6px; padding:8px 12px; font-size:13px; margin-bottom:12px; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; }
-  .card { background:#F6F8FA; border:0.5px solid #D0D7DE; border-radius:6px; padding:12px; }
-  .card-label { font-size:11px; color:#656D76; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em; }
+  .card { background:#FAFAF8; border:0.5px solid #E2E0DB; border-radius:6px; padding:12px; }
+  .card-label { font-size:11px; color:#6E6A63; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em; }
   .card-value { font-size:18px; font-weight:600; }
-  .card-sub { font-size:11px; color:#656D76; margin-top:4px; }
+  .card-sub { font-size:11px; color:#6E6A63; margin-top:4px; }
   table { border-collapse:collapse; width:100%; font-size:12px; }
-  th,td { border:0.5px solid #D0D7DE; padding:6px 8px; text-align:left; }
-  th { background:#EAEEF2; color:#656D76; font-weight:600; }
-  tr:nth-child(even) { background:#F6F8FA; }
-  a { color:#0969DA; text-decoration:none; }
+  th,td { border:0.5px solid #E2E0DB; padding:6px 8px; text-align:left; }
+  th { background:#F2F1EE; color:#6E6A63; font-weight:600; }
+  tr:nth-child(even) { background:#FAFAF8; }
+  a { color:#2C4C9C; text-decoration:none; }
   a:hover { text-decoration:underline; }
   canvas { max-height:200px; }
   .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
   .nav { margin-bottom:16px; font-size:12px; }
-  .nav a { color:#656D76; }
+  .nav a { color:#6E6A63; }
   .t-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
   .t-scroll table { min-width:100%; }
   @media (max-width:1024px) {
@@ -52,7 +52,7 @@
     #narrative-root div[style*="grid-template-columns:repeat(auto-fit"] { grid-template-columns:1fr !important; }
   }
   .tt { position:relative; display:inline-block; cursor:help; }
-  .tt-i { color:#0969DA; margin-left:4px; font-weight:600; font-size:11px; }
+  .tt-i { color:#2C4C9C; margin-left:4px; font-weight:600; font-size:11px; }
   .tt .tt-body {
     display:none;
     position:absolute; left:50%; transform:translateX(-50%);
@@ -70,14 +70,14 @@
 <div class="wrap">
   <div class="nav"><a href="../../">← 전체 대시보드</a></div>
   <h1>BSY</h1>
-  <div class="meta">최신 세션 2026-04-27 (미국 정규장) · $32.83 · 0개 세션 · <span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:10px;font-size:11px;">레거시 v2</span> · <span style="background:#FFF8C5;color:#9A6700;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">감마 스퀴즈 조건</span></div>
+  <div class="meta">최신 세션 2026-04-27 (미국 정규장) · $32.83 · 0개 세션 · <span style="background:#F2F1EE;color:#6E6A63;padding:2px 8px;border-radius:10px;font-size:11px;">레거시 v2</span> · <span style="background:#F6F0E2;color:#94630F;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px;">감마 스퀴즈 조건</span></div>
   
 
   <h2>Overview (latest)</h2>
   <div class="grid">
     
     <div class="card"><div class="card-label">Top Scenario <span class="tt tt-i">ⓘ<span class="tt-body"><b>가중 signal 합산 시나리오 확률</b><br>Bullish/Neutral/Bearish 중 가장 높은 확률이 대표 시나리오. Score는 −1.00~+1.00 범위, Macro는 FRED 기반 유동성 분류.<br><br>Neutral 37% · Bearish 21%</span></span></div>
-      <div class="card-value" style="color:#1A7F5A;">Bullish · 41.7%</div>
+      <div class="card-value" style="color:#2F7254;">Bullish · 41.7%</div>
       <div class="card-sub">점수 -0.20 · 거시 우호</div>
     </div>
     <div class="card"><div class="card-label">Dark Pool % <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA 오프거래소 거래량 ÷ 총거래량</b><br>다크풀·ATS·내부화 비중. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br><b>구성원별 OBV (5d)</b>: SIP 전 체결 tick rule — 기관 ≥10,000주/$200k · 리테일 <100주/$5k · 프로 그 외. 체결 데이터 없던 과거 세션은 Total(CLV) 만 표시.<br><b>Divergence</b>: 가격 slope vs OBV 누적 slope (5일 회귀).</span></span></div>
@@ -117,33 +117,23 @@
   </table>
   </div>
 
-  <details style="margin-top:18px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:#656D76;">이전 버전(v2) 리포트 아카이브 · 1개 세션 — 방법론이 달라 시계열·분석에서 제외 (원본 보존)</summary><div class="t-scroll" style="margin-top:8px;"><table><thead><tr><th>Session</th><th>Price</th><th>Link</th></tr></thead><tbody><tr><td>2026-04-27</td><td>$32.83</td><td><a href="../../2026-04-28/BSY_3Layer_Forensic_2026-04-28.html">리포트</a></td></tr></tbody></table></div></details>
+  <details style="margin-top:18px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:#6E6A63;">이전 버전(v2) 리포트 아카이브 · 1개 세션 — 방법론이 달라 시계열·분석에서 제외 (원본 보존)</summary><div class="t-scroll" style="margin-top:8px;"><table><thead><tr><th>Session</th><th>Price</th><th>Link</th></tr></thead><tbody><tr><td>2026-04-27</td><td>$32.83</td><td><a href="../../2026-04-28/BSY_3Layer_Forensic_2026-04-28.html">리포트</a></td></tr></tbody></table></div></details>
 
   <h2>주간 AI 분석 리포트 히스토리</h2>
-  <p style="font-size:12px;color:#656D76;">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>
+  <p style="font-size:12px;color:#6E6A63;">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>
 
-  <div id="narrative-root"></div>
-
-  <div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
+  <div style="margin-top:24px;font-size:10px;color:#6E6A63;text-align:center;">
     Data: <a href="../../data/BSY.json">BSY.json</a> · <a href="../../">Back to dashboard</a>
   </div>
 </div>
-<script src="../../narrative.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.SMA_Narrative) {
-      window.SMA_Narrative.mount(document.getElementById('narrative-root'), "BSY");
-    }
-  });
-</script>
 <script>
 Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
-Chart.defaults.color = "#1F2328";
+Chart.defaults.color = "#1C1B19";
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 const DATES = [];
-const DATASETS = {"priceChart":[[{"label":"Price","data":[],"borderColor":"#0969DA","borderWidth":2.5},{"label":"Max Pain","data":[],"borderColor":"#9A6700","borderDash":[4,3]},{"label":"GEX Flip","data":[],"borderColor":"#1A7F5A","borderDash":[2,2]}],false],"probChart":[[{"label":"Bullish","data":[],"borderColor":"#1A7F5A"},{"label":"Bearish","data":[],"borderColor":"#CF222B"}],false],"shortChart":[[{"label":"Short %","data":[],"borderColor":"#CF222B","yAxisID":"y"},{"label":"CTB %","data":[],"borderColor":"#9A6700","yAxisID":"y1"}],true],"obvChart":[[{"label":"기관 OBV (5d)","data":[],"borderColor":"#1A7F5A","yAxisID":"y"},{"label":"프로 OBV (5d)","data":[],"borderColor":"#9A6700","yAxisID":"y"},{"label":"리테일 OBV (5d)","data":[],"borderColor":"#CF222B","yAxisID":"y"},{"label":"Total OBV (5d)","data":[],"borderColor":"#A32D2D","borderDash":[5,4],"yAxisID":"y"},{"label":"Dark Pool %","data":[],"borderColor":"#0969DA","yAxisID":"y1"}],true]};
+const DATASETS = {"priceChart":[[{"label":"Price","data":[],"borderColor":"#2C4C9C","borderWidth":2.5},{"label":"Max Pain","data":[],"borderColor":"#94630F","borderDash":[4,3]},{"label":"GEX Flip","data":[],"borderColor":"#2F7254","borderDash":[2,2]}],false],"probChart":[[{"label":"Bullish","data":[],"borderColor":"#2F7254"},{"label":"Bearish","data":[],"borderColor":"#B23B34"}],false],"shortChart":[[{"label":"Short %","data":[],"borderColor":"#B23B34","yAxisID":"y"},{"label":"CTB %","data":[],"borderColor":"#94630F","yAxisID":"y1"}],true],"obvChart":[[{"label":"기관 OBV (5d)","data":[],"borderColor":"#2F7254","yAxisID":"y"},{"label":"프로 OBV (5d)","data":[],"borderColor":"#94630F","yAxisID":"y"},{"label":"리테일 OBV (5d)","data":[],"borderColor":"#B23B34","yAxisID":"y"},{"label":"Total OBV (5d)","data":[],"borderColor":"#A32D2D","borderDash":[5,4],"yAxisID":"y"},{"label":"Dark Pool %","data":[],"borderColor":"#2C4C9C","yAxisID":"y1"}],true]};
 function lineChart(id, datasets, dual) {
-  const scales = { y:{ grid:{color:"#EAEEF2"} }, x:{ grid:{display:false} } };
+  const scales = { y:{ grid:{color:"#F2F1EE"} }, x:{ grid:{display:false} } };
   if (dual) scales.y1 = { position:'right', grid:{drawOnChartArea:false} };
   new Chart(document.getElementById(id), {
     type:'line',

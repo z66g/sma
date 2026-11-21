@@ -1764,6 +1764,16 @@ COMPUTATION (deterministic engine)
 - .github/workflows/valuation-on-add.yml: when tickers.txt changes and a watchlist ticker has no published
   research, it calls the routine's API trigger; that run researches NEW tickers only (routine doc section 6).
   Without the two secrets it does nothing and the ticker waits for the Saturday run.
+- Review list (`review.txt`, `smartmoney/review_list.py`): tickers whose fair value is checked before they join the
+  watchlist. Managed from the dashboard ('적정가 분석 요청', 재분석, 편입, 삭제); a request is a timestamp on the line and is
+  resolved when a newer publish exists. Review tickers get no daily flow analysis, are researched only on request
+  (`REQUEST` in `valuation.py plan`) and re-priced for 4 weeks after research. The on-add workflow also watches review.txt.
+  Removing a watchlist ticker from the dashboard moves it to the review list when it has research.
+- Chat command: "{TICKER} 분석해줘" in a session on this repo runs `.claude/skills/valuation-desk/SKILL.md` (one ticker,
+  same procedure, result pushed to main and reported in chat).
+- Analysts are subagents on the opus model. An independent audit (`docs/VALUATION_AUDIT.md`, separate opus agent) is
+  required when fair/price > 3 or < 1/3 or the start operating margin is below -5% (updates: only if the value moved more
+  than 30% or the verdict direction changed); `valuation.py publish` refuses without an `audit` record in that case.
 ```
 
 ---

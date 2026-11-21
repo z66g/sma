@@ -1,6 +1,7 @@
 name: Valuation Desk — research newly added tickers
 
-# 관심종목(tickers.txt)이 바뀌면, 발행된 리서치가 없는 종목이 있는지 확인하고 Claude 예약 작업(API 트리거)을 호출한다.
+# 관심종목(tickers.txt)이나 검토 종목(review.txt)이 바뀌면, 조사가 필요한 종목(리서치 없는 관심종목 · 분석 대기 검토 종목)이
+# 있는지 확인하고 Claude 예약 작업(API 트리거)을 호출한다. 대시보드의 '적정가 분석 요청'·'재분석'도 review.txt 커밋으로 여기에 온다.
 # 조사는 Claude 세션이 docs/VALUATION_ROUTINE.md 의 '수시 실행' 절차로 수행한다 (Anthropic API 과금 없음).
 # 이 워크플로는 호출만 한다 — 저장소에 쓰지 않는다.
 #
@@ -11,7 +12,7 @@ name: Valuation Desk — research newly added tickers
 on:
   push:
     branches: [main]
-    paths: ["tickers.txt"]
+    paths: ["tickers.txt", "review.txt"]
   workflow_dispatch:
     inputs:
       connectivity_test:
@@ -35,23 +36,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Watchlist tickers without published research
+      - name: Tickers that need research (watchlist without research · pending review requests)
         id: new
         run: |
           set -euo pipefail
-          NEW=""
-          for T in $(grep -v '^#' tickers.txt | tr -d '\r\t ' | grep -E '^[A-Z.-]{1,10}$' || true); do
-            F="reports/valuation/${T}.json"
-            if [ ! -f "${F}" ] || ! jq -e '.method == "RESEARCH"' "${F}" >/dev/null 2>&1; then
-              NEW="${NEW} ${T}"
-            fi
-          done
-          NEW="$(echo ${NEW} | xargs || true)"
+          NEW="$(python3 tools/valuation_pending.py)"
+          if ! printf '%s' "${NEW}" | grep -Eq '^([A-Z][A-Z0-9.-]{0,9}( |$))*$'; then
+            echo "::error::예상하지 못한 출력: ${NEW}"; exit 1
+          fi
           echo "tickers=${NEW}" >> "$GITHUB_OUTPUT"
           if [ -z "${NEW}" ]; then
-            echo "모든 관심종목에 발행된 리서치가 있습니다 — 호출하지 않습니다." >> "$GITHUB_STEP_SUMMARY"
+            echo "조사가 필요한 종목이 없습니다 — 호출하지 않습니다." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "리서치가 없는 종목: ${NEW}" >> "$GITHUB_STEP_SUMMARY"
+            echo "조사가 필요한 종목: ${NEW}" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # 종목을 연달아 추가하는 동안 기다렸다가 한 번만 호출한다 (그 사이 새 푸시가 오면 이 실행은 취소된다)
@@ -84,7 +81,7 @@ jobs:
             *) echo "::error::VALUATION_ROUTINE_FIRE_URL 형식이 예상과 다릅니다"; exit 1 ;;
           esac
           if [ -n "${TICKERS}" ]; then
-            NOTE="관심종목 변경 감지 — 발행된 리서치가 없는 종목(참고용, 실제 대상은 저장소의 tickers.txt 와 valuation.py plan 으로 확인): ${TICKERS}"
+            NOTE="관심종목·검토 종목 변경 감지 — 조사가 필요한 종목(참고용, 실제 대상은 저장소의 tickers.txt · review.txt 와 valuation.py plan 으로 확인): ${TICKERS}"
           else
             NOTE="연결 시험 — 리서치가 없는 종목은 없음 (참고용)"
           fi

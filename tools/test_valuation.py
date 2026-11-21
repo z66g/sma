@@ -377,6 +377,41 @@ def main() -> int:
     check("dilution_pct: 지정한 시나리오만 희석 (강세 ÷ 1.10, 기본은 그대로)", not VD.validate(dl, "TEST")[0]
           and abs(vdl["bull"]["value"] * 1.10 / sc["bull"]["value"] - 1) < 1e-9 and abs(vdl["base"]["value"] / sc["base"]["value"] - 1) < 1e-12,
           str((VD.validate(dl, "TEST")[0], vdl["bull"]["value"], sc["bull"]["value"], vdl["base"]["value"], sc["base"]["value"])))
+    # 독립 감사 조건: 신규는 3배 괴리·적자 출발이면 필요, 갱신은 ±30% 이동·판정 변경일 때만
+    va = copy.deepcopy(vr); va["fair_value"] = va["price"] * 3.5
+    check("감사 조건: 적정가가 현재가의 3배 초과 → 필요", any("배" in x for x in VD.audit_reasons(va)))
+    va["fair_value"] = va["price"] * 1.2
+    check("감사 조건: 괴리 작고 흑자 출발 → 불필요", VD.audit_reasons(va) == [] or all("적자" in x for x in VD.audit_reasons(va)))
+    vl = copy.deepcopy(va); vl["research"] = {**vl["research"], "adjustments": {"start_margin": -0.4}}
+    check("감사 조건: 출발 영업이익률 −40% → 필요", any("적자" in x for x in VD.audit_reasons(vl)))
+    prev = {"method": "RESEARCH", "fair_value": vl["fair_value"] * 1.1, "verdict": vl["verdict"]}
+    check("감사 조건: 갱신이고 이전 발행값과 ±30% 이내·판정 동일 → 불필요", VD.audit_reasons(vl, prev) == [])
+    prev["fair_value"] = vl["fair_value"] * 2
+    check("감사 조건: 갱신인데 이전 발행값 대비 50% 이동 → 필요", len(VD.audit_reasons(vl, prev)) >= 2)
+    check("감사 기록: 없음 → 발행 불가, 형식 맞으면 통과",
+          not VD.audit_record_ok({})[0] and VD.audit_record_ok({"audit": {"date": "2026-11-21", "verdict": "수정 후 발행",
+                                                                      "summary": "부채·희석·선수금 처리를 대조했고 지적 5건을 모두 반영함 — 재무제표 연결 일치"}})[0])
+    # 검토 종목 목록: 형식·대기 판정
+    import tempfile
+    from smartmoney import review_list as RL
+    ents = RL.parse("# c\nNVDA 2026-11-21T09:30:00Z\nnvda\nAMD\n1bad line\n")
+    check("review.txt 파싱: 중복·잘못된 줄 제외, 요청 시각 보존",
+          [e["ticker"] for e in ents] == ["NVDA", "AMD"] and ents[0]["requested_at"] == "2026-11-21T09:30:00Z")
+    with tempfile.TemporaryDirectory() as td:
+        pd_ = Path(td)
+        (pd_ / "AMD.json").write_text(json.dumps({"method": "RESEARCH", "published": "2026-11-20", "published_at": "2026-11-20T10:00:00Z",
+                                                "research": {"as_of": "2026-11-20"}}), encoding="utf-8")
+        d0 = __import__("datetime").date(2026, 11, 21)
+        st = lambda e: RL.status(e, d0, pd_)["status"]  # noqa: E731
+        check("검토 종목 상태: 리서치 없음 → 대기, 요청이 발행보다 늦음 → 대기, 이르면 → 유효",
+              st({"ticker": "NVDA", "requested_at": None}) == "PENDING"
+              and st({"ticker": "AMD", "requested_at": "2026-11-21T00:00:00Z"}) == "PENDING"
+              and st({"ticker": "AMD", "requested_at": "2026-11-19T00:00:00Z"}) == "FRESH"
+              and RL.status({"ticker": "AMD", "requested_at": None}, __import__("datetime").date(2026, 12, 30), pd_)["status"] == "EXPIRED")
+    check("review.txt 쓰기 → 다시 읽기 동일", RL.parse(RL.render(ents)) == sorted(ents, key=lambda e: e["ticker"]))
+    pubx = VD.read_published("XE", 29.2, "2026-04-24")
+    check("발행보다 7일 넘게 오래된 세션 가격으로는 괴리를 다시 매기지 않음",
+          pubx is None or abs(pubx["upside_pct"] - (pubx["fair_value"] / pubx["price"] - 1) * 100) < 0.05 and pubx["price"] != 29.2)
     check("영구성장률 ≤ 명시 구간 마지막 해 성장률 (약세 2% → 영구 2%, 강세 8% → 엔진 값)",
           abs(sc["bear"]["g_T"] - 0.02) < 1e-12 and abs(sc["bull"]["g_T"] - vr["assumptions"]["gT"]) < 1e-12, str([sc[k]["g_T"] for k in sc]))
     cmp_ = V.compact(vr)

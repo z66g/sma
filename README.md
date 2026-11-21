@@ -39,9 +39,14 @@ python3 valuation.py publish MRVL --research WORK/MRVL_research.json [--dry-run]
 python3 valuation.py refresh --watchlist          # 저장된 리서치에 최신 주가·금리·ERP 반영 (워크플로 valuation-refresh.yml)
 python3 valuation.py plan                         # 관심종목별 이번 주 할 일: 신규 조사 / 실적 이후 갱신 / 재계산 (주간 예약 작업의 입력)
 python3 valuation.py status                       # 발행 현황 (방식 · 리서치 경과일)
+python3 valuation.py review list|add|remove T [--request]   # 검토 종목(review.txt) 관리
 python3 tools/test_valuation.py                   # 회귀 테스트 (네트워크 불필요)
 ```
 
+- **검토 종목**(`review.txt`): 관심종목에 넣기 전에 적정가만 먼저 보는 종목. 대시보드의 '적정가 분석 요청'·재분석·편입·삭제로 관리하고,
+  채팅 세션에서 "{티커} 분석해줘"라고 해도 된다(`.claude/skills/valuation-desk`). 매일 수급 분석은 하지 않고, 분석 후 4주까지만 매주 재계산한다.
+- 분석가는 opus 모델 서브에이전트다. 적정가가 현재가의 3배 초과·1/3 미만이거나 적자 출발 기업이면 별도 에이전트의 독립 감사
+  (`docs/VALUATION_AUDIT.md`)를 거쳐야 발행된다.
 - 리서치가 발행된 종목만 SMA 에 적정가가 표시된다. 재무제표만 본 **기계적 기준선**(18개 모델)은 상세 페이지의 교차검증으로만 남는다.
 - 발행 관문: 출처 6건 이상 · 시나리오 확률 합 1 · 실현 조건 서술 · 범위 내 성장률/마진 · 옵션 산출 근거. 실패하면 발행되지 않는다.
 - 리서치는 실적 발표 후 갱신한다 (100일 경과 시 '갱신 필요' 표시).
@@ -128,7 +133,7 @@ Cloudflare Worker)가 `workflow_dispatch` API 를 호출한다.
 | **주간 AI 내러티브** | 토 KST 12:23 (Claude Code 예약 작업) | 클라우드 세션의 **Claude Opus 5.5**가 종목별 내러티브 작성 → `reports/tickers/{T}/narratives/{SESSION_DATE}-weekly.html` → main 푸시 (**Anthropic API 과금 없음**, 구독 사용량으로 처리) |
 | **weekly-narrative.yml** | narrative 푸시 시 자동 | 텔레그램 알림만 (API 호출 없음) |
 | **주간 적정가 (Valuation Desk)** | 토 KST 08:32 (Claude Code 예약 작업, 10:40 까지 푸시 완료) | `docs/VALUATION_ROUTINE.md` 절차: 관심종목별로 신규 조사·실적 이후 갱신·재계산을 정해(`valuation.py plan`) 발행 → main 푸시. 같은 날 일일 분석·주간 내러티브가 이 수치를 읽는다 |
-| **valuation-on-add.yml** | `tickers.txt` 푸시 시 자동 | 리서치가 없는 관심종목이 있으면 Claude 예약 작업의 API 트리거를 호출 → 그 종목만 바로 조사·발행 (`docs/VALUATION_ROUTINE.md` §6). Secrets `VALUATION_ROUTINE_FIRE_URL`·`VALUATION_ROUTINE_TOKEN` 이 없으면 아무것도 하지 않는다 |
+| **valuation-on-add.yml** | `tickers.txt`·`review.txt` 푸시 시 자동 | 리서치가 없는 관심종목이나 분석 대기 검토 종목이 있으면 Claude 예약 작업의 API 트리거를 호출 → 그 종목만 바로 조사·발행 (`docs/VALUATION_ROUTINE.md` §6). Secrets `VALUATION_ROUTINE_FIRE_URL`·`VALUATION_ROUTINE_TOKEN` 이 없으면 아무것도 하지 않는다 |
 | **valuation-refresh.yml** | 수동 | 저장된 리서치에 최신 주가·금리만 반영해 재계산 (조사 없음) |
 
 두 워크플로는 같은 concurrency 그룹(`sma-repo-write`)을 써서 저장소 쓰기가 겹치지 않는다.
