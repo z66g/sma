@@ -41,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           NEW="$(python3 tools/valuation_pending.py)"
-          if ! printf '%s' "${NEW}" | grep -Eq '^([A-Z][A-Z0-9.-]{0,9}( |$))*$'; then
+          if [ -n "${NEW}" ] && ! printf '%s\n' "${NEW}" | grep -Eq '^[A-Z][A-Z0-9.-]{0,9}( [A-Z][A-Z0-9.-]{0,9})*$'; then
             echo "::error::예상하지 못한 출력: ${NEW}"; exit 1
           fi
           echo "tickers=${NEW}" >> "$GITHUB_OUTPUT"
