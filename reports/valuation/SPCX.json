@@ -1,0 +1,148 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-21",
+ "fundamentals_asof": "2026-11-21",
+ "currency": "USD",
+ "price": 127.79,
+ "fair_value": 133.38,
+ "fair_low": 14.99,
+ "fair_high": 282.77,
+ "upside_pct": 4.37,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 35.0,
+ "n_models": 7,
+ "summary": "리서치 기반 적정가 133.38 = 약세 14.99(25%) · 기본 117.88(50%) · 강세 282.77(25%)의 확률가중. 현재가 127.79 대비 +4.4% · 적정 범위 (불확실성 매우 높음). 할인율 ±1%p 범위 104.44~179.88 — 판정이 할인율에 민감. 기계적 기준선 18.15.",
+ "archetype": {
+  "code": "HYPERGROWTH_UNPROFITABLE",
+  "label": "고성장 적자",
+  "traits": [
+   "현금 소진(FCF<0)",
+   "주식보상 비중 높음(매출의 15%)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 22
+ },
+ "wacc": 0.0764,
+ "ke": 0.0764,
+ "wacc_stable": 0.0811,
+ "erp": 0.0386,
+ "rf": 0.0504,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 8.87,
+   "low": 7.32,
+   "high": 14.3,
+   "weight": 0.322
+  },
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 34.8,
+   "low": 9.78,
+   "high": 82.42,
+   "weight": 0.242
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 12.29,
+   "low": 0.0,
+   "high": 50.39,
+   "weight": 0.217
+  },
+  {
+   "id": "dcf_revenue_5y",
+   "name": "5년 DCF · Revenue Exit",
+   "mid": 41.24,
+   "low": 19.15,
+   "high": 77.19,
+   "weight": 0.121
+  },
+  {
+   "id": "ps",
+   "name": "P/S 멀티플",
+   "mid": 2.74,
+   "low": 1.97,
+   "high": 5.92,
+   "weight": 0.04
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 97.75,
+   "low": 90.98,
+   "high": 149.96,
+   "weight": 0.032
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 200.19,
+   "low": 96.57,
+   "high": 382.06,
+   "weight": 0.025
+  }
+ ],
+ "implied_cagr_5y": null,
+ "base_cagr_5y": 1.067,
+ "mc": {
+  "p10": 53.18,
+  "p50": 103.82,
+  "p90": 173.58,
+  "prob_above_price": 0.31
+ },
+ "analyst_target": 257.5,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-21",
+  "analyst": "Claude 주간 Valuation Desk",
+  "thesis": "SpaceX 의 가치는 이제 로켓이 아니라 SI(구 xAI) 부문의 AI 컴퓨트 임대에 달려 있다. 3분기 매출 146억$ 중 SI 가 76억$(Anthropic 한 고객이 매출의 34.5%)이고, 경영진은 2027년 1분기 매출 330~370억$, 2027년 +10GW 증설을 제시했다. 핵심 변수는 (1) 실제로 몇 GW 를 짓고 자금을 댈 수 있는가, (2) GW당 임대 가격이 GPU 세대 교체와 공급 증가 속에서 얼마나 유지되는가, (3) 해지 가능한 단기 계약(90일 통지)이 갱신되는가이다. Starlink(Connectivity)는 영업이익률 45% 로 이미 가치의 안정적 바닥을 제공한다.",
+  "confidence": "LOW",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 14.99,
+    "cagr5": 0.3644,
+    "target_margin": 0.16
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 117.88,
+    "cagr5": 0.6308,
+    "target_margin": 0.345
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 282.77,
+    "cagr5": 0.8228,
+    "target_margin": 0.44
+   }
+  },
+  "n_sources": 15,
+  "rate_sensitivity": {
+   "minus_1pt": 179.88,
+   "plus_1pt": 104.44
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 133.38,
+  "n_warn": 1,
+  "second_opinion": null,
+  "audit": null
+ },
+ "mechanical_fair": 18.15,
+ "ticker": "SPCX",
+ "name": "Space Exploration Technologies Corp.",
+ "published": "2026-11-21",
+ "published_at": "2026-11-21T03:27:42Z"
+}
