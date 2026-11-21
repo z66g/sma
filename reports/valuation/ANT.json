@@ -1,0 +1,127 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-21",
+ "fundamentals_asof": "2026-11-21",
+ "currency": "USD",
+ "price": 88.91,
+ "fair_value": 75.92,
+ "fair_low": 14.42,
+ "fair_high": 149.23,
+ "upside_pct": -14.61,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 35.0,
+ "n_models": 4,
+ "summary": "리서치 기반 적정가 75.92 = 약세 14.42(25%) · 기본 70.02(50%) · 강세 149.23(25%)의 확률가중. 현재가 88.91 대비 -14.6% · 적정 범위 (불확실성 매우 높음). 할인율 ±1%p 범위 64.08~93.31 — 판정이 할인율에 민감. 기계적 기준선 12.53.",
+ "archetype": {
+  "code": "PRE_REVENUE",
+  "label": "초기 단계·컨셉주 (매출 미미)",
+  "traits": [
+   "현금 소진(FCF<0)",
+   "주식보상 비중 높음(매출의 25%)"
+  ]
+ },
+ "uncertainty": {
+  "level": "VERY_HIGH",
+  "label": "매우 높음",
+  "score": 21
+ },
+ "wacc": 0.0974,
+ "ke": 0.0974,
+ "wacc_stable": 0.0907,
+ "erp": 0.0386,
+ "rf": 0.0504,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 13.35,
+   "low": 5.96,
+   "high": 25.01,
+   "weight": 0.339
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 13.9,
+   "low": 7.94,
+   "high": 30.52,
+   "weight": 0.289
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 7.99,
+   "low": 2.46,
+   "high": 18.4,
+   "weight": 0.237
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 11.65,
+   "low": 4.17,
+   "high": 24.53,
+   "weight": 0.135
+  }
+ ],
+ "implied_cagr_5y": 1.294,
+ "base_cagr_5y": 0.9583,
+ "mc": {
+  "p10": 4.0,
+  "p50": 9.45,
+  "p90": 16.93,
+  "prob_above_price": 0.0
+ },
+ "analyst_target": 118.17,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-21",
+  "analyst": "Claude 주간 Valuation Desk",
+  "thesis": "Anthropic 의 가치는 (1) 분기 매출 170억 달러·런레이트 810억 달러(10/31)로 폭증한 기업용 AI 수요가 몇 년간 이어지는지, (2) 9천억 달러에 이르는 컴퓨트 약정을 매출이 따라잡아 성숙기 GAAP 영업이익률이 어디에 안착하는지, (3) 상장 후 2,450억 달러의 현금이 이 투자 기간을 버티게 하는지로 결정된다. 증거는 매출 성장과 조정 영업이익률(2분기 19%·3분기 15%)이 이미 흑자 구조에 근접했음을 보여주지만, 가격 인하·경쟁·고정 컴퓨트 비용 때문에 성숙기 마진의 불확실성이 매우 크다. 희석 주식(아마존 전환사채·옵션·미가득 RSU·기부 매칭) 포함 약 183억 주 기준으로 평가한다.",
+  "confidence": "LOW",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 14.42,
+    "cagr5": 0.5733,
+    "target_margin": 0.12
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 70.02,
+    "cagr5": 0.9234,
+    "target_margin": 0.27
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 149.23,
+    "cagr5": 1.0922,
+    "target_margin": 0.37
+   }
+  },
+  "n_sources": 10,
+  "rate_sensitivity": {
+   "minus_1pt": 93.31,
+   "plus_1pt": 64.08
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 75.92,
+  "n_warn": 1,
+  "second_opinion": null,
+  "audit": {
+   "date": "2026-11-21",
+   "verdict": "수정 후 발행"
+  }
+ },
+ "mechanical_fair": 12.53,
+ "ticker": "ANT",
+ "name": "Anthropic, PBC",
+ "published": "2026-11-21",
+ "published_at": "2026-11-21T06:14:31Z"
+}
