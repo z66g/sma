@@ -1247,32 +1247,37 @@ PLACEMENT: Always the last section in both HTML widget and MD file.
 
 ### 11.1 Color Palette (Hard-coded HEX, no CSS variables)
 
+Warm neutral base with desaturated semantic colors, shared by the 3-Layer reports, weekly narratives, valuation pages
+and the dashboard (`smartmoney/site_tone.py` holds the mapping from the previous palette). Badges are square
+(border-radius 3px), section headings are dark text over a thin grey rule, no emoji markers.
+
 ```css
 /* Backgrounds */
 --bg-outer:     #FFFFFF
---bg-card:      #F6F8FA
---bg-panel:     #EAEEF2
---bg-border:    #D0D7DE
+--bg-card:      #FAFAF8
+--bg-panel:     #F2F1EE
+--bg-border:    #E2E0DB
 
 /* Text */
---text-primary: #1F2328
---text-secondary: #656D76
+--text-primary: #1C1B19
+--text-secondary: #6E6A63
 
 /* Semantic */
---color-bull:   #1A7F5A   /* bullish / call / buy / institutional */
---color-bear:   #CF222B   /* bearish / put / sell */
---color-warn:   #9A6700   /* warning / flip / caution / section headers */
---color-info:   #0969DA   /* info / institutional blue */
+--color-bull:   #2F7254   /* bullish / call / buy / institutional */
+--color-bear:   #B23B34   /* bearish / put / sell */
+--color-warn:   #94630F   /* warning / flip / caution */
+--line:         #CFCCC5   /* rule under section headings */
+--color-info:   #2C4C9C   /* info / institutional blue */
 
 /* Alert backgrounds */
---alert-green:  #DAFBE1
---alert-red:    #FFEBE9
---alert-amber:  #FFF8C5
---alert-blue:   #DDF4FF
+--alert-green:  #EDF4EF
+--alert-red:    #F8EDEB
+--alert-amber:  #F6F0E2
+--alert-blue:   #EDF1F8
 
 /* Charts */
 --chart-bg:     #FFFFFF
---chart-grid:   #EAEEF2
+--chart-grid:   #F2F1EE
 --bar-opacity:  0.85
 ```
 
@@ -1293,14 +1298,14 @@ Orientation: Horizontal bars extending left (negative) or right (positive)
 Data: DELTA OBV values (change from previous session)
 
 Color mapping:
-  Institutional: #1A7F5A
-  Professional:  #9A6700  
-  Retail:        #CF222B
-  Total:         #A32D2D  (slightly different from bear to distinguish)
+  Institutional: #2F7254
+  Professional:  #94630F  
+  Retail:        #B23B34
+  Total:         #8E3A33  (slightly different from bear to distinguish)
 
 Labels: Show numeric value at bar end (e.g., "+2.4M", "-1.1M")
 X-axis: Symmetric around 0 (auto-scale to max absolute value)
-Grid lines: #EAEEF2
+Grid lines: #F2F1EE
 Background: #FFFFFF
 Font: as specified in 11.2
 Title: "OBV 4-Way Decomposition (Δ from prior session)"
@@ -1323,23 +1328,23 @@ MANDATORY DIRECTION RULE (NEVER REVERSE):
   This rule is ABSOLUTE and cannot be reversed for any reason.
 
 Color:
-  Positive bars: #1A7F5A (opacity 0.85)
-  Negative bars: #CF222B (opacity 0.85)
+  Positive bars: #2F7254 (opacity 0.85)
+  Negative bars: #B23B34 (opacity 0.85)
   
 Flip zone marker: Vertical line or shaded zone at flip_zone strike
-  Color: #9A6700
+  Color: #94630F
   Label: "GEX Flip: $XX.XX"
 
 Current price marker: Vertical dashed line
-  Color: #0969DA
+  Color: #2C4C9C
   Label: "Current: $XX.XX"
 
 Max Pain marker: Vertical dotted line
-  Color: #9A6700
+  Color: #94630F
   Label: "Max Pain: $XX.XX"
 
 Background: #FFFFFF
-Grid: #EAEEF2
+Grid: #F2F1EE
 Title: "Gamma Exposure (GEX) Distribution — {EXPIRY DATE}"
 ```
 
@@ -1351,9 +1356,9 @@ X-axis: 0% to 80% (max cap)
 Bar labels: At bar end, show "XX%"
 
 Color:
-  [A] Bullish: #1A7F5A
-  [B] Neutral: #9A6700
-  [C] Bearish: #CF222B
+  [A] Bullish: #2F7254
+  [B] Neutral: #94630F
+  [C] Bearish: #B23B34
 
 Format:
   [A] Bullish Scenario  [██████████████     ] 55%
@@ -1369,29 +1374,29 @@ Include below chart:
 ```html
 <!-- Section header with pill badges -->
 <div style="display:flex; align-items:center; justify-content:space-between; 
-            border-bottom: 0.5px solid #9A6700; margin-bottom:12px;">
-  <span style="color:#9A6700; font-weight:700; font-size:14px;">
-    ▶ SECTION N [SECTION NAME]
+            border-bottom:1px solid #CFCCC5; margin-bottom:12px;">
+  <span style="color:#1C1B19; font-weight:700; font-size:15px;">
+    SECTION N [SECTION NAME]
   </span>
   <div style="display:flex; gap:6px;">
     <!-- Positive finding badge -->
-    <span style="background:#DAFBE1; color:#1A7F5A; 
-                 padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600;">
+    <span style="background:#EDF4EF; color:#2F7254; 
+                 padding:2px 8px; border-radius:3px; font-size:11px; font-weight:600;">
       Key finding text
     </span>
     <!-- Warning badge -->
-    <span style="background:#FFF8C5; color:#9A6700; 
-                 padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600;">
+    <span style="background:#F6F0E2; color:#94630F; 
+                 padding:2px 8px; border-radius:3px; font-size:11px; font-weight:600;">
       Another finding
     </span>
   </div>
 </div>
 
 <!-- Badge types:
-  kp-pos:  background:#DAFBE1, color:#1A7F5A   (bullish finding)
-  kp-neg:  background:#FFEBE9, color:#CF222B   (bearish finding)
-  kp-warn: background:#FFF8C5, color:#9A6700   (caution / ambiguous)
-  kp-info: background:#DDF4FF, color:#0969DA   (informational)
+  kp-pos:  background:#EDF4EF, color:#2F7254   (bullish finding)
+  kp-neg:  background:#F8EDEB, color:#B23B34   (bearish finding)
+  kp-warn: background:#F6F0E2, color:#94630F   (caution / ambiguous)
+  kp-info: background:#EDF1F8, color:#2C4C9C   (informational)
 -->
 ```
 
@@ -1400,33 +1405,33 @@ Include below chart:
 ```css
 /* Header row */
 th {
-  background: #EAEEF2;
-  color: #656D76;
+  background: #F2F1EE;
+  color: #6E6A63;
   padding: 4px 6px;
-  border: 0.5px solid #D0D7DE;
+  border: 0.5px solid #E2E0DB;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* Alternating rows */
 tr:nth-child(odd)  { background: #FFFFFF; }
-tr:nth-child(even) { background: #F6F8FA; }
+tr:nth-child(even) { background: #FAFAF8; }
 
 /* Cell */
 td {
   padding: 4px 6px;
-  border: 0.5px solid #D0D7DE;
+  border: 0.5px solid #E2E0DB;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #1F2328;
+  color: #1C1B19;
 }
 
 /* Value coloring */
-.value-bull { color: #1A7F5A; font-weight: 600; }
-.value-bear { color: #CF222B; font-weight: 600; }
-.value-warn { color: #9A6700; font-weight: 600; }
+.value-bull { color: #2F7254; font-weight: 600; }
+.value-bear { color: #B23B34; font-weight: 600; }
+.value-warn { color: #94630F; font-weight: 600; }
 
 /* Highlighted rows */
-.row-highlight-green { background: #DAFBE1 !important; }
-.row-highlight-amber { background: #FFF8C5 !important; }
+.row-highlight-green { background: #EDF4EF !important; }
+.row-highlight-amber { background: #F6F0E2 !important; }
 ```
 
 ---

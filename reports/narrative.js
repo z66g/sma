@@ -65,125 +65,125 @@ The 2x2 CARD GRID and the PROBABILITY BAR are MANDATORY visual elements — not 
 
 ==== TEMPLATE START (copy this entire block, fill content) ====
 
-<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1F2328;">
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1C1B19;">
 
 <div style="margin-bottom:16px;">
-  <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;color:#1F2328;">{{TICKER}} Smart Money Forensic · 데이터 기준 {{DATE}}</h1>
-  <div style="font-size:11px;color:#656D76;">{{price_quality_and_patterns_oneliner}}</div>
+  <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;color:#1C1B19;">{{TICKER}} Smart Money Forensic · 데이터 기준 {{DATE}}</h1>
+  <div style="font-size:11px;color:#6E6A63;">{{price_quality_and_patterns_oneliner}}</div>
 </div>
 
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ 핵심 발견</span>
-  <span style="background:{{kf_badge_bg}};color:{{kf_badge_fg}};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{{KF_BADGE_TEXT}}</span>
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #CFCCC5;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#1C1B19;font-weight:700;font-size:15px;">핵심 발견</span>
+  <span style="background:{{kf_badge_bg}};color:{{kf_badge_fg}};padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;">{{KF_BADGE_TEXT}}</span>
 </div>
-<p style="font-size:13px;line-height:1.7;color:#1F2328;margin:0;">{{핵심 1-2문장, 패러독스/충돌 우선}}</p>
+<p style="font-size:13px;line-height:1.7;color:#1C1B19;margin:0;">{{핵심 1-2문장, 패러독스/충돌 우선}}</p>
 
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ 4-LAYER SYNTHESIS</span>
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #CFCCC5;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#1C1B19;font-weight:700;font-size:15px;">4-LAYER SYNTHESIS</span>
 </div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
-  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
-    <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L1 DARK POOL</div>
+  <div style="background:#FAFAF8;border:0.5px solid #E2E0DB;border-radius:6px;padding:12px;">
+    <div style="font-size:10px;color:#6E6A63;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L1 DARK POOL</div>
     <div style="font-size:15px;font-weight:600;color:{{l1_color}};margin-bottom:6px;">{{l1_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L1: Total OBV(5d) 방향+규모, dp_pct 수준, dp_ratio, Divergence. 코호트 필드가 없으면 기관/리테일 분리 언급 금지}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1C1B19;">{{L1: Total OBV(5d) 방향+규모, dp_pct 수준, dp_ratio, Divergence. 코호트 필드가 없으면 기관/리테일 분리 언급 금지}}</div>
   </div>
-  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
-    <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L2 SHORT · CTB</div>
+  <div style="background:#FAFAF8;border:0.5px solid #E2E0DB;border-radius:6px;padding:12px;">
+    <div style="font-size:10px;color:#6E6A63;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L2 SHORT · CTB</div>
     <div style="font-size:15px;font-weight:600;color:{{l2_color}};margin-bottom:6px;">{{l2_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L2: short% slope + CTB 방향(Δ%) + short interest/DTC. 절대 %를 bearish로 해석 금지}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1C1B19;">{{L2: short% slope + CTB 방향(Δ%) + short interest/DTC. 절대 %를 bearish로 해석 금지}}</div>
   </div>
-  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
-    <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L3 OPTIONS</div>
+  <div style="background:#FAFAF8;border:0.5px solid #E2E0DB;border-radius:6px;padding:12px;">
+    <div style="font-size:10px;color:#6E6A63;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L3 OPTIONS</div>
     <div style="font-size:15px;font-weight:600;color:{{l3_color}};margin-bottom:6px;">{{l3_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L3: Max Pain 거리, Net GEX 부호, Flip Zone regime, Call/Put Wall, Expected Move}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1C1B19;">{{L3: Max Pain 거리, Net GEX 부호, Flip Zone regime, Call/Put Wall, Expected Move}}</div>
   </div>
-  <div style="background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;padding:12px;">
-    <div style="font-size:10px;color:#656D76;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L4 CHART</div>
+  <div style="background:#FAFAF8;border:0.5px solid #E2E0DB;border-radius:6px;padding:12px;">
+    <div style="font-size:10px;color:#6E6A63;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">L4 CHART</div>
     <div style="font-size:15px;font-weight:600;color:{{l4_color}};margin-bottom:6px;">{{l4_scenario_label}}</div>
-    <div style="font-size:12px;line-height:1.6;color:#1F2328;">{{L4: MA 배열, BB 폭/위치, RSI, S/R 거리}}</div>
+    <div style="font-size:12px;line-height:1.6;color:#1C1B19;">{{L4: MA 배열, BB 폭/위치, RSI, S/R 거리}}</div>
   </div>
 </div>
 
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ ARCHITECT PHASE TIMELINE</span>
-  <span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">{{N_days}}개 세션 관찰</span>
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #CFCCC5;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#1C1B19;font-weight:700;font-size:15px;">ARCHITECT PHASE TIMELINE</span>
+  <span style="background:#EDF1F8;color:#2C4C9C;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;">{{N_days}}개 세션 관찰</span>
 </div>
 <table style="border-collapse:collapse;width:100%;font-size:12px;margin-top:4px;">
   <thead>
     <tr>
-      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Phase</th>
-      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Dates (trading days)</th>
-      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Description</th>
+      <th style="background:#F2F1EE;color:#6E6A63;padding:6px 8px;border:0.5px solid #E2E0DB;text-align:left;">Phase</th>
+      <th style="background:#F2F1EE;color:#6E6A63;padding:6px 8px;border:0.5px solid #E2E0DB;text-align:left;">Dates (trading days)</th>
+      <th style="background:#F2F1EE;color:#6E6A63;padding:6px 8px;border:0.5px solid #E2E0DB;text-align:left;">Description</th>
     </tr>
   </thead>
   <tbody>
-    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 1 Setup</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p1_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p1_desc}}</td></tr>
-    <tr style="background:#F6F8FA;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 2 Transition</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p2_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p2_desc}}</td></tr>
-    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">Phase 3 Resolution</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p3_dates}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{p3_desc: 조건부 시나리오 + 입력 데이터에 있는 관찰 레벨(구간)만}}</td></tr>
+    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">Phase 1 Setup</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{p1_dates}}</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{p1_desc}}</td></tr>
+    <tr style="background:#FAFAF8;"><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">Phase 2 Transition</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{p2_dates}}</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{p2_desc}}</td></tr>
+    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">Phase 3 Resolution</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{p3_dates}}</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{p3_desc: 조건부 시나리오 + 입력 데이터에 있는 관찰 레벨(구간)만}}</td></tr>
   </tbody>
 </table>
 
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ PROBABILITY MATRIX</span>
-  <span style="background:#DDF4FF;color:#0969DA;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Raw Score {{raw_score}}</span>
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #CFCCC5;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#1C1B19;font-weight:700;font-size:15px;">PROBABILITY MATRIX</span>
+  <span style="background:#EDF1F8;color:#2C4C9C;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;">Raw Score {{raw_score}}</span>
 </div>
 <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
   <div style="display:flex;align-items:center;gap:10px;">
-    <span style="width:100px;color:#1A7F5A;font-weight:600;">[A] Bullish</span>
-    <div style="flex:1;background:#EAEEF2;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{A_pct}}%;background:#1A7F5A;height:16px;"></div></div>
-    <span style="width:48px;text-align:right;font-weight:600;color:#1A7F5A;">{{A_pct}}%</span>
+    <span style="width:100px;color:#2F7254;font-weight:600;">[A] Bullish</span>
+    <div style="flex:1;background:#F2F1EE;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{A_pct}}%;background:#2F7254;height:16px;"></div></div>
+    <span style="width:48px;text-align:right;font-weight:600;color:#2F7254;">{{A_pct}}%</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
-    <span style="width:100px;color:#9A6700;font-weight:600;">[B] Neutral</span>
-    <div style="flex:1;background:#EAEEF2;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{B_pct}}%;background:#9A6700;height:16px;"></div></div>
-    <span style="width:48px;text-align:right;font-weight:600;color:#9A6700;">{{B_pct}}%</span>
+    <span style="width:100px;color:#94630F;font-weight:600;">[B] Neutral</span>
+    <div style="flex:1;background:#F2F1EE;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{B_pct}}%;background:#94630F;height:16px;"></div></div>
+    <span style="width:48px;text-align:right;font-weight:600;color:#94630F;">{{B_pct}}%</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
-    <span style="width:100px;color:#CF222B;font-weight:600;">[C] Bearish</span>
-    <div style="flex:1;background:#EAEEF2;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{C_pct}}%;background:#CF222B;height:16px;"></div></div>
-    <span style="width:48px;text-align:right;font-weight:600;color:#CF222B;">{{C_pct}}%</span>
+    <span style="width:100px;color:#B23B34;font-weight:600;">[C] Bearish</span>
+    <div style="flex:1;background:#F2F1EE;border-radius:4px;overflow:hidden;height:16px;"><div style="width:{{C_pct}}%;background:#B23B34;height:16px;"></div></div>
+    <span style="width:48px;text-align:right;font-weight:600;color:#B23B34;">{{C_pct}}%</span>
   </div>
 </div>
-<div style="font-size:11px;color:#656D76;margin-top:6px;">Macro: {{macro_env}} · Patterns: {{patterns_or_none}}</div>
+<div style="font-size:11px;color:#6E6A63;margin-top:6px;">Macro: {{macro_env}} · Patterns: {{patterns_or_none}}</div>
 
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ DECISIVE TRIGGERS</span>
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #CFCCC5;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#1C1B19;font-weight:700;font-size:15px;">DECISIVE TRIGGERS</span>
 </div>
 <table style="border-collapse:collapse;width:100%;font-size:12px;">
   <thead>
     <tr>
-      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Trigger</th>
-      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Direction</th>
-      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Threshold</th>
-      <th style="background:#EAEEF2;color:#656D76;padding:6px 8px;border:0.5px solid #D0D7DE;text-align:left;">Implication</th>
+      <th style="background:#F2F1EE;color:#6E6A63;padding:6px 8px;border:0.5px solid #E2E0DB;text-align:left;">Trigger</th>
+      <th style="background:#F2F1EE;color:#6E6A63;padding:6px 8px;border:0.5px solid #E2E0DB;text-align:left;">Direction</th>
+      <th style="background:#F2F1EE;color:#6E6A63;padding:6px 8px;border:0.5px solid #E2E0DB;text-align:left;">Threshold</th>
+      <th style="background:#F2F1EE;color:#6E6A63;padding:6px 8px;border:0.5px solid #E2E0DB;text-align:left;">Implication</th>
     </tr>
   </thead>
   <tbody>
-    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{trigger_name}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{direction_pill}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;font-family:monospace;">{{threshold}}</td><td style="padding:6px 8px;border:0.5px solid #D0D7DE;">{{implication}}</td></tr>
+    <tr style="background:#FFFFFF;"><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{trigger_name}}</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{direction_pill}}</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;font-family:monospace;">{{threshold}}</td><td style="padding:6px 8px;border:0.5px solid #E2E0DB;">{{implication}}</td></tr>
   </tbody>
 </table>
 
-<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #9A6700;margin:24px 0 12px 0;padding-bottom:4px;">
-  <span style="color:#9A6700;font-weight:700;font-size:14px;">▶ CONFIDENCE & LIMITATIONS</span>
-  <span style="background:{{conf_bg}};color:{{conf_fg}};padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">{{MAX_CONFIDENCE}}</span>
+<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #CFCCC5;margin:24px 0 12px 0;padding-bottom:4px;">
+  <span style="color:#1C1B19;font-weight:700;font-size:15px;">CONFIDENCE & LIMITATIONS</span>
+  <span style="background:{{conf_bg}};color:{{conf_fg}};padding:2px 10px;border-radius:3px;font-size:11px;font-weight:700;">{{MAX_CONFIDENCE}}</span>
 </div>
-<p style="font-size:12px;line-height:1.7;color:#1F2328;margin:0;">{{데이터 기준 세션 날짜 · N_days개 세션 · 데이터 품질 등급 · 누락 레이어/지표 · 웹 검색 출처와 날짜}}</p>
+<p style="font-size:12px;line-height:1.7;color:#1C1B19;margin:0;">{{데이터 기준 세션 날짜 · N_days개 세션 · 데이터 품질 등급 · 누락 레이어/지표 · 웹 검색 출처와 날짜}}</p>
 
 </div>
 
 ==== TEMPLATE END ====
 
-TRIGGER ROWS: 3-5 rows, alternating row background #FFFFFF / #F6F8FA. Direction pills:
-- bullish: <span style="background:#DAFBE1;color:#1A7F5A;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">BULLISH</span>
-- bearish: <span style="background:#FFEBE9;color:#CF222B;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">BEARISH</span>
-- caution: <span style="background:#FFF8C5;color:#9A6700;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">WATCH</span>
+TRIGGER ROWS: 3-5 rows, alternating row background #FFFFFF / #FAFAF8. Direction pills:
+- bullish: <span style="background:#EDF4EF;color:#2F7254;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">BULLISH</span>
+- bearish: <span style="background:#F8EDEB;color:#B23B34;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">BEARISH</span>
+- caution: <span style="background:#F6F0E2;color:#94630F;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;">WATCH</span>
 
 ARCHITECT PHASE when N_days < 7: replace the table with
-<p style="font-size:12px;color:#9A6700;background:#FFF8C5;padding:8px 12px;border-radius:4px;">시계열 N개 세션으로 Phase 1(과거 setup)을 구조적으로 해석하기엔 부족합니다. 최소 7개 세션 필요.</p>
+<p style="font-size:12px;color:#94630F;background:#F6F0E2;padding:8px 12px;border-radius:4px;">시계열 N개 세션으로 Phase 1(과거 setup)을 구조적으로 해석하기엔 부족합니다. 최소 7개 세션 필요.</p>
 
 COLOR MAPPING:
-- signal=BULLISH -> #1A7F5A, signal=BEARISH -> #CF222B, signal=NEUTRAL -> #9A6700
-- confidence HIGH -> #DAFBE1/#1A7F5A, MEDIUM or MEDIUM_LOW -> #FFF8C5/#9A6700, LOW -> #FFEBE9/#CF222B
+- signal=BULLISH -> #2F7254, signal=BEARISH -> #B23B34, signal=NEUTRAL -> #94630F
+- confidence HIGH -> #EDF4EF/#2F7254, MEDIUM or MEDIUM_LOW -> #F6F0E2/#94630F, LOW -> #F8EDEB/#B23B34
 
 PROHIBITIONS:
 - Markdown syntax 금지 (# ## - ** fenced code). 순수 HTML만.
@@ -318,7 +318,7 @@ function toCSV(series) {
 }
 
 function classifyWindow(n) {
-  if (n <= 1) return { cap: 'LOW', note: '⚠ 첫 분석 — 시계열 없음. Phase 1/2/3 미구성. 오늘 스냅샷의 구조적 해석만.' };
+  if (n <= 1) return { cap: 'LOW', note: '첫 분석 — 시계열 없음. Phase 1/2/3 미구성. 오늘 스냅샷의 구조적 해석만.' };
   if (n <= 6) return { cap: 'MEDIUM_LOW', note: `📊 초기 관찰 — ${n}개 세션. Phase 1은 유보. Final Absorption 조건부.` };
   if (n <= 14) return { cap: 'MEDIUM', note: `📊 단기 트렌드 — ${n}개 세션. Phase 1 setup 가능.` };
   return { cap: 'HIGH', note: `📊 표준 심화 — ${n}개 세션. 전체 프레임워크 적용.` };
@@ -500,27 +500,27 @@ window.SMA_Narrative = {
   mount(rootEl, ticker) {
     if (!/^[A-Z0-9.\-]{1,10}$/.test(ticker || '')) return;
     rootEl.innerHTML = `
-      <details open style="margin-top:24px;background:#F6F8FA;border:0.5px solid #D0D7DE;border-radius:6px;">
-        <summary style="cursor:pointer;padding:10px 14px;font-weight:600;font-size:14px;color:#0969DA;">AI 분석 레포트 요청하기 (${esc(MODEL_LABEL)})</summary>
-        <div style="padding:14px;border-top:0.5px solid #D0D7DE;">
+      <details open style="margin-top:24px;background:#FAFAF8;border:0.5px solid #E2E0DB;border-radius:6px;">
+        <summary style="cursor:pointer;padding:10px 14px;font-weight:600;font-size:14px;color:#2C4C9C;">AI 분석 레포트 요청하기 (${esc(MODEL_LABEL)})</summary>
+        <div style="padding:14px;border-top:0.5px solid #E2E0DB;">
           <div data-role="need-key" style="display:none;margin-bottom:10px;">
-            <div style="font-size:12px;color:#656D76;margin-bottom:6px;">
+            <div style="font-size:12px;color:#6E6A63;margin-bottom:6px;">
               Anthropic API Key 필요 (이 브라우저 localStorage 에만 저장, 커밋/제3자 전송 X — 요청은 api.anthropic.com 으로 직접).
               <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">키 발급</a>
             </div>
-            <input data-role="key" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:360px;max-width:100%;padding:6px 10px;border:0.5px solid #D0D7DE;border-radius:4px;">
-            <button data-role="save" style="padding:6px 14px;background:#0969DA;color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
+            <input data-role="key" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:360px;max-width:100%;padding:6px 10px;border:0.5px solid #E2E0DB;border-radius:4px;">
+            <button data-role="save" style="padding:6px 14px;background:#2C4C9C;color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
           </div>
           <div data-role="panel" style="display:none;">
             <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
-              <button data-role="gen" style="padding:5px 12px;background:#EAEEF2;color:#1F2328;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:12px;">분석 요청</button>
-              <button data-role="key-edit" style="padding:6px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:11px;">API Key 변경</button>
-              <span data-role="status" style="font-size:11px;color:#656D76;"></span>
+              <button data-role="gen" style="padding:5px 12px;background:#F2F1EE;color:#1C1B19;border:0.5px solid #E2E0DB;border-radius:4px;cursor:pointer;font-size:12px;">분석 요청</button>
+              <button data-role="key-edit" style="padding:6px 10px;background:none;color:#6E6A63;border:0.5px solid #E2E0DB;border-radius:4px;cursor:pointer;font-size:11px;">API Key 변경</button>
+              <span data-role="status" style="font-size:11px;color:#6E6A63;"></span>
             </div>
-            <div data-role="output" style="background:#FFFFFF;border:0.5px solid #D0D7DE;border-radius:4px;padding:20px 24px;min-height:80px;font-size:13px;line-height:1.7;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"></div>
+            <div data-role="output" style="background:#FFFFFF;border:0.5px solid #E2E0DB;border-radius:4px;padding:20px 24px;min-height:80px;font-size:13px;line-height:1.7;color:#1C1B19;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"></div>
             <div data-role="save-area" style="display:none;margin-top:8px;">
-              <button data-role="commit" style="padding:6px 14px;background:#9A6700;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px;">📝 리포트 저장 (repo 커밋)</button>
-              <span data-role="commit-status" style="font-size:11px;color:#656D76;margin-left:8px;"></span>
+              <button data-role="commit" style="padding:6px 14px;background:#94630F;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:12px;">리포트 저장 (repo 커밋)</button>
+              <span data-role="commit-status" style="font-size:11px;color:#6E6A63;margin-left:8px;"></span>
             </div>
           </div>
         </div>
@@ -549,7 +549,7 @@ window.SMA_Narrative = {
     function showError(msg) {
       output.replaceChildren();
       const d = document.createElement('div');
-      d.style.color = '#CF222B';
+      d.style.color = '#B23B34';
       d.textContent = '실패: ' + msg;
       output.appendChild(d);
     }
@@ -592,7 +592,7 @@ window.SMA_Narrative = {
     async function autoCommit() {
       const ghPat = lsGet('sma_github_pat');
       if (!ghPat || !lastHTML || !lastMeta) return;
-      commitSt.textContent = '📝 repo에 자동 저장 중...';
+      commitSt.textContent = 'repo에 자동 저장 중...';
       const now = new Date();
       const hh = String(now.getUTCHours()).padStart(2, '0');
       const mm = String(now.getUTCMinutes()).padStart(2, '0');
@@ -600,7 +600,7 @@ window.SMA_Narrative = {
       const filename = `${d}-adhoc-${hh}${mm}.html`;     // 세션 날짜 + 생성 시각(UTC)
       const path = `reports/tickers/${ticker}/narratives/${filename}`;
       const meta = `Generated by ${us.model} (adhoc) · 데이터 기준 ${d} 미국 정규장 세션 · ${now.toISOString().slice(0, 16)} UTC · ~$${us.cost.toFixed(4)}`;
-      const page = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(ticker)} AI Narrative · ${esc(d)} (adhoc)</title></head><body style="background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;"><div style="max-width:1000px;margin:0 auto;"><div style="font-size:11px;color:#656D76;margin-bottom:12px;"><a href="../../../tickers/${esc(ticker)}/" style="color:#0969DA;text-decoration:none;">← ${esc(ticker)} page</a> · ${esc(meta)}</div>${lastHTML}</div></body></html>`;
+      const page = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(ticker)} AI Narrative · ${esc(d)} (adhoc)</title></head><body style="background:#FFFFFF;color:#1C1B19;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;"><div style="max-width:1000px;margin:0 auto;"><div style="font-size:11px;color:#6E6A63;margin-bottom:12px;"><a href="../../../tickers/${esc(ticker)}/" style="color:#2C4C9C;text-decoration:none;">← ${esc(ticker)} page</a> · ${esc(meta)}</div>${lastHTML}</div></body></html>`;
       const content = btoa(unescape(encodeURIComponent(page)));
       const res = await fetch(`https://api.github.com/repos/z66g/sma/contents/${path}`, {
         method: 'PUT',
@@ -612,7 +612,7 @@ window.SMA_Narrative = {
         throw new Error(err.message || res.statusText);
       }
       commitSt.replaceChildren();
-      commitSt.append('✅ 저장됨 → ');
+      commitSt.append('저장됨 → ');
       const a = document.createElement('a');
       a.href = 'narratives/' + encodeURIComponent(filename);
       a.textContent = filename;
