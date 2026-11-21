@@ -80,7 +80,7 @@ def card(vc: Optional[Dict[str, Any]], href: Optional[str] = None) -> str:
     a, u = vc.get("archetype") or {}, vc.get("uncertainty") or {}
     vk = VERDICT_KIND.get(vc.get("verdict"), "info")
     bg, fg = KIND_COL[vk]
-    pl = lambda t, k: (f'<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;'  # noqa: E731
+    pl = lambda t, k: (f'<span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;'  # noqa: E731
                        f'white-space:nowrap;background:{KIND_COL[k][0]};color:{KIND_COL[k][1]};">{e(t)}</span>')
     R = vc.get("research") or {}
     is_r = vc.get("method") == "RESEARCH"
@@ -102,7 +102,7 @@ def card(vc: Optional[Dict[str, Any]], href: Optional[str] = None) -> str:
         extra.append(f"할인율 ±1%p {_px(rs['plus_1pt'], ccy)}~{_px(rs['minus_1pt'], ccy)}"
                      + ("" if R.get("verdict_robust", True) else f' <b style="color:{WARN};">(판정 민감)</b>'))
     if vc.get("model_gap"):
-        extra.append(f'<b style="color:{WARN};">⚠ 시장과 3배 이상 괴리 — 상세의 "현재가가 맞으려면" 참고</b>')
+        extra.append(f'<b style="color:{WARN};">시장과 3배 이상 괴리 — 상세의 "현재가가 맞으려면" 참고</b>')
     if vc.get("implied_cagr_5y") is not None and vc.get("base_cagr_5y") is not None:
         extra.append(f"시장 내재 5년 매출성장 <b>{vc['implied_cagr_5y'] * 100:.0f}%</b> vs 모델 가정 {vc['base_cagr_5y'] * 100:.0f}%")
     if vc.get("analyst_target") is not None:
@@ -129,7 +129,7 @@ def card(vc: Optional[Dict[str, Any]], href: Optional[str] = None) -> str:
 
 # ─── 상세 페이지 ─────────────────────────────────────────────────────────────
 def _vsec(anchor: str, n: int, name: str, badges: List[str]) -> str:
-    return (f'<div class="sec" id="{anchor}"><span class="sec-t">▶ VALUATION {n} [{e(name)}]</span>'
+    return (f'<div class="sec" id="{anchor}"><span class="sec-t">VALUATION {n} [{e(name)}]</span>'
             f'<span class="sec-b">{"".join(badges)}</span></div>')
 
 
@@ -141,7 +141,7 @@ def _model_rows(v: Dict[str, Any], ccy: str) -> tuple:
     for m in inc + ref:
         bad = [c for c in m["checks"] if not c["ok"]]
         memo = "".join(f"<div>{e(n_)}</div>" for n_ in m["notes"][:3])
-        memo += "".join(f'<div style="color:{WARN};">⚠ {e(c["text"])}</div>' for c in bad)
+        memo += "".join(f'<div style="color:{WARN};">{e(c["text"])}</div>' for c in bad)
         if not m.get("included") and m.get("reason"):
             memo += f'<div class="muted">{e(m["reason"])}</div>'
         w = f'<b>{m["weight"] * 100:.0f}%</b>' if m.get("included") else '<span class="muted">참고</span>'
@@ -525,11 +525,11 @@ JS = r"""
 const D=JSON.parse(document.getElementById('val-data').textContent||'{}');
 if(!D.ff||typeof Chart==='undefined')return;
 const F='-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-Chart.defaults.font.family=F;Chart.defaults.font.size=11;Chart.defaults.color='#1F2328';
+Chart.defaults.font.family=F;Chart.defaults.font.size=11;Chart.defaults.color='#1C1B19';
 Chart.defaults.plugins.legend.labels.font={family:F,size:11};
 Chart.defaults.plugins.tooltip.titleFont={family:F};Chart.defaults.plugins.tooltip.bodyFont={family:F};
 Chart.defaults.maintainAspectRatio=false;
-const G='#EAEEF2',BU='#1A7F5A',BE='#CF222B',WA='#9A6700',IN='#0969DA',TX='#1F2328',MU='#656D76';
+const G='#F2F1EE',BU='#2F7254',BE='#B23B34',WA='#94630F',IN='#2C4C9C',TX='#1C1B19',MU='#6E6A63';
 const a=(h,o)=>{const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${o})`;};
 const px=v=>v==null?'N/A':D.ccy+(Math.abs(v)>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v.toFixed(2));
 const big=v=>{if(v==null)return'N/A';const x=Math.abs(v),s=v<0?'-':'';return s+D.ccy+(x>=1e12?(x/1e12).toFixed(2)+'T':x>=1e9?(x/1e9).toFixed(1)+'B':(x/1e6).toFixed(0)+'M');};

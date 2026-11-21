@@ -8,9 +8,10 @@ from typing import Any, Dict, List, Optional, Sequence
 from . import commentary as C
 
 FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-BULL, BEAR, WARN, INFO = "#1A7F5A", "#CF222B", "#9A6700", "#0969DA"
-TXT, MUTED, CARD, PANEL, BORDER = "#1F2328", "#656D76", "#F6F8FA", "#EAEEF2", "#D0D7DE"
-G_BG, R_BG, A_BG, B_BG = "#DAFBE1", "#FFEBE9", "#FFF8C5", "#DDF4FF"
+BULL, BEAR, WARN, INFO = "#2F7254", "#B23B34", "#94630F", "#2C4C9C"
+TXT, MUTED, CARD, PANEL, BORDER = "#1C1B19", "#6E6A63", "#FAFAF8", "#F2F1EE", "#E2E0DB"
+G_BG, R_BG, A_BG, B_BG = "#EDF4EF", "#F8EDEB", "#F6F0E2", "#EDF1F8"
+LINE = "#CFCCC5"          # 섹션 제목 아래 선
 SIG_KIND = {"BULLISH": "pos", "BEARISH": "neg", "NEUTRAL": "warn"}
 KIND = {"pos": (G_BG, BULL), "neg": (R_BG, BEAR), "warn": (A_BG, WARN), "info": (B_BG, INFO), "muted": (PANEL, MUTED)}
 
@@ -26,7 +27,7 @@ def pill(text: str, kind: str = "info", title: str = "") -> str:
 
 
 def sec(n: int, name: str, badges: Sequence[str] = ()) -> str:
-    return (f'<div class="sec" id="s{n}"><span class="sec-t">▶ SECTION {n} [{e(name)}]</span>'
+    return (f'<div class="sec" id="s{n}"><span class="sec-t">SECTION {n} [{e(name)}]</span>'
             f'<span class="sec-b">{"".join(badges)}</span></div>')
 
 
@@ -241,7 +242,7 @@ def _phase_rows(ph: Dict, l1: Dict, l3: Dict) -> List[List[str]]:
     if em:
         p2_note += (f". 다만 {em['start']}부터 최근 {em['days']}일은 {C.q(em['state_ko'])} 신호(가격 {C.pc(em.get('ret_pct'))})가 "
                     "나타나 전환 여부를 확인하는 중입니다")
-    contra = " <b style=\"color:#CF222B;\">리포트·체결 데이터가 다른 방향을 가리켜, 국면이 바뀌는 중일 수 있습니다.</b>" if cu.get("contradicted") else ""
+    contra = " <b style=\"color:#B23B34;\">리포트·체결 데이터가 다른 방향을 가리켜, 국면이 바뀌는 중일 수 있습니다.</b>" if cu.get("contradicted") else ""
     et = nx.get("emp_top")
     if nx.get("emp_n"):
         emp = (f"과거 {C.q(cu['state_ko'])} 다음에 {C.jo(C.q(nx['state_ko']), '이')} 온 경우 {nx['emp_hits']}/{nx['emp_n']}회"
@@ -742,7 +743,7 @@ a{{color:{INFO};text-decoration:none}} a:hover{{text-decoration:underline}}
 .hdr h1{{font-size:24px;margin:0}} .nm{{font-size:14px;color:{MUTED};font-weight:500}}
 .sub{{font-size:12px;color:{MUTED};margin-top:4px}}
 .px{{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px}} .pv{{font-size:26px;font-weight:700}}
-.pill{{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;font-family:{FONT}}}
+.pill{{display:inline-block;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:600;white-space:nowrap;font-family:{FONT}}}
 .exec{{background:{CARD};border:0.5px solid {BORDER};border-radius:8px;padding:14px 16px;margin-bottom:12px}}
 .eh{{font-size:10px;letter-spacing:.12em;color:{MUTED};font-weight:700}}
 .hl{{font-size:14px;font-weight:600;margin:6px 0 10px;color:{MUTED}}}
@@ -777,8 +778,8 @@ a{{color:{INFO};text-decoration:none}} a:hover{{text-decoration:underline}}
 details.dq{{background:#FFFFFF;border:0.5px solid {BORDER};border-radius:6px;padding:8px 12px;margin-bottom:6px}}
 details.dq summary{{cursor:pointer;font-weight:600;font-size:12px;color:{MUTED}}}
 .wl{{font-size:11px;color:{WARN};margin:8px 0 0 18px;padding:0}}
-.sec{{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:0.5px solid {WARN};margin:26px 0 12px;padding-bottom:5px}}
-.sec-t{{color:{WARN};font-weight:700;font-size:14px}} .sec-b{{display:flex;gap:6px;flex-wrap:wrap}}
+.sec{{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid {LINE};margin:26px 0 12px;padding-bottom:6px}}
+.sec-t{{color:{TXT};font-weight:700;font-size:15px;letter-spacing:-0.01em}} .sec-b{{display:flex;gap:6px;flex-wrap:wrap}}
 .card{{background:{CARD};border:0.5px solid {BORDER};border-radius:6px;padding:12px;margin-bottom:12px;min-width:0}}
 .ct{{font-weight:600;font-size:12px;color:{MUTED};margin-bottom:8px}}
 .g2{{display:grid;grid-template-columns:1fr 1fr;gap:12px}} .g2.w{{grid-template-columns:1.55fr 1fr}}
@@ -857,21 +858,21 @@ JS = """
 (function(){
 const D=JSON.parse(document.getElementById('sma-data').textContent);
 const F='-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-Chart.defaults.font.family=F;Chart.defaults.font.size=11;Chart.defaults.color='#1F2328';
+Chart.defaults.font.family=F;Chart.defaults.font.size=11;Chart.defaults.color='#1C1B19';
 Chart.defaults.plugins.legend.labels.font={family:F,size:11};
 Chart.defaults.maintainAspectRatio=false;
-const G='#EAEEF2',BU='#1A7F5A',BE='#CF222B',WA='#9A6700',IN='#0969DA';
+const G='#F2F1EE',BU='#2F7254',BE='#B23B34',WA='#94630F',IN='#2C4C9C';
 const a=(h,o)=>{const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${o})`;};
 const fmt=v=>{if(v==null)return'N/A';const x=Math.abs(v),s=v<0?'-':'';return x>=1e9?s+(x/1e9).toFixed(2)+'B':x>=1e6?s+(x/1e6).toFixed(2)+'M':x>=1e3?s+(x/1e3).toFixed(1)+'K':s+x.toFixed(0);};
 const grid={color:G};
 const endLabels={id:'endLabels',afterDatasetsDraw(c,_,o){if(!o||!o.on)return;const ctx=c.ctx;ctx.save();ctx.font='600 11px '+F;
  c.data.datasets.forEach((ds,i)=>{c.getDatasetMeta(i).data.forEach((b,j)=>{const v=ds.data[j];if(v==null)return;const t=o.f?o.f(v):v;
  const hz=c.options.indexAxis==='y';ctx.textBaseline='middle';
- if(hz){const w=ctx.measureText(t).width;let x=v<0?b.x-4:b.x+4,al=v<0?'right':'left',col=o.color||'#1F2328';
+ if(hz){const w=ctx.measureText(t).width;let x=v<0?b.x-4:b.x+4,al=v<0?'right':'left',col=o.color||'#1C1B19';
   if(v<0&&x-w<c.chartArea.left){x=b.x+4;al='left';col='#FFFFFF';}
   if(v>=0&&x+w>c.chartArea.right){x=b.x-4;al='right';col='#FFFFFF';}
   ctx.textAlign=al;ctx.fillStyle=col;ctx.fillText(t,x,b.y);}
- else{ctx.textAlign='center';ctx.fillStyle=o.color||'#1F2328';ctx.fillText(t,b.x,b.y-8);}});});ctx.restore();}};
+ else{ctx.textAlign='center';ctx.fillStyle=o.color||'#1C1B19';ctx.fillText(t,b.x,b.y-8);}});});ctx.restore();}};
 Chart.register(endLabels);
 const mk=(id,cfg)=>{const el=document.getElementById(id);if(el)new Chart(el,cfg);};
 const vline=(v,c,label,dash,pos)=>v==null?null:{type:'line',scaleID:'x',value:v,borderColor:c,borderWidth:1.5,borderDash:dash||[],
@@ -883,7 +884,7 @@ if(D.dp.labels.length){mk('cDp',{data:{labels:D.dp.labels,datasets:[
  {type:'line',label:'장외 거래량',data:D.dp.off,borderColor:WA,backgroundColor:WA,pointRadius:2,borderWidth:1.5,yAxisID:'y1'}]},
  options:{plugins:{annotation:{annotations:anns([D.dp.avg==null?null:{type:'line',scaleID:'y',value:D.dp.avg,borderColor:MUTED(),borderDash:[4,4],borderWidth:1,label:{display:true,content:'20일 평균 '+D.dp.avg.toFixed(1)+'%',position:'end',font:{size:10},backgroundColor:'rgba(101,109,118,.85)'}}])}},
  scales:{y:{grid,title:{display:true,text:'DP %'},suggestedMin:20},y1:{position:'right',grid:{display:false},ticks:{callback:fmt}},x:{grid:{display:false}}}}});}
-function MUTED(){return '#656D76';}
+function MUTED(){return '#6E6A63';}
 if(D.obv.labels.length){const end=D.obv.cum[D.obv.cum.length-1]||0,c=end>=0?BU:BE;
  const coh=D.obv.inst.some(v=>v!=null);
  const ds=coh?[
@@ -891,14 +892,14 @@ if(D.obv.labels.length){const end=D.obv.cum[D.obv.cum.length-1]||0,c=end>=0?BU:B
   {type:'bar',label:'프로',data:D.obv.pro,backgroundColor:a(WA,.85),stack:'d'},
   {type:'bar',label:'리테일',data:D.obv.ret,backgroundColor:a(BE,.85),stack:'d'},
   {type:'line',label:'기관 누적',stack:'l1',data:D.obv.inst_cum,borderColor:BU,borderWidth:2.5,pointRadius:3,tension:.25},
-  {type:'line',label:'Net 누적',stack:'l2',data:D.obv.cum,borderColor:'#A32D2D',borderDash:[5,4],borderWidth:2,pointRadius:3,tension:.25}]
+  {type:'line',label:'Net 누적',stack:'l2',data:D.obv.cum,borderColor:'#8E3A33',borderDash:[5,4],borderWidth:2,pointRadius:3,tension:.25}]
  :[{type:'bar',label:'일별 순체결',data:D.obv.day,backgroundColor:D.obv.day.map(v=>a(v>=0?BU:BE,.85))},
   {type:'line',label:'누적',data:D.obv.cum,borderColor:c,backgroundColor:a(c,.12),fill:true,tension:.25,pointRadius:3}];
  mk('cObv',{data:{labels:D.obv.labels,datasets:ds},
  options:{interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10}},tooltip:{callbacks:{label:t=>t.dataset.label+': '+fmt(t.raw)}}},
  scales:{y:{grid,stacked:coh,ticks:{callback:fmt}},x:{grid:{display:false},stacked:coh}}}});}
 {const o=D.obv4,labels=['기관','프로','리테일','전체'],vals=[o.inst,o.pro,o.ret,o.total];
- mk('cObv4',{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:[a(BU,.85),a(WA,.85),a(BE,.85),a('#A32D2D',.85)]}]},
+ mk('cObv4',{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:[a(BU,.85),a(WA,.85),a(BE,.85),a('#8E3A33',.85)]}]},
  options:{indexAxis:'y',plugins:{legend:{display:false},endLabels:{on:true,f:v=>(v>=0?'+':'')+fmt(v)}},
  scales:{x:{grid,ticks:{callback:fmt},suggestedMin:-Math.abs(o.total||1)*1.4,suggestedMax:Math.abs(o.total||1)*1.4},y:{grid:{display:false}}}}});}
 if(D.coh){const c=D.coh;mk('cCoh',{type:'bar',data:{labels:[c.week_start+'주'],datasets:[
@@ -919,7 +920,7 @@ if(D.gex.labels.length){const g=D.gex;mk('cGex',{type:'bar',data:{labels:g.label
  scales:{y:{grid,ticks:{callback:fmt}},x:{grid:{display:false},ticks:{autoSkip:true,maxRotation:0,autoSkipPadding:6}}}}});}
 if(D.prof.length){mk('cProf',{type:'line',data:{labels:D.prof.map(p=>p.s.toFixed(0)),datasets:[{label:'총 GEX',data:D.prof.map(p=>p.g),
  borderColor:WA,borderWidth:2,pointRadius:0,fill:{target:'origin',above:a(BU,.15),below:a(BE,.15)}}]},
- options:{plugins:{legend:{display:false},annotation:{annotations:anns([{type:'line',scaleID:'y',value:0,borderColor:'#656D76',borderWidth:1},
+ options:{plugins:{legend:{display:false},annotation:{annotations:anns([{type:'line',scaleID:'y',value:0,borderColor:'#6E6A63',borderWidth:1},
  vline(D.prof.reduce((b,p,i)=>Math.abs(p.s-D.price)<Math.abs(D.prof[b].s-D.price)?i:b,0),IN,'Spot',[6,4],'end')])}},
  scales:{y:{grid,ticks:{callback:fmt}},x:{grid:{display:false},ticks:{maxTicksLimit:9}}}}});}
 if(D.oi.labels.length){mk('cOi',{type:'bar',data:{labels:D.oi.labels,datasets:[{label:'Call OI',data:D.oi.c,backgroundColor:a(BU,.85)},{label:'Put OI',data:D.oi.p,backgroundColor:a(BE,.85)}]},
@@ -929,18 +930,18 @@ if(D.oi.labels.length){mk('cOi',{type:'bar',data:{labels:D.oi.labels,datasets:[{
 if(D.px.labels.length){const p=D.px;mk('cPx',{data:{labels:p.labels,datasets:[
  {type:'line',label:'BB 상단',data:p.bbu,borderColor:a(IN,.35),borderWidth:1,pointRadius:0,fill:'+1',backgroundColor:a(IN,.06)},
  {type:'line',label:'BB 하단',data:p.bbl,borderColor:a(IN,.35),borderWidth:1,pointRadius:0},
- {type:'line',label:'종가',data:p.c,borderColor:'#1F2328',borderWidth:1.8,pointRadius:0},
+ {type:'line',label:'종가',data:p.c,borderColor:'#1C1B19',borderWidth:1.8,pointRadius:0},
  {type:'line',label:'SMA20',data:p.s20,borderColor:WA,borderWidth:1.2,pointRadius:0},
  {type:'line',label:'SMA50',data:p.s50,borderColor:IN,borderWidth:1.2,pointRadius:0},
  {type:'line',label:'SMA200',data:p.s200,borderColor:BE,borderWidth:1.2,pointRadius:0},
- {type:'bar',label:'거래량',data:p.v,backgroundColor:a('#656D76',.25),yAxisID:'yv'}]},
+ {type:'bar',label:'거래량',data:p.v,backgroundColor:a('#6E6A63',.25),yAxisID:'yv'}]},
  options:{interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10}}},
  scales:{y:{grid},yv:{position:'right',grid:{display:false},ticks:{callback:fmt},max:Math.max(...p.v)*4},x:{grid:{display:false},ticks:{maxTicksLimit:10,maxRotation:0}}}}});}
 // 국면 타임라인
 if(D.reg){const g=D.reg,an={},cw=(document.getElementById('cReg')||{}).clientWidth||0,minSpan=cw>700?8:cw>0?22:99;
  g.segs.forEach((x,i)=>{an['r'+i]={type:'box',xMin:x.s,xMax:x.e,backgroundColor:a(x.c,x.o),borderWidth:0,
  label:{display:(g.labels.indexOf(x.e)-g.labels.indexOf(x.s))>=minSpan,content:x.k,position:{x:'center',y:'start'},font:{size:10,weight:'600'},color:x.c}};});
- mk('cReg',{type:'line',data:{labels:g.labels,datasets:[{label:'종가',data:g.c,borderColor:'#1F2328',borderWidth:1.6,pointRadius:0,tension:.1}]},
+ mk('cReg',{type:'line',data:{labels:g.labels,datasets:[{label:'종가',data:g.c,borderColor:'#1C1B19',borderWidth:1.6,pointRadius:0,tension:.1}]},
  options:{plugins:{legend:{display:false},annotation:{annotations:an}},scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:10,maxRotation:0}}}}});}
 // S5
 mk('cProb',{type:'bar',data:{labels:['[A] 상승','[B] 중립','[C] 하락'],datasets:[{data:D.prob,backgroundColor:[a(BU,.85),a(WA,.85),a(BE,.85)],barThickness:18}]},

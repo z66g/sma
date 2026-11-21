@@ -26,8 +26,8 @@ W = 900
 ROW_H, HEAD_H, COLH_H, SEC_H, FOOT_H = 46, 92, 30, 30, 34
 FONT = ('-apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans CJK KR", '
         '"Noto Sans KR", "NanumGothic", "Malgun Gothic", sans-serif')
-BULL, BEAR, WARN, INFO, MUTED, TXT = "#1A7F5A", "#CF222B", "#9A6700", "#0969DA", "#656D76", "#1F2328"
-SC = {"A": ("상승", BULL, "#DAFBE1"), "B": ("중립", WARN, "#FFF8C5"), "C": ("하락", BEAR, "#FFEBE9")}
+BULL, BEAR, WARN, INFO, MUTED, TXT = "#2F7254", "#B23B34", "#94630F", "#2C4C9C", "#6E6A63", "#1C1B19"
+SC = {"A": ("상승", BULL, "#EDF4EF"), "B": ("중립", WARN, "#F6F0E2"), "C": ("하락", BEAR, "#F8EDEB")}
 ST_COL = {"ACCUMULATION": BULL, "MARKUP": BULL, "DISTRIBUTION": WARN, "MARKDOWN": BEAR, "NEUTRAL": MUTED}
 # 국면 = 지금까지의 자금 흐름 어휘 (향후 전망의 상승/중립/하락과 겹치지 않게)
 ST_KO = {"ACCUMULATION": "매집", "MARKUP": "매수 주도", "DISTRIBUTION": "분산", "MARKDOWN": "매도 주도", "NEUTRAL": "관망"}
@@ -77,11 +77,11 @@ def row(d: dict, i: int) -> str:
     cc = BULL if (chg or 0) > 0 else BEAR if (chg or 0) < 0 else MUTED
     rg = ((d.get("phase") or {}).get("regime") or {}).get("current") or {}
     reg = (f'<span style="color:{ST_COL.get(rg.get("state"), MUTED)};font-weight:700;">{E(ST_KO.get(rg.get("state"), rg.get("state_ko")))}</span>'
-           f'<span class="mu"> {E(rg.get("days"))}일</span>' + (' <span style="color:#CF222B;">⚠</span>' if rg.get("contradicted") else "")
+           f'<span class="mu"> {E(rg.get("days"))}일</span>' + (' <span style="color:#B23B34;">⚠</span>' if rg.get("contradicted") else "")
            ) if rg else '<span class="mu">—</span>'
     price = d.get("price")
     ps = "" if price is None else (f"${price:,.0f}" if price >= 1000 else f"${price:,.2f}")
-    bgc = "#FFFFFF" if i % 2 == 0 else "#F6F8FA"
+    bgc = "#FFFFFF" if i % 2 == 0 else "#FAFAF8"
     return (f'<tr style="background:{bgc};"><td class="tk"><b>{E(d.get("ticker"))}</b><span class="mu">{E(ps)}</span></td>'
             f'<td style="color:{cc};font-weight:700;text-align:right;">{"" if chg is None else f"{chg:+.1f}%"}</td>'
             f'<td><span class="pill" style="background:{bg};color:{fg};">{lab} {prob:.0f}%</span></td>'
@@ -106,11 +106,11 @@ body{{width:{W}px;font-family:{FONT};color:{TXT};padding:12px 16px}}
 .t1{{font-size:21px;font-weight:800}} .t1 span{{color:{WARN}}}
 .t2{{font-size:13px;color:{MUTED};margin-top:6px}} .t2 b{{font-weight:700}}
 table{{border-collapse:collapse;width:100%;table-layout:fixed}}
-th{{height:{COLH_H}px;font-size:11.5px;color:{MUTED};text-align:left;padding:0 8px;background:#EAEEF2;font-weight:700}}
-td{{height:{ROW_H}px;padding:0 8px;font-size:13.5px;border-bottom:0.5px solid #D0D7DE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+th{{height:{COLH_H}px;font-size:11.5px;color:{MUTED};text-align:left;padding:0 8px;background:#F2F1EE;font-weight:700}}
+td{{height:{ROW_H}px;padding:0 8px;font-size:13.5px;border-bottom:0.5px solid #E2E0DB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 td.tk b{{font-size:15px;margin-right:6px}} .mu{{color:{MUTED};font-size:12px}}
 .pill{{display:inline-block;padding:3px 10px;border-radius:12px;font-weight:700;font-size:12.5px}}
-td.sec{{height:{SEC_H}px;font-size:11.5px;font-weight:700;color:{MUTED};background:#F6F8FA}}
+td.sec{{height:{SEC_H}px;font-size:11.5px;font-weight:700;color:{MUTED};background:#FAFAF8}}
 .ft{{height:{FOOT_H}px;display:flex;align-items:flex-end;justify-content:space-between;font-size:11px;color:{MUTED}}}
 col.c1{{width:128px}} col.c2{{width:72px}} col.c3{{width:116px}} col.c4{{width:150px}}
 </style></head><body>

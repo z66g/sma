@@ -21,14 +21,37 @@ _PAGE_CSS = ("<style>.sec{border-bottom:1px solid #CFCCC5 !important}.sec-t{colo
              "</style>")
 
 
-def tone(html: str) -> str:
-    if not html:
-        return html
-    out = _RE.sub(lambda m: COLOR_MAP[m.group(0).upper()], html)
-    if "</head>" in out and _PAGE_CSS not in out:
-        out = out.replace("</head>", _PAGE_CSS + "</head>", 1)
+LINE = "#CFCCC5"
+# 섹션 제목(황토색 굵은 글씨 + 황토색 밑줄 + ▶) → 짙은 글씨 + 회색 선
+_HEAD_RE = re.compile(r"color:\s*#9A6700;\s*font-weight:\s*700;\s*font-size:\s*14px;\s*\">▶\s*", re.IGNORECASE)
+_RULE_RE = re.compile(r"border-bottom:\s*0\.5px solid #9A6700", re.IGNORECASE)
+_PILL_RE = re.compile(r"(padding:\s*2px (?:8|10)px;\s*)border-radius:\s*12px;")
+
+
+def retone(text: str) -> str:
+    """리포트·템플릿 원문(HTML 또는 그것을 만드는 소스)의 색·제목·배지 모양을 사이트 톤으로."""
+    if not text:
+        return text
+    out = _HEAD_RE.sub('color:#1C1B19;font-weight:700;font-size:15px;">', text)
+    out = _RULE_RE.sub(f"border-bottom:1px solid {LINE}", out)
+    out = _PILL_RE.sub(r"\1border-radius:3px;", out)
     out = out.replace("border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;",
                       "border-radius:3px;font-size:11px;font-weight:600;white-space:nowrap;")
+    out = out.replace("▶ SECTION", "SECTION")
+    # 이미 만들어진 리포트의 섹션 제목 CSS (render_html 의 이전 규격)
+    out = re.sub(r"\.sec-t\{color:#9A6700;font-weight:700;font-size:14px\}",
+                 ".sec-t{color:#1C1B19;font-weight:700;font-size:15px;letter-spacing:-0.01em}", out, flags=re.I)
+    out = _RE.sub(lambda m: COLOR_MAP[m.group(0).upper()], out)
     for a, b in _EMOJI:
         out = out.replace(a, b)
+    return out
+
+
+def tone(html: str) -> str:
+    """발행되는 페이지(적정가 상세 등)용: retone + 리포트 규격 CSS 의 섹션 제목 덮어쓰기."""
+    if not html:
+        return html
+    out = retone(html)
+    if "</head>" in out and _PAGE_CSS not in out:
+        out = out.replace("</head>", _PAGE_CSS + "</head>", 1)
     return out
