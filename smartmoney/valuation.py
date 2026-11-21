@@ -1578,7 +1578,7 @@ def apply_research(out: Dict[str, Any], D, P, exitp, R: Dict[str, Any], as_of: O
                                                  "n_models", "uncertainty", "summary", "status")}
     out["research"] = {**{k: R.get(k) for k in ("as_of", "analyst", "thesis", "business", "performance", "plans", "news", "risks",
                                                 "catalysts", "confidence", "sources", "adjustments", "valuation_notes", "second_opinion",
-                                                "prob_basis")},
+                                                "prob_basis", "audit")},
                        "scenarios": scen, "options": opts, "option_value": opt_total, "age_days": age, "stale": stale,
                        "anchor": {"ttm_end": D.get("ttm_end")}, "checks": checks, "rate_sensitivity": sens, "rate_elasticity": rate_el, "fair_symmetric": fair_sym,
                        "verdict_robust": robust}
@@ -1629,7 +1629,8 @@ def compact(v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
                            "verdict_robust": R.get("verdict_robust", True), "fair_symmetric": r(R.get("fair_symmetric")),
                            "n_warn": sum(1 for c in R.get("checks") or [] if c.get("level") in ("WARN", "ERROR")),
                            "second_opinion": ({k: (R["second_opinion"] or {}).get(k) for k in ("analyst", "fair_value")}
-                                              if R.get("second_opinion") else None)}
+                                              if R.get("second_opinion") else None),
+                           "audit": ({k: (R.get("audit") or {}).get(k) for k in ("date", "verdict")} if isinstance(R.get("audit"), dict) else None)}
         out["mechanical_fair"] = r((v.get("mechanical") or {}).get("fair_value"))
     return out
 

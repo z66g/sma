@@ -104,6 +104,9 @@ def main() -> int:
     s = sub.add_parser("show", help="발행 없이 출력")
     s.add_argument("tickers", nargs="+"); s.add_argument("--json", action="store_true"); s.add_argument("--refresh", action="store_true")
     sub.add_parser("status", help="워치리스트 발행 현황")
+    s = sub.add_parser("review", help="검토 종목(review.txt) 보기·추가·삭제")
+    s.add_argument("op", choices=["list", "add", "remove"]); s.add_argument("tickers", nargs="*")
+    s.add_argument("--request", action="store_true", help="add 할 때 분석 요청 시각을 함께 기록 (예약 작업이 조사하도록)")
     s = sub.add_parser("plan", help="관심종목별 이번 주 할 일 (주간 예약 작업용)")
     s.add_argument("--budget", type=int, default=8, help="이번 실행의 작업량 상한 (신규 조사 = 2, 갱신 = 1)")
     s.add_argument("--json", action="store_true"); s.add_argument("--no-fetch", action="store_true", help="최신 재무 조회 없이 저장된 정보로만 판단")
@@ -145,9 +148,21 @@ def main() -> int:
             for x in fatal:
                 print(f"  ✗ {x}", file=sys.stderr)
             return 2
+        try:
+            prev = json.loads((VD.PUB_DIR / f"{T}.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            prev = None
+        reasons = VD.audit_reasons(v, prev)
+        ok, why = VD.audit_record_ok(R)
+        if reasons:
+            print(f"  [감사 필요] {' · '.join(reasons)} — docs/VALUATION_AUDIT.md 의 독립 감사를 거쳐 리서치에 audit 기록을 남길 것"
+                  + (f" (기록 있음: {R['audit'].get('date')} · {R['audit'].get('verdict')})" if ok else f" (현재: {why})"))
         if args.dry_run:
             print("\n(dry-run: 발행하지 않음)")
             return 0
+        if reasons and not ok:
+            print(f"독립 감사 필요 — 발행하지 않음: {' · '.join(reasons)} ({why})", file=sys.stderr)
+            return 2
         for k, p in VD.publish(T, v, R).items():
             print(f"{k.upper():9}: {p}")
         return 0
@@ -185,9 +200,39 @@ def main() -> int:
             print(json.dumps(out, ensure_ascii=False, indent=1))
         return rc
 
+    if args.cmd == "review":
+        from smartmoney import review_list as RL
+        from datetime import datetime, timezone
+        entries = RL.load()
+        wl = set(watchlist())
+        if args.op in ("add", "remove") and not args.tickers:
+            ap.error("티커를 지정")
+        for t in (x.upper() for x in args.tickers):
+            if not RL.TICKER_RE.match(t):
+                ap.error(f"티커 형식이 아님: {t}")
+            if args.op == "add":
+                if t in wl:
+                    print(f"{t}: 관심종목에 있음 — 검토 종목에 넣지 않음")
+                    continue
+                req = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if args.request else None
+                entries = [e for e in entries if e["ticker"] != t] + [{"ticker": t, "requested_at": req}]
+                print(f"{t}: 검토 종목에 추가" + (f" (분석 요청 {req})" if req else ""))
+            else:
+                n = len(entries)
+                entries = [e for e in entries if e["ticker"] != t]
+                print(f"{t}: " + ("검토 종목에서 삭제 (발행 파일은 남김)" if len(entries) < n else "검토 종목에 없음"))
+        if args.op in ("add", "remove"):
+            RL.REVIEW_FILE.write_text(RL.render(entries), encoding="utf-8")
+        print(f"{'종목':<7}{'상태':<10}{'리서치일':>12}{'경과':>6}  분석 요청")
+        for e in RL.load():
+            st = RL.status(e)
+            print(f"{e['ticker']:<7}{st['status']:<10}{st['research_as_of'] or '-':>12}{st['age_days'] if st['age_days'] is not None else '-':>6}  {e['requested_at'] or '-'}")
+        return 0
+
     if args.cmd == "plan":
-        rows = VD.plan(watchlist(), fetch=not args.no_fetch)
-        todo = [r for r in rows if r["action"] != "OK"]
+        from smartmoney import review_list as RL
+        rows = VD.plan(watchlist(), fetch=not args.no_fetch, review=RL.load())
+        todo = [r for r in rows if r["action"] not in ("OK", "REVIEW_OK", "REVIEW_EXPIRED")]
         queue, later, left = [], [], max(args.budget, 0)
         for r in todo:                                      # 우선순위 순으로 예산이 허락하는 만큼
             cost = VD.PLAN_COST.get(r["action"], 1)
@@ -196,15 +241,17 @@ def main() -> int:
                 left -= cost
             else:
                 later.append(r)
-        res = {"research_queue": queue, "deferred": later, "recompute": [r["ticker"] for r in rows if r["action"] == "OK"] +
-               [r["ticker"] for r in later if r["action"] != "NEW"], "budget": args.budget}
+        res = {"research_queue": queue, "deferred": later,
+               "recompute": [r["ticker"] for r in rows if r["action"] in ("OK", "REVIEW_OK")] +
+               [r["ticker"] for r in later if r["action"] not in ("NEW", "REQUEST") or (r["action"] == "REQUEST" and r.get("mode") == "UPDATE")],
+               "review_expired": [r["ticker"] for r in rows if r["action"] == "REVIEW_EXPIRED"], "budget": args.budget}
         if args.json:
             print(json.dumps(res, ensure_ascii=False, indent=1))
             return 0
-        print(f"{'종목':<7}{'할 일':<12}{'리서치일':>12}{'경과':>6}  사유")
+        print(f"{'종목':<7}{'할 일':<15}{'리서치일':>12}{'경과':>6}  사유")
         for r in rows:
             mark = "→ 이번 실행" if r in queue else "→ 다음 주로" if r in later else ""
-            print(f"{r['ticker']:<7}{r['action']:<12}{r['research_as_of'] or '-':>12}{r['age_days'] if r['age_days'] is not None else '-':>6}  {r['why']} {mark}")
+            print(f"{r['ticker']:<7}{r['action']:<15}{r['research_as_of'] or '-':>12}{r['age_days'] if r['age_days'] is not None else '-':>6}  {r['why']} {mark}")
         print(f"\n조사·갱신 {len(queue)}종목 (작업량 상한 {args.budget}: 신규 2 · 갱신 1) · 다음 주로 {len(later)}종목 · 재계산 {len(res['recompute'])}종목")
         return 0
     if args.cmd == "status":

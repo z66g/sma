@@ -414,6 +414,10 @@ def _research_html(v: Dict[str, Any], ccy: str) -> str:
         gap += (f'<div class="tk-x"><b>독립 2차 의견</b> · {e(so.get("analyst"))}: 적정가 <b>{_px(so["fair_value"], ccy)}</b>'
                 + (f' (약세 {_px(sv.get("bear"), ccy)} · 기본 {_px(sv.get("base"), ccy)} · 강세 {_px(sv.get("bull"), ccy)})' if sv else "")
                 + f' — 이 리서치와 {abs(so["fair_value"] / v["fair_value"] - 1) * 100:.0f}% 차이. {e(so.get("note") or "")}</div>')
+    au = R.get("audit") if isinstance(R.get("audit"), dict) else {}
+    if au.get("verdict"):
+        gap += (f'<div class="tk-x"><b>독립 감사</b> · {e(au.get("date"))} · {e(au.get("verdict"))}'
+                + (f' ({e(au.get("auditor"))})' if au.get("auditor") else "") + f' — {e(au.get("summary"))}</div>')
     # 자체 점검 · 민감도: 결론이 어느 가정에 얼마나 기대고 있는지 숨기지 않는다
     sens, chk = R.get("rate_sensitivity"), R.get("checks") or []
     diag = []
@@ -432,7 +436,8 @@ def _research_html(v: Dict[str, Any], ccy: str) -> str:
     return _vsec("v0", 0, "리서치 — 사업·성과·계획·뉴스를 시나리오로", [
         pill(f"리서치 {R.get('as_of')}", "warn" if R.get("stale") else "info"),
         pill(f"확신도 {conf}", {"HIGH": "pos", "MEDIUM": "info", "LOW": "warn"}.get(conf, "info")),
-        pill(f"출처 {len(R.get('sources') or [])}건", "info")]) + f"""
+        pill(f"출처 {len(R.get('sources') or [])}건", "info")]
+        + ([pill(f"독립 감사 {au.get('verdict')}", "pos")] if au.get("verdict") else [])) + f"""
 <div class="tk" style="border-left-color:{INFO};"><div class="tk-h" style="color:{INFO};">투자 논지</div>
 <div class="tk-t">{e(R.get('thesis'))}</div>{gap}</div>
 <div class="card"><div class="ct">시나리오 — 서로 다른 세계에 확률을 부여하고 같은 DCF 로 계산</div>
