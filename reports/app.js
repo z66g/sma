@@ -34,10 +34,10 @@ function qualityPill(r) {
   const g = String(r.quality_grade).toUpperCase().charAt(0);
   const cls = (g === 'A' || g === 'B') ? 'q-good' : (g === 'C' ? 'q-mid' : 'q-bad');
   const title = (r.quality_missing || []).join('; ') || '모든 레이어 OK';
-  const warn = r.warnings_count ? ` · ⚠${r.warnings_count}` : '';
+  const warn = r.warnings_count ? ` · 경고 ${r.warnings_count}` : '';
   return `<span class="pill ${cls}" title="${esc(title)}">${esc(r.quality_grade)}${isNum(r.quality_score) ? ' ' + r.quality_score.toFixed(0) : ''}${esc(warn)}</span>`;
 }
-function verdictColor(v) { v = v || ''; return v.indexOf('UNDER') >= 0 ? '#1A7F5A' : v.indexOf('OVER') >= 0 ? '#CF222B' : '#656D76'; }
+function verdictColor(v) { v = v || ''; return v.indexOf('UNDER') >= 0 ? '#2F7254' : v.indexOf('OVER') >= 0 ? '#B23B34' : '#6E6A63'; }
 function verdictPill(r) {
   if (!isNum(r.fair_value) || !r.fair_verdict_ko) return DASH;
   const v = r.fair_verdict || '';
@@ -52,7 +52,7 @@ function fairTitle(r) {
 function fairCell(r) {
   if (!isNum(r.fair_value)) return DASH;
   const url = safePath(r.val_url);
-  const body = fmtDol(r.fair_value) + (r.fair_stale ? ' <span title="리서치 갱신 필요" style="color:#9A6700;">⏳</span>' : '');
+  const body = fmtDol(r.fair_value) + (r.fair_stale ? '<span class="flag" title="리서치 갱신 필요 (실적 발표 이후 또는 100일 경과)">!</span>' : '');
   return url ? `<a href="${esc(url)}" title="${esc(fairTitle(r))}">${body}</a>` : `<span title="${esc(fairTitle(r))}">${body}</span>`;
 }
 function upsideCell(r) {
@@ -60,13 +60,13 @@ function upsideCell(r) {
   const base = isNum(r.fair_base_price) && isNum(r.price) && Math.abs(r.fair_base_price - r.price) > 0.005
     ? `세션 주가가 오래되어 발행 시점 주가 $${r.fair_base_price.toFixed(2)} 기준` : '현재가 대비';
   return `<span class="up" style="color:${verdictColor(r.fair_verdict)};" title="${esc(base)}">${fmtSigned(r.fair_upside, 0)}%</span>`
-    + (base !== '현재가 대비' ? ' <span class="muted" title="' + esc(base) + '">ⓘ</span>' : '')
-    + (r.fair_gap ? ' <span title="시장 가격과 3배 이상 괴리 — 상세 페이지의 전제 조건 참고" style="color:#9A6700;">⚠</span>' : '');
+    + (base !== '현재가 대비' ? '<span class="flag flag-n" title="' + esc(base) + '">*</span>' : '')
+    + (r.fair_gap ? '<span class="flag" title="시장 가격과 3배 이상 괴리 — 상세 페이지의 전제 조건 참고">!</span>' : '');
 }
 function fairChip(r) {
   if (!isNum(r.fair_value) || !isNum(r.fair_upside)) return '';
   const px = '$' + (r.fair_value >= 100 ? r.fair_value.toFixed(0) : r.fair_value.toFixed(2));
-  return `<span class="olp" style="font-size:10.5px;color:#656D76;" title="펀더멘털 적정가 ${esc(fmtDol(r.fair_value))} · ${esc(r.fair_verdict_ko || '')}">적정 ${px} `
+  return `<span class="olp" style="font-size:10.5px;color:#6E6A63;" title="펀더멘털 적정가 ${esc(fmtDol(r.fair_value))} · ${esc(r.fair_verdict_ko || '')}">적정 ${px} `
     + `<b style="color:${verdictColor(r.fair_verdict)};font-size:10.5px;">${fmtSigned(r.fair_upside, 0)}%</b></span>`;
 }
 function casePretty(c) { return c ? esc(KO[c] || String(c).replace(/^CASE_\d+_/, '').replace(/^CASE_/, '')) : NA; }
@@ -269,12 +269,12 @@ function showPanel(hasToken) {
 }
 function setStatus(msg, isError) {
   statusEl.textContent = msg || '';
-  statusEl.style.color = isError ? '#CF222B' : '#656D76';
+  statusEl.style.color = isError ? '#B23B34' : '#6E6A63';
 }
 // 신뢰된 HTML 조각 전용 — 호출부에서 모든 동적 값을 esc() 해야 함
 function setStatusHTML(html, isError) {
   statusEl.innerHTML = html || '';
-  statusEl.style.color = isError ? '#CF222B' : '#656D76';
+  statusEl.style.color = isError ? '#B23B34' : '#6E6A63';
 }
 function needPAT() {
   if (getPAT()) return false;
@@ -357,7 +357,7 @@ function syncReviewRows() {
 
 function renderWL() {
   if (!ticksCache.length) {
-    wlList.innerHTML = '<span style="color:#656D76;font-size:11px;">관심종목 없음</span>';
+    wlList.innerHTML = '<span class="muted" style="font-size:11px;">관심종목 없음</span>';
     return;
   }
   wlList.innerHTML = ticksCache.map(t =>
@@ -393,7 +393,7 @@ async function commitTickers(message) {
     body: JSON.stringify({ message, content: b64encode(buildFileContent()), sha: txtSha })
   });
   txtSha = j.content.sha;
-  setStatus(`✅ 커밋 완료: ${message} (${String(txtSha).slice(0,7)})`);
+  setStatus(`커밋 완료: ${message} (${String(txtSha).slice(0,7)})`);
 }
 async function commitReview(message) {
   setStatus('커밋 중...');
@@ -448,7 +448,7 @@ async function promote(t, how) {
   if (row) row.is_active = true;
   REVIEW = REVIEW.filter(r => r.ticker !== t);
   renderWL(); render();
-  setStatus(`✅ ${t} 관심종목에 추가 — 다음 화~토 오전 자동 수급 분석부터 표에 나타납니다`
+  setStatus(`${t} 관심종목에 추가 — 다음 화~토 오전 자동 수급 분석부터 표에 나타납니다`
     + (row || how === 'review' ? '' : ' (적정가 리서치가 없으면 곧 조사가 시작됩니다)'));
 }
 
@@ -476,7 +476,7 @@ async function removeTicker(t) {
     }
     if (row) row.is_active = false;
     renderWL(); render();
-    setStatus(`✅ ${t} 관심종목에서 제거` + (hasFair ? ' — 검토 종목으로 이동' : ''));
+    setStatus(`${t} 관심종목에서 제거` + (hasFair ? ' — 검토 종목으로 이동' : ''));
   } catch (e) { setStatus('실패: ' + e.message, true); }
 }
 
@@ -493,7 +493,7 @@ async function requestAnalysis(t, again) {
   const r = REVIEW.find(x => x.ticker === t);
   if (r) r.requested_at = now; else REVIEW.push({ ticker: t, requested_at: now });
   render();
-  setStatusHTML(`✅ ${esc(t)} ${again ? '재분석' : '적정가 분석'} 요청 — 약 2분 뒤 분석 세션이 시작됩니다. `
+  setStatusHTML(`${esc(t)} ${again ? '재분석' : '적정가 분석'} 요청 — 약 2분 뒤 분석 세션이 시작됩니다. `
     + `${again ? '갱신은 보통 10~20분' : '신규 조사는 보통 20~40분'} 걸리고, 끝나면 새로고침했을 때 '검토 종목' 표에 반영됩니다. `
     + `<a href="https://github.com/${REPO}/actions/workflows/valuation-on-add.yml" target="_blank" rel="noopener">호출 기록</a>`);
   return true;
@@ -515,7 +515,7 @@ async function deleteReview(t) {
     });
     REVIEW = REVIEW.filter(r => r.ticker !== t);
     render();
-    setStatus(`✅ ${t} 검토 종목에서 삭제`);
+    setStatus(`${t} 검토 종목에서 삭제`);
   } catch (e) { setStatus('실패: ' + e.message, true); }
 }
 
@@ -549,13 +549,13 @@ async function pollRun(dispatchTime, label, timeoutMs) {
       const r = await gh(`/repos/${REPO}/actions/runs/${encodeURIComponent(runId)}`);
       const elapsed = Math.round((Date.now() - dispatchTime) / 1000);
       const statusStr = r.status === 'completed'
-        ? (r.conclusion === 'success' ? '✅ 완료' : `❌ ${r.conclusion}`)
+        ? (r.conclusion === 'success' ? '완료' : `실패 (${r.conclusion})`)
         : r.status;
       setStatusHTML(
         `${esc(label)}: ${esc(statusStr)} · ${elapsed}s 경과`
-        + (safeUrl ? ` · <a href="${esc(safeUrl)}" target="_blank" rel="noopener" style="color:#0969DA;">Actions 보기</a>` : '')
+        + (safeUrl ? ` · <a href="${esc(safeUrl)}" target="_blank" rel="noopener" ">Actions 보기</a>` : '')
         + (r.status === 'completed' && r.conclusion === 'success'
-           ? ` · <button id="reload-btn" style="padding:2px 10px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:11px;">새로고침</button>`
+           ? ` · <button id="reload-btn" class="btn" style="padding:1px 8px;font-size:11px;">새로고침</button>`
            : '')
       );
       const rb = document.getElementById('reload-btn');

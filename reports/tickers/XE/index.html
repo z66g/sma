@@ -12,30 +12,30 @@
 <title>XE · Smart Money History</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1F2328; margin:0; padding:24px; font-size:13px;
+  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1C1B19; margin:0; padding:24px; font-size:13px;
          -webkit-tap-highlight-color:transparent; }
   .wrap { max-width:1200px; margin:0 auto; }
   h1 { font-size:22px; margin:0 0 4px 0; }
-  h2 { font-size:14px; color:#9A6700; border-bottom:0.5px solid #9A6700; padding-bottom:4px; margin-top:24px; }
-  .meta { color:#656D76; font-size:12px; margin-bottom:12px; }
-  .oneliner { background:#FFF8C5; border-left:4px solid #9A6700; border-radius:0 6px 6px 0; padding:10px 14px; font-size:15px; font-weight:700; line-height:1.55; margin-bottom:8px; }
-  .oneliner span { display:block; font-size:11px; color:#9A6700; letter-spacing:.06em; margin-bottom:2px; }
-  .headline { background:#DDF4FF; color:#1F2328; border-radius:6px; padding:8px 12px; font-size:13px; margin-bottom:12px; }
+  h2 { font-size:15px; color:#1C1B19; border-bottom:1px solid #CFCCC5; padding-bottom:6px; margin-top:26px; letter-spacing:-0.01em; }
+  .meta { color:#6E6A63; font-size:12px; margin-bottom:12px; }
+  .oneliner { background:#F6F0E2; border-left:4px solid #94630F; border-radius:0 6px 6px 0; padding:10px 14px; font-size:15px; font-weight:700; line-height:1.55; margin-bottom:8px; }
+  .oneliner span { display:block; font-size:11px; color:#94630F; letter-spacing:.06em; margin-bottom:2px; }
+  .headline { background:#EDF1F8; color:#1C1B19; border-radius:6px; padding:8px 12px; font-size:13px; margin-bottom:12px; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; }
-  .card { background:#F6F8FA; border:0.5px solid #D0D7DE; border-radius:6px; padding:12px; }
-  .card-label { font-size:11px; color:#656D76; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em; }
+  .card { background:#FAFAF8; border:0.5px solid #E2E0DB; border-radius:6px; padding:12px; }
+  .card-label { font-size:11px; color:#6E6A63; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em; }
   .card-value { font-size:18px; font-weight:600; }
-  .card-sub { font-size:11px; color:#656D76; margin-top:4px; }
+  .card-sub { font-size:11px; color:#6E6A63; margin-top:4px; }
   table { border-collapse:collapse; width:100%; font-size:12px; }
-  th,td { border:0.5px solid #D0D7DE; padding:6px 8px; text-align:left; }
-  th { background:#EAEEF2; color:#656D76; font-weight:600; }
-  tr:nth-child(even) { background:#F6F8FA; }
-  a { color:#0969DA; text-decoration:none; }
+  th,td { border:0.5px solid #E2E0DB; padding:6px 8px; text-align:left; }
+  th { background:#F2F1EE; color:#6E6A63; font-weight:600; }
+  tr:nth-child(even) { background:#FAFAF8; }
+  a { color:#2C4C9C; text-decoration:none; }
   a:hover { text-decoration:underline; }
   canvas { max-height:200px; }
   .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
   .nav { margin-bottom:16px; font-size:12px; }
-  .nav a { color:#656D76; }
+  .nav a { color:#6E6A63; }
   .t-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
   .t-scroll table { min-width:100%; }
   @media (max-width:1024px) {
@@ -52,7 +52,7 @@
     #narrative-root div[style*="grid-template-columns:repeat(auto-fit"] { grid-template-columns:1fr !important; }
   }
   .tt { position:relative; display:inline-block; cursor:help; }
-  .tt-i { color:#0969DA; margin-left:4px; font-weight:600; font-size:11px; }
+  .tt-i { color:#2C4C9C; margin-left:4px; font-weight:600; font-size:11px; }
   .tt .tt-body {
     display:none;
     position:absolute; left:50%; transform:translateX(-50%);
@@ -70,14 +70,14 @@
 <div class="wrap">
   <div class="nav"><a href="../../">← 전체 대시보드</a></div>
   <h1>XE</h1>
-  <div class="meta">최신 세션 2026-04-24 (미국 정규장) · $29.20 · 0개 세션 · <span style="background:#EAEEF2;color:#656D76;padding:2px 8px;border-radius:10px;font-size:11px;">레거시 v2</span> · <span title="l3 cboe: CBOE HTTP 403 — falling back to yfinance; l3: yfinance: no expiries" style="color:#9A6700;">경고 2건</span> · <span style='color:#656D76;font-size:11px;'>패턴 없음</span></div>
+  <div class="meta">최신 세션 2026-04-24 (미국 정규장) · $29.20 · 0개 세션 · <span style="background:#F2F1EE;color:#6E6A63;padding:2px 8px;border-radius:10px;font-size:11px;">레거시 v2</span> · <span title="l3 cboe: CBOE HTTP 403 — falling back to yfinance; l3: yfinance: no expiries" style="color:#94630F;">경고 2건</span> · <span style='color:#6E6A63;font-size:11px;'>패턴 없음</span></div>
   
 
   <h2>Overview (latest)</h2>
   <div class="grid">
     
     <div class="card"><div class="card-label">Top Scenario <span class="tt tt-i">ⓘ<span class="tt-body"><b>가중 signal 합산 시나리오 확률</b><br>Bullish/Neutral/Bearish 중 가장 높은 확률이 대표 시나리오. Score는 −1.00~+1.00 범위, Macro는 FRED 기반 유동성 분류.<br><br>Bullish 37% · Bearish 23%</span></span></div>
-      <div class="card-value" style="color:#9A6700;">Neutral · 40.0%</div>
+      <div class="card-value" style="color:#94630F;">Neutral · 40.0%</div>
       <div class="card-sub">점수 +0.00 · 거시 우호</div>
     </div>
     <div class="card"><div class="card-label">Dark Pool % <span class="tt tt-i">ⓘ<span class="tt-body"><b>FINRA 오프거래소 거래량 ÷ 총거래량</b><br>다크풀·ATS·내부화 비중. 30-50% 정상 범위, 50%+ 기관 heavy.<br><br><b>구성원별 OBV (5d)</b>: SIP 전 체결 tick rule — 기관 ≥10,000주/$200k · 리테일 <100주/$5k · 프로 그 외. 체결 데이터 없던 과거 세션은 Total(CLV) 만 표시.<br><b>Divergence</b>: 가격 slope vs OBV 누적 slope (5일 회귀).</span></span></div>
@@ -99,7 +99,7 @@
     
   </div>
 
-  <h2>펀더멘털 적정가치 <span style="font-size:11px;color:#656D76;font-weight:400;">수급 분석과 독립된 축 · 2026-04-24 세션 기준</span></h2><div style="background:#FFFFFF;border:0.5px solid #D0D7DE;border-left:4px solid #CF222B;border-radius:0 6px 6px 0;padding:10px 14px;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;color:#1F2328;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#656D76;">적정가치 · 리서치 기반 시나리오 확률가중 (2026-11-20)</div><div style="display:flex;gap:6px;flex-wrap:wrap;"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;background:#DDF4FF;color:#0969DA;">초기 단계·컨셉주 (매출 미미)</span><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;background:#FFEBE9;color:#CF222B;">불확실성 매우 높음</span><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;background:#FFEBE9;color:#CF222B;">크게 고평가</span></div></div><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 2px;"><span style="font-size:22px;font-weight:700;">$4.78</span><span style="font-size:13px;">현재가 대비 <span style="color:#CF222B;font-weight:700;">-50.8%</span></span><span style="font-size:11.5px;color:#656D76;">범위 $0.87 ~ $15.90</span></div><div style="position:relative;height:46px;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;"><div style="position:absolute;left:0;right:0;top:20px;height:8px;background:#EAEEF2;border-radius:4px;"></div><div title="모델 통합 범위" style="position:absolute;left:0.64%;width:91.61%;top:20px;height:8px;background:#0969DA;opacity:.85;border-radius:4px;"></div><div title="적정가" style="position:absolute;left:24.47%;top:15px;width:3px;height:18px;margin-left:-1.5px;background:#1F2328;border-radius:2px;"></div><div title="현재가" style="position:absolute;left:54.46%;top:11px;width:0;height:26px;border-left:2px dashed #9A6700;"></div><div style="position:absolute;right:45.54%;margin-right:6px;top:-2px;font-size:10.5px;color:#9A6700;font-weight:700;white-space:nowrap;">현재가 $9.70</div><div style="position:absolute;left:0.64%;top:32px;font-size:10.5px;color:#656D76;transform:translateX(-50%);white-space:nowrap;">$0.87</div><div style="position:absolute;left:92.25%;top:32px;font-size:10.5px;color:#656D76;transform:translateX(-50%);white-space:nowrap;">$15.90</div></div><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11.5px;color:#656D76;margin-top:4px;"><span>약세 $0.87 (25%) · 기본 $1.17 (50%) · 강세 $15.90 (25%) · 기계적 기준선 $8.44 · 할인율 ±1%p $3.51~$7.01 · 시장 내재 5년 매출성장 <b>78%</b> vs 모델 가정 92% · 애널리스트 목표가 $25.72</span><a href="valuation.html" style="color:#0969DA;text-decoration:none;font-weight:600;white-space:nowrap;">모델별 상세 →</a></div><div style="font-size:12px;margin-top:6px;padding-top:6px;border-top:0.5px dashed #D0D7DE;">X-energy의 가치는 (1) 첫 Xe-100 플랜트(다우 Long Mott, 4기 320MWe)가 최종투자결정을 받아 2030년대 초에 실제로 가동되는지, (2) 그 뒤 아마존·유틸리티 물량이 연 몇 개 플랜트 속도로 이어지는지, (3) 아직 한 건도 체결되지 않은 기술료·연료공급 계약의 가격이 경영진 예시 단가(플랜트당 생애 24억~47억달러)에 얼마나 가까운지로 결정된다. 현재 매출은 DOE 비용분담 환급이 83%인 개발 단계 매출이고 연 4억달러대 영업손실이 이어지고 있어, 상용 매출 전까지의 누적 소진(약 20억~25억달러 + 연료공장 투자)이 보유 유동성 18억달러를 넘어선다. 규제 진척(건설허가·연료공장 인허가)은 계획보다 빠르지만 고객 최종투자결정은 아직 0건이라, 가치는 &#x27;상위 4분의 1&#x27; 결과에 크게 쏠린 벤처형 분포다.</div></div>
+  <h2>펀더멘털 적정가치 <span style="font-size:11px;color:#6E6A63;font-weight:400;">수급 분석과 독립된 축 · 2026-04-24 세션 기준</span></h2><div style="background:#FFFFFF;border:0.5px solid #E2E0DB;border-left:4px solid #B23B34;border-radius:0 6px 6px 0;padding:10px 14px;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;color:#1C1B19;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#6E6A63;">적정가치 · 리서치 기반 시나리오 확률가중 (2026-11-20)</div><div style="display:flex;gap:6px;flex-wrap:wrap;"><span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;white-space:nowrap;background:#EDF1F8;color:#2C4C9C;">초기 단계·컨셉주 (매출 미미)</span><span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;white-space:nowrap;background:#F8EDEB;color:#B23B34;">불확실성 매우 높음</span><span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;white-space:nowrap;background:#F8EDEB;color:#B23B34;">크게 고평가</span></div></div><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 2px;"><span style="font-size:22px;font-weight:700;">$4.78</span><span style="font-size:13px;">현재가 대비 <span style="color:#B23B34;font-weight:700;">-50.8%</span></span><span style="font-size:11.5px;color:#6E6A63;">범위 $0.87 ~ $15.90</span></div><div style="position:relative;height:46px;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;"><div style="position:absolute;left:0;right:0;top:20px;height:8px;background:#F2F1EE;border-radius:4px;"></div><div title="모델 통합 범위" style="position:absolute;left:0.64%;width:91.61%;top:20px;height:8px;background:#2C4C9C;opacity:.85;border-radius:4px;"></div><div title="적정가" style="position:absolute;left:24.47%;top:15px;width:3px;height:18px;margin-left:-1.5px;background:#1C1B19;border-radius:2px;"></div><div title="현재가" style="position:absolute;left:54.46%;top:11px;width:0;height:26px;border-left:2px dashed #94630F;"></div><div style="position:absolute;right:45.54%;margin-right:6px;top:-2px;font-size:10.5px;color:#94630F;font-weight:700;white-space:nowrap;">현재가 $9.70</div><div style="position:absolute;left:0.64%;top:32px;font-size:10.5px;color:#6E6A63;transform:translateX(-50%);white-space:nowrap;">$0.87</div><div style="position:absolute;left:92.25%;top:32px;font-size:10.5px;color:#6E6A63;transform:translateX(-50%);white-space:nowrap;">$15.90</div></div><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11.5px;color:#6E6A63;margin-top:4px;"><span>약세 $0.87 (25%) · 기본 $1.17 (50%) · 강세 $15.90 (25%) · 기계적 기준선 $8.44 · 할인율 ±1%p $3.51~$7.01 · 시장 내재 5년 매출성장 <b>78%</b> vs 모델 가정 92% · 애널리스트 목표가 $25.72</span><a href="valuation.html" style="color:#2C4C9C;text-decoration:none;font-weight:600;white-space:nowrap;">모델별 상세 →</a></div><div style="font-size:12px;margin-top:6px;padding-top:6px;border-top:0.5px dashed #E2E0DB;">X-energy의 가치는 (1) 첫 Xe-100 플랜트(다우 Long Mott, 4기 320MWe)가 최종투자결정을 받아 2030년대 초에 실제로 가동되는지, (2) 그 뒤 아마존·유틸리티 물량이 연 몇 개 플랜트 속도로 이어지는지, (3) 아직 한 건도 체결되지 않은 기술료·연료공급 계약의 가격이 경영진 예시 단가(플랜트당 생애 24억~47억달러)에 얼마나 가까운지로 결정된다. 현재 매출은 DOE 비용분담 환급이 83%인 개발 단계 매출이고 연 4억달러대 영업손실이 이어지고 있어, 상용 매출 전까지의 누적 소진(약 20억~25억달러 + 연료공장 투자)이 보유 유동성 18억달러를 넘어선다. 규제 진척(건설허가·연료공장 인허가)은 계획보다 빠르지만 고객 최종투자결정은 아직 0건이라, 가치는 &#x27;상위 4분의 1&#x27; 결과에 크게 쏠린 벤처형 분포다.</div></div>
 
   <h2>시계열 추이</h2>
   <div class="chart-grid">
@@ -117,33 +117,23 @@
   </table>
   </div>
 
-  <details style="margin-top:18px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:#656D76;">이전 버전(v2) 리포트 아카이브 · 1개 세션 — 방법론이 달라 시계열·분석에서 제외 (원본 보존)</summary><div class="t-scroll" style="margin-top:8px;"><table><thead><tr><th>Session</th><th>Price</th><th>Link</th></tr></thead><tbody><tr><td>2026-04-24</td><td>$29.20</td><td><a href="../../2026-04-25/XE_3Layer_Forensic_2026-04-25.html">리포트</a></td></tr></tbody></table></div></details>
+  <details style="margin-top:18px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:#6E6A63;">이전 버전(v2) 리포트 아카이브 · 1개 세션 — 방법론이 달라 시계열·분석에서 제외 (원본 보존)</summary><div class="t-scroll" style="margin-top:8px;"><table><thead><tr><th>Session</th><th>Price</th><th>Link</th></tr></thead><tbody><tr><td>2026-04-24</td><td>$29.20</td><td><a href="../../2026-04-25/XE_3Layer_Forensic_2026-04-25.html">리포트</a></td></tr></tbody></table></div></details>
 
   <h2>주간 AI 분석 리포트 히스토리</h2>
-  <p style="font-size:12px;color:#656D76;">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>
+  <p style="font-size:12px;color:#6E6A63;">아직 생성된 AI 내러티브 없음. 아래 버튼으로 즉석 생성 가능.</p>
 
-  <div id="narrative-root"></div>
-
-  <div style="margin-top:24px;font-size:10px;color:#656D76;text-align:center;">
+  <div style="margin-top:24px;font-size:10px;color:#6E6A63;text-align:center;">
     Data: <a href="../../data/XE.json">XE.json</a> · <a href="../../">Back to dashboard</a>
   </div>
 </div>
-<script src="../../narrative.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.SMA_Narrative) {
-      window.SMA_Narrative.mount(document.getElementById('narrative-root'), "XE");
-    }
-  });
-</script>
 <script>
 Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
-Chart.defaults.color = "#1F2328";
+Chart.defaults.color = "#1C1B19";
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 const DATES = [];
-const DATASETS = {"priceChart":[[{"label":"Price","data":[],"borderColor":"#0969DA","borderWidth":2.5},{"label":"Max Pain","data":[],"borderColor":"#9A6700","borderDash":[4,3]},{"label":"GEX Flip","data":[],"borderColor":"#1A7F5A","borderDash":[2,2]}],false],"probChart":[[{"label":"Bullish","data":[],"borderColor":"#1A7F5A"},{"label":"Bearish","data":[],"borderColor":"#CF222B"}],false],"shortChart":[[{"label":"Short %","data":[],"borderColor":"#CF222B","yAxisID":"y"},{"label":"CTB %","data":[],"borderColor":"#9A6700","yAxisID":"y1"}],true],"obvChart":[[{"label":"기관 OBV (5d)","data":[],"borderColor":"#1A7F5A","yAxisID":"y"},{"label":"프로 OBV (5d)","data":[],"borderColor":"#9A6700","yAxisID":"y"},{"label":"리테일 OBV (5d)","data":[],"borderColor":"#CF222B","yAxisID":"y"},{"label":"Total OBV (5d)","data":[],"borderColor":"#A32D2D","borderDash":[5,4],"yAxisID":"y"},{"label":"Dark Pool %","data":[],"borderColor":"#0969DA","yAxisID":"y1"}],true]};
+const DATASETS = {"priceChart":[[{"label":"Price","data":[],"borderColor":"#2C4C9C","borderWidth":2.5},{"label":"Max Pain","data":[],"borderColor":"#94630F","borderDash":[4,3]},{"label":"GEX Flip","data":[],"borderColor":"#2F7254","borderDash":[2,2]}],false],"probChart":[[{"label":"Bullish","data":[],"borderColor":"#2F7254"},{"label":"Bearish","data":[],"borderColor":"#B23B34"}],false],"shortChart":[[{"label":"Short %","data":[],"borderColor":"#B23B34","yAxisID":"y"},{"label":"CTB %","data":[],"borderColor":"#94630F","yAxisID":"y1"}],true],"obvChart":[[{"label":"기관 OBV (5d)","data":[],"borderColor":"#2F7254","yAxisID":"y"},{"label":"프로 OBV (5d)","data":[],"borderColor":"#94630F","yAxisID":"y"},{"label":"리테일 OBV (5d)","data":[],"borderColor":"#B23B34","yAxisID":"y"},{"label":"Total OBV (5d)","data":[],"borderColor":"#A32D2D","borderDash":[5,4],"yAxisID":"y"},{"label":"Dark Pool %","data":[],"borderColor":"#2C4C9C","yAxisID":"y1"}],true]};
 function lineChart(id, datasets, dual) {
-  const scales = { y:{ grid:{color:"#EAEEF2"} }, x:{ grid:{display:false} } };
+  const scales = { y:{ grid:{color:"#F2F1EE"} }, x:{ grid:{display:false} } };
   if (dual) scales.y1 = { position:'right', grid:{drawOnChartArea:false} };
   new Chart(document.getElementById(id), {
     type:'line',

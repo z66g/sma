@@ -263,7 +263,8 @@ def publish(ticker: str, v: Dict[str, Any], research: Optional[Dict[str, Any]] =
     pub["published"] = now.date().isoformat()
     pub["published_at"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")          # 검토 종목의 '분석 요청' 해소 판단에 쓴다 (review_list)
     _write(out["numbers"], json.dumps(pub, ensure_ascii=False, indent=1))
-    _write(out["html"], page(v, v.get("name")))
+    from .site_tone import tone
+    _write(out["html"], tone(page(v, v.get("name"))))
     if research is not None:
         out["research"] = RESEARCH_DIR / f"{T}.json"
         _write(out["research"], json.dumps({k: x for k, x in research.items() if not k.startswith("_")}, ensure_ascii=False, indent=1))

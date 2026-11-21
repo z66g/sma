@@ -36,6 +36,7 @@ from typing import Any, Dict, List, Optional
 from smartmoney import commentary as C
 from smartmoney.calendar import legacy_session_for, parse_date
 from smartmoney.render_valuation import card as valuation_card
+from smartmoney.site_tone import tone as site_tone
 
 ROOT = Path(__file__).resolve().parent
 REPORTS = ROOT / "reports"
@@ -54,12 +55,14 @@ HEAVY_KEYS = {
 }
 
 FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+# 사이트(대시보드·종목 페이지) 색: 따뜻한 무채색 바탕 + 채도를 낮춘 의미색. 3-Layer 리포트 본문은 render_html 의 규격을 따른다.
 COLOR = {
-    "bg": "#FFFFFF", "card": "#F6F8FA", "panel": "#EAEEF2",
-    "border": "#D0D7DE", "text": "#1F2328", "muted": "#656D76",
-    "bull": "#1A7F5A", "bear": "#CF222B", "warn": "#9A6700", "info": "#0969DA",
-    "alert_green": "#DAFBE1", "alert_red": "#FFEBE9",
-    "alert_amber": "#FFF8C5", "alert_blue": "#DDF4FF",
+    "bg": "#FFFFFF", "card": "#FAFAF8", "panel": "#F2F1EE",
+    "border": "#E2E0DB", "line": "#CFCCC5", "text": "#1C1B19", "muted": "#6E6A63",
+    "bull": "#2F7254", "bear": "#B23B34", "warn": "#94630F", "info": "#2C4C9C",
+    "alert_green": "#EDF4EF", "alert_red": "#F8EDEB",
+    "alert_amber": "#F6F0E2", "alert_blue": "#EDF1F8",
+    "edge_green": "#CFE1D5", "edge_red": "#ECCFCB", "edge_amber": "#E6D7B3", "edge_blue": "#D2DAEC",
 }
 
 E = lambda v: html.escape("" if v is None else str(v), quote=True)  # noqa: E731
@@ -484,7 +487,7 @@ def render_ticker_page(ticker: str, series: list) -> str:
     val_html = ""
     if val and val.get("fair_value") is not None:
         href = "valuation.html" if (TICKERS_DIR / ticker / "valuation.html").exists() else None
-        val_html = f'<h2>펀더멘털 적정가치 <span style="font-size:11px;color:{COLOR["muted"]};font-weight:400;">수급 분석과 독립된 축 · {E(latest.get("date"))} 세션 기준</span></h2>' + valuation_card(val, href)
+        val_html = f'<h2>펀더멘털 적정가치 <span style="font-size:11px;color:{COLOR["muted"]};font-weight:400;">수급 분석과 독립된 축 · {E(latest.get("date"))} 세션 기준</span></h2>' + site_tone(valuation_card(val, href))
     datasets = {
         "priceChart": (price_ds, False),
         "probChart": ([
@@ -524,7 +527,7 @@ def render_ticker_page(ticker: str, series: list) -> str:
          -webkit-tap-highlight-color:transparent; }}
   .wrap {{ max-width:1200px; margin:0 auto; }}
   h1 {{ font-size:22px; margin:0 0 4px 0; }}
-  h2 {{ font-size:14px; color:{COLOR['warn']}; border-bottom:0.5px solid {COLOR['warn']}; padding-bottom:4px; margin-top:24px; }}
+  h2 {{ font-size:15px; color:{COLOR['text']}; border-bottom:1px solid {COLOR['line']}; padding-bottom:6px; margin-top:26px; letter-spacing:-0.01em; }}
   .meta {{ color:{COLOR['muted']}; font-size:12px; margin-bottom:12px; }}
   .oneliner {{ background:{COLOR['alert_amber']}; border-left:4px solid {COLOR['warn']}; border-radius:0 6px 6px 0; padding:10px 14px; font-size:15px; font-weight:700; line-height:1.55; margin-bottom:8px; }}
   .oneliner span {{ display:block; font-size:11px; color:{COLOR['warn']}; letter-spacing:.06em; margin-bottom:2px; }}
@@ -609,20 +612,10 @@ def render_ticker_page(ticker: str, series: list) -> str:
   <h2>주간 AI 분석 리포트 히스토리</h2>
   {_render_narrative_archive(ticker)}
 
-  <div id="narrative-root"></div>
-
   <div style="margin-top:24px;font-size:10px;color:{COLOR['muted']};text-align:center;">
     Data: <a href="../../data/{t}.json">{t}.json</a> · <a href="../../">Back to dashboard</a>
   </div>
 </div>
-<script src="../../narrative.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {{
-    if (window.SMA_Narrative) {{
-      window.SMA_Narrative.mount(document.getElementById('narrative-root'), {_js(ticker)});
-    }}
-  }});
-</script>
 <script>
 Chart.defaults.font.family = {_js(FONT)};
 Chart.defaults.color = {_js(COLOR['text'])};
@@ -813,7 +806,7 @@ TABLE_HEAD = """<thead>
     <th class="gs">매크로</th><th>다크풀</th><th>공매도</th><th>옵션</th>
     <th class="gs" data-sort="dp_pct">DP %</th><th data-sort="short_pct">Short %</th><th data-sort="ctb_fee">CTB % (Δ)</th><th data-sort="dtc">DTC</th><th data-sort="exp_move_pct">±Move</th>
     <th class="gs" data-sort="max_pain">Max Pain</th><th>Call / Put Wall</th>
-    <th class="gs">패턴</th><th data-sort="report_count" title="리포트 수">📄</th><th></th>
+    <th class="gs">패턴</th><th data-sort="report_count" title="저장된 수급 리포트 수">리포트</th><th></th>
   </tr>
 </thead>"""
 
@@ -832,8 +825,6 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
     latest_session = max((r["latest_date"] for r in summary if r["latest_date"]), default="N/A")
     meta = f"최신 세션 {latest_session} (미국 정규장, ET) · {len(summary)}개 종목"
     c = COLOR
-    btn = (f"padding:5px 12px;background:{c['panel']};color:{c['text']};border:0.5px solid {c['border']};"
-           "border-radius:4px;cursor:pointer;font-size:12px;")
 
     html_out = f"""<!DOCTYPE html>
 <html lang="ko">
@@ -863,49 +854,57 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
   .secnav {{ position:sticky; top:0; z-index:30; background:{c['bg']}; display:flex; gap:6px; padding:10px 0 8px; margin-bottom:12px;
              border-bottom:0.5px solid {c['border']}; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }}
   .secnav::-webkit-scrollbar {{ display:none; }}
-  .secnav a {{ flex:0 0 auto; padding:4px 11px; border-radius:14px; background:{c['panel']}; color:{c['text']}; font-size:12px; font-weight:600; }}
-  .secnav a:hover {{ text-decoration:none; background:{c['alert_blue']}; color:{c['info']}; }}
+  .secnav a {{ flex:0 0 auto; padding:4px 10px; border-radius:4px; color:{c['text']}; font-size:12.5px; font-weight:600; border:1px solid transparent; }}
+  .secnav a:hover {{ text-decoration:none; border-color:{c['border']}; background:{c['card']}; }}
   .secnav a .c {{ color:{c['muted']}; font-weight:400; margin-left:4px; }}
-  h2.sec {{ font-size:14px; color:{c['warn']}; margin:20px 0 6px; border-bottom:0.5px solid {c['warn']}; padding-bottom:4px;
+  h2.sec {{ font-size:15px; color:{c['text']}; margin:26px 0 8px; border-bottom:1px solid {c['line']}; padding-bottom:6px; letter-spacing:-0.01em;
             scroll-margin-top:56px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }}
   h2.sec .sub {{ font-size:11px; color:{c['muted']}; font-weight:400; }}
-  .hint {{ font-size:11px; color:{c['muted']}; margin:0 0 8px; line-height:1.5; }}
+  .btn {{ padding:5px 12px; background:{c['bg']}; color:{c['text']}; border:1px solid {c['border']}; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600; }}
+  .btn:hover {{ border-color:{c['line']}; background:{c['card']}; }}
+  .btn-p {{ background:{c['text']}; color:#FFFFFF; border-color:{c['text']}; }}
+  .btn-p:hover {{ background:#34322E; border-color:#34322E; }}
+  details.help {{ margin-top:12px; font-size:12px; color:{c['muted']}; }}
+  details.help summary {{ cursor:pointer; font-weight:600; color:{c['muted']}; width:max-content; }}
+  details.help ul {{ margin:8px 0 0; padding-left:18px; line-height:1.65; }}
   .tgl {{ margin-left:auto; background:none; border:0.5px solid {c['border']}; border-radius:4px; color:{c['muted']}; font-size:11px; padding:2px 8px; cursor:pointer; }}
 
   /* 관리 패널 */
-  #mgmt {{ margin-bottom:8px; background:{c['card']}; border:0.5px solid {c['border']}; border-radius:6px; padding:14px 16px; }}
+  #mgmt {{ margin-bottom:8px; background:{c['card']}; border:1px solid {c['border']}; border-radius:6px; padding:14px 16px; scroll-margin-top:56px; }}
   .mg-grid {{ display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1.2fr) minmax(0,1fr); gap:14px; }}
   .mg {{ min-width:0; }}
   .mg + .mg {{ border-left:0.5px solid {c['border']}; padding-left:14px; }}
-  .mg-h {{ font-size:11px; color:{c['muted']}; letter-spacing:0.04em; font-weight:700; margin-bottom:6px; }}
+  .mg-h {{ font-size:12px; color:{c['text']}; font-weight:700; margin-bottom:8px; }}
+  .mg-h span {{ color:{c['muted']}; font-weight:400; }}
   .mg-row {{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }}
   .mg-row input {{ width:140px; text-transform:uppercase; }}
   .mg-d {{ font-size:11px; color:{c['muted']}; line-height:1.5; }}
-  .chip {{ background:{c['alert_blue']}; color:{c['info']}; padding:3px 4px 3px 10px; border-radius:12px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }}
-  .chip button {{ background:none; border:0; color:{c['bear']}; cursor:pointer; font-size:14px; padding:0 6px; }}
+  .chip {{ background:{c['bg']}; color:{c['text']}; border:1px solid {c['border']}; padding:2px 2px 2px 9px; border-radius:4px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:2px; }}
+  .chip button {{ background:none; border:0; color:{c['muted']}; cursor:pointer; font-size:14px; padding:0 6px; line-height:1; }}
+  .chip button:hover {{ color:{c['bear']}; }}
 
   /* 한줄평 */
   .ol-list {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:6px; }}
-  .ol {{ display:grid; grid-template-columns:92px 1fr; gap:4px 10px; align-items:start; background:{c['card']}; border:0.5px solid {c['border']};
+  .ol {{ display:grid; grid-template-columns:92px 1fr; gap:4px 10px; align-items:start; background:{c['bg']}; border:1px solid {c['border']};
          border-radius:6px; padding:8px 12px; color:{c['text']}; text-decoration:none; font-size:12.5px; line-height:1.55; }}
-  .ol:hover {{ border-color:{c['warn']}; text-decoration:none; }}
+  .ol:hover {{ border-color:{c['line']}; background:{c['card']}; text-decoration:none; }}
   .ol b {{ font-size:13px; }} .ol .olp {{ display:block; margin-top:3px; white-space:nowrap; }}
 
   /* 표: 머리글·종목 열 고정 */
-  .tbl-wrap {{ max-height:calc(100vh - 96px); overflow:auto; border:0.5px solid {c['border']}; border-radius:6px; -webkit-overflow-scrolling:touch; background:{c['bg']}; }}
+  .tbl-wrap {{ max-height:calc(100vh - 96px); overflow:auto; border:1px solid {c['border']}; border-radius:6px; -webkit-overflow-scrolling:touch; background:{c['bg']}; }}
   table.dt {{ border-collapse:separate; border-spacing:0; width:100%; font-size:12px; }}
   table.dt th, table.dt td {{ border:0; border-right:0.5px solid {c['border']}; border-bottom:0.5px solid {c['border']}; padding:6px 8px; text-align:left; white-space:nowrap; }}
   table.dt th:last-child, table.dt td:last-child {{ border-right:0; }}
-  table.dt thead th {{ position:sticky; top:0; z-index:2; background:{c['panel']}; color:{c['muted']}; font-weight:600; }}
-  table.dt thead tr.grp th {{ box-sizing:border-box; height:28px; padding:0 8px; font-size:10.5px; letter-spacing:.03em; text-align:center; color:#57606A; }}
+  table.dt thead th {{ position:sticky; top:0; z-index:2; background:#F7F6F3; color:{c['muted']}; font-weight:600; }}
+  table.dt thead tr.grp th {{ box-sizing:border-box; height:28px; padding:0 8px; font-size:10.5px; letter-spacing:.04em; text-align:center; color:#8A857C; font-weight:600; }}
   table.dt thead tr.cols th {{ top:28px; }}
   table.dt tbody tr {{ background:{c['bg']}; }}
   table.dt tbody tr:nth-child(even) {{ background:{c['card']}; }}
-  table.dt tbody tr:hover {{ background:{c['alert_blue']}; }}
+  table.dt tbody tr:hover {{ background:#F1F3F7; }}
   table.dt tbody td {{ background:inherit; }}
   table.dt .stk {{ position:sticky; left:0; z-index:1; min-width:84px; box-shadow:6px 0 6px -6px rgba(31,35,40,.28); }}
   table.dt thead th.stk {{ z-index:3; }}
-  table.dt .gs {{ border-left:1px solid #AFB8C1; }}
+  table.dt .gs {{ border-left:1px solid {c['line']}; }}
   table.dt th[data-sort] {{ cursor:pointer; user-select:none; }}
   table.dt th[data-sort]:hover {{ color:{c['text']}; }}
   table.dt th .arr {{ font-size:9px; margin-left:3px; color:{c['info']}; }}
@@ -913,21 +912,22 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
   .nm {{ display:block; font-size:10px; color:{c['muted']}; max-width:128px; overflow:hidden; text-overflow:ellipsis; font-weight:400; margin-top:1px; }}
   .up {{ font-weight:700; }}
 
-  .pill {{ padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; }}
-  .pill-A {{ background:{c['alert_green']}; color:{c['bull']}; }}
-  .pill-B {{ background:{c['alert_amber']}; color:{c['warn']}; }}
-  .pill-C {{ background:{c['alert_red']}; color:{c['bear']}; }}
-  .pill-N {{ background:{c['panel']}; color:{c['muted']}; }}
-  .q-good {{ background:{c['alert_green']}; color:{c['bull']}; }}
-  .q-mid  {{ background:{c['alert_amber']}; color:{c['warn']}; }}
-  .q-bad  {{ background:{c['alert_red']}; color:{c['bear']}; }}
-  .q-info {{ background:{c['alert_blue']}; color:{c['info']}; }}
-  .pattern {{ font-size:9px; background:{c['alert_amber']}; color:{c['warn']}; padding:1px 4px; border-radius:6px; margin-right:2px; }}
+  /* 배지: 옅은 바탕 + 같은 계열 테두리, 각진 모서리 */
+  .pill {{ display:inline-block; padding:0 6px; border-radius:3px; font-size:10.5px; line-height:17px; font-weight:600; white-space:nowrap; border:1px solid {c['border']}; background:{c['bg']}; color:{c['muted']}; }}
+  .pill-A, .q-good {{ background:{c['alert_green']}; color:{c['bull']}; border-color:{c['edge_green']}; }}
+  .pill-B, .q-mid  {{ background:{c['alert_amber']}; color:{c['warn']}; border-color:{c['edge_amber']}; }}
+  .pill-C, .q-bad  {{ background:{c['alert_red']}; color:{c['bear']}; border-color:{c['edge_red']}; }}
+  .q-info {{ background:{c['alert_blue']}; color:{c['info']}; border-color:{c['edge_blue']}; }}
+  .pill-N {{ background:{c['panel']}; color:{c['muted']}; border-color:{c['border']}; }}
+  .pattern {{ display:inline-block; font-size:10px; line-height:16px; color:{c['muted']}; border:1px solid {c['border']}; padding:0 5px; border-radius:3px; margin-right:3px; }}
+  .flag {{ display:inline-block; width:14px; height:14px; line-height:13px; text-align:center; border-radius:50%; font-size:10px; font-weight:700; color:{c['warn']}; border:1px solid {c['edge_amber']}; background:{c['alert_amber']}; vertical-align:1px; margin-left:3px; cursor:help; }}
+  .flag-n {{ color:{c['muted']}; border-color:{c['border']}; background:{c['bg']}; }}
   .muted {{ color:{c['muted']}; }}
   .empty {{ padding:28px; text-align:center; color:{c['muted']}; white-space:normal !important; }}
-  .act {{ padding:2px 8px; border:0; border-radius:4px; cursor:pointer; font-size:11px; font-weight:700; margin-right:4px; color:#fff; }}
-  .act-add {{ background:{c['bull']}; }} .act-rm {{ background:{c['bear']}; }} .act-re {{ background:{c['info']}; }}
-  .act:disabled {{ opacity:.5; cursor:default; }}
+  .act {{ padding:1px 8px; border:1px solid {c['border']}; background:{c['bg']}; border-radius:3px; cursor:pointer; font-size:11px; font-weight:600; margin-right:4px; color:{c['text']}; line-height:18px; }}
+  .act:hover {{ background:{c['card']}; }}
+  .act-add {{ color:{c['bull']}; border-color:{c['edge_green']}; }} .act-rm {{ color:{c['bear']}; border-color:{c['edge_red']}; }} .act-re {{ color:{c['info']}; border-color:{c['edge_blue']}; }}
+  .act:disabled {{ opacity:.45; cursor:default; }}
 
   @media (max-width:1100px) {{
     .mg-grid {{ grid-template-columns:1fr; }}
@@ -979,56 +979,62 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 
 <div id="mgmt">
   <div id="mgmt-need-token" style="display:none;">
-    <div style="margin-bottom:8px;font-size:12px;color:{c['muted']};line-height:1.6;">
-      관심종목·검토 종목 편집과 분석 요청에는 GitHub 토큰이 필요합니다. 토큰은 <b>이 브라우저 localStorage 에만</b> 저장되며 repo 에 커밋되거나 다른 사이트로 전송되지 않습니다.<br>
-      권장: <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained PAT</a> —
-      Repository access: <b>Only select repositories → z66g/sma</b>, Permissions: <b>Contents: Read and write</b> + <b>Actions: Read and write</b>, 만료일 설정.
-      (repo 전체 권한을 주는 Classic PAT 은 권장하지 않음)
+    <div class="mg-h">관리 <span>— 관심종목·검토 종목 편집과 분석 요청에는 GitHub 토큰이 필요합니다</span></div>
+    <div class="mg-row">
+      <input id="pat" type="password" placeholder="github_pat_…" autocomplete="off" style="width:320px;max-width:100%;text-transform:none;">
+      <button id="pat-save" class="btn btn-p">저장</button>
+      <button id="pat-clear" class="btn">지우기</button>
     </div>
-    <input id="pat" type="password" placeholder="github_pat_…" autocomplete="off" style="width:360px;max-width:100%;">
-    <button id="pat-save" style="padding:6px 14px;background:{c['info']};color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
-    <button id="pat-clear" style="padding:6px 10px;background:none;color:{c['muted']};border:0.5px solid {c['border']};border-radius:4px;cursor:pointer;">지우기</button>
+    <details class="help"><summary>토큰 만드는 법</summary><ul>
+      <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained PAT</a> 생성 — Repository access: <b>Only select repositories → z66g/sma</b></li>
+      <li>Permissions: <b>Contents: Read and write</b>, <b>Actions: Read and write</b>, 만료일 설정 (저장소 전체 권한을 주는 Classic PAT 은 권장하지 않음)</li>
+      <li>토큰은 이 브라우저의 localStorage 에만 저장되고, 저장소에 커밋되거나 GitHub 외의 곳으로 전송되지 않습니다.</li>
+    </ul></details>
   </div>
 
   <div id="mgmt-panel" style="display:none;">
     <div class="mg-grid">
       <div class="mg">
-        <div class="mg-h">관심종목 — 화~토 오전(KST) 자동 수급 분석 · 직전 미국 정규장 세션 (휴장일 자동 건너뜀)</div>
+        <div class="mg-h">관심종목 <span>— 화~토 오전 자동 수급 분석</span></div>
         <div class="mg-row">
           <input id="new-ticker" type="text" placeholder="티커 (예: PLTR)" autocomplete="off">
-          <button id="add-btn" style="{btn}">추가</button>
-          <button id="run-btn" style="{btn}">리스트 전체 분석</button>
+          <button id="add-btn" class="btn">추가</button>
+          <button id="run-btn" class="btn">리스트 전체 분석</button>
         </div>
         <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
       <div class="mg">
-        <div class="mg-h">적정가 분석 — 관심종목에 넣기 전에 먼저</div>
+        <div class="mg-h">적정가 분석 <span>— 관심종목에 넣기 전에</span></div>
         <div class="mg-row">
           <input id="rv-ticker" type="text" placeholder="티커 (예: NVDA)" autocomplete="off">
-          <button id="rv-btn" style="{btn}background:{c['info']};color:#fff;border-color:{c['info']};">분석 요청</button>
+          <button id="rv-btn" class="btn btn-p">분석 요청</button>
         </div>
-        <div class="mg-d">검토 종목에 추가되고 약 2분 뒤 분석 세션이 시작됩니다. 신규 조사는 보통 20~40분 걸리고, 끝나면 아래 '검토 종목' 표에 적정가가 나타납니다.
-          매일 수급 분석은 하지 않습니다 — 마음에 들면 표에서 <b>편입</b>.</div>
       </div>
       <div class="mg">
-        <div class="mg-h">단일 종목 즉시 수급 분석</div>
+        <div class="mg-h">수급 분석 <span>— 한 종목 즉시</span></div>
         <div class="mg-row">
           <input id="adhoc-ticker" type="text" placeholder="티커 (예: PLTR)" autocomplete="off">
-          <button id="adhoc-btn" style="{btn}">개별분석</button>
+          <button id="adhoc-btn" class="btn">개별분석</button>
         </div>
-        <div class="mg-d">관심종목 여부와 상관없이 직전 세션 3-Layer 리포트를 한 번 만듭니다 (1~3분).</div>
-        <button id="pat-edit" style="margin-top:8px;padding:3px 10px;background:none;color:{c['muted']};border:0.5px solid {c['border']};border-radius:4px;cursor:pointer;font-size:11px;">PAT 변경</button>
       </div>
     </div>
-    <div id="mgmt-status" style="font-size:11px;color:{c['muted']};min-height:16px;margin-top:10px;"></div>
+    <div id="mgmt-status" style="font-size:12px;color:{c['muted']};min-height:16px;margin-top:10px;"></div>
+    <details class="help"><summary>도움말</summary><ul>
+      <li><b>관심종목</b> — 화~토 오전(KST)에 직전 미국 정규장 세션을 자동 분석합니다(휴장일 건너뜀). 리서치가 없는 종목을 추가하면 적정가 조사도 바로 시작됩니다.
+        제거할 때 적정가가 있으면 검토 종목으로 옮겨집니다.</li>
+      <li><b>적정가 분석</b> — 티커를 검토 종목에 넣고 약 2분 뒤 분석 세션이 시작됩니다. 신규 조사는 보통 20~40분, 재분석은 10~20분 걸리며 끝나면 새로고침했을 때 표에 반영됩니다.
+        검토 종목은 매일 수급 분석을 하지 않고, 분석 후 4주까지만 매주 주가·금리를 반영합니다. 채팅 세션에서 "티커 분석해줘"라고 해도 같은 분석이 됩니다.</li>
+      <li><b>수급 분석</b> — 관심종목 여부와 상관없이 직전 세션의 3-Layer 리포트를 한 번 만듭니다(1~3분).</li>
+      <li><b>표</b> — 종목 열은 가로로 스크롤해도 고정됩니다. 열 제목을 누르면 정렬하고, 한 번 더 누르면 반대로 정렬합니다.</li>
+    </ul></details>
+    <div style="margin-top:8px;"><button id="pat-edit" class="btn" style="font-size:11px;padding:2px 8px;font-weight:400;color:{c['muted']};">토큰 변경</button></div>
   </div>
 </div>
 
-<h2 class="sec" id="sec-ol">▶ 종목별 한줄평 <span class="sub">{E(latest_session)} 세션</span><button class="tgl" id="ol-tgl" type="button">접기</button></h2>
+<h2 class="sec" id="sec-ol">종목별 한줄평 <span class="sub">{E(latest_session)} 세션</span><button class="tgl" id="ol-tgl" type="button">접기</button></h2>
 <div id="ol-list" class="ol-list"></div>
 
-<h2 class="sec" id="sec-active">▶ 관심종목 <span class="sub" id="active-count"></span></h2>
-<div class="hint">종목 열은 가로로 스크롤해도 고정됩니다. 열 제목을 누르면 정렬하고, 한 번 더 누르면 반대로 정렬합니다.</div>
+<h2 class="sec" id="sec-active">관심종목 <span class="sub" id="active-count"></span></h2>
 <div class="tbl-wrap">
 <table id="tbl-active" class="dt">
   {TABLE_HEAD}
@@ -1036,8 +1042,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 </table>
 </div>
 
-<h2 class="sec" id="sec-review">▶ 검토 종목 <span class="sub" id="review-count"></span>
-  <span class="sub">— 적정가만 먼저 보는 종목 · 분석 후 4주까지 매주 재계산</span></h2>
+<h2 class="sec" id="sec-review" title="관심종목에 넣기 전에 적정가만 먼저 보는 종목 · 분석 후 4주까지 매주 재계산">검토 종목 <span class="sub" id="review-count"></span></h2>
 <div class="tbl-wrap">
 <table id="tbl-review" class="dt">
   {REVIEW_HEAD}
@@ -1046,7 +1051,7 @@ def render_dashboard(db: dict, watchlist: set = None) -> tuple[str, str]:
 </div>
 
 <details id="archive-wrap" style="margin-top:24px;">
-<summary id="sec-archive" style="cursor:pointer;font-size:14px;font-weight:700;color:{c['muted']};border-bottom:0.5px solid {c['border']};padding-bottom:4px;scroll-margin-top:56px;">히스토리 (Archive) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
+<summary id="sec-archive" style="cursor:pointer;font-size:15px;font-weight:700;color:{c['muted']};border-bottom:1px solid {c['line']};padding-bottom:6px;scroll-margin-top:56px;">히스토리 (Archive) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
 <div class="tbl-wrap" style="margin-top:8px;">
 <table id="tbl-archive" class="dt">
   {TABLE_HEAD}
@@ -1103,10 +1108,10 @@ function qualityPill(r) {
   const g = String(r.quality_grade).toUpperCase().charAt(0);
   const cls = (g === 'A' || g === 'B') ? 'q-good' : (g === 'C' ? 'q-mid' : 'q-bad');
   const title = (r.quality_missing || []).join('; ') || '모든 레이어 OK';
-  const warn = r.warnings_count ? ` · ⚠${r.warnings_count}` : '';
+  const warn = r.warnings_count ? ` · 경고 ${r.warnings_count}` : '';
   return `<span class="pill ${cls}" title="${esc(title)}">${esc(r.quality_grade)}${isNum(r.quality_score) ? ' ' + r.quality_score.toFixed(0) : ''}${esc(warn)}</span>`;
 }
-function verdictColor(v) { v = v || ''; return v.indexOf('UNDER') >= 0 ? '#1A7F5A' : v.indexOf('OVER') >= 0 ? '#CF222B' : '#656D76'; }
+function verdictColor(v) { v = v || ''; return v.indexOf('UNDER') >= 0 ? '#2F7254' : v.indexOf('OVER') >= 0 ? '#B23B34' : '#6E6A63'; }
 function verdictPill(r) {
   if (!isNum(r.fair_value) || !r.fair_verdict_ko) return DASH;
   const v = r.fair_verdict || '';
@@ -1121,7 +1126,7 @@ function fairTitle(r) {
 function fairCell(r) {
   if (!isNum(r.fair_value)) return DASH;
   const url = safePath(r.val_url);
-  const body = fmtDol(r.fair_value) + (r.fair_stale ? ' <span title="리서치 갱신 필요" style="color:#9A6700;">⏳</span>' : '');
+  const body = fmtDol(r.fair_value) + (r.fair_stale ? '<span class="flag" title="리서치 갱신 필요 (실적 발표 이후 또는 100일 경과)">!</span>' : '');
   return url ? `<a href="${esc(url)}" title="${esc(fairTitle(r))}">${body}</a>` : `<span title="${esc(fairTitle(r))}">${body}</span>`;
 }
 function upsideCell(r) {
@@ -1129,13 +1134,13 @@ function upsideCell(r) {
   const base = isNum(r.fair_base_price) && isNum(r.price) && Math.abs(r.fair_base_price - r.price) > 0.005
     ? `세션 주가가 오래되어 발행 시점 주가 $${r.fair_base_price.toFixed(2)} 기준` : '현재가 대비';
   return `<span class="up" style="color:${verdictColor(r.fair_verdict)};" title="${esc(base)}">${fmtSigned(r.fair_upside, 0)}%</span>`
-    + (base !== '현재가 대비' ? ' <span class="muted" title="' + esc(base) + '">ⓘ</span>' : '')
-    + (r.fair_gap ? ' <span title="시장 가격과 3배 이상 괴리 — 상세 페이지의 전제 조건 참고" style="color:#9A6700;">⚠</span>' : '');
+    + (base !== '현재가 대비' ? '<span class="flag flag-n" title="' + esc(base) + '">*</span>' : '')
+    + (r.fair_gap ? '<span class="flag" title="시장 가격과 3배 이상 괴리 — 상세 페이지의 전제 조건 참고">!</span>' : '');
 }
 function fairChip(r) {
   if (!isNum(r.fair_value) || !isNum(r.fair_upside)) return '';
   const px = '$' + (r.fair_value >= 100 ? r.fair_value.toFixed(0) : r.fair_value.toFixed(2));
-  return `<span class="olp" style="font-size:10.5px;color:#656D76;" title="펀더멘털 적정가 ${esc(fmtDol(r.fair_value))} · ${esc(r.fair_verdict_ko || '')}">적정 ${px} `
+  return `<span class="olp" style="font-size:10.5px;color:#6E6A63;" title="펀더멘털 적정가 ${esc(fmtDol(r.fair_value))} · ${esc(r.fair_verdict_ko || '')}">적정 ${px} `
     + `<b style="color:${verdictColor(r.fair_verdict)};font-size:10.5px;">${fmtSigned(r.fair_upside, 0)}%</b></span>`;
 }
 function casePretty(c) { return c ? esc(KO[c] || String(c).replace(/^CASE_\d+_/, '').replace(/^CASE_/, '')) : NA; }
@@ -1338,12 +1343,12 @@ function showPanel(hasToken) {
 }
 function setStatus(msg, isError) {
   statusEl.textContent = msg || '';
-  statusEl.style.color = isError ? '#CF222B' : '#656D76';
+  statusEl.style.color = isError ? '#B23B34' : '#6E6A63';
 }
 // 신뢰된 HTML 조각 전용 — 호출부에서 모든 동적 값을 esc() 해야 함
 function setStatusHTML(html, isError) {
   statusEl.innerHTML = html || '';
-  statusEl.style.color = isError ? '#CF222B' : '#656D76';
+  statusEl.style.color = isError ? '#B23B34' : '#6E6A63';
 }
 function needPAT() {
   if (getPAT()) return false;
@@ -1426,7 +1431,7 @@ function syncReviewRows() {
 
 function renderWL() {
   if (!ticksCache.length) {
-    wlList.innerHTML = '<span style="color:#656D76;font-size:11px;">관심종목 없음</span>';
+    wlList.innerHTML = '<span class="muted" style="font-size:11px;">관심종목 없음</span>';
     return;
   }
   wlList.innerHTML = ticksCache.map(t =>
@@ -1462,7 +1467,7 @@ async function commitTickers(message) {
     body: JSON.stringify({ message, content: b64encode(buildFileContent()), sha: txtSha })
   });
   txtSha = j.content.sha;
-  setStatus(`✅ 커밋 완료: ${message} (${String(txtSha).slice(0,7)})`);
+  setStatus(`커밋 완료: ${message} (${String(txtSha).slice(0,7)})`);
 }
 async function commitReview(message) {
   setStatus('커밋 중...');
@@ -1517,7 +1522,7 @@ async function promote(t, how) {
   if (row) row.is_active = true;
   REVIEW = REVIEW.filter(r => r.ticker !== t);
   renderWL(); render();
-  setStatus(`✅ ${t} 관심종목에 추가 — 다음 화~토 오전 자동 수급 분석부터 표에 나타납니다`
+  setStatus(`${t} 관심종목에 추가 — 다음 화~토 오전 자동 수급 분석부터 표에 나타납니다`
     + (row || how === 'review' ? '' : ' (적정가 리서치가 없으면 곧 조사가 시작됩니다)'));
 }
 
@@ -1545,7 +1550,7 @@ async function removeTicker(t) {
     }
     if (row) row.is_active = false;
     renderWL(); render();
-    setStatus(`✅ ${t} 관심종목에서 제거` + (hasFair ? ' — 검토 종목으로 이동' : ''));
+    setStatus(`${t} 관심종목에서 제거` + (hasFair ? ' — 검토 종목으로 이동' : ''));
   } catch (e) { setStatus('실패: ' + e.message, true); }
 }
 
@@ -1562,7 +1567,7 @@ async function requestAnalysis(t, again) {
   const r = REVIEW.find(x => x.ticker === t);
   if (r) r.requested_at = now; else REVIEW.push({ ticker: t, requested_at: now });
   render();
-  setStatusHTML(`✅ ${esc(t)} ${again ? '재분석' : '적정가 분석'} 요청 — 약 2분 뒤 분석 세션이 시작됩니다. `
+  setStatusHTML(`${esc(t)} ${again ? '재분석' : '적정가 분석'} 요청 — 약 2분 뒤 분석 세션이 시작됩니다. `
     + `${again ? '갱신은 보통 10~20분' : '신규 조사는 보통 20~40분'} 걸리고, 끝나면 새로고침했을 때 '검토 종목' 표에 반영됩니다. `
     + `<a href="https://github.com/${REPO}/actions/workflows/valuation-on-add.yml" target="_blank" rel="noopener">호출 기록</a>`);
   return true;
@@ -1584,7 +1589,7 @@ async function deleteReview(t) {
     });
     REVIEW = REVIEW.filter(r => r.ticker !== t);
     render();
-    setStatus(`✅ ${t} 검토 종목에서 삭제`);
+    setStatus(`${t} 검토 종목에서 삭제`);
   } catch (e) { setStatus('실패: ' + e.message, true); }
 }
 
@@ -1618,13 +1623,13 @@ async function pollRun(dispatchTime, label, timeoutMs) {
       const r = await gh(`/repos/${REPO}/actions/runs/${encodeURIComponent(runId)}`);
       const elapsed = Math.round((Date.now() - dispatchTime) / 1000);
       const statusStr = r.status === 'completed'
-        ? (r.conclusion === 'success' ? '✅ 완료' : `❌ ${r.conclusion}`)
+        ? (r.conclusion === 'success' ? '완료' : `실패 (${r.conclusion})`)
         : r.status;
       setStatusHTML(
         `${esc(label)}: ${esc(statusStr)} · ${elapsed}s 경과`
-        + (safeUrl ? ` · <a href="${esc(safeUrl)}" target="_blank" rel="noopener" style="color:#0969DA;">Actions 보기</a>` : '')
+        + (safeUrl ? ` · <a href="${esc(safeUrl)}" target="_blank" rel="noopener" ">Actions 보기</a>` : '')
         + (r.status === 'completed' && r.conclusion === 'success'
-           ? ` · <button id="reload-btn" style="padding:2px 10px;background:#1A7F5A;color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:11px;">새로고침</button>`
+           ? ` · <button id="reload-btn" class="btn" style="padding:1px 8px;font-size:11px;">새로고침</button>`
            : '')
       );
       const rb = document.getElementById('reload-btn');

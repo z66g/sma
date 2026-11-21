@@ -11,90 +11,99 @@
 <meta name="theme-color" content="#000000">
 <title>Smart Money Analyzer — Dashboard</title>
 <style>
-  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1F2328; margin:0; padding:24px; font-size:13px;
+  body { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#FFFFFF; color:#1C1B19; margin:0; padding:24px; font-size:13px;
          -webkit-tap-highlight-color:transparent; }
   .wrap { max-width:1400px; margin:0 auto; }
-  header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #D0D7DE; padding-bottom:12px; margin-bottom:0; flex-wrap:wrap; gap:12px; }
+  header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E0DB; padding-bottom:12px; margin-bottom:0; flex-wrap:wrap; gap:12px; }
   h1 { font-size:20px; margin:0; }
-  .meta { color:#656D76; font-size:11px; }
-  a { color:#0969DA; text-decoration:none; }
+  .meta { color:#6E6A63; font-size:11px; }
+  a { color:#2C4C9C; text-decoration:none; }
   a:hover { text-decoration:underline; }
-  input, select { padding:6px 10px; border:0.5px solid #D0D7DE; border-radius:4px; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:13px; background:#FFFFFF; color:#1F2328; }
+  input, select { padding:6px 10px; border:0.5px solid #E2E0DB; border-radius:4px; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:13px; background:#FFFFFF; color:#1C1B19; }
   button { font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 
   /* 섹션 바로가기 — 화면 위에 고정 */
   .secnav { position:sticky; top:0; z-index:30; background:#FFFFFF; display:flex; gap:6px; padding:10px 0 8px; margin-bottom:12px;
-             border-bottom:0.5px solid #D0D7DE; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+             border-bottom:0.5px solid #E2E0DB; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .secnav::-webkit-scrollbar { display:none; }
-  .secnav a { flex:0 0 auto; padding:4px 11px; border-radius:14px; background:#EAEEF2; color:#1F2328; font-size:12px; font-weight:600; }
-  .secnav a:hover { text-decoration:none; background:#DDF4FF; color:#0969DA; }
-  .secnav a .c { color:#656D76; font-weight:400; margin-left:4px; }
-  h2.sec { font-size:14px; color:#9A6700; margin:20px 0 6px; border-bottom:0.5px solid #9A6700; padding-bottom:4px;
+  .secnav a { flex:0 0 auto; padding:4px 10px; border-radius:4px; color:#1C1B19; font-size:12.5px; font-weight:600; border:1px solid transparent; }
+  .secnav a:hover { text-decoration:none; border-color:#E2E0DB; background:#FAFAF8; }
+  .secnav a .c { color:#6E6A63; font-weight:400; margin-left:4px; }
+  h2.sec { font-size:15px; color:#1C1B19; margin:26px 0 8px; border-bottom:1px solid #CFCCC5; padding-bottom:6px; letter-spacing:-0.01em;
             scroll-margin-top:56px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
-  h2.sec .sub { font-size:11px; color:#656D76; font-weight:400; }
-  .hint { font-size:11px; color:#656D76; margin:0 0 8px; line-height:1.5; }
-  .tgl { margin-left:auto; background:none; border:0.5px solid #D0D7DE; border-radius:4px; color:#656D76; font-size:11px; padding:2px 8px; cursor:pointer; }
+  h2.sec .sub { font-size:11px; color:#6E6A63; font-weight:400; }
+  .btn { padding:5px 12px; background:#FFFFFF; color:#1C1B19; border:1px solid #E2E0DB; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600; }
+  .btn:hover { border-color:#CFCCC5; background:#FAFAF8; }
+  .btn-p { background:#1C1B19; color:#FFFFFF; border-color:#1C1B19; }
+  .btn-p:hover { background:#34322E; border-color:#34322E; }
+  details.help { margin-top:12px; font-size:12px; color:#6E6A63; }
+  details.help summary { cursor:pointer; font-weight:600; color:#6E6A63; width:max-content; }
+  details.help ul { margin:8px 0 0; padding-left:18px; line-height:1.65; }
+  .tgl { margin-left:auto; background:none; border:0.5px solid #E2E0DB; border-radius:4px; color:#6E6A63; font-size:11px; padding:2px 8px; cursor:pointer; }
 
   /* 관리 패널 */
-  #mgmt { margin-bottom:8px; background:#F6F8FA; border:0.5px solid #D0D7DE; border-radius:6px; padding:14px 16px; }
+  #mgmt { margin-bottom:8px; background:#FAFAF8; border:1px solid #E2E0DB; border-radius:6px; padding:14px 16px; scroll-margin-top:56px; }
   .mg-grid { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1.2fr) minmax(0,1fr); gap:14px; }
   .mg { min-width:0; }
-  .mg + .mg { border-left:0.5px solid #D0D7DE; padding-left:14px; }
-  .mg-h { font-size:11px; color:#656D76; letter-spacing:0.04em; font-weight:700; margin-bottom:6px; }
+  .mg + .mg { border-left:0.5px solid #E2E0DB; padding-left:14px; }
+  .mg-h { font-size:12px; color:#1C1B19; font-weight:700; margin-bottom:8px; }
+  .mg-h span { color:#6E6A63; font-weight:400; }
   .mg-row { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
   .mg-row input { width:140px; text-transform:uppercase; }
-  .mg-d { font-size:11px; color:#656D76; line-height:1.5; }
-  .chip { background:#DDF4FF; color:#0969DA; padding:3px 4px 3px 10px; border-radius:12px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }
-  .chip button { background:none; border:0; color:#CF222B; cursor:pointer; font-size:14px; padding:0 6px; }
+  .mg-d { font-size:11px; color:#6E6A63; line-height:1.5; }
+  .chip { background:#FFFFFF; color:#1C1B19; border:1px solid #E2E0DB; padding:2px 2px 2px 9px; border-radius:4px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:2px; }
+  .chip button { background:none; border:0; color:#6E6A63; cursor:pointer; font-size:14px; padding:0 6px; line-height:1; }
+  .chip button:hover { color:#B23B34; }
 
   /* 한줄평 */
   .ol-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:6px; }
-  .ol { display:grid; grid-template-columns:92px 1fr; gap:4px 10px; align-items:start; background:#F6F8FA; border:0.5px solid #D0D7DE;
-         border-radius:6px; padding:8px 12px; color:#1F2328; text-decoration:none; font-size:12.5px; line-height:1.55; }
-  .ol:hover { border-color:#9A6700; text-decoration:none; }
+  .ol { display:grid; grid-template-columns:92px 1fr; gap:4px 10px; align-items:start; background:#FFFFFF; border:1px solid #E2E0DB;
+         border-radius:6px; padding:8px 12px; color:#1C1B19; text-decoration:none; font-size:12.5px; line-height:1.55; }
+  .ol:hover { border-color:#CFCCC5; background:#FAFAF8; text-decoration:none; }
   .ol b { font-size:13px; } .ol .olp { display:block; margin-top:3px; white-space:nowrap; }
 
   /* 표: 머리글·종목 열 고정 */
-  .tbl-wrap { max-height:calc(100vh - 96px); overflow:auto; border:0.5px solid #D0D7DE; border-radius:6px; -webkit-overflow-scrolling:touch; background:#FFFFFF; }
+  .tbl-wrap { max-height:calc(100vh - 96px); overflow:auto; border:1px solid #E2E0DB; border-radius:6px; -webkit-overflow-scrolling:touch; background:#FFFFFF; }
   table.dt { border-collapse:separate; border-spacing:0; width:100%; font-size:12px; }
-  table.dt th, table.dt td { border:0; border-right:0.5px solid #D0D7DE; border-bottom:0.5px solid #D0D7DE; padding:6px 8px; text-align:left; white-space:nowrap; }
+  table.dt th, table.dt td { border:0; border-right:0.5px solid #E2E0DB; border-bottom:0.5px solid #E2E0DB; padding:6px 8px; text-align:left; white-space:nowrap; }
   table.dt th:last-child, table.dt td:last-child { border-right:0; }
-  table.dt thead th { position:sticky; top:0; z-index:2; background:#EAEEF2; color:#656D76; font-weight:600; }
-  table.dt thead tr.grp th { box-sizing:border-box; height:28px; padding:0 8px; font-size:10.5px; letter-spacing:.03em; text-align:center; color:#57606A; }
+  table.dt thead th { position:sticky; top:0; z-index:2; background:#F7F6F3; color:#6E6A63; font-weight:600; }
+  table.dt thead tr.grp th { box-sizing:border-box; height:28px; padding:0 8px; font-size:10.5px; letter-spacing:.04em; text-align:center; color:#8A857C; font-weight:600; }
   table.dt thead tr.cols th { top:28px; }
   table.dt tbody tr { background:#FFFFFF; }
-  table.dt tbody tr:nth-child(even) { background:#F6F8FA; }
-  table.dt tbody tr:hover { background:#DDF4FF; }
+  table.dt tbody tr:nth-child(even) { background:#FAFAF8; }
+  table.dt tbody tr:hover { background:#F1F3F7; }
   table.dt tbody td { background:inherit; }
   table.dt .stk { position:sticky; left:0; z-index:1; min-width:84px; box-shadow:6px 0 6px -6px rgba(31,35,40,.28); }
   table.dt thead th.stk { z-index:3; }
-  table.dt .gs { border-left:1px solid #AFB8C1; }
+  table.dt .gs { border-left:1px solid #CFCCC5; }
   table.dt th[data-sort] { cursor:pointer; user-select:none; }
-  table.dt th[data-sort]:hover { color:#1F2328; }
-  table.dt th .arr { font-size:9px; margin-left:3px; color:#0969DA; }
+  table.dt th[data-sort]:hover { color:#1C1B19; }
+  table.dt th .arr { font-size:9px; margin-left:3px; color:#2C4C9C; }
   .tk b { font-size:13px; }
-  .nm { display:block; font-size:10px; color:#656D76; max-width:128px; overflow:hidden; text-overflow:ellipsis; font-weight:400; margin-top:1px; }
+  .nm { display:block; font-size:10px; color:#6E6A63; max-width:128px; overflow:hidden; text-overflow:ellipsis; font-weight:400; margin-top:1px; }
   .up { font-weight:700; }
 
-  .pill { padding:1px 8px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; }
-  .pill-A { background:#DAFBE1; color:#1A7F5A; }
-  .pill-B { background:#FFF8C5; color:#9A6700; }
-  .pill-C { background:#FFEBE9; color:#CF222B; }
-  .pill-N { background:#EAEEF2; color:#656D76; }
-  .q-good { background:#DAFBE1; color:#1A7F5A; }
-  .q-mid  { background:#FFF8C5; color:#9A6700; }
-  .q-bad  { background:#FFEBE9; color:#CF222B; }
-  .q-info { background:#DDF4FF; color:#0969DA; }
-  .pattern { font-size:9px; background:#FFF8C5; color:#9A6700; padding:1px 4px; border-radius:6px; margin-right:2px; }
-  .muted { color:#656D76; }
-  .empty { padding:28px; text-align:center; color:#656D76; white-space:normal !important; }
-  .act { padding:2px 8px; border:0; border-radius:4px; cursor:pointer; font-size:11px; font-weight:700; margin-right:4px; color:#fff; }
-  .act-add { background:#1A7F5A; } .act-rm { background:#CF222B; } .act-re { background:#0969DA; }
-  .act:disabled { opacity:.5; cursor:default; }
+  /* 배지: 옅은 바탕 + 같은 계열 테두리, 각진 모서리 */
+  .pill { display:inline-block; padding:0 6px; border-radius:3px; font-size:10.5px; line-height:17px; font-weight:600; white-space:nowrap; border:1px solid #E2E0DB; background:#FFFFFF; color:#6E6A63; }
+  .pill-A, .q-good { background:#EDF4EF; color:#2F7254; border-color:#CFE1D5; }
+  .pill-B, .q-mid  { background:#F6F0E2; color:#94630F; border-color:#E6D7B3; }
+  .pill-C, .q-bad  { background:#F8EDEB; color:#B23B34; border-color:#ECCFCB; }
+  .q-info { background:#EDF1F8; color:#2C4C9C; border-color:#D2DAEC; }
+  .pill-N { background:#F2F1EE; color:#6E6A63; border-color:#E2E0DB; }
+  .pattern { display:inline-block; font-size:10px; line-height:16px; color:#6E6A63; border:1px solid #E2E0DB; padding:0 5px; border-radius:3px; margin-right:3px; }
+  .flag { display:inline-block; width:14px; height:14px; line-height:13px; text-align:center; border-radius:50%; font-size:10px; font-weight:700; color:#94630F; border:1px solid #E6D7B3; background:#F6F0E2; vertical-align:1px; margin-left:3px; cursor:help; }
+  .flag-n { color:#6E6A63; border-color:#E2E0DB; background:#FFFFFF; }
+  .muted { color:#6E6A63; }
+  .empty { padding:28px; text-align:center; color:#6E6A63; white-space:normal !important; }
+  .act { padding:1px 8px; border:1px solid #E2E0DB; background:#FFFFFF; border-radius:3px; cursor:pointer; font-size:11px; font-weight:600; margin-right:4px; color:#1C1B19; line-height:18px; }
+  .act:hover { background:#FAFAF8; }
+  .act-add { color:#2F7254; border-color:#CFE1D5; } .act-rm { color:#B23B34; border-color:#ECCFCB; } .act-re { color:#2C4C9C; border-color:#D2DAEC; }
+  .act:disabled { opacity:.45; cursor:default; }
 
   @media (max-width:1100px) {
     .mg-grid { grid-template-columns:1fr; }
-    .mg + .mg { border-left:0; padding-left:0; border-top:0.5px solid #D0D7DE; padding-top:12px; }
+    .mg + .mg { border-left:0; padding-left:0; border-top:0.5px solid #E2E0DB; padding-top:12px; }
   }
   @media (max-width:1024px) {
     .wrap { max-width:100% !important; }
@@ -120,11 +129,11 @@
 <div class="wrap">
 <header>
   <div>
-    <h1><span style="color:#0969DA;">S</span>mart <span style="color:#0969DA;">M</span>oney <span style="color:#0969DA;">A</span>nalyzer</h1>
+    <h1><span style="color:#2C4C9C;">S</span>mart <span style="color:#2C4C9C;">M</span>oney <span style="color:#2C4C9C;">A</span>nalyzer</h1>
     <div class="meta">최신 세션 2026-11-19 (미국 정규장, ET) · 32개 종목</div>
   </div>
   <div>
-    <a href="https://github.com/z66g/sma" target="_blank" rel="noopener" aria-label="GitHub" title="GitHub" style="color:#656D76;display:inline-flex;align-items:center;">
+    <a href="https://github.com/z66g/sma" target="_blank" rel="noopener" aria-label="GitHub" title="GitHub" style="color:#6E6A63;display:inline-flex;align-items:center;">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.98 3.23 9.2 7.71 10.7.56.1.77-.24.77-.54 0-.27-.01-1.16-.02-2.1-3.14.68-3.8-1.34-3.8-1.34-.51-1.3-1.25-1.65-1.25-1.65-1.03-.7.08-.69.08-.69 1.13.08 1.73 1.16 1.73 1.16 1.01 1.73 2.65 1.23 3.3.94.1-.73.4-1.23.72-1.51-2.5-.28-5.14-1.25-5.14-5.57 0-1.23.44-2.23 1.16-3.02-.12-.29-.5-1.43.11-2.98 0 0 .94-.3 3.09 1.15.9-.25 1.86-.37 2.82-.38.96.01 1.92.13 2.82.38 2.15-1.45 3.09-1.15 3.09-1.15.61 1.55.23 2.69.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.33-2.64 5.29-5.15 5.56.4.35.77 1.04.77 2.1 0 1.52-.01 2.75-.01 3.13 0 .3.2.65.78.54 4.47-1.5 7.7-5.72 7.7-10.7C23.25 5.48 18.27.5 12 .5z"/>
       </svg>
@@ -142,56 +151,62 @@
 
 <div id="mgmt">
   <div id="mgmt-need-token" style="display:none;">
-    <div style="margin-bottom:8px;font-size:12px;color:#656D76;line-height:1.6;">
-      관심종목·검토 종목 편집과 분석 요청에는 GitHub 토큰이 필요합니다. 토큰은 <b>이 브라우저 localStorage 에만</b> 저장되며 repo 에 커밋되거나 다른 사이트로 전송되지 않습니다.<br>
-      권장: <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained PAT</a> —
-      Repository access: <b>Only select repositories → z66g/sma</b>, Permissions: <b>Contents: Read and write</b> + <b>Actions: Read and write</b>, 만료일 설정.
-      (repo 전체 권한을 주는 Classic PAT 은 권장하지 않음)
+    <div class="mg-h">관리 <span>— 관심종목·검토 종목 편집과 분석 요청에는 GitHub 토큰이 필요합니다</span></div>
+    <div class="mg-row">
+      <input id="pat" type="password" placeholder="github_pat_…" autocomplete="off" style="width:320px;max-width:100%;text-transform:none;">
+      <button id="pat-save" class="btn btn-p">저장</button>
+      <button id="pat-clear" class="btn">지우기</button>
     </div>
-    <input id="pat" type="password" placeholder="github_pat_…" autocomplete="off" style="width:360px;max-width:100%;">
-    <button id="pat-save" style="padding:6px 14px;background:#0969DA;color:#fff;border:0;border-radius:4px;cursor:pointer;">저장</button>
-    <button id="pat-clear" style="padding:6px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;">지우기</button>
+    <details class="help"><summary>토큰 만드는 법</summary><ul>
+      <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained PAT</a> 생성 — Repository access: <b>Only select repositories → z66g/sma</b></li>
+      <li>Permissions: <b>Contents: Read and write</b>, <b>Actions: Read and write</b>, 만료일 설정 (저장소 전체 권한을 주는 Classic PAT 은 권장하지 않음)</li>
+      <li>토큰은 이 브라우저의 localStorage 에만 저장되고, 저장소에 커밋되거나 GitHub 외의 곳으로 전송되지 않습니다.</li>
+    </ul></details>
   </div>
 
   <div id="mgmt-panel" style="display:none;">
     <div class="mg-grid">
       <div class="mg">
-        <div class="mg-h">관심종목 — 화~토 오전(KST) 자동 수급 분석 · 직전 미국 정규장 세션 (휴장일 자동 건너뜀)</div>
+        <div class="mg-h">관심종목 <span>— 화~토 오전 자동 수급 분석</span></div>
         <div class="mg-row">
           <input id="new-ticker" type="text" placeholder="티커 (예: PLTR)" autocomplete="off">
-          <button id="add-btn" style="padding:5px 12px;background:#EAEEF2;color:#1F2328;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:12px;">추가</button>
-          <button id="run-btn" style="padding:5px 12px;background:#EAEEF2;color:#1F2328;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:12px;">리스트 전체 분석</button>
+          <button id="add-btn" class="btn">추가</button>
+          <button id="run-btn" class="btn">리스트 전체 분석</button>
         </div>
         <div id="wl-list" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
       <div class="mg">
-        <div class="mg-h">적정가 분석 — 관심종목에 넣기 전에 먼저</div>
+        <div class="mg-h">적정가 분석 <span>— 관심종목에 넣기 전에</span></div>
         <div class="mg-row">
           <input id="rv-ticker" type="text" placeholder="티커 (예: NVDA)" autocomplete="off">
-          <button id="rv-btn" style="padding:5px 12px;background:#EAEEF2;color:#1F2328;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:12px;background:#0969DA;color:#fff;border-color:#0969DA;">분석 요청</button>
+          <button id="rv-btn" class="btn btn-p">분석 요청</button>
         </div>
-        <div class="mg-d">검토 종목에 추가되고 약 2분 뒤 분석 세션이 시작됩니다. 신규 조사는 보통 20~40분 걸리고, 끝나면 아래 '검토 종목' 표에 적정가가 나타납니다.
-          매일 수급 분석은 하지 않습니다 — 마음에 들면 표에서 <b>편입</b>.</div>
       </div>
       <div class="mg">
-        <div class="mg-h">단일 종목 즉시 수급 분석</div>
+        <div class="mg-h">수급 분석 <span>— 한 종목 즉시</span></div>
         <div class="mg-row">
           <input id="adhoc-ticker" type="text" placeholder="티커 (예: PLTR)" autocomplete="off">
-          <button id="adhoc-btn" style="padding:5px 12px;background:#EAEEF2;color:#1F2328;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:12px;">개별분석</button>
+          <button id="adhoc-btn" class="btn">개별분석</button>
         </div>
-        <div class="mg-d">관심종목 여부와 상관없이 직전 세션 3-Layer 리포트를 한 번 만듭니다 (1~3분).</div>
-        <button id="pat-edit" style="margin-top:8px;padding:3px 10px;background:none;color:#656D76;border:0.5px solid #D0D7DE;border-radius:4px;cursor:pointer;font-size:11px;">PAT 변경</button>
       </div>
     </div>
-    <div id="mgmt-status" style="font-size:11px;color:#656D76;min-height:16px;margin-top:10px;"></div>
+    <div id="mgmt-status" style="font-size:12px;color:#6E6A63;min-height:16px;margin-top:10px;"></div>
+    <details class="help"><summary>도움말</summary><ul>
+      <li><b>관심종목</b> — 화~토 오전(KST)에 직전 미국 정규장 세션을 자동 분석합니다(휴장일 건너뜀). 리서치가 없는 종목을 추가하면 적정가 조사도 바로 시작됩니다.
+        제거할 때 적정가가 있으면 검토 종목으로 옮겨집니다.</li>
+      <li><b>적정가 분석</b> — 티커를 검토 종목에 넣고 약 2분 뒤 분석 세션이 시작됩니다. 신규 조사는 보통 20~40분, 재분석은 10~20분 걸리며 끝나면 새로고침했을 때 표에 반영됩니다.
+        검토 종목은 매일 수급 분석을 하지 않고, 분석 후 4주까지만 매주 주가·금리를 반영합니다. 채팅 세션에서 "티커 분석해줘"라고 해도 같은 분석이 됩니다.</li>
+      <li><b>수급 분석</b> — 관심종목 여부와 상관없이 직전 세션의 3-Layer 리포트를 한 번 만듭니다(1~3분).</li>
+      <li><b>표</b> — 종목 열은 가로로 스크롤해도 고정됩니다. 열 제목을 누르면 정렬하고, 한 번 더 누르면 반대로 정렬합니다.</li>
+    </ul></details>
+    <div style="margin-top:8px;"><button id="pat-edit" class="btn" style="font-size:11px;padding:2px 8px;font-weight:400;color:#6E6A63;">토큰 변경</button></div>
   </div>
 </div>
 
-<h2 class="sec" id="sec-ol">▶ 종목별 한줄평 <span class="sub">2026-11-19 세션</span><button class="tgl" id="ol-tgl" type="button">접기</button></h2>
+<h2 class="sec" id="sec-ol">종목별 한줄평 <span class="sub">2026-11-19 세션</span><button class="tgl" id="ol-tgl" type="button">접기</button></h2>
 <div id="ol-list" class="ol-list"></div>
 
-<h2 class="sec" id="sec-active">▶ 관심종목 <span class="sub" id="active-count"></span></h2>
-<div class="hint">종목 열은 가로로 스크롤해도 고정됩니다. 열 제목을 누르면 정렬하고, 한 번 더 누르면 반대로 정렬합니다.</div>
+<h2 class="sec" id="sec-active">관심종목 <span class="sub" id="active-count"></span></h2>
 <div class="tbl-wrap">
 <table id="tbl-active" class="dt">
   <thead>
@@ -211,15 +226,14 @@
     <th class="gs">매크로</th><th>다크풀</th><th>공매도</th><th>옵션</th>
     <th class="gs" data-sort="dp_pct">DP %</th><th data-sort="short_pct">Short %</th><th data-sort="ctb_fee">CTB % (Δ)</th><th data-sort="dtc">DTC</th><th data-sort="exp_move_pct">±Move</th>
     <th class="gs" data-sort="max_pain">Max Pain</th><th>Call / Put Wall</th>
-    <th class="gs">패턴</th><th data-sort="report_count" title="리포트 수">📄</th><th></th>
+    <th class="gs">패턴</th><th data-sort="report_count" title="저장된 수급 리포트 수">리포트</th><th></th>
   </tr>
 </thead>
   <tbody id="tbody-active"></tbody>
 </table>
 </div>
 
-<h2 class="sec" id="sec-review">▶ 검토 종목 <span class="sub" id="review-count"></span>
-  <span class="sub">— 적정가만 먼저 보는 종목 · 분석 후 4주까지 매주 재계산</span></h2>
+<h2 class="sec" id="sec-review" title="관심종목에 넣기 전에 적정가만 먼저 보는 종목 · 분석 후 4주까지 매주 재계산">검토 종목 <span class="sub" id="review-count"></span></h2>
 <div class="tbl-wrap">
 <table id="tbl-review" class="dt">
   <thead><tr class="cols1">
@@ -232,7 +246,7 @@
 </div>
 
 <details id="archive-wrap" style="margin-top:24px;">
-<summary id="sec-archive" style="cursor:pointer;font-size:14px;font-weight:700;color:#656D76;border-bottom:0.5px solid #D0D7DE;padding-bottom:4px;scroll-margin-top:56px;">히스토리 (Archive) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
+<summary id="sec-archive" style="cursor:pointer;font-size:15px;font-weight:700;color:#6E6A63;border-bottom:1px solid #CFCCC5;padding-bottom:6px;scroll-margin-top:56px;">히스토리 (Archive) <span id="archive-count" style="font-size:11px;font-weight:400;"></span></summary>
 <div class="tbl-wrap" style="margin-top:8px;">
 <table id="tbl-archive" class="dt">
   <thead>
@@ -252,7 +266,7 @@
     <th class="gs">매크로</th><th>다크풀</th><th>공매도</th><th>옵션</th>
     <th class="gs" data-sort="dp_pct">DP %</th><th data-sort="short_pct">Short %</th><th data-sort="ctb_fee">CTB % (Δ)</th><th data-sort="dtc">DTC</th><th data-sort="exp_move_pct">±Move</th>
     <th class="gs" data-sort="max_pain">Max Pain</th><th>Call / Put Wall</th>
-    <th class="gs">패턴</th><th data-sort="report_count" title="리포트 수">📄</th><th></th>
+    <th class="gs">패턴</th><th data-sort="report_count" title="저장된 수급 리포트 수">리포트</th><th></th>
   </tr>
 </thead>
   <tbody id="tbody-archive"></tbody>
