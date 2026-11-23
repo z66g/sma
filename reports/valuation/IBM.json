@@ -1,0 +1,161 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-23",
+ "fundamentals_asof": "2026-11-23",
+ "currency": "USD",
+ "price": 224.44,
+ "fair_value": 230.48,
+ "fair_low": 152.3,
+ "fair_high": 303.27,
+ "upside_pct": 2.69,
+ "verdict": "FAIR",
+ "verdict_ko": "적정 범위",
+ "mos_band_pct": 15.0,
+ "n_models": 9,
+ "summary": "리서치 기반 적정가 230.48 = 약세 152.30(25%) · 기본 233.18(50%) · 강세 303.27(25%)의 확률가중 (신사업 옵션 5.80 포함). 현재가 224.44 대비 +2.7% · 적정 범위 (불확실성 보통). 할인율 ±1%p 범위 189.08~293.21 — 판정이 할인율에 민감. 기계적 기준선 194.10.",
+ "archetype": {
+  "code": "DIVIDEND_DEFENSIVE",
+  "label": "배당·방어주",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "MEDIUM",
+  "label": "보통",
+  "score": 73
+ },
+ "wacc": 0.0771,
+ "ke": 0.0835,
+ "wacc_stable": 0.0775,
+ "erp": 0.0386,
+ "rf": 0.0504,
+ "g_term": 0.04,
+ "models": [
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 171.43,
+   "low": 127.98,
+   "high": 215.3,
+   "weight": 0.168
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 135.44,
+   "low": 116.59,
+   "high": 201.34,
+   "weight": 0.151
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 225.89,
+   "low": 142.97,
+   "high": 384.91,
+   "weight": 0.135
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 201.2,
+   "low": 138.65,
+   "high": 279.0,
+   "weight": 0.135
+  },
+  {
+   "id": "ddm_multi",
+   "name": "배당할인(DDM) · 다단계",
+   "mid": 198.17,
+   "low": 159.38,
+   "high": 254.01,
+   "weight": 0.135
+  },
+  {
+   "id": "ddm_stable",
+   "name": "배당할인(DDM) · 안정성장",
+   "mid": 211.72,
+   "low": 153.48,
+   "high": 284.2,
+   "weight": 0.121
+  },
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 235.98,
+   "low": 149.11,
+   "high": 401.45,
+   "weight": 0.067
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 196.41,
+   "low": 158.92,
+   "high": 233.9,
+   "weight": 0.067
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 59.95,
+   "low": 43.82,
+   "high": 90.68,
+   "weight": 0.021
+  }
+ ],
+ "implied_cagr_5y": 0.0372,
+ "base_cagr_5y": 0.0459,
+ "mc": {
+  "p10": 149.29,
+  "p50": 219.21,
+  "p90": 315.48,
+  "prob_above_price": 0.47
+ },
+ "analyst_target": 259.85,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-23",
+  "analyst": "Claude 주간 Valuation Desk",
+  "thesis": "IBM 의 가치는 (1) Software(매출 45%, 부문이익률 35%)의 성장이 정체된 Consulting·주기적인 IBM Z 를 얼마나 상쇄하느냐, (2) 생산성 개선과 인수 상각 소멸로 GAAP 영업이익률이 18% 에서 얼마나 오르느냐에 달려 있다. 2026년 2분기 메인프레임·Transaction Processing 부진으로 가이던스를 '5% 초과'에서 4~5% 로 낮췄지만 3분기는 Software +8%, 영업 세전마진 +0.7%p 로 회복했다. AI 가 레거시(COBOL·컨설팅) 매출을 잠식할 위험이 최대 불확실성이다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 5.8,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 152.3,
+    "cagr5": 0.012,
+    "target_margin": 0.195
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 233.18,
+    "cagr5": 0.036,
+    "target_margin": 0.235
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 303.27,
+    "cagr5": 0.054,
+    "target_margin": 0.26
+   }
+  },
+  "n_sources": 14,
+  "rate_sensitivity": {
+   "minus_1pt": 293.21,
+   "plus_1pt": 189.08
+  },
+  "verdict_robust": false,
+  "fair_symmetric": 230.48,
+  "n_warn": 1,
+  "second_opinion": null,
+  "audit": null
+ },
+ "mechanical_fair": 194.1,
+ "ticker": "IBM",
+ "name": "International Business Machines Corporation",
+ "published": "2026-11-23",
+ "published_at": "2026-11-23T02:00:58Z"
+}
