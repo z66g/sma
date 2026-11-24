@@ -1,0 +1,177 @@
+{
+ "version": 1,
+ "status": "OK",
+ "as_of": "2026-11-24",
+ "fundamentals_asof": "2026-11-24",
+ "currency": "USD",
+ "price": 155.38,
+ "fair_value": 262.16,
+ "fair_low": 99.9,
+ "fair_high": 421.65,
+ "upside_pct": 68.72,
+ "verdict": "DEEP_UNDERVALUED",
+ "verdict_ko": "크게 저평가",
+ "mos_band_pct": 25.0,
+ "n_models": 11,
+ "summary": "리서치 기반 적정가 262.16 = 약세 99.90(25%) · 기본 263.55(50%) · 강세 421.65(25%)의 확률가중. 현재가 155.38 대비 +68.7% · 크게 저평가 (불확실성 높음). 할인율 ±1%p 범위 226.89~312.29. 기계적 기준선 475.20.",
+ "archetype": {
+  "code": "HIGH_GROWTH",
+  "label": "고성장 흑자",
+  "traits": []
+ },
+ "uncertainty": {
+  "level": "HIGH",
+  "label": "높음",
+  "score": 56
+ },
+ "wacc": 0.1159,
+ "ke": 0.1165,
+ "wacc_stable": 0.0932,
+ "erp": 0.0386,
+ "rf": 0.0492,
+ "g_term": 0.0392,
+ "models": [
+  {
+   "id": "dcf_growth_10y",
+   "name": "10년 DCF · 영구성장",
+   "mid": 500.42,
+   "low": 319.12,
+   "high": 809.41,
+   "weight": 0.174
+  },
+  {
+   "id": "dcf_ebitda_10y",
+   "name": "10년 DCF · EBITDA Exit",
+   "mid": 658.49,
+   "low": 412.48,
+   "high": 1026.32,
+   "weight": 0.174
+  },
+  {
+   "id": "pe",
+   "name": "P/E 멀티플",
+   "mid": 414.33,
+   "low": 266.11,
+   "high": 530.77,
+   "weight": 0.157
+  },
+  {
+   "id": "ev_ebitda",
+   "name": "EV/EBITDA 멀티플",
+   "mid": 379.25,
+   "low": 258.37,
+   "high": 438.57,
+   "weight": 0.122
+  },
+  {
+   "id": "lynch",
+   "name": "피터 린치 공정가(PEG)",
+   "mid": 459.8,
+   "low": 353.31,
+   "high": 459.8,
+   "weight": 0.105
+  },
+  {
+   "id": "ev_rev",
+   "name": "EV/Revenue 멀티플",
+   "mid": 360.03,
+   "low": 152.37,
+   "high": 377.6,
+   "weight": 0.07
+  },
+  {
+   "id": "dcf_ebitda_5y",
+   "name": "5년 DCF · EBITDA Exit",
+   "mid": 668.31,
+   "low": 430.27,
+   "high": 1004.26,
+   "weight": 0.055
+  },
+  {
+   "id": "dcf_growth_5y",
+   "name": "5년 DCF · 영구성장",
+   "mid": 429.26,
+   "low": 279.58,
+   "high": 681.34,
+   "weight": 0.052
+  },
+  {
+   "id": "dcf_revenue_10y",
+   "name": "10년 DCF · Revenue Exit",
+   "mid": 718.49,
+   "low": 483.03,
+   "high": 1043.72,
+   "weight": 0.049
+  },
+  {
+   "id": "graham",
+   "name": "그레이엄 공식",
+   "mid": 221.85,
+   "low": 169.99,
+   "high": 256.42,
+   "weight": 0.035
+  },
+  {
+   "id": "epv",
+   "name": "수익력 가치(EPV)",
+   "mid": 50.6,
+   "low": 42.79,
+   "high": 55.8,
+   "weight": 0.007
+  }
+ ],
+ "implied_cagr_5y": 0.1225,
+ "base_cagr_5y": 0.4331,
+ "mc": {
+  "p10": 279.39,
+  "p50": 562.28,
+  "p90": 962.52,
+  "prob_above_price": 0.98
+ },
+ "analyst_target": 244.71,
+ "method": "RESEARCH",
+ "model_gap": false,
+ "research": {
+  "as_of": "2026-11-24",
+  "analyst": "Claude 주간 Valuation Desk",
+  "thesis": "NVIDIA 의 가치는 (1) AI 인프라 투자가 CY2027 이후에도 유지되는지(하이퍼스케일러 설비투자 2027년 약 $1.2~1.3조 전망, 그러나 6개사 중 5개가 FCF 적자 예상)와 (2) TPU·Trainium·AMD 등 대안이 늘어나는 가운데 70%대 매출총이익률을 얼마나 지키는지 두 변수로 결정된다. 현재 증거(3분기 매출 $115.8B로 가이던스 $108B를 7% 상회, FY28 매출 성장 가이던스 70%→75% 상향, 클라우드 백로그 $2.5조)는 향후 12~18개월에 대해서는 강하지만, CY2028 이후의 수요는 고객사의 자금 조달 능력에 달려 있고 회사도 '고객의 자본 접근성'을 전망 조건으로 명시했다. 11월의 CEO 사임·복귀 사태는 영업 수치를 바꾸지 않았으나 수출통제·중국 우회 판매 조사 리스크를 키웠다.",
+  "confidence": "MEDIUM",
+  "stale": false,
+  "option_value": 0,
+  "scenarios": {
+   "bear": {
+    "prob": 0.25,
+    "value": 99.9,
+    "cagr5": 0.0522,
+    "target_margin": 0.45
+   },
+   "base": {
+    "prob": 0.5,
+    "value": 263.55,
+    "cagr5": 0.2537,
+    "target_margin": 0.58
+   },
+   "bull": {
+    "prob": 0.25,
+    "value": 421.65,
+    "cagr5": 0.3579,
+    "target_margin": 0.62
+   }
+  },
+  "n_sources": 20,
+  "rate_sensitivity": {
+   "minus_1pt": 312.29,
+   "plus_1pt": 226.89
+  },
+  "verdict_robust": true,
+  "fair_symmetric": 262.16,
+  "n_warn": 0,
+  "second_opinion": null,
+  "audit": null
+ },
+ "mechanical_fair": 475.2,
+ "ticker": "NVDA",
+ "name": "NVIDIA Corporation",
+ "published": "2026-11-24",
+ "published_at": "2026-11-24T23:04:53Z"
+}
